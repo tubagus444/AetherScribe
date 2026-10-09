@@ -294,11 +294,33 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
-## Panduan Pengguna & Direktori Fitur (Guide Panel)
+---
+
+## Glosarium Istilah In-World & Mode strictMatch
 - **Status:** Selesai
-- **Deskripsi:** Panel bantuan terintegrasi yang menyajikan panduan cara pakai langkah demi langkah, detail arsitektur, dan tips hemat token untuk seluruh fitur AetherScribe dengan pencarian instan, filter kategori pil, serta tautan langsung untuk membuka modul terkait.
-- **File terkait:** `src/components/panels/GuidePanel.tsx`, `src/components/panels/guide/guideContent.tsx`
-- **Tabel DB:** Tidak ada (data-driven statis)
-- **Endpoint:** Tidak ada
-- **Catatan:** Konten panduan selalu disinkronkan dengan fitur aktif, termasuk modul Kalender Dunia (arsitektur 2-kolom, heatmap tahunan, festival tahunan, pelacak usia dinamis, kalkulator perjalanan, audit kronologi), Atlas, Codex, Timeline, Peta Kontinuitas, dan daftar fitur mikro.
+- **Deskripsi:** Basis data istilah *in-world* non-nama (satuan ukuran, pangkat, kalender, salam, idiom) untuk menjaga konsistensi ejaan secara deterministik di editor TipTap. Mendukung deteksi varian salah yang dideklarasikan, pendeteksian typo berbasis jarak edit (Levensthein), serta opsi mode `strictMatch` per-entri.
+- **File terkait:** `src/types.ts`, `src/lib/glossary.ts`, `src/lib/glossary.test.ts`, `src/features/consistency/components/GlossaryPanel.tsx`
+- **Tabel DB:** `glossary`
+- **Endpoint:** Tidak ada (100% deterministik, 0 token AI)
+- **Catatan:** Mode `strictMatch` (`GlossaryEntry.strictMatch`) menggunakan pencocokan regex case-sensitive persis (`g` tanpa `i`) dan mengecualikan entri dari fuzzy typo guessing. Mengeliminasi false-positive pada kata umum/istilah pendek (seperti "mana", "ki", "chi", singkatan "PM").
+
+---
+
+## Pelacak Janji Plot (Chekhov's Gun) & Rekomendasi Kata Kunci
+- **Status:** Selesai
+- **Deskripsi:** Pembukuan janji naratif (*plot promises*) yang dideklarasikan penulis—artefak, ramalan, misteri, atau rahasia yang harus terbayar (*payoff*). Sistem melacak di bab mana elemen muncul (via Codex ID atau kata kunci Aho-Corasick) dan membunyikan alarm bila elemen tertidur (*dormant*) terlalu lama. Dilengkapi ekstraktor rekomendasi kata kunci otomatis 1-klik saat membuat janji baru.
+- **File terkait:** `src/types.ts`, `src/lib/plotPromises.ts`, `src/lib/plotPromises.test.ts`, `src/features/consistency/components/PlotPromisePanel.tsx`
+- **Tabel DB:** `plotPromises`
+- **Endpoint:** Tidak ada (100% deterministik, 0 token AI)
+- **Catatan:** Fungsi `extractKeywordCandidates` mengekstrak frasa berhuruf kapital multi-kata, istilah tunggal penting (bukan kata hubung/stop words), serta entri glosarium yang cocok di judul/deskripsi janji, menyajikannya sebagai badge pil interaktif yang langsung menambahkan kata kunci ke formulir.
+
+---
+
+## Pengecek Kontinuitas & Audit Konsistensi Batch (Prompt Caching)
+- **Status:** Selesai
+- **Deskripsi:** Pengecekan konsistensi naskah dengan AI terhadap Story Bible, Codex Lore, Relasi Karakter, dan Linimasa Peristiwa. Menyediakan mode pemeriksaan bab tunggal dan mode **Audit Batch** (antrian berurutan untuk banyak bab sekaligus).
+- **File terkait:** `src/features/consistency/components/ConsistencyPanel.tsx`, `src/services/ai/index.ts`, `src/lib/timelineSummary.ts`
+- **Tabel DB:** `chapters`, `codex`, `bible`, `relationships`, `timeline`
+- **Endpoint:** Provider AI (`openrouter`, `google`, `claude`, `groq`, dll.)
+- **Catatan:** Mode Batch memproses bab secara sekuensial dengan bilah progres real-time dan opsi pembatalan aman. Karena knowledge base yang dikirimkan identik antar-bab, bab ke-2 dan seterusnya memanfaatkan *prompt caching hit* (~100% reusable context di Anthropic/Gemini) yang menghemat biaya token hingga 90% dan mempercepat respons. Hasil disajikan dalam akordeon ringkas per bab dengan deep link langsung ke kutipan terkait di editor manuskrip.
 

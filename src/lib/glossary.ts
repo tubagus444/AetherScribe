@@ -61,13 +61,20 @@ export function findGlossaryIssues(text: string, entries: GlossaryEntry[]): Glos
   for (const e of entries) {
     const term = e.term?.trim();
     if (!term) continue;
+    const isStrict = !!e.strictMatch;
     for (const raw of e.variants ?? []) {
       const variant = (raw || '').trim();
       if (variant.length < 2) continue;
-      if (termLowers.has(variant.toLowerCase())) continue; // varian tak boleh sama dgn term baku
+      // Varian tak boleh sama persis dengan term baku.
+      // Jika non-strict, bandingkan secara case-insensitive; jika strict, bandingkan case-sensitive.
+      if (isStrict) {
+        if (variant === term) continue;
+      } else {
+        if (termLowers.has(variant.toLowerCase())) continue;
+      }
       let re: RegExp;
       try {
-        re = new RegExp(`\\b${escapeRegExp(variant)}\\b`, 'gi');
+        re = new RegExp(`\\b${escapeRegExp(variant)}\\b`, isStrict ? 'g' : 'gi');
       } catch {
         continue;
       }
@@ -86,7 +93,9 @@ export function findGlossaryIssues(text: string, entries: GlossaryEntry[]): Glos
   }
 
   // --- 2) TYPO — near-miss `term` baku (gated: kapital + satu-kata) ---
+  // Entri dengan strictMatch dilewati dari fuzzy typo agar istilah pendek/huruf-kecil tidak memicu false-positive.
   const singleTerms = entries
+    .filter((e) => !e.strictMatch)
     .map((e) => e.term?.trim())
     .filter((t): t is string => !!t && !/\s/.test(t) && t.length >= MIN_LEN);
 

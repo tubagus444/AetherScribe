@@ -42,6 +42,34 @@ describe('findGlossaryIssues — variant (deklarasi ejaan salah)', () => {
   });
 });
 
+describe('findGlossaryIssues — strictMatch opt-in', () => {
+  it('strictMatch: hanya menandai varian dengan casing persis', () => {
+    const g = [entry({ term: 'Ki', variants: ['chi'], strictMatch: true })];
+    // "chi" cocok persis → ditandai
+    expect(findGlossaryIssues('Ia memusatkan chi.', g)).toHaveLength(1);
+    // "Chi" atau "CHI" huruf besar/kapital → TIDAK ditandai karena strictMatch
+    expect(findGlossaryIssues('Marga Chi dari utara.', g)).toHaveLength(0);
+    expect(findGlossaryIssues('CHI tingkat tinggi.', g)).toHaveLength(0);
+  });
+
+  it('strictMatch: mengizinkan varian yang hanya berbeda casing dari term baku', () => {
+    const g = [entry({ term: 'Mana', variants: ['mana'], strictMatch: true })];
+    // "mana" (huruf kecil) ditandai sebagai salah dengan saran "Mana"
+    const found = findGlossaryIssues('Energi mana mulai habis.', g);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({ word: 'mana', suggestion: 'Mana', kind: 'variant' });
+
+    // "Mana" yang sudah baku tidak ditandai
+    expect(findGlossaryIssues('Energi Mana melimpah.', g)).toHaveLength(0);
+  });
+
+  it('strictMatch: tidak masuk ke fuzzy typo guessing', () => {
+    const g = [entry({ term: 'Mana', strictMatch: true })];
+    // Kata mirip "Mano" tidak memicu typo guessing karena strictMatch aktif
+    expect(findGlossaryIssues('Mano melangkah pergi.', g)).toHaveLength(0);
+  });
+});
+
 describe('findGlossaryIssues — typo (near-miss term baku)', () => {
   it('menandai kandidat salah-eja berkapital yang mirip term', () => {
     const g = [entry({ term: 'Threnody' })];

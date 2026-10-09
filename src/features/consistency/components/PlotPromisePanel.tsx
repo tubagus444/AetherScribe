@@ -19,7 +19,7 @@ import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useProjectData } from '@/src/hooks/useProjectData';
 import { usePlainChapters } from '@/src/hooks/usePlainChapters';
 import { PlotPromise, PlotPromiseImportance, PlotPromiseStatus } from '@/src/types';
-import { analyzePromises, analyzePayoffs, PromiseState, PayoffState } from '@/src/lib/plotPromises';
+import { analyzePromises, analyzePayoffs, extractKeywordCandidates, PromiseState, PayoffState } from '@/src/lib/plotPromises';
 import { usePresenceIndex } from '@/src/hooks/usePresenceIndex';
 import { cn } from '@/src/lib/utils';
 
@@ -439,6 +439,27 @@ function PromiseForm({
   const [payoffCodexId, setPayoffCodexId] = useState<number | ''>(initial?.payoffCodexId ?? '');
   const [saving, setSaving] = useState(false);
 
+  const glossaryEntries = useLiveQuery(() =>
+    db.glossary.where('projectId').equals(projectId).toArray()
+  , [projectId]);
+
+  const recommendedCandidates = useMemo(() => {
+    if (linkMode !== 'keywords') return [];
+    const candidates = extractKeywordCandidates(title, description, glossaryEntries);
+    const currentTokens = new Set(keywords.split(',').map(s => s.trim().toLowerCase()).filter(Boolean));
+    return candidates.filter(c => !currentTokens.has(c.toLowerCase()));
+  }, [linkMode, title, description, glossaryEntries, keywords]);
+
+  const addCandidateToKeywords = (candidate: string) => {
+    const trimmed = keywords.trim();
+    if (!trimmed) {
+      setKeywords(candidate);
+    } else {
+      const sep = trimmed.endsWith(',') ? ' ' : ', ';
+      setKeywords(`${trimmed}${sep}${candidate}`);
+    }
+  };
+
   const canSave = title.trim().length > 0;
 
   const save = async () => {
@@ -513,7 +534,31 @@ function PromiseForm({
               {codexEntries.filter(c => c.id != null).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           ) : (
-            <input value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="ramalan, sang pengkhianat (pisahkan dengan koma)" className={inputCls} />
+            <div className="space-y-2">
+              <input value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="ramalan, sang pengkhianat (pisahkan dengan koma)" className={inputCls} />
+              {recommendedCandidates.length > 0 && (
+                <div className="space-y-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    <Sparkles size={12} className="text-indigo-500 shrink-0" />
+                    <span>Rekomendasi kandidat kata kunci:</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {recommendedCandidates.map((cand) => (
+                      <button
+                        key={cand}
+                        type="button"
+                        onClick={() => addCandidateToKeywords(cand)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 shadow-xs transition-all active:scale-95"
+                        title={`Tambahkan "${cand}" ke kata kunci`}
+                      >
+                        <Plus size={11} className="text-indigo-500" />
+                        {cand}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
             {linkMode === 'codex' ? 'Dilacak lewat nama & alias entri Codex.' : 'Untuk janji non-entitas (ramalan/misteri): dilacak lewat kemunculan kata kunci di teks.'}

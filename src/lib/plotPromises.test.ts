@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { analyzePromises, analyzePayoffs } from './plotPromises';
+import { analyzePromises, analyzePayoffs, extractKeywordCandidates } from './plotPromises';
 import { CodexEntry, PlotPromise } from '@/src/types';
 
 // 6 bab (idx 0..5). Belati (Codex #1) disebut di Bab 1 & 2 saja.
@@ -148,5 +148,38 @@ describe('analyzePayoffs', () => {
     );
     const payoffs = analyzePayoffs(analyses);
     expect(payoffs.map(p => p.state)).toEqual(['unplanted', 'thin']);
+  });
+});
+
+describe('extractKeywordCandidates', () => {
+  it('mengekstrak frasa multi-kata dan kata berkapital dari judul dan deskripsi', () => {
+    const title = 'Belati Berukir dari Lembah Kabut';
+    const desc = 'Pemberian Tetua Arya sebelum perang meletus.';
+    const candidates = extractKeywordCandidates(title, desc);
+
+    expect(candidates).toContain('Belati Berukir');
+    expect(candidates).toContain('Lembah Kabut');
+    expect(candidates).toContain('Tetua Arya');
+    // Stop words seperti "Dari", "Sebelum" tidak boleh muncul sebagai kandidat kata tunggal
+    expect(candidates).not.toContain('dari');
+    expect(candidates).not.toContain('Sebelum');
+  });
+
+  it('mencocokkan istilah glosarium (termasuk huruf kecil)', () => {
+    const title = 'Misteri artefak dan aliran mana kuno';
+    const glossary = [{ term: 'mana' }, { term: 'artefak kuno' }];
+    const candidates = extractKeywordCandidates(title, undefined, glossary);
+
+    expect(candidates).toContain('mana');
+  });
+
+  it('menghindari duplikasi kandidat yang sama', () => {
+    const title = 'Pedang Naga dan Pedang Naga';
+    const candidates = extractKeywordCandidates(title);
+    expect(candidates.filter(c => c === 'Pedang Naga')).toHaveLength(1);
+  });
+
+  it('mengembalikan array kosong jika input kosong', () => {
+    expect(extractKeywordCandidates('')).toEqual([]);
   });
 });

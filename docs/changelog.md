@@ -6,6 +6,31 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-10-09
 
+### [Fitur] Glosarium strictMatch, Janji Plot Rekomendasi Kata Kunci, & Audit Konsistensi Batch
+- **Glosarium: Mode strictMatch Opt-In per-Entri**:
+  - Menambahkan field `strictMatch?: boolean` pada `GlossaryEntry` di `src/types.ts`.
+  - Memperbarui `findGlossaryIssues` di `src/lib/glossary.ts` untuk menggunakan regex case-sensitive (`'g'` tanpa flag `'i'`) bila `strictMatch` aktif pada entri, serta mengisolasi entri tersebut dari fuzzy typo guessing agar istilah pendek atau huruf-kecil (seperti "mana", "ki", "chi", atau singkatan gelar "PM") tidak memicu false-positive terhadap kata umum bahasa Indonesia.
+  - Menambahkan badge penanda `Ketat` pada kartu istilah dan kontrol centang interaktif pada `GlossaryForm` di `GlossaryPanel.tsx`.
+- **Janji Plot: Rekomendasi Otomatis Kandidat Kata Kunci**:
+  - Mengimplementasikan `extractKeywordCandidates` di `src/lib/plotPromises.ts` (100% deterministik, 0 token AI) untuk mengekstrak frasa berhuruf kapital multi-kata, kata tunggal esensial (dengan filter stop-words bahasa Indonesia/Inggris), serta pencocokan istilah glosarium aktif yang muncul di judul atau deskripsi janji.
+  - Menampilkan lencana pil rekomendasi interaktif berikon *Sparkles* di `PlotPromisePanel.tsx` pada mode pelacakan kata kunci. Mengklik pil langsung menambahkan kata kunci ke formulir tanpa perlu mengetik ulang.
+- **Audit Konsistensi Batch: Antrian Multi-Bab Berbasis Prompt Caching**:
+  - Menambahkan pengalih tab `Bab Tunggal` vs `Audit Batch (Banyak Bab)` di `ConsistencyPanel.tsx`.
+  - Mode Batch menyediakan antrian pemilihan multi-bab dengan tombol aksi cepat (*Pilih Semua*, *5 Bab Terakhir*, *Kosongkan*) dan perhitungan estimasi kata.
+  - Memproses bab secara berurutan dalam antrian otomatis lengkap dengan bilah progres real-time (`%`, bab berjalan) serta tombol pembatalan aman kapan saja.
+  - Menampilkan spanduk edukasi *Prompt Caching*: karena *Story Bible*, *Codex Lore*, dan relasi karakter dikirimkan dalam payload yang sama, bab ke-2 dan seterusnya memanfaatkan cache prompt AI (Anthropic/Gemini) yang menghemat biaya token hingga ~90% dan memangkas latensi.
+  - Menyajikan ringkasan statistik temuan (Tinggi, Sedang, Rendah) dan akordeon hasil per bab yang dapat dibuka-tutup mandiri, lengkap dengan tombol `Buka di editor` untuk langsung melompat ke posisi kutipan bermasalah di naskah.
+- **File yang berubah:**
+  - `src/types.ts`
+  - `src/lib/glossary.ts` & `src/lib/glossary.test.ts`
+  - `src/features/consistency/components/GlossaryPanel.tsx`
+  - `src/lib/plotPromises.ts` & `src/lib/plotPromises.test.ts`
+  - `src/features/consistency/components/PlotPromisePanel.tsx`
+  - `src/features/consistency/components/ConsistencyPanel.tsx`
+  - `ROADMAP.md`
+  - `docs/features.md`
+  - `docs/changelog.md`
+
 ### [UI/UX] Perbaikan Tema Gelap & Penataan Pop Up Modal Kalender Dunia
 - **Portal Rendering & Solusi Modal Terpotong**: Membungkus seluruh dialog pop up kalender (`CalendarCalculatorModal.tsx`, `ChronologyAuditModal.tsx`, `CalendarEditorModal.tsx`, `CalendarEventModal.tsx`) menggunakan `createPortal` langsung ke `document.body` dengan layer `z-[9999]`. Menghilangkan batasan stacking context dari `MainView` sehingga modal tidak lagi tertutup atau terpotong oleh header atas aplikasi.
 - **Ketinggian Responsif Modal**: Mengubah batas ketinggian modal menjadi `max-h-[85vh]` dengan pemosisian `my-auto` dan pengguliran internal mandiri (`overflow-y-auto custom-scrollbar`), memberikan margin vertikal yang lega dari batas atas dan bawah layar.

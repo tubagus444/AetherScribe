@@ -511,6 +511,8 @@ export interface GlossaryEntry {
   variants?: string[];
   /** Kategori bebas (mis. "satuan", "pangkat", "kalender") — untuk pengelompokan UI. */
   category?: string;
+  /** Mode pencocokan ketat (case-sensitive) opt-in untuk istilah pendek/huruf-kecil yang rawan false-positive. */
+  strictMatch?: boolean;
   createdAt: number;
   updatedAt: number;
 }

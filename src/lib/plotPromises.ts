@@ -191,3 +191,98 @@ export function analyzePayoffs(analyses: PromiseAnalysis[], options?: PayoffOpti
   result.sort((a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state] || a.codexId - b.codexId);
   return result;
 }
+
+// ── Rekomendasi Kata Kunci (Janji Baru) ────────────────────────────────────────
+
+const KEYWORD_STOP_WORDS = new Set([
+  'Dan', 'Di', 'Ke', 'Dari', 'Yang', 'Untuk', 'Ini', 'Itu', 'Ada', 'Saat',
+  'Bila', 'Jika', 'Setelah', 'Sebelum', 'Pada', 'Dengan', 'Atau', 'Namun',
+  'Tetapi', 'Serta', 'Oleh', 'Karena', 'Sebagai', 'Hingga', 'Sampai', 'Lalu',
+  'Kemudian', 'Akan', 'Telah', 'Sudah', 'Sedang', 'Bisa', 'Dapat', 'Saya', 'Dia',
+  'Mereka', 'Kami', 'Kita', 'Kamu', 'The', 'A', 'An', 'In', 'On', 'At', 'Of', 'And', 'Or'
+]);
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Rekomendasi otomatis kandidat kata kunci dari kata berhuruf kapital
+ * atau entri glosarium saat membuat/mengubah janji plot.
+ * 100% deterministik, nol token.
+ */
+export function extractKeywordCandidates(
+  title: string,
+  description?: string,
+  glossaryEntries?: { term: string }[],
+): string[] {
+  const texts = [title, description].map(t => (t || '').trim()).filter(Boolean);
+  if (!texts.length) return [];
+
+  const candidates: string[] = [];
+  const seenLower = new Set<string>();
+
+  const addCandidate = (cand: string) => {
+    const clean = cand.trim().replace(/^['"“‘(]+|['"”’)]+$/g, '');
+    if (!clean || clean.length < 2) return;
+    const lower = clean.toLowerCase();
+    if (seenLower.has(lower)) return;
+    if (KEYWORD_STOP_WORDS.has(clean) || KEYWORD_STOP_WORDS.has(clean[0].toUpperCase() + clean.slice(1).toLowerCase())) {
+      return;
+    }
+    seenLower.add(lower);
+    candidates.push(clean);
+  };
+
+  // 1) Cek kecocokan istilah glosarium (bisa istilah huruf kecil maupun besar)
+  const combined = texts.join('\n');
+  if (glossaryEntries && glossaryEntries.length > 0) {
+    for (const g of glossaryEntries) {
+      const term = g.term?.trim();
+      if (!term || term.length < 2) continue;
+      try {
+        const re = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'i');
+        if (re.test(combined)) {
+          addCandidate(term);
+        }
+      } catch {
+        // abaikan regex tak valid
+      }
+    }
+  }
+
+  // 2) Ekstraksi frasa berkapital multi-kata per-field (mis. "Belati Berukir", "Lembah Kabut")
+  const multiWordPattern = /\b[A-Z\u00C0-\u024F][\p{L}'’-]*(?:[^\S\r\n]+[A-Z\u00C0-\u024F][\p{L}'’-]*)+\b/gu;
+  for (const text of texts) {
+    const multiMatches = text.match(multiWordPattern) ?? [];
+    for (const m of multiMatches) {
+      let cleanPhrase = m.trim();
+      const words = cleanPhrase.split(/\s+/);
+      while (words.length > 1 && (KEYWORD_STOP_WORDS.has(words[0]) || KEYWORD_STOP_WORDS.has(words[0][0].toUpperCase() + words[0].slice(1).toLowerCase()))) {
+        words.shift();
+      }
+      cleanPhrase = words.join(' ');
+      addCandidate(cleanPhrase);
+
+      // Jika terdiri dari 3 kata atau lebih (mis. "Pemberian Tetua Arya"), tambahkan juga sub-frasa intinya ("Tetua Arya")
+      if (words.length > 2) {
+        addCandidate(words.slice(1).join(' '));
+      }
+    }
+  }
+
+  // 3) Ekstraksi kata berkapital tunggal (mis. "Excalibur", "Arya")
+  const singleWordPattern = /\b[A-Z\u00C0-\u024F][\p{L}'’-]{2,}\b/gu;
+  for (const text of texts) {
+    const singleMatches = text.match(singleWordPattern) ?? [];
+    for (const m of singleMatches) {
+      const lower = m.toLowerCase();
+      const isPartOfMulti = candidates.some(c => c.includes(' ') && c.toLowerCase().includes(lower));
+      if (!isPartOfMulti) {
+        addCandidate(m);
+      }
+    }
+  }
+
+  return candidates.slice(0, 10);
+}
