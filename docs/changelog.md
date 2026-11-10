@@ -4,6 +4,17 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-09
+
+### [Docs] Audit Aplikasi dan Backlog Perbaikan Berdasarkan Prioritas
+
+- Menambahkan [indeks dokumentasi](README.md), [laporan audit 21 bagian](audits/2026-11-09-application-audit.md), dan [register 29 temuan F01–F29](audits/2026-11-09-findings.md).
+- Menyimpan bukti source/baris, severity, metode dan batas verifikasi, rekomendasi, effort, dependensi, risiko perubahan, serta kriteria penerimaan tiap temuan.
+- Menambahkan checklist P1/P2/P3 di [ROADMAP.md](../ROADMAP.md#audit-2026-11-09) sebagai satu-satunya tracker aktif; seluruh temuan masih terbuka.
+- Menjelaskan perbedaan temuan baseline sekarang dengan klaim/keputusan dokumentasi historis tanpa mengubah arsip atau menyatakan keputusan baru sudah diterapkan.
+- Hasil 43 berkas/473 tes, typecheck, build dan probe mock berasal dari sesi audit; penulisan dokumentasi ini tidak menjalankan ulang pengujian aplikasi atau layanan eksternal.
+- **Cakupan perubahan:** hanya dokumentasi dan roadmap; tidak ada perubahan source, schema, fitur, API, atau implementasi mitigasi.
+
 ## 2026-10-09
 
 ### [Fitur] Glosarium strictMatch, Janji Plot Rekomendasi Kata Kunci, & Audit Konsistensi Batch
