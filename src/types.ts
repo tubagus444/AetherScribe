@@ -525,7 +525,8 @@ export interface GlossaryEntry {
 /**
  * Satu gambar peta yang di-upload penulis (dunia/benua/kota/…). Boleh banyak per
  * proyek. `imageBlob` = Blob gambar di IndexedDB (bukan base64 di field) — konversi
- * base64 hanya terjadi di jalur EKSPOR manual (backupService), bukan auto-backup.
+ * base64 digunakan oleh backupService untuk file/Drive/pre-restore penuh;
+ * auto internal v8 menyimpan referensi hash gambar, bukan salinan base64.
  */
 export interface AtlasMap {
   id?: number;

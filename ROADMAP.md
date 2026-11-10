@@ -25,7 +25,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 
 ### P1 — Kerjakan dahulu: data, keamanan, dan fungsi inti
 
-- [ ] **[F03](docs/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas** (High; M).
+- [x] **[F03](docs/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas** (High; M).
+  - Tanggal / commit atau PR: 10 November 2026; commit `fix(backup): lindungi aset Atlas dan validasi restore (F03/F04)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: backup v8 memakai imageMode full/references dan SHA-256; auto internal mempertahankan Blob live yang cocok atau menolak jika aset tak tersedia. Snapshot pre-restore menyimpan gambar lengkap untuk undo. Peta tanpa gambar ditandai eksplisit; format/kebijakan diselaraskan dengan F04.
+  - Reproduksi sebelum perbaikan: tes `restoring an internal backup does not discard an existing Atlas image` gagal pada source `270b5f2` (imageBlob undefined).
+  - Verifikasi sesudah perbaikan: tes internal/full/pre-restore, undo gambar setelah map diganti, legacy, hash mismatch, dan aset hilang/diganti lulus. Batch F03/F04: 49 tes baru; `npx vitest run` — 48 berkas/534 tes lulus; `npm run lint` dan `npm run build` lulus.
+  - Dokumentasi modul: `docs/backup-format.md`, `docs/features.md`, `docs/database.md`, `docs/decisions.md`, `docs/changelog.md`, indeks docs dan aturan backup/Atlas.
+  - Batas verifikasi / risiko tersisa: IndexedDB sintetis, belum browser/Drive nyata. Auto internal membutuhkan aset live dan bukan backup gambar mandiri. Legacy tanpa hash mempertahankan identitas/dimensi cocok, tidak membuktikan versi gambar historis. F19 tetap terbuka.
 - [x] **[F05](docs/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal** (High; S–M).
   - Tanggal / commit atau PR: 10 November 2026; commit `fix(editor): hentikan replace dan reload saat save gagal (F05)` (commit yang menambahkan bukti ini).
   - Perubahan inti: flush reject pada error/update nol baris; status gagal tetap terlihat; draft dapat dicoba simpan ulang; replace/reload dibatalkan. Handler versionchange menahan auto-close Dexie sampai flush berhasil. Rejection pemanggil lifecycle/autosave ditangani.
@@ -36,7 +42,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 - [ ] **[F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas** (High; S).
 - [ ] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
 - [ ] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).
-- [ ] **[F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai** (High; M).
+- [x] **[F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai** (High; M).
+  - Tanggal / commit atau PR: 10 November 2026; commit `fix(backup): lindungi aset Atlas dan validasi restore (F03/F04)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: schema/limit terpusat untuk UI/core/internal/Drive, scope restore-all vs import-project, versi 3–8, struktur record/metadata, ID/kunci unik/FK lintas-proyek, raster data URL tanpa jaringan, batas file/dekompresi/record. Legacy dinormalisasi sesudah checksum. Snapshot pengaman lengkap wajib berhasil sebelum mutasi; error ditampilkan ke pengguna.
+  - Reproduksi sebelum perbaikan: enam tes gagal pada source `270b5f2` — scope project, future version, malformed project, content salah tipe, FK tidak valid, dan kegagalan snapshot tetap diterima/dilanjutkan.
+  - Verifikasi sesudah perbaikan: penolakan tanpa clear/snapshot untuk input invalid, fixture legacy v3–v7, impor non-destruktif dengan gambar, rollback insert gagal, kegagalan snapshot, batas stream/gzip/gambar, dan jalur Drive fetch mock lulus. `npx vitest run` — 48 berkas/534 tes lulus; `npm run lint` dan `npm run build` lulus (peringatan bundle/ActionsPanel/ONNX/Browserslist tetap ada).
+  - Dokumentasi modul: sama dengan F03; detail kontrak dan batas ada di `docs/backup-format.md`.
+  - Batas verifikasi / risiko tersisa: belum browser native/Drive nyata atau file legacy pengguna. Record/referensi workspace yang sudah tidak valid dapat menghalangi snapshot pengaman; restore dibatalkan. F10/F11/F19 dan harness/CI penuh F24 tetap terbuka.
 - [ ] **[F06](docs/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu** (Medium; S).
 - [ ] **[F07](docs/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada** (Medium; S).
 

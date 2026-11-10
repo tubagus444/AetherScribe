@@ -98,8 +98,8 @@ export function useDriveSync() {
       if (err instanceof Error && err.message === 'TOKEN_EXPIRED') {
         handleExpiredSession();
         toast.error('Sesi Google Anda telah berakhir. Harap login ulang untuk memulihkan.');
-      } else if (err instanceof Error && err.message.includes('integritas')) {
-        toast.error(err.message); // Verifikasi integritas gagal (#5)
+      } else if (err instanceof Error) {
+        toast.error(err.message);
       } else {
         toast.error('Gagal memulihkan dari Google Drive. Pastikan file cadangan valid.');
       }

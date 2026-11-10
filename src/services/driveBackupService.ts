@@ -2,6 +2,7 @@ import { getAccessToken } from './googleAuth';
 import { db } from '../db';
 import { backupService } from './backupService';
 import { selectBackupsToDelete } from '../lib/backupRetention';
+import { readBackupResponse } from '@/src/lib/backupIO';
 
 const DRIVE_API_URL = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD_API_URL = 'https://www.googleapis.com/upload/drive/v3/files';
@@ -204,20 +205,7 @@ export async function restoreFromDrive(fileId: string): Promise<void> {
     throw new Error(`Gagal mengunduh cadangan Drive: ${res.status}`);
   }
 
-  const buffer = await res.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  const isGzip = bytes.length > 1 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-
-  let content: string;
-  if (isGzip && typeof DecompressionStream !== 'undefined') {
-    // @ts-ignore
-    const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-    content = await new Response(ds).text();
-  } else {
-    content = new TextDecoder().decode(bytes);
-  }
-
-  const parsed = JSON.parse(content);
+  const parsed = await readBackupResponse(res);
   await backupService.restoreData(parsed);
 }
 

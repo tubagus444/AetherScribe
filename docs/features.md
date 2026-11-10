@@ -153,7 +153,7 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 - **File terkait:** `src/features/atlas/components/AtlasPanel.tsx`, `src/features/atlas/components/MapCanvas.tsx`, `src/lib/mapGeometry.ts`, `src/lib/atlasAnalytics.ts`, `src/lib/atlasHierarchy.ts`
 - **Tabel DB:** `maps`, `mapMarkers`
 - **Endpoint:** Tidak ada (lokal)
-- **Catatan:** Menggunakan Leaflet murni (bukan wrapper React). Koordinat disimpan dalam rasio relatif 0–1. Gambar peta ikut backup penuh manual namun dikeluarkan dari auto-backup internal demi menekan bengkak IndexedDB.
+- **Catatan:** Menggunakan Leaflet murni (bukan wrapper React). Koordinat disimpan dalam rasio relatif 0–1. File/Drive/ekspor novel dan snapshot pra-restore menyertakan gambar lengkap. Auto internal v8 menyimpan referensi SHA-256 untuk mencocokkan gambar live, bukan menghapus Blob saat restore; referensi yang tidak tersedia membatalkan pemulihan. Kebijakan legacy dan batasnya dijelaskan di [format backup](backup-format.md).
 
 ---
 
@@ -270,10 +270,10 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ## Pencadangan Otomatis & Google Drive Sync
 - **Status:** Selesai
 - **Deskripsi:** Sistem cadangan berkala ke file terkompresi gzip, retensi kuota otomatis, dan integrasi opsional ke folder Google Drive pribadi via GIS token.
-- **File terkait:** `src/services/backupService.ts`, `src/services/driveBackupService.ts`, `src/lib/backupRetention.ts`, `src/hooks/useAutoBackup.tsx`
+- **File terkait:** `src/services/backupService.ts`, `src/services/driveBackupService.ts`, `src/lib/backupValidation.ts`, `src/lib/backupIO.ts`, `src/lib/backupLimits.ts`, `src/lib/backupRetention.ts`, `src/hooks/useAutoBackup.tsx`
 - **Tabel DB:** `backups`
 - **Endpoint:** Tidak ada (langsung ke IndexedDB & Google Drive API)
-- **Catatan:** Pemulihan backup memvalidasi versi minimal (≥v3), tipe array, dan verifikasi checksum SHA-256 sebelum data diterapkan.
+- **Catatan:** Format keluaran v8; legacy v3–v7 diterima melalui normalisasi eksplisit. Service membedakan restore seluruh workspace dengan impor novel baru, memeriksa schema/ID/FK/checksum, membatasi file/dekompresi/record, dan hanya menerima data URL raster yang diizinkan. Kegagalan snapshot pengaman membatalkan restore; transaksi restore tetap atomik. UI menampilkan pesan penolakan dari service. Kontrak lengkap, keterbatasan auto internal, dan cakupan tes terdapat pada [format backup](backup-format.md).
 
 ---
 

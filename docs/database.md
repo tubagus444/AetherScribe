@@ -327,6 +327,7 @@
 
 ### maps
 - **Fungsi tabel:** Koleksi gambar peta dunia yang diunggah penulis untuk kanvas Atlas.
+- **Backup F03/F04:** Skema tabel tetap v33. `imageDataUrl`, `imageAssetId`, dan `imageMissing` hanya milik representasi backup v8, dilepas sebelum insert. Auto internal mencocokkan hash gambar live; snapshot pra-restore menyimpan gambar penuh. Restore tidak clear workspace bila aset yang dibutuhkan atau snapshot pengaman gagal. Lihat [format backup](backup-format.md) untuk kompatibilitas legacy, validasi relasi, dan batas input.
 - **Kolom:**
   - `id` | `number` | Ya (auto-increment) | auto | Primary key (`++id`)
   - `projectId` | `number` | Tidak | - | FK ke `projects.id`

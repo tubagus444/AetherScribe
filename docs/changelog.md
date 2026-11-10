@@ -6,6 +6,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-10
 
+### [Fix] F03/F04 — Restore Atlas dan Validasi Backup
+
+- Format backup v8 menandai gambar lengkap/referensi secara eksplisit. Auto internal tetap ramping melalui SHA-256 dan mempertahankan Blob live yang cocok; aset tidak tersedia membuat restore dibatalkan. File/Drive/ekspor/pre-restore menyimpan gambar lengkap; gambar yang memang sudah hilang ditandai eksplisit.
+- Semua jalur restore/impor memakai schema terpusat: scope, versi 3–8, record/metadata, ID/kunci unik, dan FK termasuk batas proyek. Legacy v3–v7 dinormalisasi setelah verifikasi checksum data asli. Scope project tidak dapat mengganti seluruh workspace.
+- Batas file/unduhan 64 MiB, JSON dekompresi 128 MiB, string 16 MiB, gambar 5 MiB, record 100.000/tabel dan 200.000 total. Dekompresi/unduhan dihitung per chunk. Decoder hanya menerima data URL PNG/JPEG/WebP/GIF dan tidak melakukan fetch gambar.
+- Snapshot pra-restore wajib lengkap dan berhasil sebelum clear; kegagalan ditampilkan di UI dan membatalkan restore. Transaksi clear/refill tetap atomik. Skema DB tetap v33; tidak menambah dependensi.
+- Menambahkan 49 tes pada service backup dan Drive mock. Tujuh reproduksi regresi gagal pada source `270b5f2` sebelum perbaikan. Verifikasi akhir: 48 berkas/534 tes lulus; typecheck dan build lulus. Peringatan build tetap terkait bundle besar, import ActionsPanel, eval ONNX, dan Browserslist lama.
+- Memperbarui katalog fitur, dokumentasi DB, keputusan arsitektur, aturan modul, dan [format backup](backup-format.md). Batas: DB browser native/Drive nyata belum diuji; fixture legacy sintetis; legacy tanpa hash tidak dapat membuktikan versi gambar lama. Konsistensi snapshot bersamaan F19 dan round-trip F10 tetap terbuka.
+
 ### [Fix] F05 — Flush editor meneruskan kegagalan simpan
 
 - Save konten hanya dianggap berhasil bila update memengaruhi tepat satu bab; error DB, ID invalid, dan update nol baris membuat flush reject serta menampilkan `Gagal menyimpan`. Konten kosong tetap dapat disimpan.

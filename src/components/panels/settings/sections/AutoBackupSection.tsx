@@ -84,7 +84,7 @@ export function AutoBackupSection() {
       setTimeout(() => window.location.reload(), 1200);
     } catch (err) {
       console.error('Internal restore failed:', err);
-      const msg = err instanceof Error && err.message.includes('integritas')
+      const msg = err instanceof Error
         ? err.message
         : 'Gagal memulihkan dari cadangan internal.';
       toast.error(msg);
@@ -125,6 +125,7 @@ export function AutoBackupSection() {
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
               Penyimpanan bergulir yang hening di dalam penyimpanan peramban Anda. Menyimpan riwayat berjenjang (terbaru, harian, mingguan) secara otomatis.
+              {' '}Pemulihan gambar peta membutuhkan gambar yang masih tersedia di perangkat ini. Gunakan file atau Drive untuk cadangan gambar lengkap.
             </p>
           </div>
           <button

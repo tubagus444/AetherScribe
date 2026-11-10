@@ -1,3 +1,4 @@
+import { validateBackup } from './backupValidation';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -256,26 +257,6 @@ export function summarizeProjectBackup(data: ProjectBackupData): ProjectBackupCo
  * ekspor SATU novel. (Jalur impor kebalikan dari restore-penuh: hanya menerima
  * scope:'project'.) Checksum diverifikasi terpisah di service memakai computeChecksum.
  */
-export function validateProjectBackup(backup: any): void {
-  if (!backup || typeof backup !== 'object') {
-    throw new Error('Format file tidak valid.');
-  }
-  if (typeof backup.version !== 'number') {
-    throw new Error('Format cadangan tidak valid atau versi terlalu usang (tidak dikenali).');
-  }
-  if (backup.version < 3) {
-    throw new Error(`Cadangan versi ${backup.version} terlalu usang dan tidak kompatibel dengan aplikasi versi saat ini.`);
-  }
-  if (backup.scope !== 'project') {
-    throw new Error(
-      'Ini bukan file ekspor per-novel. Untuk memulihkan cadangan penuh semua proyek, gunakan “Kembalikan dari JSON”.',
-    );
-  }
-  const data = backup.data;
-  if (!data || !Array.isArray(data.projects) || !Array.isArray(data.chapters) || !Array.isArray(data.codex)) {
-    throw new Error('Format cadangan tidak valid: tabel inti (proyek/bab/codex) tidak ditemukan atau korup.');
-  }
-  if (data.projects.length !== 1) {
-    throw new Error(`File ini bukan ekspor satu novel (berisi ${data.projects.length} proyek).`);
-  }
+export function validateProjectBackup(backup: unknown): void {
+  validateBackup(backup, 'project');
 }

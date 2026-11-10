@@ -8,10 +8,11 @@ import { BackupRecord } from '@/src/types';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
 import { assembleBackupJson } from '@/src/lib/backupEnvelope';
 import { blobToDataUrl, dataUrlToBlob } from '@/src/lib/blobCodec';
+import { validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation';
+import { decodeBackupText } from '@/src/lib/backupIO';
 import {
   remapProjectDependents,
   summarizeProjectBackup,
-  validateProjectBackup,
   importedProjectName,
   type ProjectBackupData,
   type ProjectBackupCounts,
@@ -32,6 +33,8 @@ export interface BackupData {
   scope?: 'all' | 'project';
   // Nama proyek sumber saat scope='project' (untuk nama file & label impor nanti).
   projectName?: string;
+  /** v8: auto internal berisi referensi hash; file/Drive/pre-restore lengkap. */
+  imageMode?: 'full' | 'references';
   data: {
     projects: any[];
     chapters: any[];
@@ -46,8 +49,8 @@ export interface BackupData {
     plotPromises?: any[];
     glossary?: any[];
     // Atlas Dunia (v7). `maps[].imageBlob` diganti `imageDataUrl` (base64) karena Blob
-    // tak selamat lewat JSON. Sengaja DIKELUARKAN dari rolling auto-backup internal
-    // (saveToInternalDB) demi menekan bengkak 5× — lengkap hanya di file/Drive/ekspor.
+    // tak selamat lewat JSON. v8 internal auto memakai imageAssetId (SHA-256).
+    // Snapshot pre-restore selalu menyertakan gambar lengkap.
     maps?: any[];
     mapMarkers?: any[];
     continuityTriage?: any[];
@@ -76,17 +79,49 @@ export const backupService = {
   /** Ganti `imageBlob` (Blob) → `imageDataUrl` (base64) agar aman di JSON. */
   async serializeMaps(maps: any[]): Promise<any[]> {
     return Promise.all(maps.map(async (m) => {
-      const { imageBlob, ...rest } = m;
-      return { ...rest, imageDataUrl: imageBlob instanceof Blob ? await blobToDataUrl(imageBlob) : undefined };
+      const { imageBlob, imageDataUrl: _url, imageAssetId: _id, imageMissing: _missing, ...rest } = m;
+      if (!(imageBlob instanceof Blob)) return { ...rest, imageMissing: true };
+      const imageDataUrl = await blobToDataUrl(imageBlob);
+      const imageAssetId = await this.computeChecksum(imageDataUrl);
+      if (!imageAssetId) throw new Error('Tidak dapat menghitung identitas gambar cadangan. Gunakan browser dengan Web Crypto.');
+      return { ...rest, imageDataUrl, imageAssetId };
     }));
   },
 
   /** Kebalikan `serializeMaps`: `imageDataUrl` → `imageBlob` (Blob). Async → panggil
-   *  di LUAR transaksi Dexie (fetch data URL tak boleh menggantung transaksi). */
-  async deserializeMaps(maps: any[] | undefined): Promise<any[]> {
+   *  di LUAR transaksi Dexie; Blob/aset disiapkan sebelum clear. */
+  async deserializeMaps(maps: any[] | undefined, allowReferences = false): Promise<any[]> {
+    const needsLive = allowReferences && (maps ?? []).some(m => !m.imageDataUrl && !m.imageMissing);
+    const liveMaps = needsLive ? await db.maps.toArray() : [];
+    const assets = new Map<string, Blob>();
+    const needed = new Set<string>((maps ?? []).filter(m => m.imageAssetId && !m.imageDataUrl && !m.imageMissing).map(m => m.imageAssetId));
+    // Jangan menahan salinan base64 seluruh gambar live sekaligus hanya untuk
+    // resolusi referensi. Hash satu per satu, berhenti setelah semua aset ditemukan.
+    for (const live of liveMaps) {
+      if (!needed.size) break;
+      if (!(live.imageBlob instanceof Blob)) continue;
+      const hash = await this.computeChecksum(await blobToDataUrl(live.imageBlob));
+      if (hash && needed.has(hash)) { assets.set(hash, live.imageBlob); needed.delete(hash); }
+    }
     return Promise.all((maps ?? []).map(async (m) => {
-      const { imageDataUrl, ...rest } = m;
-      return { ...rest, imageBlob: imageDataUrl ? await dataUrlToBlob(imageDataUrl) : undefined };
+      const { imageDataUrl, imageAssetId, imageMissing, ...rest } = m;
+      let imageBlob: Blob | undefined;
+      if (imageDataUrl) {
+        imageBlob = await dataUrlToBlob(imageDataUrl);
+        if (imageAssetId && await this.computeChecksum(imageDataUrl) !== imageAssetId) {
+          throw new Error('Identitas gambar cadangan tidak cocok. Pemulihan dibatalkan.');
+        }
+      } else if (!imageMissing) {
+        if (allowReferences && imageAssetId) imageBlob = assets.get(imageAssetId);
+        // Legacy v7 internal tidak menyimpan hash. Pertahankan hanya peta dengan
+        // identitas & dimensi yang sama; versi gambar historis tidak dapat dibuktikan.
+        if (allowReferences && !imageAssetId) {
+          imageBlob = liveMaps.find(live => live.id === m.id && live.projectId === m.projectId &&
+            live.createdAt === m.createdAt && live.width === m.width && live.height === m.height)?.imageBlob;
+        }
+        if (!(imageBlob instanceof Blob)) throw new Error(`Gambar peta “${m.name}” tidak tersedia. Gunakan cadangan lengkap dari file/Drive.`);
+      }
+      return { ...rest, imageBlob };
     }));
   },
   /**
@@ -113,8 +148,10 @@ export const backupService = {
       continuityTriage: await db.continuityTriage.toArray()
     };
     return {
-      version: 7, // v7: maps/mapMarkers (v6: glossary; v5: plotPromises; v4: checksum; v3: codexCategories)
+      version: 8, // v8: kebijakan aset eksplisit; v7: maps/mapMarkers
       timestamp: Date.now(),
+      scope: 'all',
+      imageMode: 'full',
       checksum: await this.computeChecksum(JSON.stringify(data)),
       data
     };
@@ -156,9 +193,10 @@ export const backupService = {
       mapMarkers: await db.mapMarkers.where('projectId').equals(projectId).toArray()
     };
     return {
-      version: 7,
+      version: 8,
       timestamp: Date.now(),
       scope: 'project',
+      imageMode: 'full',
       projectName: project.name,
       checksum: await this.computeChecksum(JSON.stringify(data)),
       data
@@ -188,12 +226,22 @@ export const backupService = {
    * didukung/gagal, simpan JSON string mentah (tetap dapat dipulihkan).
    */
   async saveToInternalDB(data: BackupData, kind: 'auto' | 'pre-restore' = 'auto'): Promise<void> {
-    // Rolling auto-backup menyimpan hingga ~5 salinan → BUANG gambar peta (base64)
-    // agar tak membengkak berlipat di IndexedDB. Penanda tetap ikut; gambar dipulihkan
-    // dari file/Drive/ekspor per-novel.
+    validateBackup(data, data.scope ?? 'all');
+    if (kind === 'pre-restore' && data.imageMode === 'references') {
+      throw new Error('Cadangan pengaman harus menyertakan gambar lengkap.');
+    }
+    // Hanya rolling AUTO yang ramping. Pre-restore harus mampu memulihkan gambar
+    // walaupun live maps sudah diganti oleh restore berikutnya.
     let leanData = data.data;
-    if (data.data?.maps?.length) {
-      const leanMaps = data.data.maps.map((m: any) => { const { imageDataUrl, ...rest } = m; return rest; });
+    if (kind === 'auto' && data.data?.maps?.length) {
+      const leanMaps = await Promise.all(data.data.maps.map(async (m: any) => {
+        const { imageDataUrl, ...rest } = m;
+        if (imageDataUrl && !rest.imageAssetId) {
+          rest.imageAssetId = await this.computeChecksum(imageDataUrl);
+          if (!rest.imageAssetId) throw new Error('Gagal menghitung identitas gambar cadangan.');
+        }
+        return rest;
+      }));
       leanData = { ...data.data, maps: leanMaps };
     }
 
@@ -206,6 +254,7 @@ export const backupService = {
     const meta: Record<string, unknown> = { version: data.version, timestamp: data.timestamp };
     if (data.scope) meta.scope = data.scope;
     if (data.projectName) meta.projectName = data.projectName;
+    if (data.version >= 8) meta.imageMode = kind === 'auto' ? 'references' : 'full';
     if (checksum) meta.checksum = checksum;
     const jsonString = assembleBackupJson(meta, dataString);
     const { blob, compressed } = await this.compressData(jsonString);
@@ -293,16 +342,7 @@ export const backupService = {
    */
   async decodeInternalBackup(backup: BackupRecord): Promise<string> {
     const d = backup.data;
-    if (typeof d === 'string') return d; // cadangan lama: JSON mentah
-    const bytes = d instanceof Uint8Array ? d : new Uint8Array(d as ArrayBuffer);
-    const isGzip = bytes.length > 1 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-    if (isGzip && typeof DecompressionStream !== 'undefined') {
-      // @ts-ignore
-      const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-      return await new Response(ds).text();
-    }
-    // Bukan gzip (kompresi sempat fallback) → bytes adalah UTF-8 JSON mentah.
-    return new TextDecoder().decode(bytes);
+    return decodeBackupText(typeof d === 'string' ? d : d instanceof Uint8Array ? d : new Uint8Array(d as ArrayBuffer));
   },
 
   /**
@@ -380,53 +420,40 @@ export const backupService = {
   },
 
   /**
-   * Sumber kebenaran tunggal untuk SEMUA jalur restore (internal DB & file).
-   * Semua tabel di-clear lalu diisi ulang dalam satu transaksi (atomik: rollback
-   * bila gagal). `embeddings` & `sceneEmbeddings` sengaja di-clear—bukan dipulihkan—agar
-   * di-regenerasi ulang dari codex/naskah (mencegah indeks basi/tak sinkron setelah restore).
-   * Backward-compatible: backup lama tanpa `chatSessions` tetap aman (guard `?.length`).
+   * Schema dan checksum berlaku di boundary semua jalur restore/impor.
+   * Salinan input tetap membawa data/checksum asli; normalisasi legacy dilakukan
+   * setelah verifikasi, hanya pada data yang akan ditulis.
    */
-  async restoreData(parsedData: BackupData): Promise<void> {
-    if (!parsedData || typeof parsedData.version !== 'number') {
-      throw new Error('Format cadangan tidak valid atau versi terlalu usang (tidak dikenali).');
+  async validateInput(input: unknown, scope: 'all' | 'project'): Promise<BackupData> {
+    validateBackup(input, scope);
+    // Salin sebelum await agar caller tidak mengubah record setelah validasi.
+    const backup = JSON.parse(JSON.stringify(input)) as BackupData;
+    if (backup.checksum) {
+      const actual = await this.computeChecksum(JSON.stringify(backup.data));
+      if (!actual || actual !== backup.checksum) throw new Error('Verifikasi integritas gagal: cadangan rusak atau checksum tidak dapat diverifikasi.');
     }
-    // Tolak backup yang terlalu tua (mis. sebelum v3) karena skema Dexie mungkin
-    // sangat tidak kompatibel dan memicu error runtime (tabel wajib hilang).
-    if (parsedData.version < 3) {
-      throw new Error(`Cadangan versi ${parsedData.version} terlalu usang dan tidak kompatibel dengan aplikasi versi saat ini.`);
-    }
+    return backup;
+  },
 
-    const data = parsedData.data;
-    if (!data || !Array.isArray(data.projects) || !Array.isArray(data.chapters) || !Array.isArray(data.codex)) {
-      throw new Error('Format cadangan tidak valid: tabel inti (proyek/bab/codex) tidak ditemukan atau korup.');
-    }
-
-    // Verifikasi integritas (#5): bila cadangan menyertakan checksum, cocokkan sebelum
-    // menyentuh DB. Menangkap file terpotong/rusak lebih dini — TIDAK menimpa & tidak
-    // membuang jaring undo. Cadangan lama tanpa checksum dilewati (backward-compatible);
-    // bila crypto tak tersedia (`actual` undefined) verifikasi juga dilewati, bukan gagal.
-    if (parsedData.checksum) {
-      const actual = await this.computeChecksum(JSON.stringify(data));
-      if (actual && actual !== parsedData.checksum) {
-        throw new Error('Verifikasi integritas gagal: cadangan tampak rusak atau tidak lengkap.');
-      }
-    }
+  /** Restore-penuh: validasi → resolusi gambar → snapshot pengaman lengkap →
+   * clear/refill atomik. Cache embedding dibuang untuk regenerasi. */
+  async restoreData(input: unknown): Promise<void> {
+    const parsedData = await this.validateInput(input, 'all');
+    const data = normalizeLegacyData(parsedData.data) as BackupData['data'];
+    // Dekode/resolusi aset sebelum snapshot atau mutasi database.
+    const mapRows = await this.deserializeMaps(data.maps, true);
 
     // Jaring undo (#2): potret state saat ini ke tabel `backups` (tak ikut di-clear
     // oleh transaksi restore) SEBELUM menimpa. Melindungi SEMUA jalur restore
     // (internal / file JSON / Drive) dari cadangan yang valid-sintaks tapi lossy.
-    // Best-effort: kegagalan (mis. kuota) tak boleh membatalkan restore yang
-    // diminta pengguna — cukup diperingatkan di konsol.
+    // Fail-closed: jangan mengganti workspace tanpa snapshot lengkap.
     try {
       const current = await this.collectAllData();
+      validateBackup(current, 'all');
       await this.saveToInternalDB(current, 'pre-restore');
     } catch (err) {
-      console.warn('Gagal membuat snapshot pra-pemulihan; melanjutkan restore tanpa jaring undo.', err);
+      throw new Error('Pemulihan dibatalkan: gagal membuat cadangan pengaman pra-pemulihan. Data workspace belum diganti.', { cause: err });
     }
-
-    // Dekode gambar peta (data URL → Blob) di LUAR transaksi (fetch async tak boleh
-    // menggantung transaksi Dexie). Backup ramping (rolling internal) → imageBlob undefined.
-    const mapRows = await this.deserializeMaps(data.maps);
 
     await db.transaction('rw',
       [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.embeddings, db.sceneEmbeddings, db.codexCategories, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage],
@@ -506,21 +533,13 @@ export const backupService = {
    * Pemanggil bertanggung jawab menyegarkan konteks (invalidateContextCache) & berpindah
    * ke proyek baru — service ini sengaja bebas dependensi pada worker/konteks.
    */
-  async importProjectData(backup: BackupData): Promise<{ projectId: number; counts: ProjectBackupCounts }> {
-    validateProjectBackup(backup);
+  async importProjectData(input: unknown): Promise<{ projectId: number; counts: ProjectBackupCounts }> {
+    const backup = await this.validateInput(input, 'project');
 
-    // Verifikasi integritas (#5), pola sama dgn restoreData — sebelum menyentuh DB.
-    if (backup.checksum) {
-      const actual = await this.computeChecksum(JSON.stringify(backup.data));
-      if (actual && actual !== backup.checksum) {
-        throw new Error('Verifikasi integritas gagal: cadangan tampak rusak atau tidak lengkap.');
-      }
-    }
-
-    const data = backup.data as unknown as ProjectBackupData;
+    const data = normalizeLegacyData(backup.data) as unknown as ProjectBackupData;
     const counts = summarizeProjectBackup(data);
 
-    // Dekode gambar peta di LUAR transaksi (fetch async); id lama dipertahankan untuk
+    // Dekode gambar peta di LUAR transaksi; id lama dipertahankan untuk
     // membangun mapIdMap saat insert.
     const decodedMaps = await this.deserializeMaps(data.maps);
 

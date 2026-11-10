@@ -3,11 +3,12 @@ import { Upload, Download, Database, FileArchive, FolderInput } from 'lucide-rea
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/src/db';
 import { backupService, BackupData } from '@/src/services/backupService';
-import { validateProjectBackup, summarizeProjectBackup, importedProjectName, type ProjectBackupCounts } from '@/src/lib/importRemap';
+import { summarizeProjectBackup, importedProjectName, type ProjectBackupCounts } from '@/src/lib/importRemap';
 import { invalidateContextCache } from '@/src/services/contextEngine';
 import { useProject } from '@/src/contexts/ProjectContext';
 import { useToast } from '@/src/hooks/useToast';
 import { ConfirmDialog } from '@/src/components/common/ConfirmDialog';
+import { readBackupFile } from '@/src/lib/backupIO';
 
 export function ManualBackupSection() {
   const { toast } = useToast();
@@ -33,23 +34,6 @@ export function ManualBackupSection() {
   };
   const resetImportInput = () => {
     if (importInputRef.current) importInputRef.current.value = '';
-  };
-
-  // Baca file cadangan → objek JSON. Deteksi gzip via magic bytes (0x1f 0x8b), bukan
-  // ekstensi (BK4). Dipakai bersama oleh jalur restore-penuh & impor per-novel.
-  const readBackupFile = async (file: File): Promise<any> => {
-    const buffer = await file.arrayBuffer();
-    const head = new Uint8Array(buffer.slice(0, 2));
-    const isGzip = head[0] === 0x1f && head[1] === 0x8b;
-    let content = '';
-    if (isGzip) {
-      // @ts-ignore
-      const ds = new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'));
-      content = await new Response(ds).text();
-    } else {
-      content = new TextDecoder().decode(buffer);
-    }
-    return JSON.parse(content);
   };
 
   const handleBackup = async () => {
@@ -113,7 +97,7 @@ export function ManualBackupSection() {
     if (!file) return;
 
     try {
-      const backup = await readBackupFile(file);
+      const backup = await readBackupFile(file) as BackupData;
 
       if (!backup.data || !backup.data.projects) {
         throw new Error("Format file cadangan tidak valid");
@@ -131,10 +115,11 @@ export function ManualBackupSection() {
         return;
       }
 
+      await backupService.validateInput(backup, 'all');
       setPendingRestore(backup);
     } catch (error) {
       console.error('Failed to read backup:', error);
-      toast.error('Gagal membaca file cadangan. Pastikan ini file JSON (atau .json.gz) yang valid.');
+      toast.error(error instanceof Error ? error.message : 'Gagal membaca file cadangan.');
       resetFileInput();
     }
   };
@@ -153,14 +138,14 @@ export function ManualBackupSection() {
       backup = await readBackupFile(file);
     } catch (error) {
       console.error('Failed to read import file:', error);
-      toast.error('Gagal membaca file. Pastikan file .json atau .json.gz yang valid.');
+      toast.error(error instanceof Error ? error.message : 'Gagal membaca file cadangan.');
       resetImportInput();
       return;
     }
 
     try {
       // Fail-closed: hanya menerima file ekspor SATU novel (scope:'project').
-      validateProjectBackup(backup);
+      await backupService.validateInput(backup, 'project');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'File impor tidak valid.');
       resetImportInput();
@@ -185,7 +170,7 @@ export function ManualBackupSection() {
       toast.success(`Novel “${name}” berhasil diimpor sebagai proyek baru.`);
     } catch (error) {
       console.error('Failed to import project:', error);
-      const msg = error instanceof Error && error.message.includes('integritas')
+      const msg = error instanceof Error
         ? error.message
         : 'Gagal mengimpor novel. Pastikan ini file ekspor per-novel yang valid.';
       toast.error(msg);
@@ -220,8 +205,8 @@ export function ManualBackupSection() {
       setTimeout(() => window.location.reload(), 1200);
     } catch (error) {
       console.error('Failed to restore backup:', error);
-      // Surfacing pesan spesifik kegagalan verifikasi integritas (#5); selain itu pesan generik.
-      const msg = error instanceof Error && error.message.includes('integritas')
+      // Tampilkan alasan penolakan schema/aset atau kegagalan snapshot pengaman.
+      const msg = error instanceof Error
         ? error.message
         : 'Gagal memulihkan dari file cadangan.';
       toast.error(msg);
