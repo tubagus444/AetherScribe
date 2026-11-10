@@ -277,7 +277,12 @@ db.on('versionchange', () => {
       window.location.reload();
     }
   };
-  flushActiveEditor().catch(() => {}).finally(closeAndReload);
+  void flushActiveEditor().then(closeAndReload, () => {
+    notifyDbIssue('error', 'Draft belum tersimpan. Muat ulang dibatalkan. Tetap di tab ini dan coba simpan ulang sebelum menutupnya.');
+  });
+  // Dexie menutup koneksi otomatis kecuali subscriber mengembalikan false.
+  // Pertahankan koneksi sampai flush berhasil, termasuk saat save gagal.
+  return false;
 });
 
 // Upgrade di koneksi ini terblokir oleh koneksi lama yang belum menutup (tab lain).

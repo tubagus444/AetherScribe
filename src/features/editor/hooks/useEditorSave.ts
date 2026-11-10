@@ -18,53 +18,72 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   const chapterIdRef = useRef(chapterId);
   const isMountedRef = useRef(true);
   const htmlRef = useRef(editor?.getHTML() || "");
+  const saveFailedRef = useRef(false);
+  const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const performSave = useCallback((id: number, content: string) => {
-    if (!id || id <= 0) return Promise.resolve();
-    if (!isMountedRef.current) {
-      // Just do the update without state changes if unmounted
-      return db.chapters.update(id, { content, lastModified: Date.now() });
-    }
+  const clearStatusTimeout = useCallback(() => {
+    if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+    statusTimeoutRef.current = null;
+  }, []);
 
-    setSaveStatus('Menyimpan...');
-    return db.chapters.update(id, { content, lastModified: Date.now() }).then(() => {
+  const performSave = useCallback(async (id: number, content: string): Promise<void> => {
+    clearStatusTimeout();
+    if (isMountedRef.current) setSaveStatus('Menyimpan...');
+    try {
+      if (!Number.isInteger(id) || id <= 0) throw new Error('Bab tidak valid.');
+      const affected = await db.chapters.update(id, { content, lastModified: Date.now() });
+      if (affected !== 1) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
+      saveFailedRef.current = false;
       if (isMountedRef.current) {
         setSaveStatus('Tersimpan');
-        setTimeout(() => {
+        statusTimeoutRef.current = setTimeout(() => {
+          statusTimeoutRef.current = null;
           if (isMountedRef.current) setSaveStatus('');
         }, 2000);
       }
-    }).catch(err => {
+    } catch (err) {
+      saveFailedRef.current = true;
+      clearStatusTimeout();
       console.error('Failed to save chapter:', err);
       if (isMountedRef.current) setSaveStatus('Gagal menyimpan');
-    });
-  }, [setSaveStatus]);
+      // Caller yang mengubah DB/reload harus berhenti; draft editor tetap utuh.
+      throw err;
+    }
+  }, [setSaveStatus, clearStatusTimeout]);
+
+  // Autosave/lifecycle tidak punya pemanggil yang menunggu Promise. Error sudah
+  // ditampilkan performSave; tangani rejection tanpa mengubah kontrak flush.
+  const saveInBackground = useCallback((id: number, content: string) => {
+    void performSave(id, content).catch(() => {});
+  }, [performSave]);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      clearStatusTimeout();
       // Final cleanup on unmount
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
         const html = htmlRef.current;
-        if (html && chapterIdRef.current) {
-          performSave(chapterIdRef.current, html);
+        if (chapterIdRef.current) {
+          saveInBackground(chapterIdRef.current, html);
         }
       }
     };
-  }, [editor, performSave]);
+  }, [editor, saveInBackground, clearStatusTimeout]);
 
   useEffect(() => {
     if (chapterIdRef.current !== chapterId) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
-        performSave(chapterIdRef.current, htmlRef.current);
+        saveInBackground(chapterIdRef.current, htmlRef.current);
         saveTimeoutRef.current = null;
       }
       chapterIdRef.current = chapterId;
     }
-  }, [chapterId, performSave]);
+  }, [chapterId, saveInBackground]);
 
   // Flush segera: batalkan timer debounce lalu simpan konten editor TERKINI ke DB.
   // Dipakai sebelum operasi lintas-bab (mis. Find & Replace global) agar edit yang
@@ -76,7 +95,6 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
       saveTimeoutRef.current = null;
     }
     const id = chapterIdRef.current;
-    if (!id || id <= 0) return;
     const html = editor && !editor.isDestroyed ? editor.getHTML() : htmlRef.current;
     htmlRef.current = html;
     await performSave(id, html);
@@ -89,6 +107,9 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
       getChapterId: () => chapterIdRef.current,
       flush: flushNow,
       reload: async () => {
+        if (saveFailedRef.current) {
+          throw new Error('Draft belum tersimpan. Coba simpan ulang sebelum memuat ulang editor.');
+        }
         if (!editor || editor.isDestroyed) return;
         const fresh = await db.chapters.get(chapterIdRef.current);
         if (!editor || editor.isDestroyed) return;
@@ -122,15 +143,16 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
     htmlRef.current = currentEditor.getHTML();
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    clearStatusTimeout();
     setSaveStatus('Menyimpan...');
 
     saveTimeoutRef.current = setTimeout(() => {
       if (isMountedRef.current) {
-        performSave(idToSave, htmlRef.current);
+        saveInBackground(idToSave, htmlRef.current);
         saveTimeoutRef.current = null;
       }
     }, 1500);
-  }, [setSaveStatus, performSave]);
+  }, [setSaveStatus, saveInBackground, clearStatusTimeout]);
 
   const handleTitleChange = useCallback((newTitle: string) => {
     setTitle(newTitle);

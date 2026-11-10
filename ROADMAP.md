@@ -9,7 +9,7 @@
 
 ## Audit Aplikasi — 9 November 2026
 
-**Status awal:** seluruh 29 temuan terbuka; belum ada implementasi perbaikan. Ini pencatatan hasil audit, bukan klaim bahwa fitur telah diperbaiki. **Baseline:** `a47f895a47a633f02f95511192bddfa47397bef2`.
+**Status awal audit (9 November 2026):** seluruh 29 temuan terbuka pada baseline. Status implementasi terkini mengikuti checklist dan bukti penyelesaian di bawah. **Baseline:** `a47f895a47a633f02f95511192bddfa47397bef2`.
 
 - [Laporan aplikasi (21 bagian)](docs/audits/2026-11-09-application-audit.md).
 - [Register bukti dan kriteria penerimaan F01–F29](docs/audits/2026-11-09-findings.md).
@@ -26,7 +26,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 ### P1 — Kerjakan dahulu: data, keamanan, dan fungsi inti
 
 - [ ] **[F03](docs/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas** (High; M).
-- [ ] **[F05](docs/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal** (High; S–M).
+- [x] **[F05](docs/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal** (High; S–M).
+  - Tanggal / commit atau PR: 10 November 2026; commit `fix(editor): hentikan replace dan reload saat save gagal (F05)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: flush reject pada error/update nol baris; status gagal tetap terlihat; draft dapat dicoba simpan ulang; replace/reload dibatalkan. Handler versionchange menahan auto-close Dexie sampai flush berhasil. Rejection pemanggil lifecycle/autosave ditangani.
+  - Reproduksi sebelum perbaikan: `npx vitest run src/features/editor/hooks/useEditorSave.test.tsx` — 5 gagal/3 lulus (flush rejection dan update 0 dianggap sukses, reload menimpa draft, timer menghapus status gagal, cleanup melewatkan konten kosong).
+  - Verifikasi sesudah perbaikan: tiga berkas tes F05 — 12/12 lulus; `npx vitest run` — 46 berkas/485 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Build masih memberi peringatan bundle besar, import statis/dinamis ActionsPanel, eval ONNX, dan data Browserslist lama. Tes Find & Replace memakai hook asli dan IndexedDB sintetis terisolasi, mencakup pembatalan serta retry berhasil.
+  - Dokumentasi modul: `docs/features.md`, `docs/database.md`, `docs/changelog.md`.
+  - Batas verifikasi / risiko tersisa: belum diuji browser native/upgrade lintas-tab nyata; penutupan paksa tidak menjamin flush async selesai dan dapat membuang draft di memori. Upgrade tab lain tertahan selama save gagal. F19 tetap terbuka.
 - [ ] **[F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas** (High; S).
 - [ ] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
 - [ ] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).

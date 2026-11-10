@@ -98,9 +98,11 @@ export function CrossChapterReplace({ projectId, onSelectChapter, onClose }: Cro
     }
     const prepared = prepareReplacement(replacement, isRegex);
     setIsReplacing(true);
+    let editorFlushed = false;
     try {
       // 1. Persist edit bab aktif yang belum tersimpan agar tidak hilang saat di-replace.
       await flushActiveEditor();
+      editorFlushed = true;
 
       // 2. Baca ulang dari DB (pasca-flush) lalu ganti di dalam satu transaksi.
       const all = await db.chapters.where('projectId').equals(projectId).toArray();
@@ -137,7 +139,9 @@ export function CrossChapterReplace({ projectId, onSelectChapter, onClose }: Cro
       }
     } catch (err) {
       console.error('Cross-chapter replace failed:', err);
-      toast.error('Gagal melakukan penggantian.');
+      toast.error(editorFlushed
+        ? 'Gagal melakukan penggantian.'
+        : 'Draft belum tersimpan. Penggantian dibatalkan. Coba lagi untuk menyimpan ulang.');
     } finally {
       setIsReplacing(false);
     }

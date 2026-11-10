@@ -4,6 +4,17 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-10
+
+### [Fix] F05 — Flush editor meneruskan kegagalan simpan
+
+- Save konten hanya dianggap berhasil bila update memengaruhi tepat satu bab; error DB, ID invalid, dan update nol baris membuat flush reject serta menampilkan `Gagal menyimpan`. Konten kosong tetap dapat disimpan.
+- Draft tetap di editor saat gagal. Find & Replace berhenti sebelum membaca/mengubah bab, membuat snapshot, atau reload; klik ulang mencoba flush kembali. Bridge reload menolak setelah save gagal sampai penyimpanan berhasil.
+- Handler `versionchange` menahan auto-close Dexie dan hanya menutup/reload setelah flush sukses; kegagalan ditampilkan melalui isu DB. Rejection autosave/unmount/pergantian bab/pagehide ditangani; timer status lama dibersihkan agar pesan gagal tetap terlihat.
+- Menambahkan dev dependencies `@testing-library/react`, `jsdom`, dan `fake-indexeddb` untuk tes React serta IndexedDB terisolasi. Lima tes gagal pada implementasi awal, lalu lulus setelah perbaikan; 12 tes regresi F05 mencakup kegagalan, retry, konten kosong, pembatalan replace/reload, dan `versionchange`.
+- Verifikasi: `npx vitest run` — 46 berkas/485 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build terkait ukuran bundle, import ActionsPanel, eval ONNX, dan Browserslist dicatat di ROADMAP.
+- Batas: belum ada verifikasi browser native/upgrade lintas-tab nyata; flush saat penutupan paksa tetap bersifat best effort. Data/key pengguna dan layanan eksternal tidak dipakai.
+
 ## 2026-11-09
 
 ### [Docs] Audit Aplikasi dan Backlog Perbaikan Berdasarkan Prioritas

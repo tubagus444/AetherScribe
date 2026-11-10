@@ -63,7 +63,11 @@ export function useGlobalEvents({
     // `visibilitychange`→hidden lebih andal (halaman belum dibongkar sehingga tulis
     // IndexedDB sempat selesai, dan konsisten di mobile); `pagehide` menangkap
     // penutupan/navigasi sebenarnya di desktop.
-    const flushOnHide = () => { void flushActiveEditor(); };
+    const flushOnHide = () => {
+      void flushActiveEditor().catch(err => {
+        console.error('Failed to flush editor on page hide:', err);
+      });
+    };
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') flushOnHide();
     };

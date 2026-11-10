@@ -7,6 +7,8 @@
 
 ## 1. Konvensi & Aturan Database
 
+**Flush sebelum pembaruan lintas-tab (F05):** Handler `versionchange` di `src/db.ts` mengembalikan `false` agar Dexie tidak otomatis menutup koneksi sebelum flush selesai. Koneksi ditutup dan halaman dimuat ulang hanya setelah `flushActiveEditor()` resolve. Jika flush reject, koneksi tetap terbuka dan isu DB ditampilkan agar draft editor dapat dicoba simpan ulang. Konsekuensinya, upgrade pada tab lain tetap terblokir sampai koneksi lama dapat ditutup dengan aman. Tidak ada perubahan skema untuk perbaikan ini.
+
 1. **Skema Bersifat Append-Only:**
    - Dilarang mengedit atau menghapus blok `this.version(N)` yang sudah ada di `src/db.ts`. Setiap perubahan skema wajib menambahkan blok `this.version(N + 1).stores({...})` baru dengan migrasi `.upgrade()` bila ada transformasi data.
 2. **Pola "Field JSON Inert Menumpang Objek":**

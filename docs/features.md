@@ -7,10 +7,13 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ## Editor Manuskrip (TipTap 3)
 - **Status:** Selesai
 - **Deskripsi:** Editor kaya fitur berbasis TipTap 3 yang dioptimalkan untuk penulisan novel panjang dengan penghitung kata langsung, mode fokus, dan jaring pengaman autosave anti kehilangan data.
-- **File terkait:** `src/features/editor/components/NovelEditor.tsx`, `src/features/editor/components/EditorToolbar.tsx`, `src/features/editor/editorBridge.ts`, `src/hooks/useGlobalEvents.ts`
+- **File terkait:** `src/features/editor/components/NovelEditor.tsx`, `src/features/editor/components/EditorToolbar.tsx`, `src/features/editor/hooks/useEditorSave.ts`, `src/features/editor/editorBridge.ts`, `src/hooks/useGlobalEvents.ts`
 - **Tabel DB:** `chapters`, `snapshots`
 - **Endpoint:** Tidak ada (lokal)
-- **Catatan:** Seluruh paket `@tiptap/*` WAJIB dipin tepat ke versi `3.22.5`. Flush autosave terpasang pada lifecycle `pagehide` dan `visibilitychange` untuk menjamin kata terakhir tersimpan saat tab ditutup.
+- **Catatan:** Seluruh paket `@tiptap/*` WAJIB dipin tepat ke versi `3.22.5`. Autosave memakai debounce 1,5 detik; flush membaca HTML terbaru termasuk konten kosong. `flushActiveEditor(): Promise<void>` hanya resolve setelah update tepat satu bab, dan reject pada error DB, ID invalid, atau update nol baris. Tanpa editor aktif, flush tetap no-op.
+- **Penanganan gagal simpan (F05):** Status menjadi `Gagal menyimpan`, draft tetap di editor, dan reload melalui bridge ditolak sampai save berhasil. Find & Replace membatalkan penggantian/snapshot/reload ketika flush gagal; klik ulang mencoba flush lagi. Edit berikutnya juga mencoba autosave kembali. Timer status sukses sebelumnya tidak boleh menghapus pesan kegagalan. Rejection autosave dan lifecycle ditangani agar tidak menjadi unhandled rejection.
+- **Lifecycle:** `pagehide` dan `visibilitychange` mencoba flush, tetapi penyelesaian IndexedDB saat browser menutup halaman tidak dijamin. Pembaruan skema dari koneksi lain hanya menutup DB dan memuat ulang setelah flush sukses; kegagalan mempertahankan tab/koneksi dan menampilkan pesan. Menutup paksa tab setelah save gagal tetap dapat menghilangkan draft yang hanya ada di memori.
+- **Verifikasi F05:** Tes hook React, Find & Replace dengan `fake-indexeddb`, dan handler `versionchange` memakai fixture terisolasi; belum diuji pada browser/IndexedDB native atau upgrade lintas-tab nyata.
 
 ---
 
