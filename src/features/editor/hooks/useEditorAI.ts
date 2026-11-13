@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import { getRelevantContext, getRelevantBibleRules } from '@/src/services/contextEngine';
-import { processRewrite } from '@/src/services/ai';
+import { processRewrite, cancelAI } from '@/src/services/ai';
 import { cleanRewriteOutput } from '@/src/lib/cleanRewriteOutput';
 import { createAutoSnapshot } from '@/src/services/snapshotService';
 import { useToast } from '@/src/hooks/useToast';
@@ -42,14 +42,29 @@ export function useEditorAI(
   
   const streamBufferRef = useRef<string>('');
   const isStreamingRef = useRef<boolean>(false);
+  const runRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    setIsAiProcessing(false);
+    setRetryStatus(null);
+    setRewritePreview(null);
+    return () => {
+    ++runRef.current;
+    isStreamingRef.current = false;
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    cancelAI('rewrite');
+    };
+  }, [chapterId, editor]);
 
   const runAiAction = async (action: string, provider?: string, customPrompt?: string) => {
-    if (!editor) return;
+    if (!editor || isStreamingRef.current) return;
     const { from, to } = editor.state.selection;
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
     
     if (selectedText.length < 5) return;
 
+    const run = ++runRef.current;
     setIsAiProcessing(true);
     setRetryStatus(null);
     setRewritePreview(null);
@@ -71,7 +86,7 @@ export function useEditorAI(
         setRewritePreview(prev => prev ? { ...prev, rewritten: streamBufferRef.current } : null);
       };
 
-      const flushInterval = setInterval(flushBuffer, 50);
+      timerRef.current = setInterval(flushBuffer, 50);
 
       const result = await processRewrite({
         action,
@@ -86,19 +101,20 @@ export function useEditorAI(
         ragContextText: textBeforeCursor,
         stream: true,
         onRetry: (attempt, error, currentProvider) => {
+          if (run !== runRef.current) return;
+          streamBufferRef.current = "";
           setRetryStatus(`Koneksi melambat (${currentProvider}). Percobaan ulang ke-${attempt}...`);
         },
         onChunk: (chunk) => {
-           streamBufferRef.current += chunk;
+           if (run === runRef.current) streamBufferRef.current += chunk;
         }
       });
 
+      if (run !== runRef.current) return;
       isStreamingRef.current = false;
-      clearInterval(flushInterval);
       
-      // Saat streaming, buffer mentah (streamBufferRef) yang dipakai untuk tampilan
-      // & disisipkan — bukan return value processRewrite — jadi bersihkan di sini juga.
-      const finalRewritten = cleanRewriteOutput(streamBufferRef.current || result);
+      // Hasil final dari attempt sukses adalah sumber utama, bukan buffer parsial.
+      const finalRewritten = cleanRewriteOutput(result);
       setRewritePreview({
         original: selectedText,
         rewritten: finalRewritten,
@@ -106,6 +122,8 @@ export function useEditorAI(
         to
       });
     } catch (err: any) {
+      if (run !== runRef.current) return;
+      setRewritePreview(null);
       console.error(err);
       if (err.code === 'INVALID_KEY' || err.code === 'QUOTA_EXCEEDED') {
         toast.error(err.message, {
@@ -120,6 +138,10 @@ export function useEditorAI(
         toast.error(err.message || 'AI Rewrite failed. Please try again.');
       }
     } finally {
+      if (run !== runRef.current) return;
+      isStreamingRef.current = false;
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
       setIsAiProcessing(false);
       setRetryStatus(null);
     }

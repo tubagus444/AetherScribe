@@ -392,6 +392,7 @@ async function executeAIAction(config: AIExecutionParams): Promise<string> {
       cacheable: useCaching,
     });
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') throw error;
     if (error instanceof AIError) throw error;
     throw new AIError(error instanceof Error ? error.message : `AI action ${config.actionType} failed.`, 'API_ERROR');
   } finally {
@@ -472,7 +473,8 @@ export async function processRewrite(params: GenerateParams): Promise<string> {
         temperature: getRewriteTemperature(),
         maxTokens: Math.min(4000, Math.max(512, Math.ceil(Math.ceil((params.selection?.length || 0) / 4) * 2.5))),
         stream: params.stream,
-        onChunk: params.onChunk
+        onChunk: params.onChunk,
+        onRetry: params.onRetry
       }
     });
     return cleanRewriteOutput(res);
@@ -535,7 +537,8 @@ export async function processChat(params: ChatParams): Promise<string> {
       temperature: 0.7,
       maxTokens: 2048,
       stream: params.stream,
-      onChunk: params.onChunk
+      onChunk: params.onChunk,
+        onRetry: params.onRetry
     }
   });
 }

@@ -1,3 +1,4 @@
+import { readAIStream } from './sse';
 import { AIRenderParams } from '@/src/services/ai/types';
 import { ErrorService } from '@/src/services/errorService';
 import { classifyError, getErrorMessage } from '@/src/services/ai/errors';
@@ -213,71 +214,20 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
   try {
     let usageData: any = null;
 
-    if (params.stream && params.onChunk) {
+    if (params.stream) {
       const reader = response.body?.getReader();
       if (!reader) throw new Error("Streaming not supported.");
 
-      let completeText = "";
-      let buffer = "";
-      const decoder = new TextDecoder("utf-8");
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        armTimeout(); // data mengalir → reset idle-timeout
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ""; // last incomplete line
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
-
-          const dataStr = trimmed.slice(5).trim();
-          if (dataStr === '[DONE]') continue;
-
-          try {
-            const data = JSON.parse(dataStr);
-            let chunk = "";
-
-            if (data.usage) usageData = data.usage;
-            if (data.usageMetadata) usageData = data.usageMetadata;
-            if (data.amazon_bedrock_invocation_metrics) usageData = data.amazon_bedrock_invocation_metrics;
-
-            if (provider === 'claude') {
-               // Anthropic SSE: message_start membawa input_tokens, message_delta membawa output_tokens.
-               if (data.type === 'message_start' && data.message?.usage) {
-                  usageData = { ...usageData, ...data.message.usage };
-               }
-               if (data.type === 'message_delta' && data.usage) {
-                  usageData = { ...usageData, ...data.usage };
-               }
-               if (data.type === 'message_stop' && data.amazon_bedrock_invocation_metrics) {
-                  usageData = data.amazon_bedrock_invocation_metrics;
-               }
-               if (data.type === 'content_block_delta' && data.delta?.text) {
-                 chunk = data.delta.text;
-               }
-            } else if (provider === 'google') {
-               if (data.candidates && data.candidates[0]?.content?.parts) {
-                 chunk = data.candidates[0].content.parts[0]?.text || "";
-               }
-            } else {
-               if (data.choices && data.choices[0]?.delta?.content) {
-                 chunk = data.choices[0].delta.content;
-               }
-            }
-
-            if (chunk) {
-               completeText += chunk;
-               params.onChunk(chunk);
-            }
-          } catch (e) {
-            // Ignore partial parse or unexpected data
-          }
-        }
-      }
+      const cancelReader = () => { void reader.cancel().catch(() => {}); };
+      composite.signal.addEventListener('abort', cancelReader);
+      let streamed: Awaited<ReturnType<typeof readAIStream>>;
+      try {
+        if (composite.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+        streamed = await readAIStream(provider, reader, params.onChunk ?? (() => {}), armTimeout);
+        if (composite.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      } finally { composite.signal.removeEventListener('abort', cancelReader); }
+      const completeText = streamed.text;
+      usageData = streamed.usage;
 
       logUsageToDB(params, provider, usageData, completeText);
       return completeText;
@@ -300,6 +250,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
     return completeText;
   } catch (err: any) {
     if (timedOut) throw timeoutError();
+    if (externalSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
     throw err;
   } finally {
     cleanup();

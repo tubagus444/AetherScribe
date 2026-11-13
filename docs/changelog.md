@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F12/F14/F15 ? Error Streaming, Isolasi Retry, dan Cleanup Rewrite
+
+- Parser SSE provider-aware menolak error frame/JSON rusak/teks kosong/EOF tanpa terminasi, memproses CRLF/multiline dan buffer akhir, serta meneruskan error callback. Reader dibatalkan/dilepas; stream tanpa callback dan abort body macet ditangani.
+- Teruskan onRetry pada facade chat/rewrite. Reset buffer pada retry/fallback dan pakai hasil final sukses sebagai sumber utama; callback chat sesi lama diabaikan. Rewrite memakai run guard, ref timer, cleanup finally/unmount/ganti bab, pembatalan request dan penghapusan preview gagal.
+- Empat reproduksi gagal pada source 2a42ceb: error SSE HTTP 200 dianggap sukses, buffer chat/rewrite bercampur dan timer gagal tertinggal. Verifikasi: 62 berkas/666 tes lulus; typecheck, build dan diff-check lulus (peringatan build lama tetap ada). Delapan belas tes baru memakai stream sintetis dan mock hook/provider, tanpa key/data pengguna. Belum provider/browser nyata; variasi protokol di luar fixture belum diverifikasi. F17 kebijakan fallback lokal/cloud tetap terbuka; F13 tidak ditutup meskipun usage stream kini digabung oleh parser.
+
+
 ### [Fix] F08/F09 ? Jalur Worker Pencarian dan Generated Key Codex
 
 - Panel memakai pencarian berskor melalui facade worker dengan projectId eksplisit; worker mengantrekan INIT/mutasi/search. Codex bisa dicari sebelum indeks adegan tersedia dan hasil lama dibatalkan saat ganti proyek. Error worker tampil sebagai kegagalan, bukan hasil kosong.

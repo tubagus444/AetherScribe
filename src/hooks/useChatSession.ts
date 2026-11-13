@@ -155,17 +155,19 @@ export function useChatSession({
         extraSystem,
         stream: true,
         onRetry: (attempt, error, currentProvider) => {
+          if (sessionIdRef.current !== targetSessionId) return;
+          streamBufferRef.current = "";
           setRetryStatus(`Koneksi melambat (${currentProvider}). Percobaan ulang ke-${attempt}...`);
         },
         onChunk: (chunk) => {
-          streamBufferRef.current += chunk;
+          if (sessionIdRef.current === targetSessionId) streamBufferRef.current += chunk;
         }
       });
 
       isStreamingRef.current = false;
 
       // Final flush to ensure no text is truncated at the end
-      const finalReply = streamBufferRef.current || reply;
+      const finalReply = reply;
       const assistantMsg: ChatMessage = {
         id: assistantMsgId,
         role: 'model',

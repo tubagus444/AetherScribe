@@ -113,9 +113,24 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti awal: panel memakai singleton main-thread yang tidak diinisialisasi; creating hook menimpa ID dengan primKey sebelum auto-increment selesai.
   - Verifikasi: sembilan tes facade/worker-handler/store dengan transport emulasi, DB terisolasi dan panel mock; 58 berkas/648 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md dan docs/changelog.md. Batas: belum Worker browser native/embedding nyata.
-- [ ] **[F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong** (Medium; M).
-- [ ] **[F14](docs/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt** (Medium; M).
-- [ ] **[F15](docs/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal** (Medium; S).
+- [x] **[F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong** (Medium; M).
+  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
+  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
+  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
+  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
+- [x] **[F14](docs/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt** (Medium; M).
+  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
+  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
+  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
+  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
+- [x] **[F15](docs/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal** (Medium; S).
+  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
+  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
+  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
+  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
 - [ ] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
 - [ ] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
 - [ ] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).

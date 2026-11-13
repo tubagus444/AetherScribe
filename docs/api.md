@@ -158,3 +158,7 @@ Verifikasi memakai fixture/mocked upstream dan HTTP loopback terisolasi; tidak m
     ]
   }
   ```
+
+## Konsumsi SSE pada Klien (F12)
+
+HTTP 200 bukan jaminan keberhasilan inferensi: error SSE provider diteruskan sebagai rejection. Klien memeriksa frame akhir/teks kosong/terminasi, membaca buffer akhir dan mengakhiri reader pada error/abort. Ini berlaku pada proxy.ts/sse.ts, bukan perubahan payload provider server. Retry/fallback membersihkan preview parsial melalui onRetry; hasil final attempt sukses bersifat otoritatif.

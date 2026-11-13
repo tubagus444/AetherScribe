@@ -42,3 +42,7 @@ Format baris lore Codex mode caching hidup **hanya** di `src/lib/loreFormat.ts` 
 
 ## Optimasi token/biaya
 Seluruh item optimasi token/biaya AI telah **selesai** (arsip lengkap di `docs/archive/RENCANA-OPTIMASI-AI.md` & `docs/decisions.md`): prompt caching trio, plafon `max_tokens` per-aksi, routing model per-tugas, bersih payload Story Bible, cache riwayat chat Claude (#4) & OpenRouter (#P2), debounce/dedup auto-summarizer & rewrite (#6), KB dibagi lintas-aksi (#9), tier cache Bible/Codex (#P3), akurasi estimasi token (#P4), plus empat tunable di Settings → "Optimasi AI Lanjutan": cap lore cache (#5), override model ringan (#7), TTL cache Claude 5m/1j (#P5, `getClaudeCacheTtl` di `aiTuning.ts`, dipakai 3 titik cache_control Claude di `proxy.ts`), dan suhu rewrite (`getRewriteTemperature` di `aiTuning.ts`, default 0.5, clamp 0–1, dipakai `processRewrite`; hanya jalur rewrite, tugas analitis tetap terkunci). Cek dokumen tersebut sebelum menyentuh jalur AI terkait token/caching/model.
+
+## Streaming/retry F12/F14/F15
+
+Jangan menelan error frame SSE sebagai parse error: sse.ts menangani framing dan terminasi provider. Teruskan onRetry dari facade; consumer reset buffer attempt lama dan memakai return final sukses. Rewrite timer wajib cleanup pada finally/unmount/ganti bab; callback memakai run guard. Pertahankan AbortError agar pembatalan tidak dianggap kegagalan biasa. Kebijakan izin fallback lokal/cloud tetap F17.
