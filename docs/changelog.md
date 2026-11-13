@@ -4,6 +4,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-13
+
+### [Fix] F01 — Stored XSS pada Label Atlas
+
+- Mengganti string HTML ikon dengan DOM dalam `atlasMarkerIcons.ts`. Judul marker/nama Codex pada pin, area, route, dan portal menggunakan `textContent`; tooltip dinamis Leaflet menerima HTMLElement. SVG dekoratif memakai atribut konstan, tanpa parsing markup dari data pengguna.
+- Menambahkan allowlist warna hex `#RGB`/`#RRGGBB` di resolver dan boundary render, termasuk polygon/polyline serta handle edit. Override invalid memakai fallback tanpa mengubah data tersimpan; tidak menambah dependensi atau mengubah skema DB.
+- Menambahkan 49 tes regresi memakai Leaflet asli di jsdom dan fixture JSON sintetis. Pada source awal `c12bc43`, tes DOM mereproduksi 27 kegagalan/1 lulus (markup menjadi node/handler dan warna dapat menyisipkan HTML). Setelah perbaikan, 50 berkas/583 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build tetap terkait bundle besar, import ActionsPanel, eval ONNX, dan Browserslist lama.
+- Memperbarui katalog fitur, kontrak backup terkait label, aturan Atlas, dan roadmap. Tidak mengubah snapshot laporan audit. Belum ada pengujian visual atau eksekusi payload di browser native; verifikasi jsdom memastikan payload tidak menjadi elemen/atribut handler.
+
 ## 2026-11-10
 
 ### [Fix] F03/F04 — Restore Atlas dan Validasi Backup

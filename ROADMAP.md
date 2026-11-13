@@ -39,7 +39,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi sesudah perbaikan: tiga berkas tes F05 — 12/12 lulus; `npx vitest run` — 46 berkas/485 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Build masih memberi peringatan bundle besar, import statis/dinamis ActionsPanel, eval ONNX, dan data Browserslist lama. Tes Find & Replace memakai hook asli dan IndexedDB sintetis terisolasi, mencakup pembatalan serta retry berhasil.
   - Dokumentasi modul: `docs/features.md`, `docs/database.md`, `docs/changelog.md`.
   - Batas verifikasi / risiko tersisa: belum diuji browser native/upgrade lintas-tab nyata; penutupan paksa tidak menjamin flush async selesai dan dapat membuang draft di memori. Upgrade tab lain tertahan selama save gagal. F19 tetap terbuka.
-- [ ] **[F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas** (High; S).
+- [x] **[F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas** (High; S).
+  - Tanggal / commit atau PR: 13 November 2026; commit `fix(atlas): cegah stored XSS pada label dan tooltip (F01)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: ikon dibangun sebagai DOM, judul marker/nama Codex melalui textContent; tooltip dinamis diberikan ke Leaflet sebagai HTMLElement. Allowlist hex #RGB/#RRGGBB diterapkan di resolver dan boundary render termasuk handle edit; nilai invalid memakai fallback. Tidak mengubah data sumber, skema DB, atau dependensi.
+  - Reproduksi sebelum perbaikan: `npx vitest run src/features/atlas/components/MapCanvas.test.tsx` pada source `c12bc43` — 27 gagal/1 lulus; payload JSON menjadi elemen/atribut handler pada badge/tooltip dan warna dapat menyisipkan HTML lewat style.
+  - Verifikasi sesudah perbaikan: dua berkas tes F01 — 49/49 lulus, memakai Leaflet asli di jsdom untuk badge pin/area/route/portal, tooltip, nama marker/Codex, warna, edit handle, serta klik/dobel-klik. `npx vitest run` — 50 berkas/583 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build tetap terkait bundle besar, import ActionsPanel, eval ONNX, dan Browserslist lama.
+  - Dokumentasi modul: `docs/features.md`, `docs/backup-format.md`, `docs/changelog.md`, `.claude/rules/atlas.md`.
+  - Batas verifikasi / risiko tersisa: fixture sintetis, tidak memakai data pengguna. Belum pemeriksaan visual atau eksekusi payload di browser native; jsdom memverifikasi bahwa markup tidak menjadi node/handler. Tidak mengklaim mitigasi XSS di modul lain. F24 harness/CI penuh tetap terbuka.
 - [ ] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
 - [ ] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).
 - [x] **[F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai** (High; M).

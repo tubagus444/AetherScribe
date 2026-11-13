@@ -150,10 +150,13 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ## Atlas Dunia (Peta Interaktif Leaflet)
 - **Status:** Selesai (v1.0 s/d v2.1)
 - **Deskripsi:** Kanvas peta interaktif berbasis Leaflet CRS.Simple untuk mengunggah peta, menandai pin, poligon batas wilayah, rute perjalanan, kalibrasi skala jarak, deteksi wilayah yatim, dan navigasi sub-peta bertingkat.
-- **File terkait:** `src/features/atlas/components/AtlasPanel.tsx`, `src/features/atlas/components/MapCanvas.tsx`, `src/lib/mapGeometry.ts`, `src/lib/atlasAnalytics.ts`, `src/lib/atlasHierarchy.ts`
+- **File terkait:** `src/features/atlas/components/AtlasPanel.tsx`, `src/features/atlas/components/MapCanvas.tsx`, `src/features/atlas/components/atlasMarkerIcons.ts`, `src/lib/atlasColors.ts`, `src/lib/mapGeometry.ts`, `src/lib/atlasAnalytics.ts`, `src/lib/atlasHierarchy.ts`
 - **Tabel DB:** `maps`, `mapMarkers`
 - **Endpoint:** Tidak ada (lokal)
 - **Catatan:** Menggunakan Leaflet murni (bukan wrapper React). Koordinat disimpan dalam rasio relatif 0–1. File/Drive/ekspor novel dan snapshot pra-restore menyertakan gambar lengkap. Auto internal v8 menyimpan referensi SHA-256 untuk mencocokkan gambar live, bukan menghapus Blob saat restore; referensi yang tidak tersedia membatalkan pemulihan. Kebijakan legacy dan batasnya dijelaskan di [format backup](backup-format.md).
+- **Keamanan label (F01, 13 November 2026):** Ikon dibangun lewat DOM; judul marker dan nama Codex dimasukkan dengan `textContent`. Tooltip dinamis diberikan ke Leaflet sebagai HTMLElement, sehingga markup dari data tersimpan/impor tampil harfiah. SVG dekoratif hanya memakai atribut konstan. Nilai data tidak diinterpolasi ke string HTML.
+- **Warna:** Hanya hex `#RGB`/`#RRGGBB` (case-insensitive) diterima. Override invalid diabaikan dan resolver melanjutkan ke warna faksi/kategori/jenis. Boundary render, termasuk SVG path dan handle edit, memvalidasi lagi; callback warna invalid memakai fallback `#64748b`. Data sumber tetap disimpan tanpa perubahan.
+- **Verifikasi F01:** 49 tes baru memakai Leaflet asli di jsdom dan fixture JSON sintetis: badge pin/area/route/portal, hover tooltip, nama marker/Codex, penolakan elemen/handler injeksi, warna, handle edit, dan interaksi klik/dobel-klik. Belum ada verifikasi visual atau eksekusi payload di browser native.
 
 ---
 

@@ -24,6 +24,9 @@ Penanda disimpan sebagai `{x,y}` (pin) / `[{x,y}…]` (area/route) dalam **0–1
 ## Faksi & warna = TURUNAN dari `codexId` (tanpa FK faksi)
 Faksi bukan tabel/id di app ini — faksi = entri Codex ber-`factionTag` (lihat CLAUDE.md #15). Area yang `codexId`-nya menunjuk entri ber-`factionTag` **otomatis** "wilayah faksi itu". Warna penanda **diturunkan** (`src/lib/atlasColors.ts`, murni): `marker.color` eksplisit → hue faksi (hash `factionTag`) → warna kategori Codex → default per-jenis. Peta hex kategori = **salinan lokal** (sama seperti LoreGraphPanel, karena `codexCategories.ts` hanya simpan kelas Tailwind). Filter (jenis/kategori/faksi) = **murni state komponen**, data tetap penuh (pola LoreGraph).
 
+## Label dan tooltip = DOM teks, warna = allowlist (F01)
+`atlasMarkerIcons.ts` membangun ikon dengan `createElement`/`createElementNS`, judul melalui `textContent`; `atlasText` membuat HTMLElement untuk tooltip Leaflet. Jangan masukkan judul/nama Codex atau data lain ke string HTML, `innerHTML`, atau `cssText`. `cssText` helper hanya untuk konstanta internal; SVG dekoratif memakai atribut konstan. Validasi warna lewat `isAtlasColor`/`safeAtlasColor` (`#RGB`/`#RRGGBB` saja), baik di resolver maupun boundary render termasuk edit handle. Override invalid mengikuti fallback faksi/kategori/jenis; callback render invalid memakai `#64748b`. Jangan bergantung pada sanitasi form/impor karena data lama tetap dapat berisi markup.
+
 ## Kehadiran bab = reuse `buildPresenceIndex` (jangan scan ganda)
 `MarkerSidebar` menampilkan "muncul di bab: …" dari `PresenceIndex` (`src/lib/continuity.ts`) atas entri Codex tertaut — indeks dibangun **di worker** via hook `usePresenceIndex(chapters, codex)` di `AtlasPanel` (bukan lagi scan sinkron di main thread). Klik penanda → `openCodexEntry(codexId)` (deep-link ke `CodexDetailModal`, primitif yang sama dipakai panel lain). `title`/`note` hanya fallback bila tak tertaut.
 

@@ -23,6 +23,15 @@ const CATEGORY_HEX: Record<string, string> = {
   pink: '#ec4899', cyan: '#06b6d4', lime: '#84cc16', fuchsia: '#d946ef',
 };
 const FALLBACK_HEX = '#64748b';
+/** Format warna yang dipakai UI Atlas. Tolak CSS bebas, URL, dan markup dari impor. */
+export function isAtlasColor(value: unknown): value is string {
+  return typeof value === 'string' && /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(value);
+}
+
+/** Pertahanan pada boundary render, termasuk callback colorFor kustom. */
+export function safeAtlasColor(value: unknown): string {
+  return isAtlasColor(value) ? value : FALLBACK_HEX;
+}
 /** Warna kabut rahasia untuk entri tersembunyi (hidden: true). */
 export const FOG_HEX = '#7c3aed';
 
@@ -50,7 +59,7 @@ export function factionHue(tag: string): string {
 /** Warna kategori sebuah entri (hex). */
 export function categoryHex(entry: CodexEntry, categories?: CategoryDef[]): string {
   const def = getCategoryDef(entry.category, categories);
-  return CATEGORY_HEX[def?.color ?? ''] ?? FALLBACK_HEX;
+  return safeAtlasColor(CATEGORY_HEX[def?.color ?? '']);
 }
 
 /**
@@ -62,10 +71,10 @@ export function resolveMarkerColor(
   entry: CodexEntry | undefined,
   categories?: CategoryDef[],
 ): string {
-  if (explicitColor) return explicitColor;
+  if (isAtlasColor(explicitColor)) return explicitColor;
   if (entry) {
     if (entry.factionTag && entry.factionTag.trim()) return factionHue(entry.factionTag.trim());
     return categoryHex(entry, categories);
   }
-  return KIND_DEFAULT[kind] ?? FALLBACK_HEX;
+  return safeAtlasColor(KIND_DEFAULT[kind]);
 }

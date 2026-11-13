@@ -25,7 +25,8 @@ import {
 } from '@/src/lib/mapGeometry';
 import { RegionAnalytic } from '@/src/lib/atlasAnalytics';
 import { PresenceIndex } from '@/src/lib/continuity';
-import { FOG_HEX } from '@/src/lib/atlasColors';
+import { FOG_HEX, safeAtlasColor } from '@/src/lib/atlasColors';
+import { atlasText, vertexIcon, midIcon, regularPinIcon, portalPinIcon, portalAreaBadgeIcon, selectedPinIcon, selectedAreaBadgeIcon, selectedRouteBadgeIcon } from './atlasMarkerIcons';
 
 export type DrawMode = 'pin' | 'area' | 'route' | 'scale' | null;
 
@@ -60,157 +61,6 @@ interface MapCanvasProps {
   onOpenSubMap?: (mapId: number) => void;
   parentMap?: AtlasMap | null;
   onReturnToParent?: () => void;
-}
-
-/** Handle titik (bulat = pin/vertex, kotak vs bulat hanya kosmetik). */
-function vertexIcon(color: string): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-vertex',
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    html: `<div style="width:14px;height:14px;background:${color};border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35);cursor:grab"></div>`,
-  });
-}
-
-/** Handle titik-tengah untuk menyisipkan vertex baru. */
-function midIcon(): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-midpoint',
-    iconSize: [11, 11],
-    iconAnchor: [5.5, 5.5],
-    html: `<div style="width:11px;height:11px;background:#fff;border:2px dashed #2563eb;border-radius:50%;opacity:.85;cursor:copy"></div>`,
-  });
-}
-
-/** Ikon Pin Regular (Beacon Pin dengan kontras drop-shadow & dual-ring yang terbaca jelas di peta terang maupun gelap) */
-function regularPinIcon(color: string, isOrphan?: boolean): L.DivIcon {
-  const pinColor = isOrphan ? '#f59e0b' : color;
-  return L.divIcon({
-    className: 'atlas-beacon-pin',
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-    html: `
-      <div style="position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;">
-        <!-- Ring Luar Kontras Tinggi -->
-        <span style="position:absolute;inset:0;border-radius:9999px;background:rgba(0,0,0,0.28);"></span>
-        <!-- Badan Pin dengan Border Putih Bersih -->
-        <span style="position:absolute;inset:1.5px;border-radius:9999px;background:${pinColor};border:2px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></span>
-        <!-- Titik Inti Kilau Tengah -->
-        <span style="position:relative;width:4px;height:4px;border-radius:9999px;background:rgba(255,255,255,0.85);"></span>
-      </div>
-    `,
-  });
-}
-
-/** Ikon portal berkilau untuk Pin yang menautkan ke Sub-Peta */
-function portalPinIcon(color: string, selected: boolean): L.DivIcon {
-  const glow = selected ? '0 0 14px rgba(245, 158, 11, 0.95)' : '0 0 10px rgba(99, 102, 241, 0.75)';
-  const borderColor = selected ? '#f59e0b' : '#818cf8';
-  return L.divIcon({
-    className: 'atlas-portal-marker',
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    html: `
-      <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-        <span style="position:absolute;inset:0;border-radius:9999px;background:rgba(99,102,241,0.3);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;"></span>
-        <span style="position:absolute;inset:1px;border-radius:9999px;border:2px solid ${borderColor};background:rgba(15,23,42,0.88);box-shadow:${glow};"></span>
-        <span style="position:relative;width:15px;height:15px;border-radius:9999px;background:${color};display:flex;align-items:center;justify-content:center;color:#ffffff;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <polyline points="9 21 3 21 3 15"></polyline>
-            <line x1="21" y1="3" x2="14" y2="10"></line>
-            <line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        </span>
-      </div>
-    `,
-  });
-}
-
-/** Badge melayang di pusat Wilayah (Area) yang menautkan ke Sub-Peta */
-function portalAreaBadgeIcon(title: string, selected: boolean): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-portal-area-badge',
-    iconSize: [120, 26],
-    iconAnchor: [60, 13],
-    html: `
-      <div style="${selected ? 'border-color: #f59e0b !important;' : ''}">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
-        </svg>
-        <span style="max-width:80px;overflow:hidden;text-overflow:ellipsis;">${title}</span>
-        <span style="font-size:9px;background:#4f46e5;color:#ffffff;padding:1px 4px;border-radius:4px;margin-left:2px;font-weight:bold;">↗ Sub</span>
-      </div>
-    `,
-  });
-}
-
-/** Ikon Pin Terpilih — Radar Pulse Beacon & Floating Pill Nama Wilayah (Sangat Kontras & Adaptif Tema) */
-function selectedPinIcon(color: string, title: string, hasSubMap: boolean): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-selected-pin-marker',
-    iconSize: [44, 44],
-    iconAnchor: [22, 22],
-    html: `
-      <div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-        <!-- Radar Wave Ping 1 (Besar) -->
-        <span style="position:absolute;width:56px;height:56px;border-radius:9999px;background:rgba(245,158,11,0.22);border:2.5px solid rgba(245,158,11,0.9);animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></span>
-        <!-- Radar Wave Ping 2 (Lambat) -->
-        <span style="position:absolute;width:40px;height:40px;border-radius:9999px;background:rgba(245,158,11,0.28);border:2px solid rgba(245,158,11,0.95);animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;animation-delay:0.5s;"></span>
-        
-        <!-- Cincin Spotlight Utama (Adaptif Tema via CSS) -->
-        <span class="atlas-selected-pin-spotlight" style="position:absolute;width:28px;height:28px;border-radius:9999px;"></span>
-        
-        <!-- Titik Inti Pin -->
-        <span style="position:relative;width:15px;height:15px;border-radius:9999px;background:${color};border:2px solid #ffffff;box-shadow:0 1px 4px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">
-          ${hasSubMap ? `<span style="font-size:8px;color:#ffffff;font-weight:900;">↗</span>` : ''}
-        </span>
-
-        <!-- Floating Badge Mengambang di Atas Pin (Adaptif Tema via CSS) -->
-        <div style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:999;filter:drop-shadow(0 3px 8px rgba(0,0,0,0.3));">
-          <div class="atlas-selected-pin-badge">
-            <span style="width:7px;height:7px;border-radius:9999px;background:#f59e0b;display:inline-block;animation:pulse 1s infinite;"></span>
-            <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">${title}</span>
-            ${hasSubMap ? `<span style="font-size:9px;background:#4f46e5;color:#fff;padding:0 3px;border-radius:3px;">Sub-Peta</span>` : ''}
-          </div>
-          <!-- Indikator Panah Bawah -->
-          <div class="atlas-selected-pin-arrow"></div>
-        </div>
-      </div>
-    `,
-  });
-}
-
-/** Badge Pusat Wilayah Poligon yang Sedang Dipilih */
-function selectedAreaBadgeIcon(title: string): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-selected-area-badge',
-    iconSize: [160, 30],
-    iconAnchor: [80, 15],
-    html: `
-      <div>
-        <span style="color:#f59e0b;font-size:13px;">🏰</span>
-        <span style="max-width:115px;overflow:hidden;text-overflow:ellipsis;">${title}</span>
-      </div>
-    `,
-  });
-}
-
-/** Badge Pusat Rute yang Sedang Dipilih */
-function selectedRouteBadgeIcon(title: string): L.DivIcon {
-  return L.divIcon({
-    className: 'atlas-selected-route-badge',
-    iconSize: [140, 28],
-    iconAnchor: [70, 14],
-    html: `
-      <div>
-        <span style="color:#f59e0b;">🛣️</span>
-        <span style="max-width:95px;overflow:hidden;text-overflow:ellipsis;">${title}</span>
-      </div>
-    `,
-  });
 }
 
 export default function MapCanvas({
@@ -448,7 +298,7 @@ export default function MapCanvas({
       const ghosted = highlightOrphans ? !isOrphan : isFaded;
       const hasSubMap = m.linkedMapId != null;
 
-      const color = isSecret ? FOG_HEX : propsRef.current.colorFor(m);
+      const color = isSecret ? FOG_HEX : safeAtlasColor(propsRef.current.colorFor(m));
       const displayTitle = propsRef.current.titleFor
         ? propsRef.current.titleFor(m)
         : (isSecret ? '??? (Lokasi Rahasia)' : (m.title || (m.kind === 'area' ? 'Wilayah' : m.kind === 'route' ? 'Rute' : 'Lokasi')));
@@ -529,7 +379,7 @@ export default function MapCanvas({
                 propsRef.current.onOpenSubMap?.(m.linkedMapId!);
               });
               if (!selected) {
-                badge.bindTooltip(displayTitle + ' (↗ Dobel-klik: Buka Sub-Peta)', { direction: 'top', offset: [0, -8] });
+                badge.bindTooltip(atlasText(displayTitle + ' (↗ Dobel-klik: Buka Sub-Peta)'), { direction: 'top', offset: [0, -8] });
               }
               badge.addTo(layer);
             } else if (selected) {
@@ -604,7 +454,7 @@ export default function MapCanvas({
         // sehingga tooltip hover tidak lagi tumpang-tindih atau menghalangi nama penanda.
         if (displayTitle && !selected) {
           const tooltipText = displayTitle + (hasSubMap ? ' (↗ Dobel-klik: Buka Sub-Peta)' : '');
-          (shape as any).bindTooltip?.(tooltipText, {
+          (shape as any).bindTooltip?.(atlasText(tooltipText), {
             direction: 'top',
             offset: m.kind === 'pin' ? [0, -14] : [0, -6],
           });
@@ -626,7 +476,7 @@ export default function MapCanvas({
 
     const w = map.width || 1;
     const h = map.height || 1;
-    const color = propsRef.current.colorFor(marker);
+    const color = safeAtlasColor(propsRef.current.colorFor(marker));
     const persist = (geom: MapPoint | MapPoint[]) => propsRef.current.onGeometryChange?.(marker.id!, geom);
 
     // Pin: satu handle yang bisa diseret.
