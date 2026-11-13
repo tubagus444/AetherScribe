@@ -7,7 +7,7 @@ import { validateBackup } from './backupValidation';
 import type {
   Project, Chapter, CodexEntry, StoryBibleRule, AIAction,
   Snapshot, TimelineEvent, Relationship, ChatSession, CustomCategory, PlotPromise, GlossaryEntry,
-  MapMarker,
+  MapMarker, ContinuityTriage,
 } from '@/src/types';
 
 /**
@@ -26,6 +26,8 @@ import type {
  *  - maps: hanya projectId (di-insert lebih dulu oleh service utk membangun mapIdMap;
  *    gambar didekode dari data URL di service, bukan di sini)
  *  - mapMarkers.mapId → mapIdMap (buang penanda bila peta hilang), codexId? → codexIdMap
+ *  - continuityTriage.findingId: Codex/relasi/timeline melalui remapTriage sesudah ID dependen tersedia.
+ *  - chatSessions.workshopKey entry:<id>: codexIdMap; new:<seed> tetap literal.
  *  - TIDAK di-remap: Chapter.pov (nama), CodexEntry.category & key/slug (string).
  */
 
@@ -46,6 +48,7 @@ export interface ProjectBackupData {
   /** Peta Atlas — gambar tersimpan sebagai data URL (`imageDataUrl`), didekode di service. */
   maps?: any[];
   mapMarkers?: MapMarker[];
+  continuityTriage?: ContinuityTriage[];
 }
 
 export interface RemapMaps {
@@ -57,6 +60,34 @@ export interface RemapMaps {
   codexIdMap: Map<number, number>;
   /** id peta Atlas lama → id baru (peta di-insert lebih dulu oleh service). */
   mapIdMap: Map<number, number>;
+  relationshipIdMap?: Map<number, number>;
+  timelineIdMap?: Map<number, number>;
+}
+
+/** ID temuan adalah protokol terstruktur; jangan mengganti angka dalam teks bebas. */
+export function remapTriage(data: ProjectBackupData, maps: RemapMaps): ContinuityTriage[] {
+  const mapFinding = (value: string): string | undefined => {
+    let match = /^(gap|unused)-(\d+)$/.exec(value);
+    if (match) { const id = maps.codexIdMap.get(Number(match[2])); return id === undefined ? undefined : `${match[1]}-${id}`; }
+    match = /^(rel|tl)-(\d+)$/.exec(value);
+    if (match) { const id = (match[1] === 'rel' ? maps.relationshipIdMap : maps.timelineIdMap)?.get(Number(match[2])); return id === undefined ? undefined : `${match[1]}-${id}`; }
+    match = /^rel-(\d+)-(\d+)$/.exec(value);
+    if (match) { const a = maps.codexIdMap.get(Number(match[1])), b = maps.codexIdMap.get(Number(match[2])); return a === undefined || b === undefined ? undefined : `rel-${a}-${b}`; }
+    match = /^chrono-(invalid-range|same-chapter|retro-chap)-(\d+)(?:-(\d+))?$/.exec(value);
+    if (match) {
+      if ((match[1] === 'invalid-range') !== (match[3] === undefined)) throw new Error('Format findingId kronologi tidak valid.');
+      const a = maps.timelineIdMap?.get(Number(match[2]));
+      const b = match[3] === undefined ? undefined : maps.timelineIdMap?.get(Number(match[3]));
+      if (a === undefined || (match[3] !== undefined && b === undefined)) return undefined;
+      return `chrono-${match[1]}-${a}${b === undefined ? '' : `-${b}`}`;
+    }
+    // Format asing ditolak agar status tidak diam-diam hilang atau salah menunjuk.
+    throw new Error(`Format findingId triage tidak dikenali: ${value}`);
+  };
+  return (data.continuityTriage ?? []).flatMap(row => {
+    const findingId = mapFinding(row.findingId);
+    return findingId === undefined ? [] : [{ ...stripId(row), projectId: maps.projectId, findingId }];
+  });
 }
 
 /** Tabel dependen hasil remap (id dilepas; siap bulkAdd). */
@@ -92,7 +123,7 @@ function dedupeBy<T>(rows: T[], key: (row: T) => string): T[] {
 }
 
 /**
- * Menulis ulang FK 7 tabel dependen memakai peta id baru. Kebijakan referensi
+ * Menulis ulang FK tabel dependen memakai peta id baru. Kebijakan referensi
  * menggantung eksplisit (buang baris yatim / saring id tak dikenal) — lihat komentar
  * per-tabel. Tabel primer (projects/chapters/codex) di-insert lebih dulu oleh service
  * untuk MEMBANGUN peta ini, jadi tidak ditangani di sini.
@@ -167,6 +198,12 @@ export function remapProjectDependents(
       const nc = chapterIdMap.get(cs.activeChapterId);
       if (nc !== undefined) remapped.activeChapterId = nc;
       else delete remapped.activeChapterId;
+    }
+    if (cs.workshopKey?.startsWith('entry:')) {
+      const match = /^entry:(\d+)$/.exec(cs.workshopKey);
+      const entry = match ? codexIdMap.get(Number(match[1])) : undefined;
+      if (entry === undefined) throw new Error('Target sesi workshop tidak valid.');
+      remapped.workshopKey = `entry:${entry}`;
     }
     return remapped as ChatSession;
   });

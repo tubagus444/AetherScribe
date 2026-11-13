@@ -31,3 +31,7 @@ Jebakan & konvensi:
 ## Snapshot dan retensi F19/F20
 
 collectAllData/collectProjectData dan ekspor manuskrip membaca melalui backupSnapshot.ts: flush editor terlebih dahulu, transaksi readonly hanya berisi operasi DB, lalu serialisasi Blob/checksum/kompresi di luar transaksi. Jangan memakai live-query lama untuk isi ekspor. Drive harus upload sukses dengan ID file sebelum prune; exclude ID baru dari kandidat hapus. Kegagalan prune tidak membatalkan upload yang sudah berhasil dan dilaporkan terpisah.
+
+## Round-trip F10
+
+collectProjectData menyertakan continuityTriage. Import transaction harus mencakup tabel ini. Setelah insert timeline/relationships, bangun peta generated ID lalu panggil remapTriage. Remap workshopKey entry:<id> via codexIdMap; jangan mengganti angka dalam pesan/HTML atau new:<seed>. Format finding asing membatalkan transaksi; target finding hilang dilewati sebagai status basi.

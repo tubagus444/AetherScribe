@@ -83,7 +83,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 ### P2 — Correctness dan reliabilitas berikutnya
 
 - [ ] **[F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia** (Medium; L).
-- [ ] **[F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip** (Medium; M).
+- [x] **[F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip** (Medium; M).
+  - Tanggal / commit: 13 November 2026; commit `fix(import): pulihkan triage dan remap sesi workshop (F10)` (commit yang menambahkan bukti ini).
+  - Perubahan: impor triage dalam transaksi; remap findingId Codex/relasi/timeline dan workshopKey entry:<id>, pertahankan teks bebas. Format asing ditolak atomik; status target hilang dianggap basi.
+  - Bukti awal: snapshot ekspor sudah memuat triage sejak F19, tetapi importer tidak menulis tabelnya; workshopKey tidak mengikuti codexIdMap.
+  - Verifikasi: lima tes round-trip/rollback/legacy dan pemetaan finding; 56 berkas/639 tes, typecheck dan build lulus (peringatan build lama tetap ada). Tes round-trip gagal pada baseline e17b932 karena triage impor kosong, lalu lulus sesudah perbaikan.
+  - Dokumentasi: docs/features.md, docs/database.md, docs/backup-format.md, docs/changelog.md. Batas: belum browser/file pengguna nyata.
 - [x] **[F11](docs/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim** (Medium; M).
   - Tanggal / commit: 13 November 2026; commit `fix(data): bersihkan referensi saat menghapus entitas (F11)` (commit yang menambahkan bukti ini).
   - Perubahan: service transaksi domain untuk bab/peta/Codex/proyek; hapus data turunan, unlink referensi sambil mempertahankan teks; cleanup snapshot legacy tanpa parent dan cache bab setelah commit. Kebijakan reset triage/retensi dijelaskan di docs/database.md.

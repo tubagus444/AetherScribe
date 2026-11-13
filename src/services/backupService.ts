@@ -13,6 +13,7 @@ import { validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation'
 import { decodeBackupText } from '@/src/lib/backupIO';
 import {
   remapProjectDependents,
+  remapTriage,
   summarizeProjectBackup,
   importedProjectName,
   type ProjectBackupData,
@@ -490,7 +491,7 @@ export const backupService = {
    *
    * Karena PK numerik auto-increment tak unik lintas-ekspor, tiap baris di-insert TANPA
    * id lama (Dexie menetapkan id baru); proyek→bab→codex di-insert lebih dulu untuk
-   * membangun peta id, lalu FK 7 tabel dependen ditulis ulang oleh remapProjectDependents
+   * membangun peta id, lalu FK tabel dependen ditulis ulang oleh remapProjectDependents
    * (murni, teruji). Seluruhnya dalam satu transaksi (gagal → rollback).
    *
    * Pemanggil bertanggung jawab menyegarkan konteks (invalidateContextCache) & berpindah
@@ -516,7 +517,7 @@ export const backupService = {
 
     let newProjectId = 0;
     await db.transaction('rw',
-      [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.codexCategories, db.plotPromises, db.glossary, db.maps, db.mapMarkers],
+      [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.codexCategories, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage],
       async () => {
         // 1) Proyek baru (lepas id; lastOpened=now agar langsung teratas; nama diberi
         //    suffix "(impor)" agar terbedakan dari aslinya bila keduanya berdampingan).
@@ -556,8 +557,14 @@ export const backupService = {
         if (dep.aiActions.length) await db.aiActions.bulkAdd(dep.aiActions);
         if (dep.codexCategories.length) await db.codexCategories.bulkAdd(dep.codexCategories);
         if (dep.snapshots.length) await db.snapshots.bulkAdd(dep.snapshots);
-        if (dep.timeline.length) await db.timeline.bulkAdd(dep.timeline);
-        if (dep.relationships.length) await db.relationships.bulkAdd(dep.relationships);
+        const timelineKeys = dep.timeline.length ? await db.timeline.bulkAdd(dep.timeline, { allKeys: true }) : [];
+        const relationshipKeys = dep.relationships.length ? await db.relationships.bulkAdd(dep.relationships, { allKeys: true }) : [];
+        const timelineIdMap = new Map<number, number>();
+        const relationshipIdMap = new Map<number, number>();
+        data.timeline.forEach((row, i) => timelineIdMap.set(row.id!, timelineKeys[i] as number));
+        data.relationships.forEach((row, i) => relationshipIdMap.set(row.id!, relationshipKeys[i] as number));
+        const triage = remapTriage(data, { projectId: newProjectId, chapterIdMap, codexIdMap, mapIdMap, timelineIdMap, relationshipIdMap });
+        if (triage.length) await db.continuityTriage.bulkAdd(triage);
         if (dep.chatSessions.length) await db.chatSessions.bulkAdd(dep.chatSessions);
         if (dep.plotPromises.length) await db.plotPromises.bulkAdd(dep.plotPromises);
         if (dep.glossary.length) await db.glossary.bulkAdd(dep.glossary);

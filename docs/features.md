@@ -333,3 +333,7 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 - **Endpoint:** Provider AI (`openrouter`, `google`, `claude`, `groq`, dll.)
 - **Catatan:** Mode Batch memproses bab secara sekuensial dengan bilah progres real-time dan opsi pembatalan aman. Karena knowledge base yang dikirimkan identik antar-bab, bab ke-2 dan seterusnya memanfaatkan *prompt caching hit* (~100% reusable context di Anthropic/Gemini) yang menghemat biaya token hingga 90% dan mempercepat respons. Hasil disajikan dalam akordeon ringkas per bab dengan deep link langsung ke kutipan terkait di editor manuskrip.
 
+
+## Round-trip Proyek (F10)
+
+Ekspor/impor per-proyek menyertakan continuityTriage. Impor menetapkan ID baru lalu memetakan workshopKey entry:<id> serta findingId gap/unused (Codex), rel (relasi), tl dan chrono (timeline). Pesan chat, HTML naskah, dan new:<seed> tidak diubah. Referensi triage yang sudah tidak punya target dibuang sebagai status basi; format finding asing atau target workshop invalid membatalkan impor secara atomik. Backup lama tanpa triage tetap diterima.

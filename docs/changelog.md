@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F10 ? Round-trip Triage dan Sesi Workshop
+
+- Lengkapi import continuityTriage dalam transaksi proyek baru. Petakan findingId Codex/relasi/timeline/kronologi setelah ID dependen tersedia; pertahankan status/timestamp, lepas primary key sumber.
+- Remap workshopKey entry:<id> melalui Codex baru; biarkan new:<seed>, pesan chat, dan HTML tetap literal. Format finding asing/target workshop tidak valid membatalkan impor atomik; triage dengan target yang sudah hilang tidak diimpor.
+- Verifikasi: 56 berkas/639 tes lulus; typecheck dan build lulus (peringatan build lama tetap ada). Tes round-trip gagal pada baseline e17b932 karena hasil triage impor kosong, lalu lulus setelah perbaikan. Lima tes DB/pure mencakup ekspor/impor dua kali, semua bentuk finding yang dipakai consumer, ID baru, sumber tidak berubah, rollback dan legacy tanpa triage. Batas: fixture sintetis, belum browser native/file pengguna.
+
+
 ### [Fix] F19/F20 ? Snapshot Konsisten dan Retensi Drive Setelah Upload
 
 - Pusatkan pembacaan backup dalam transaksi readonly setelah flush editor tervalidasi, termasuk backup per-proyek dan metadata ekspor manuskrip. Blob/checksum/kompresi di luar transaksi; save gagal menghentikan operasi dengan pesan error.

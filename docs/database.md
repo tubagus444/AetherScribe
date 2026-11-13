@@ -381,3 +381,7 @@ Hapus proyek membersihkan seluruh tabel domain project-scoped; snapshot bab proy
 - **Relasi:** FK `projectId` -> `projects.id`
 - **Index penting:** `++id`, `projectId`, `findingId`
 - **File migration terkait:** `src/db.ts` (v33)
+
+## Impor Identitas Triage dan Workshop (F10)
+
+Schema v33 tidak berubah. Transaksi importProjectData kini mencakup continuityTriage. ID timeline/relationships dikumpulkan dari hasil bulkAdd untuk remap findingId, selain chapterIdMap/codexIdMap/mapIdMap. Primary key triage lama dilepas, projectId diganti, status/timestamp dipertahankan. workshopKey entry:<id> mengikuti ID Codex baru; teks chat tetap literal. Format findingId yang tidak dikenal membatalkan seluruh transaksi, sedangkan finding lama dengan target yang sudah hilang dibuang. Tidak memodifikasi proyek sumber atau tabel proyek lain.
