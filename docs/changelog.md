@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F02/F18 — Batas Localhost dan Validasi Proxy
+
+- Bind server ke 127.0.0.1; periksa Host/Origin/Sec-Fetch-Site sebelum parser/akses key. Batasi Ollama ke loopback HTTP port 11434 dan tolak redirect pada semua request upstream.
+- Validasi objek request, provider, model, stream, dan URL sebelum handler async. Tambahkan wrapper rejection untuk semua POST serta error JSON parser/oversize terstruktur. Ekspor factory app agar HTTP dapat diuji tanpa startup Vite.
+- Tambahkan 26 tes boundary dan HTTP loopback dengan upstream mock. Seluruh 609 tes lulus; typecheck dan build lulus (peringatan build lama tetap ada). Tidak menggunakan key/data pengguna. Kebijakan dan batas kompatibilitas Ollama remote didokumentasikan di docs/api.md; F21 tetap terbuka.
+
 ### [Fix] F01 — Stored XSS pada Label Atlas
 
 - Mengganti string HTML ikon dengan DOM dalam `atlasMarkerIcons.ts`. Judul marker/nama Codex pada pin, area, route, dan portal menggunakan `textContent`; tooltip dinamis Leaflet menerima HTMLElement. SVG dekoratif memakai atribut konstan, tanpa parsing markup dari data pengguna.

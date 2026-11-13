@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
+import { proxyBoundary, validateProxyRequest } from "./src/server/proxyBoundary";
 
 // SV10: pola penanganan error yang sama dipakai di tiga endpoint → satu helper.
 // Menghormati SV3: bila header sudah terkirim (stream SSE) jangan tulis status lagi.
@@ -14,16 +15,23 @@ function sendError(res: express.Response, status: number, error: any, context: s
   res.status(status).json({ error: error?.message || fallbackMsg || String(error) });
 }
 
-async function startServer() {
+export function createProxyApp() {
   const app = express();
   const PORT = 3000;
 
   // Body bisa besar pada mode caching (full Story Bible + Codex di system prompt).
   // Default Express 100kb akan menolak (413), jadi limit dinaikkan.
+  app.use('/api', proxyBoundary);
   app.use(express.json({ limit: '25mb' }));
 
+  app.use('/api', validateProxyRequest);
+
+  const post = (route: string, handler: express.RequestHandler) => app.post(route, (req, res, next) => {
+    void Promise.resolve().then(() => handler(req, res, next)).catch(next);
+  });
+
   // API Proxy Layer for AI Calls
-  app.post("/api/ai/proxy", async (req, res) => {
+  post("/api/ai/proxy", async (req, res) => {
     // SV2: batalkan permintaan ke provider bila klien memutus koneksi (hemat kuota & resource).
     const upstream = new AbortController();
     res.on('close', () => upstream.abort());
@@ -106,6 +114,7 @@ async function startServer() {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(body),
+        redirect: 'error',
         signal: upstream.signal
       });
 
@@ -156,7 +165,7 @@ async function startServer() {
   });
 
   // Query Allowed Gemini Models from Google API
-  app.post("/api/ai/google-models", async (req, res) => {
+  post("/api/ai/google-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';
     const apiKey = clientApiKey || process.env.GEMINI_API_KEY || '';
 
@@ -167,7 +176,7 @@ async function startServer() {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -181,7 +190,7 @@ async function startServer() {
   });
 
   // Query Allowed Groq Models (OpenAI-compatible endpoint)
-  app.post("/api/ai/groq-models", async (req, res) => {
+  post("/api/ai/groq-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';
     const apiKey = clientApiKey || process.env.GROQ_API_KEY || '';
 
@@ -191,7 +200,7 @@ async function startServer() {
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/models', {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -206,7 +215,7 @@ async function startServer() {
   });
 
   // Query Allowed OpenAI Models
-  app.post("/api/ai/openai-models", async (req, res) => {
+  post("/api/ai/openai-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';
     const apiKey = clientApiKey || process.env.OPENAI_API_KEY || '';
 
@@ -216,7 +225,7 @@ async function startServer() {
 
     try {
       const response = await fetch('https://api.openai.com/v1/models', {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -231,7 +240,7 @@ async function startServer() {
   });
 
   // Query Allowed Hugging Face Models (router OpenAI-compatible)
-  app.post("/api/ai/huggingface-models", async (req, res) => {
+  post("/api/ai/huggingface-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';
     const apiKey = clientApiKey || process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || '';
 
@@ -241,7 +250,7 @@ async function startServer() {
 
     try {
       const response = await fetch('https://router.huggingface.co/v1/models', {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -256,7 +265,7 @@ async function startServer() {
   });
 
   // Query Allowed Claude (Anthropic) Models
-  app.post("/api/ai/claude-models", async (req, res) => {
+  post("/api/ai/claude-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';
     const apiKey = clientApiKey || process.env.CLAUDE_API_KEY || '';
 
@@ -266,7 +275,7 @@ async function startServer() {
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/models?limit=1000', {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
@@ -282,13 +291,13 @@ async function startServer() {
   });
 
   // Query Ollama Models
-  app.post("/api/ai/ollama-models", async (req, res) => {
+  post("/api/ai/ollama-models", async (req, res) => {
     const { baseUrl } = req.body;
     const url = `${(baseUrl || 'http://localhost:11434').replace(/\/$/, '')}/api/tags`;
 
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'GET', redirect: 'error',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -305,6 +314,17 @@ async function startServer() {
     }
   });
 
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    if (res.headersSent) { res.end(); return; }
+    const status = err.status === 413 ? 413 : err.status === 400 ? 400 : 500;
+    res.status(status).json({ error: status === 500 ? 'Proxy gagal memproses permintaan.' : 'Permintaan JSON tidak valid atau terlalu besar.' });
+  });
+  return app;
+}
+
+async function startServer() {
+  const app = createProxyApp();
+  const PORT = 3000;
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -322,9 +342,9 @@ async function startServer() {
     }
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(PORT, "127.0.0.1", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
-startServer();
+if (process.env.VITEST !== 'true') void startServer();

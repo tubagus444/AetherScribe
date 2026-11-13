@@ -46,8 +46,20 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi sesudah perbaikan: dua berkas tes F01 — 49/49 lulus, memakai Leaflet asli di jsdom untuk badge pin/area/route/portal, tooltip, nama marker/Codex, warna, edit handle, serta klik/dobel-klik. `npx vitest run` — 50 berkas/583 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build tetap terkait bundle besar, import ActionsPanel, eval ONNX, dan Browserslist lama.
   - Dokumentasi modul: `docs/features.md`, `docs/backup-format.md`, `docs/changelog.md`, `.claude/rules/atlas.md`.
   - Batas verifikasi / risiko tersisa: fixture sintetis, tidak memakai data pengguna. Belum pemeriksaan visual atau eksekusi payload di browser native; jsdom memverifikasi bahwa markup tidak menjadi node/handler. Tidak mengklaim mitigasi XSS di modul lain. F24 harness/CI penuh tetap terbuka.
-- [ ] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
-- [ ] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).
+- [x] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
+  - Tanggal / commit atau PR: 13 November 2026; commit `fix(proxy): batasi akses localhost dan validasi request (F02/F18)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: loopback bind, Host/Origin guard, allowlist Ollama dan redirect:error; schema request sebelum handler, wrapper rejection async dan error middleware JSON.
+  - Bukti sebelum: source server.ts pada c152d2e bind 0.0.0.0, memakai URL request tanpa allowlist, model.includes/baseUrl.replace sebelum try.
+  - Verifikasi: 26 tes boundary/HTTP loopback terisolasi lulus; seluruh 52 berkas/609 tes lulus; npm run lint, npm run build dan git diff --check lulus. Peringatan build lama tetap ada (bundle/ActionsPanel/ONNX/Browserslist).
+  - Dokumentasi: docs/api.md dan docs/changelog.md.
+  - Batas: tanpa key/provider nyata; Host/Origin bukan autentikasi proses lokal. Ollama remote/port kustom sengaja ditolak; F21 tetap terbuka.
+- [x] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).
+  - Tanggal / commit atau PR: 13 November 2026; commit `fix(proxy): batasi akses localhost dan validasi request (F02/F18)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: loopback bind, Host/Origin guard, allowlist Ollama dan redirect:error; schema request sebelum handler, wrapper rejection async dan error middleware JSON.
+  - Bukti sebelum: source server.ts pada c152d2e bind 0.0.0.0, memakai URL request tanpa allowlist, model.includes/baseUrl.replace sebelum try.
+  - Verifikasi: 26 tes boundary/HTTP loopback terisolasi lulus; seluruh 52 berkas/609 tes lulus; npm run lint, npm run build dan git diff --check lulus. Peringatan build lama tetap ada (bundle/ActionsPanel/ONNX/Browserslist).
+  - Dokumentasi: docs/api.md dan docs/changelog.md.
+  - Batas: tanpa key/provider nyata; Host/Origin bukan autentikasi proses lokal. Ollama remote/port kustom sengaja ditolak; F21 tetap terbuka.
 - [x] **[F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai** (High; M).
   - Tanggal / commit atau PR: 10 November 2026; commit `fix(backup): lindungi aset Atlas dan validasi restore (F03/F04)` (commit yang menambahkan bukti ini).
   - Perubahan inti: schema/limit terpusat untuk UI/core/internal/Drive, scope restore-all vs import-project, versi 3–8, struktur record/metadata, ID/kunci unik/FK lintas-proyek, raster data URL tanpa jaringan, batas file/dekompresi/record. Legacy dinormalisasi sesudah checksum. Snapshot pengaman lengkap wajib berhasil sebelum mutasi; error ditampilkan ke pengguna.
