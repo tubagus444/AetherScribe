@@ -18,6 +18,7 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Manajemen Bab & Papan Babak (Kanban Act)
+- **Perbaikan F06:** ChapterList memakai tipe metadata tanpa content. Duplikasi melakukan flush editor sebelum membaca entitas lengkap dari DB, menyalin HTML/metadata ke ID baru dan menempatkannya sesudah sumber. Operasi daftar memakai `chapterOperations.ts`: urutan awal order lalu ID, dinormalisasi 0..N-1 dalam transaksi pada tambah/hapus/duplikasi/perpindahan. Kegagalan transaksi rollback; kegagalan flush membatalkan duplikasi dan ditampilkan melalui toast. Relasi/snapshot/chat bab tidak ikut digandakan; cleanup referensi saat delete tetap cakupan F11.
 - **Status:** Selesai
 - **Deskripsi:** Pengorganisasian bab naskah dengan drag-and-drop reordering, penetapan status draf, target kata per bab, dan visualisasi babak naratif (Act I, II-A, II-B, III).
 - **File terkait:** `src/features/chapters/components/OutlinePanel.tsx`, `src/features/chapters/components/ChapterList.tsx`, `src/features/chapters/hooks/useChapters.ts`

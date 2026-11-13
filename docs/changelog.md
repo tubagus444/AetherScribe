@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F06/F07 — Duplikasi Bab, Urutan Atomik, dan Persistensi Triage
+
+- Duplikasi ChapterList membaca entitas lengkap setelah flush editor, bukan metadata list dengan content kosong. Pisahkan tipe metadata; normalisasi urutan add/delete/duplicate/move dalam transaksi dengan tie-break ID. Error operasi ditampilkan ke pengguna.
+- Ganti query compound-index triage yang tidak tersedia dengan query projectId/filter findingId. Set/update/clear transaksional, terisolasi proyek dan mengonsolidasi duplikat pasangan yang disentuh. Schema DB tetap v33.
+- Verifikasi: 53 berkas/616 tes lulus, typecheck dan build lulus (peringatan bundle/ActionsPanel/ONNX/Browserslist lama tetap ada). Tujuh tes regresi DB terisolasi mencakup salinan HTML/metadata, urutan, rollback, kegagalan flush, concurrency, isolasi proyek dan persistensi setelah koneksi dibuka ulang. Batas: belum pengujian UI/browser native; F10/F11 tetap terbuka.
+
 ### [Fix] F02/F18 — Batas Localhost dan Validasi Proxy
 
 - Bind server ke 127.0.0.1; periksa Host/Origin/Sec-Fetch-Site sebelum parser/akses key. Batasi Ollama ke loopback HTTP port 11434 dan tolak redirect pada semua request upstream.

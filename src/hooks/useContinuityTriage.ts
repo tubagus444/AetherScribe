@@ -1,3 +1,4 @@
+import { writeTriage } from '@/src/services/continuityTriageService';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -23,50 +24,8 @@ export function useContinuityTriage(projectId: number) {
     }
   }
 
-  const setTriage = useCallback(async (findingId: string, status: TriageStatus) => {
-    // Avoid dependency on triageMap by querying directly before update
-    // Alternatively, use triageMap if we are confident it's up to date.
-    // Let's query to be safe against race conditions.
-    const existing = await db.continuityTriage
-      .where('[projectId+findingId]')
-      .equals([projectId, findingId])
-      .first();
-      
-    // Wait, we don't have [projectId+findingId] index. We only have ++id, projectId, findingId.
-    // Let's use triageMap to find the ID.
-    const existingFromMap = triageMap.get(findingId);
-    
-    if (existingFromMap?.id) {
-      await db.continuityTriage.update(existingFromMap.id, { status, timestamp: Date.now() });
-    } else {
-      // Need to query just in case it wasn't in map yet due to React render cycle
-      const allForProject = await db.continuityTriage.where('projectId').equals(projectId).toArray();
-      const dbExisting = allForProject.find(t => t.findingId === findingId);
-      if (dbExisting?.id) {
-        await db.continuityTriage.update(dbExisting.id, { status, timestamp: Date.now() });
-      } else {
-        await db.continuityTriage.add({
-          projectId,
-          findingId,
-          status,
-          timestamp: Date.now(),
-        });
-      }
-    }
-  }, [projectId, triageMap]);
-
-  const clearTriage = useCallback(async (findingId: string) => {
-    const existingFromMap = triageMap.get(findingId);
-    if (existingFromMap?.id) {
-      await db.continuityTriage.delete(existingFromMap.id);
-    } else {
-      const allForProject = await db.continuityTriage.where('projectId').equals(projectId).toArray();
-      const dbExisting = allForProject.find(t => t.findingId === findingId);
-      if (dbExisting?.id) {
-        await db.continuityTriage.delete(dbExisting.id);
-      }
-    }
-  }, [projectId, triageMap]);
+  const setTriage = useCallback((findingId: string, status: TriageStatus) => writeTriage(projectId, findingId, status), [projectId]);
+  const clearTriage = useCallback((findingId: string) => writeTriage(projectId, findingId), [projectId]);
 
   return {
     triageMap,

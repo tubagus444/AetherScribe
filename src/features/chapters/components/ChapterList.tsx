@@ -1,3 +1,6 @@
+import { changeChapters, compareChapters } from '@/src/services/chapterOperations';
+import { useToast } from '@/src/hooks/useToast';
+type ChapterListMetadata = Omit<Chapter, 'content'> & { _computedWordCount: number };
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -8,7 +11,7 @@ import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
 import { db } from '@/src/db';
 import { Plus, FileText, Trash2, Copy, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn, countWords } from '@/src/lib/utils';
-import { ChapterStatus } from '@/src/types';
+import { Chapter } from '@/src/types';
 import { STATUS_DOTS } from '@/src/lib/constants';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -19,17 +22,14 @@ interface ChapterListProps {
 }
 
 export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterListProps) {
+  const { toast } = useToast();
   const parentRef = useRef<HTMLDivElement>(null);
 
   const chapters = useOptimizedLiveQuery(async () => {
     const all = await db.chapters.where('projectId').equals(projectId).toArray();
-    const sorted = all.sort((a, b) => a.order - b.order);
+    const sorted = all.sort(compareChapters);
     
-    return sorted.map(ch => ({
-      ...ch,
-      content: '', // Kosongkan content, kita hanya butuh judul dan metadata untuk list
-      _computedWordCount: countWords(ch.content)
-    }));
+    return sorted.map(({ content, ...metadata }): ChapterListMetadata => ({ ...metadata, _computedWordCount: countWords(content) }));
   }, [projectId]);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -42,16 +42,8 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
   });
 
   const addChapter = async () => {
-    const nextOrder = chapters ? chapters.length : 0;
-    const id = await db.chapters.add({
-      projectId,
-      title: `Chapter ${nextOrder + 1}`,
-      content: '',
-      summary: '',
-      status: 'outline',
-      order: nextOrder,
-      lastModified: Date.now(),
-    });
+    const nextOrder = chapters?.length ?? 0;
+    const id = await changeChapters(projectId, 'add');
     onSelect(id as number);
     
     setTimeout(() => {
@@ -62,10 +54,10 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
   const deleteChapter = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     if (deleteConfirmId === id) {
-      await db.chapters.delete(id);
+      await changeChapters(projectId, 'delete', id);
       setDeleteConfirmId(null);
       if (activeChapterId === id) {
-        const remaining = await db.chapters.where('projectId').equals(projectId).first();
+        const remaining = (await db.chapters.where('projectId').equals(projectId).toArray()).sort(compareChapters)[0];
         if (remaining) {
           onSelect(remaining.id!);
         } else {
@@ -78,31 +70,17 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
     }
   };
 
-  const duplicateChapter = async (e: React.MouseEvent, chapter: any) => {
+  const duplicateChapter = async (e: React.MouseEvent, chapter: ChapterListMetadata) => {
     e.stopPropagation();
-    const id = await db.chapters.add({
-      ...chapter,
-      id: undefined,
-      title: `${chapter.title} (Copy)`,
-      lastModified: Date.now(),
-      order: chapter.order + 1
-    });
-    onSelect(id as number);
+    const id = await changeChapters(projectId, 'duplicate', chapter.id);
+    onSelect(id!);
   };
-
-  const moveChapter = async (e: React.MouseEvent, chapter: any, direction: 'up' | 'down') => {
+  const moveChapter = async (e: React.MouseEvent, chapter: ChapterListMetadata, direction: 'up' | 'down') => {
     e.stopPropagation();
-    if (!chapters) return;
-    const index = chapters.findIndex(c => c.id === chapter.id);
-    if (direction === 'up' && index > 0) {
-      const prev = chapters[index - 1];
-      await db.chapters.update(chapter.id!, { order: prev.order });
-      await db.chapters.update(prev.id!, { order: chapter.order });
-    } else if (direction === 'down' && index < chapters.length - 1) {
-      const next = chapters[index + 1];
-      await db.chapters.update(chapter.id!, { order: next.order });
-      await db.chapters.update(next.id!, { order: chapter.order });
-    }
+    await changeChapters(projectId, direction, chapter.id);
+  };
+  const reportFailure = (operation: Promise<unknown>) => {
+    void operation.catch(error => { console.error('Chapter operation failed:', error); toast.error('Operasi bab gagal. Draft dan perubahan yang belum tersimpan perlu dicoba kembali.'); });
   };
 
   return (
@@ -113,7 +91,7 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
           Outline
         </h2>
         <button 
-          onClick={addChapter}
+          onClick={() => reportFailure(addChapter())}
           className="p-1 hover:bg-indigo-50 rounded text-slate-400 dark:text-slate-500 hover:text-indigo-600 transition-all active:scale-90"
           title="New Chapter"
         >
@@ -150,9 +128,9 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
                   isActive={activeChapterId === chapter.id}
                   deleteConfirmId={deleteConfirmId}
                   onSelect={onSelect}
-                  onDelete={deleteChapter}
-                  onDuplicate={duplicateChapter}
-                  onMove={moveChapter}
+                  onDelete={(e, id) => reportFailure(deleteChapter(e, id))}
+                  onDuplicate={(e, chapter) => reportFailure(duplicateChapter(e, chapter))}
+                  onMove={(e, chapter, direction) => reportFailure(moveChapter(e, chapter, direction))}
                 />
               </div>
             );
@@ -164,13 +142,13 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
 }
 
 interface ChapterListItemProps {
-  chapter: any;
+  chapter: ChapterListMetadata;
   isActive: boolean;
   deleteConfirmId: number | null;
   onSelect: (id: number) => void;
   onDelete: (e: React.MouseEvent, id: number) => void;
-  onDuplicate: (e: React.MouseEvent, chapter: any) => void;
-  onMove: (e: React.MouseEvent, chapter: any, direction: 'up' | 'down') => void;
+  onDuplicate: (e: React.MouseEvent, chapter: ChapterListMetadata) => void;
+  onMove: (e: React.MouseEvent, chapter: ChapterListMetadata, direction: 'up' | 'down') => void;
 }
 
 const ChapterListItem = React.memo(function ChapterListItem({ chapter, isActive, deleteConfirmId, onSelect, onDelete, onDuplicate, onMove }: ChapterListItemProps) {

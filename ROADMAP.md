@@ -67,8 +67,18 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi sesudah perbaikan: penolakan tanpa clear/snapshot untuk input invalid, fixture legacy v3–v7, impor non-destruktif dengan gambar, rollback insert gagal, kegagalan snapshot, batas stream/gzip/gambar, dan jalur Drive fetch mock lulus. `npx vitest run` — 48 berkas/534 tes lulus; `npm run lint` dan `npm run build` lulus (peringatan bundle/ActionsPanel/ONNX/Browserslist tetap ada).
   - Dokumentasi modul: sama dengan F03; detail kontrak dan batas ada di `docs/backup-format.md`.
   - Batas verifikasi / risiko tersisa: belum browser native/Drive nyata atau file legacy pengguna. Record/referensi workspace yang sudah tidak valid dapat menghalangi snapshot pengaman; restore dibatalkan. F10/F11/F19 dan harness/CI penuh F24 tetap terbuka.
-- [ ] **[F06](docs/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu** (Medium; S).
-- [ ] **[F07](docs/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada** (Medium; S).
+- [x] **[F06](docs/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu** (Medium; S).
+  - Tanggal / commit: 13 November 2026; commit `fix(chapters): perbaiki duplikasi, urutan bab, dan triage (F06/F07)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: F06 membaca entitas lengkap setelah flush dan menormalkan order secara atomik; F07 memakai indeks projectId dengan upsert/clear transaksional tanpa migrasi.
+  - Bukti awal: ChapterList menduplikasi proyeksi content kosong dan menukar order lewat update terpisah; setter triage menunggu compound index yang tidak ada.
+  - Verifikasi: tujuh tes DB sintetis terisolasi mencakup duplikasi, urutan, rollback, gagal flush, concurrency, isolasi proyek dan reopen koneksi; hasil pemeriksaan akhir dicatat di changelog.
+  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum UI/browser native; cleanup referensi F11 dan ekspor triage F10 tetap terbuka.
+- [x] **[F07](docs/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada** (Medium; S).
+  - Tanggal / commit: 13 November 2026; commit `fix(chapters): perbaiki duplikasi, urutan bab, dan triage (F06/F07)` (commit yang menambahkan bukti ini).
+  - Perubahan inti: F06 membaca entitas lengkap setelah flush dan menormalkan order secara atomik; F07 memakai indeks projectId dengan upsert/clear transaksional tanpa migrasi.
+  - Bukti awal: ChapterList menduplikasi proyeksi content kosong dan menukar order lewat update terpisah; setter triage menunggu compound index yang tidak ada.
+  - Verifikasi: tujuh tes DB sintetis terisolasi mencakup duplikasi, urutan, rollback, gagal flush, concurrency, isolasi proyek dan reopen koneksi; hasil pemeriksaan akhir dicatat di changelog.
+  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum UI/browser native; cleanup referensi F11 dan ekspor triage F10 tetap terbuka.
 
 ### P2 — Correctness dan reliabilitas berikutnya
 

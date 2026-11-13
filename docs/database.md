@@ -7,6 +7,8 @@
 
 ## 1. Konvensi & Aturan Database
 
+**F06/F07 (13 November 2026):** Normalisasi urutan ChapterList berlangsung dalam satu transaksi chapters, dengan tie-break ID untuk order lama yang sama. Triage memakai indeks projectId yang sudah ada, memfilter findingId dalam transaksi read-write untuk set/update/clear. Upsert bersamaan diserialisasi oleh transaksi; duplikat lama untuk pasangan proyek/finding yang disentuh dikonsolidasi. Tidak mengubah schema v33 atau menambah indeks. Hook membaca ulang state persisten melalui live query; round-trip ekspor triage F10 tetap terpisah.
+
 **Flush sebelum pembaruan lintas-tab (F05):** Handler `versionchange` di `src/db.ts` mengembalikan `false` agar Dexie tidak otomatis menutup koneksi sebelum flush selesai. Koneksi ditutup dan halaman dimuat ulang hanya setelah `flushActiveEditor()` resolve. Jika flush reject, koneksi tetap terbuka dan isu DB ditampilkan agar draft editor dapat dicoba simpan ulang. Konsekuensinya, upgrade pada tab lain tetap terblokir sampai koneksi lama dapat ditutup dengan aman. Tidak ada perubahan skema untuk perbaikan ini.
 
 1. **Skema Bersifat Append-Only:**
