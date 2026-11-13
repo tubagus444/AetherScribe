@@ -273,6 +273,7 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Pencadangan Otomatis & Google Drive Sync
+- **F19/F20:** Backup penuh/per-proyek dan ekspor manuskrip melakukan flush tervalidasi serta membaca snapshot transaksi readonly. Serialisasi Blob/kompresi di luar transaksi. Drive upload sukses dengan ID mendahului retensi; gagal prune dilaporkan terpisah. Lihat [kontrak backup](backup-format.md).
 - **Status:** Selesai
 - **Deskripsi:** Sistem cadangan berkala ke file terkompresi gzip, retensi kuota otomatis, dan integrasi opsional ke folder Google Drive pribadi via GIS token.
 - **File terkait:** `src/services/backupService.ts`, `src/services/driveBackupService.ts`, `src/lib/backupValidation.ts`, `src/lib/backupIO.ts`, `src/lib/backupLimits.ts`, `src/lib/backupRetention.ts`, `src/hooks/useAutoBackup.tsx`

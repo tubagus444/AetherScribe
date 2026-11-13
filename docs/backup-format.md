@@ -50,4 +50,8 @@ File ditolak sebelum pembacaan jika ukurannya berlebihan. Unduhan Drive dihitung
 
 `src/services/backupService.test.ts` dan `driveBackupService.test.ts` menguji DB sintetis terisolasi, auto/full/pre-restore, undo gambar, legacy v3–v7, scope/versi/schema/FK, checksum, rollback transaksi, kegagalan snapshot, batas ukuran/dekompresi, dan Drive dengan fetch mock. Tujuh probe regresi gagal pada kode sebelum perbaikan lalu lulus setelahnya.
 
-Belum diuji dengan IndexedDB browser native, akun Drive nyata, atau file novel pengguna. Fixture legacy adalah data sintetis yang mewakili versi envelope, bukan koleksi file historis pengguna. Konsistensi snapshot saat ada penulisan bersamaan dan flush editor sebelum backup tetap menjadi cakupan F19; round-trip triage/workshop F10 tetap terbuka.
+Belum diuji dengan IndexedDB browser native, akun Drive nyata, atau file novel pengguna. Fixture legacy adalah data sintetis yang mewakili versi envelope, bukan koleksi file historis pengguna. F19: pengumpulan backup/ekspor melakukan flush tervalidasi, lalu membaca tabel dalam satu transaksi readonly melalui backupSnapshot.ts. Blob diserialisasi dan checksum/kompresi dilakukan setelah transaksi. Ekspor manuskrip membaca ulang bab terpilih dan metadata proyek dari snapshot tersebut, bukan state live-query lama. Snapshot menjamin konsistensi antar-store pada saat baca, bukan menyertakan edit yang baru terjadi setelah flush/snapshot. Round-trip workshop dan pemetaan findingId F10 tetap terbuka.
+
+## Retensi Drive (F20)
+
+Unggah dahulu, pastikan HTTP sukses dan response memuat ID file; baru jalankan retensi. Upload gagal/network error/response tanpa ID tidak menghapus backup lama. Kegagalan prune dicatat terpisah dan ditampilkan sebagai warning pada sinkronisasi manual, tanpa mengubah sukses upload. Verifikasi ini memakai respons Drive, bukan unduh ulang dan pembandingan hash berkas remote.

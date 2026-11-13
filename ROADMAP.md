@@ -90,7 +90,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti awal: jalur delete bab hanya menghapus chapter; map tidak melepas portal masuk; project hanya mencari snapshot dari bab yang masih ada.
   - Verifikasi: sembilan tes DB terisolasi untuk isolasi proyek, unlink, orphan snapshot, backup retention dan rollback; seluruh 54 berkas/625 tes lulus, typecheck dan build lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/database.md, docs/features.md, docs/changelog.md. Batas: belum browser native/lintas-tab nyata; F10/F19 tetap terbuka.
-- [ ] **[F19](docs/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten** (Medium; M).
+- [x] **[F19](docs/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten** (Medium; M).
+  - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
+  - Perubahan: snapshot readonly setelah flush editor, serialisasi di luar transaksi; ekspor membaca data terbaru. Upload Drive diverifikasi sukses/ID sebelum prune; kegagalan retensi dilaporkan terpisah.
+  - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
+  - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
+  - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
 - [ ] **[F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi** (Medium; S–M).
 - [ ] **[F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key** (Medium; S).
 - [ ] **[F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong** (Medium; M).
@@ -99,7 +104,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 - [ ] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
 - [ ] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
 - [ ] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).
-- [ ] **[F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses** (Medium; S).
+- [x] **[F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses** (Medium; S).
+  - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
+  - Perubahan: snapshot readonly setelah flush editor, serialisasi di luar transaksi; ekspor membaca data terbaru. Upload Drive diverifikasi sukses/ID sebelum prune; kegagalan retensi dilaporkan terpisah.
+  - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
+  - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
+  - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
 - [ ] **[F21](docs/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik** (Medium; M).
 - [ ] **[F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus** (Medium; S–M).
 - [ ] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).

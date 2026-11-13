@@ -1,3 +1,4 @@
+import { readBackupSnapshot } from './backupSnapshot';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -130,23 +131,8 @@ export const backupService = {
    * but manual backup collects everything to ensure full redundancy.
    */
   async collectAllData(): Promise<BackupData> {
-    const data = {
-      projects: await db.projects.toArray(),
-      chapters: await db.chapters.toArray(),
-      codex: await db.codex.toArray(),
-      bible: await db.bible.toArray(),
-      aiActions: await db.aiActions.toArray(),
-      snapshots: await db.snapshots.toArray(),
-      timeline: await db.timeline.toArray(),
-      relationships: await db.relationships.toArray(),
-      chatSessions: await db.chatSessions.toArray(),
-      codexCategories: await db.codexCategories.toArray(),
-      plotPromises: await db.plotPromises.toArray(),
-      glossary: await db.glossary.toArray(),
-      maps: await this.serializeMaps(await db.maps.toArray()),
-      mapMarkers: await db.mapMarkers.toArray(),
-      continuityTriage: await db.continuityTriage.toArray()
-    };
+    const data = await readBackupSnapshot() as BackupData['data'];
+    data.maps = await this.serializeMaps(data.maps ?? []);
     return {
       version: 8, // v8: kebijakan aset eksplisit; v7: maps/mapMarkers
       timestamp: Date.now(),
@@ -166,32 +152,9 @@ export const backupService = {
    * agar jalur restore-penuh bisa menolaknya (lihat catatan di BackupData.scope).
    */
   async collectProjectData(projectId: number): Promise<BackupData> {
-    const project = await db.projects.get(projectId);
-    if (!project) throw new Error('Proyek tidak ditemukan');
-
-    const chapters = await db.chapters.where('projectId').equals(projectId).toArray();
-    const chapterIds = chapters.map(c => c.id!).filter((id): id is number => id != null);
-    const snapshots = chapterIds.length
-      ? await db.snapshots.where('chapterId').anyOf(chapterIds).toArray()
-      : [];
-
-    const data = {
-      projects: [project],
-      chapters,
-      codex: await db.codex.where('projectId').equals(projectId).toArray(),
-      bible: await db.bible.where('projectId').equals(projectId).toArray(),
-      aiActions: await db.aiActions.where('projectId').equals(projectId).toArray(),
-      snapshots,
-      timeline: await db.timeline.where('projectId').equals(projectId).toArray(),
-      relationships: await db.relationships.where('projectId').equals(projectId).toArray(),
-      chatSessions: await db.chatSessions.where('projectId').equals(projectId).toArray(),
-      codexCategories: await db.codexCategories.where('projectId').equals(projectId).toArray(),
-      plotPromises: await db.plotPromises.where('projectId').equals(projectId).toArray(),
-      glossary: await db.glossary.where('projectId').equals(projectId).toArray(),
-      // Ekspor per-novel = jalur LENGKAP: gambar peta ikut (base64) agar restore utuh.
-      maps: await this.serializeMaps(await db.maps.where('projectId').equals(projectId).toArray()),
-      mapMarkers: await db.mapMarkers.where('projectId').equals(projectId).toArray()
-    };
+    const data = await readBackupSnapshot(projectId) as BackupData['data'];
+    const project = data.projects[0];
+    data.maps = await this.serializeMaps(data.maps ?? []);
     return {
       version: 8,
       timestamp: Date.now(),

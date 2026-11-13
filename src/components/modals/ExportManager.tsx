@@ -1,3 +1,5 @@
+import { useToast } from '@/src/hooks/useToast';
+import { readBackupSnapshot } from '@/src/services/backupSnapshot';
 /**
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -71,6 +73,7 @@ function makeUuid(): string {
 const yieldToUI = () => new Promise<void>((r) => setTimeout(r, 0));
 
 export function ExportManager({ projectId, project, onClose }: ExportManagerProps) {
+  const { toast } = useToast();
   const [status, setStatus] = useState<ExportStatus>('idle');
   const [format, setFormat] = useState<ExportFormat>('md');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -116,15 +119,15 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
 
   // ── Eksportir ────────────────────────────────────────────────────────────────
 
-  const exportMarkdown = (list: Chapter[]) => {
-    let content = `# ${project?.name || 'Untitled Project'}\n\n`;
+  const exportMarkdown = (list: Chapter[], exportProject = project) => {
+    let content = `# ${exportProject?.name || 'Untitled Project'}\n\n`;
     list.forEach(ch => {
       content += `## ${ch.title}\n\n${htmlToMarkdown(ch.content)}\n\n`;
     });
-    saveAs(new Blob([content], { type: 'text/markdown' }), `${project?.name || 'Manuscript'}.md`);
+    saveAs(new Blob([content], { type: 'text/markdown' }), `${exportProject?.name || 'Manuscript'}.md`);
   };
 
-  const exportPDF = async (list: Chapter[]) => {
+  const exportPDF = async (list: Chapter[], exportProject = project) => {
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
@@ -137,7 +140,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
 
     // Halaman judul sederhana
     doc.setFontSize(24);
-    doc.text(project?.name || 'Manuscript', pageWidth / 2, y + 40, { align: 'center' });
+    doc.text(exportProject?.name || 'Manuscript', pageWidth / 2, y + 40, { align: 'center' });
     doc.setFontSize(14);
     doc.text('A Novel Manuscript', pageWidth / 2, y + 55, { align: 'center' });
     doc.addPage();
@@ -198,7 +201,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
       if ((index & 7) === 7) await yieldToUI();
     }
 
-    doc.save(`${project?.name || 'Manuscript'}.pdf`);
+    doc.save(`${exportProject?.name || 'Manuscript'}.pdf`);
   };
 
   const htmlToDocxElements = (html: string): Paragraph[] => {
@@ -300,7 +303,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
     return elements;
   };
 
-  const exportDocx = async (list: Chapter[]) => {
+  const exportDocx = async (list: Chapter[], exportProject = project) => {
     const sections: Paragraph[] = [];
     for (let i = 0; i < list.length; i++) {
       const ch = list[i];
@@ -310,17 +313,17 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
     }
 
     const doc = new Document({
-      title: project?.name,
+      title: exportProject?.name,
       sections: [{ properties: { page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children: sections }],
     });
 
     const buffer = await Packer.toBlob(doc);
-    saveAs(buffer, `${project?.name || 'Manuscript'}.docx`);
+    saveAs(buffer, `${exportProject?.name || 'Manuscript'}.docx`);
   };
 
-  const exportEpub = (list: Chapter[]) => {
+  const exportEpub = (list: Chapter[], exportProject = project) => {
     const bytes = buildEpub({
-      title: project?.name || 'Manuscript',
+      title: exportProject?.name || 'Manuscript',
       identifier: makeUuid(),
       language: 'id',
       chapters: list.map((ch, i) => ({
@@ -328,7 +331,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
         xhtmlBody: htmlToXhtmlBody(ch.content || ''),
       })),
     });
-    saveAs(new Blob([bytes], { type: 'application/epub+zip' }), `${project?.name || 'Manuscript'}.epub`);
+    saveAs(new Blob([bytes], { type: 'application/epub+zip' }), `${exportProject?.name || 'Manuscript'}.epub`);
   };
 
   const handleExport = async () => {
@@ -341,17 +344,20 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
       await yieldToUI();
       // Lepas mark catatan revisi dari konten sebelum konversi format apa pun agar
       // catatan pribadi penulis tidak ikut terbawa ke berkas hasil ekspor.
-      const cleaned = selectedChapters.map(c => ({ ...c, content: stripRevisionComments(c.content || '') }));
+      const snapshot = await readBackupSnapshot(projectId);
+      const freshChapters = (snapshot.chapters as Chapter[]).filter(c => selectedIds.has(c.id!)).sort((a, b) => a.order - b.order || a.id! - b.id!);
+      const cleaned = freshChapters.map(c => ({ ...c, content: stripRevisionComments(c.content || '') }));
       switch (format) {
-        case 'md': exportMarkdown(cleaned); break;
-        case 'pdf': await exportPDF(cleaned); break;
-        case 'docx': await exportDocx(cleaned); break;
-        case 'epub': exportEpub(cleaned); break;
+        case 'md': exportMarkdown(cleaned, snapshot.projects[0]); break;
+        case 'pdf': await exportPDF(cleaned, snapshot.projects[0]); break;
+        case 'docx': await exportDocx(cleaned, snapshot.projects[0]); break;
+        case 'epub': exportEpub(cleaned, snapshot.projects[0]); break;
       }
       setStatus('success');
       setTimeout(() => { setStatus('idle'); onClose(); }, 2000);
     } catch (error) {
       console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Ekspor gagal.');
       setStatus('idle');
     }
   };

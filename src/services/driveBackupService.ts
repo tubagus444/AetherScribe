@@ -59,7 +59,7 @@ async function getAppFolder(accessToken: string): Promise<string | null> {
 }
 
 // Upload a single project backup with Versioning and Compression
-export async function syncProjectToDrive(force: boolean = false): Promise<boolean> {
+export async function syncProjectToDrive(force: boolean = false, onRetentionWarning?: (message: string) => void): Promise<boolean> {
   const accessToken = await getAccessToken();
   if (!accessToken) return false;
 
@@ -104,24 +104,6 @@ export async function syncProjectToDrive(force: boolean = false): Promise<boolea
   const backupDataString = JSON.stringify(backupObject);
   const { blob: contentBlob, compressed } = await backupService.compressData(backupDataString);
 
-  // Rotasi berjenjang (#3): perlakukan unggahan yang akan datang sebagai item TERBARU,
-  // lalu hapus file yang jatuh di luar kebijakan retensi (terbaru + harian + mingguan).
-  const candidates = [
-    { id: '__incoming__', ts: Date.now() },
-    ...files.map((f: any) => ({ id: f.id as string, ts: new Date(f.createdTime).getTime() }))
-  ];
-  const filesToDelete = selectBackupsToDelete(candidates, c => c.ts).filter(c => c.id !== '__incoming__');
-  for (const file of filesToDelete) {
-    // BK9: cek hasil DELETE; bila gagal, jangan diam — file lama bisa menumpuk
-    const delRes = await fetch(`${DRIVE_API_URL}/${file.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (!delRes.ok && delRes.status !== 404) {
-      console.warn(`Gagal menghapus cadangan Drive lama (${file.id}): ${delRes.status}`, await delRes.text().catch(() => ''));
-    }
-  }
-
   // Create new version. Ekstensi & mimeType mengikuti hasil kompresi (BK4): bila
   // kompresi gagal, simpan JSON mentah agar tetap bisa dipulihkan.
   const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
@@ -160,9 +142,35 @@ export async function syncProjectToDrive(force: boolean = false): Promise<boolea
      return false;
   }
 
-  // Update local record of last sync time to avoid conflicts on next sync
-  localStorage.setItem('last_drive_sync_time', new Date().toISOString());
+  const uploaded = await uploadRes.json();
+  if (!uploaded || typeof uploaded.id !== 'string' || !uploaded.id) throw new Error('Upload Drive tidak mengembalikan identitas file; retensi dibatalkan.');
+  // Catat sukses upload sebelum retensi; kegagalan prune tidak mengubah hasil upload.
+  try { localStorage.setItem('last_drive_sync_time', new Date().toISOString()); }
+  catch (error) { console.warn('Upload berhasil, timestamp lokal tidak dapat disimpan:', error); }
+  // Rotasi berjenjang (#3): perlakukan unggahan yang akan datang sebagai item TERBARU,
+  // lalu hapus file yang jatuh di luar kebijakan retensi (terbaru + harian + mingguan).
+  const candidates = [
+    { id: uploaded.id as string, ts: Date.now() },
+    ...files.filter((f: any) => f.id !== uploaded.id).map((f: any) => ({ id: f.id as string, ts: new Date(f.createdTime).getTime() }))
+  ];
+  const filesToDelete = selectBackupsToDelete(candidates, c => c.ts).filter(c => c.id !== uploaded.id);
+  let retentionFailed = false;
+  for (const file of filesToDelete) {
+    try {
+    // BK9: cek hasil DELETE; bila gagal, jangan diam — file lama bisa menumpuk
+    const delRes = await fetch(`${DRIVE_API_URL}/${file.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!delRes.ok && delRes.status !== 404) {
+      retentionFailed = true;
+      console.warn(`Gagal menghapus cadangan Drive lama (${file.id}): ${delRes.status}`, await delRes.text().catch(() => ''));
+    }
+    } catch (error) { retentionFailed = true; console.warn('Upload berhasil, tetapi retensi Drive gagal:', error); }
+  }
+  if (retentionFailed) onRetentionWarning?.('Cadangan baru berhasil diunggah, tetapi sebagian cadangan lama gagal dibersihkan.');
 
+  // Update local record of last sync time to avoid conflicts on next sync
   return true;
 }
 

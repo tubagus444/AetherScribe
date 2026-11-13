@@ -117,7 +117,7 @@ export function useDriveSync() {
       }
 
       // Use trigger a full DB backup
-      const driveSuccess = await syncProjectToDrive();
+      const driveSuccess = await syncProjectToDrive(false, message => toast.warning(message));
       if (!driveSuccess) {
          throw new Error("DRIVE_SYNC_FAILED");
       }
@@ -129,7 +129,7 @@ export function useDriveSync() {
          const force = window.confirm("Konflik: Ditemukan cadangan yang lebih baru di Google Drive (mungkin diedit di perangkat lain). Menimpa sekarang dapat menghilangkan data yang ada di Drive.\n\nApakah Anda ingin MENIMPA cadangan di Google Drive dengan versi lokal ini?");
          if (force) {
             try {
-               const forceSuccess = await syncProjectToDrive(true);
+               const forceSuccess = await syncProjectToDrive(true, message => toast.warning(message));
                if (!forceSuccess) throw new Error("DRIVE_SYNC_FAILED");
                toast.success('Berhasil menimpa cadangan di Google Drive!');
                loadDriveBackups();

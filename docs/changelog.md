@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F19/F20 ? Snapshot Konsisten dan Retensi Drive Setelah Upload
+
+- Pusatkan pembacaan backup dalam transaksi readonly setelah flush editor tervalidasi, termasuk backup per-proyek dan metadata ekspor manuskrip. Blob/checksum/kompresi di luar transaksi; save gagal menghentikan operasi dengan pesan error.
+- Upload Drive wajib sukses dan mengembalikan ID sebelum prune. Error upload/network/missing ID tidak menghapus cadangan lama. Error prune menjadi warning terpisah; keberhasilan upload tetap dipertahankan.
+- Verifikasi: 55 berkas/634 tes lulus; typecheck dan build lulus (peringatan build lama tetap ada). Sembilan tes regresi memakai DB terisolasi dan Drive mock: flush/gagal save, konsistensi penulisan bersamaan, scope proyek, urutan upload/delete dan kegagalan retensi. Belum browser/Drive nyata; perubahan setelah snapshot tidak termasuk hasil backup. F10 tetap terbuka meskipun koleksi per-proyek kini juga mencakup tabel triage.
+
+
 ### [Fix] F11 — Penghapusan Entitas dan Integritas Referensi
 
 - Pusatkan penghapusan bab/peta/Codex/proyek dalam transaksi domain. Bersihkan snapshot/embedding, lepaskan referensi terstruktur dan portal masuk; pertahankan teks timeline/chat/janji plot. Workshop entri yang dihapus menjadi sesi studio. Triage proyek terkait direset.

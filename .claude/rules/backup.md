@@ -27,3 +27,7 @@ Jebakan & konvensi:
 
 ## Backup Google Drive
 `useAutoBackup` — backup berkala terkompresi gzip ke tabel `backups`; sinkronisasi + restore Google Drive opsional (`driveBackupService.ts`, `googleAuth.ts`, BYOK). `firebase-applet-config.json` berisi nilai placeholder — sinkronisasi Firebase bersifat opt-in dan config asli berasal dari pengguna, bukan file ini.
+
+## Snapshot dan retensi F19/F20
+
+collectAllData/collectProjectData dan ekspor manuskrip membaca melalui backupSnapshot.ts: flush editor terlebih dahulu, transaksi readonly hanya berisi operasi DB, lalu serialisasi Blob/checksum/kompresi di luar transaksi. Jangan memakai live-query lama untuk isi ekspor. Drive harus upload sukses dengan ID file sebelum prune; exclude ID baru dari kandidat hapus. Kegagalan prune tidak membatalkan upload yang sudah berhasil dan dilaporkan terpisah.
