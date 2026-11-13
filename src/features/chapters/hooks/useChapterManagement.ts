@@ -1,3 +1,4 @@
+import { changeChapters } from '@/src/services/chapterOperations';
 import { useState } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -15,7 +16,7 @@ export function useChapterManagement(projectId: number) {
 
   const deleteChapter = async (id: number) => {
     if (deleteConfirmId === id) {
-      await db.chapters.delete(id);
+      await changeChapters(projectId, 'delete', id);
       setDeleteConfirmId(null);
     } else {
       setDeleteConfirmId(id);
@@ -24,16 +25,7 @@ export function useChapterManagement(projectId: number) {
   };
 
   const addChapter = async () => {
-    const nextOrder = chapters ? chapters.length : 0;
-    await db.chapters.add({
-      projectId,
-      title: `Chapter ${nextOrder + 1}`,
-      content: '',
-      summary: '',
-      status: 'outline',
-      order: nextOrder,
-      lastModified: Date.now(),
-    });
+    await changeChapters(projectId, 'add');
   };
 
   return {

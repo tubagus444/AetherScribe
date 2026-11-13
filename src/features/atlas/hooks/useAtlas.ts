@@ -1,3 +1,4 @@
+import { deleteAtlasMap } from '@/src/services/entityDeletion';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -54,12 +55,9 @@ export function useAtlas(selectedMapId?: number) {
   }, []);
 
   const deleteMap = useCallback(async (id: number) => {
-    // Hapus peta + seluruh penanda miliknya (tak ada tabel lain yang menaut).
-    await db.transaction('rw', db.maps, db.mapMarkers, async () => {
-      await db.mapMarkers.where('mapId').equals(id).delete();
-      await db.maps.delete(id);
-    });
-  }, []);
+    if (!projectId) throw new Error('Proyek tidak tersedia.');
+    await deleteAtlasMap(projectId, id);
+  }, [projectId]);
 
   const addMarker = useCallback(
     async (marker: Omit<MapMarker, 'id' | 'projectId' | 'createdAt'>): Promise<number | undefined> => {

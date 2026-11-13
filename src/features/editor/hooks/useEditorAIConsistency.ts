@@ -35,6 +35,14 @@ export interface InlineAIConsistency {
  * tetap disimpan. Reset saat refresh penuh. Diisi oleh cek otomatis MAUPUN manual.
  */
 const chapterCache = new Map<number, Map<string, InlineQuoteFinding[]>>();
+if (typeof window !== 'undefined') {
+  window.addEventListener('aetherscribe-chapters-deleted', (event: Event) => {
+    const ids = (event as CustomEvent<number[]>).detail;
+    for (const id of ids) { chapterCache.delete(id); hydratedChapters.delete(id); }
+    writeLru(readLru().filter(id => !ids.includes(id)));
+  });
+}
+
 
 /**
  * Persistensi ke localStorage agar garis bawah ungu BERTAHAN melintasi reload
@@ -233,6 +241,7 @@ export function useEditorAIConsistency(
             f.suggestion ? `→ ${f.suggestion}` : '',
           ].filter(Boolean).join(' '),
         }));
+      if (chapterCache.get(chapterIdRef.current) !== map) return 0;
       map.set(text, mapped); // simpan (termasuk []) agar tak diperiksa ulang
       refresh();
       // Tulis ke localStorage agar garis bawah bertahan setelah reload halaman.

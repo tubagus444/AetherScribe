@@ -1,3 +1,4 @@
+import { domainTables, removeChapterRelations, notifyDeletedChapters } from './entityDeletion';
 import { db } from '@/src/db';
 import type { Chapter } from '@/src/types';
 import { flushActiveEditor } from '@/src/features/editor/editorBridge';
@@ -7,7 +8,7 @@ export const compareChapters = (a: Chapter, b: Chapter) => a.order - b.order || 
 /** Semua pembacaan dan penulisan urutan berada di transaksi yang sama. */
 export async function changeChapters(projectId: number, action: 'add' | 'duplicate' | 'delete' | 'up' | 'down', chapterId?: number): Promise<number | undefined> {
   if (action === 'duplicate') await flushActiveEditor();
-  return db.transaction('rw', db.chapters, async () => {
+  const result = await db.transaction('rw', action === 'delete' ? domainTables() : [db.chapters], async () => {
     const rows = (await db.chapters.where('projectId').equals(projectId).toArray()).sort(compareChapters);
     let index = rows.findIndex(row => row.id === chapterId);
     if (action !== 'add' && index < 0) throw new Error('Bab tidak ditemukan dalam proyek ini.');
@@ -22,6 +23,7 @@ export async function changeChapters(projectId: number, action: 'add' | 'duplica
       row.id = result;
       rows.splice(source ? index + 1 : rows.length, 0, row);
     } else if (action === 'delete') {
+      await removeChapterRelations(projectId, chapterId!);
       await db.chapters.delete(chapterId!);
       rows.splice(index, 1);
     } else {
@@ -31,4 +33,6 @@ export async function changeChapters(projectId: number, action: 'add' | 'duplica
     for (let order = 0; order < rows.length; order++) await db.chapters.update(rows[order].id!, { order });
     return result;
   });
+  if (action === 'delete') notifyDeletedChapters([chapterId!]);
+  return result;
 }

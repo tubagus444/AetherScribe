@@ -84,7 +84,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 
 - [ ] **[F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia** (Medium; L).
 - [ ] **[F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip** (Medium; M).
-- [ ] **[F11](docs/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim** (Medium; M).
+- [x] **[F11](docs/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim** (Medium; M).
+  - Tanggal / commit: 13 November 2026; commit `fix(data): bersihkan referensi saat menghapus entitas (F11)` (commit yang menambahkan bukti ini).
+  - Perubahan: service transaksi domain untuk bab/peta/Codex/proyek; hapus data turunan, unlink referensi sambil mempertahankan teks; cleanup snapshot legacy tanpa parent dan cache bab setelah commit. Kebijakan reset triage/retensi dijelaskan di docs/database.md.
+  - Bukti awal: jalur delete bab hanya menghapus chapter; map tidak melepas portal masuk; project hanya mencari snapshot dari bab yang masih ada.
+  - Verifikasi: sembilan tes DB terisolasi untuk isolasi proyek, unlink, orphan snapshot, backup retention dan rollback; seluruh 54 berkas/625 tes lulus, typecheck dan build lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/database.md, docs/features.md, docs/changelog.md. Batas: belum browser native/lintas-tab nyata; F10/F19 tetap terbuka.
 - [ ] **[F19](docs/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten** (Medium; M).
 - [ ] **[F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi** (Medium; S–M).
 - [ ] **[F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key** (Medium; S).

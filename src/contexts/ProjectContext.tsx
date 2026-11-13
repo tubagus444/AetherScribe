@@ -1,3 +1,4 @@
+import { deleteProjectData } from '@/src/services/entityDeletion';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -94,35 +95,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         nextId = other?.id;
       }
 
-      await db.transaction('rw', [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.codexCategories, db.embeddings, db.sceneEmbeddings, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage], async () => {
-        // Ambil semua chapter ID yang dimiliki project ini untuk menghapus snapshots-nya
-        const chapters = await db.chapters.where('projectId').equals(id).toArray();
-        const chapterIds = chapters.map(c => c.id!).filter(Boolean);
-
-        // Hapus snapshots untuk chapter-chapter tersebut
-        if (chapterIds.length > 0) {
-          await db.snapshots.where('chapterId').anyOf(chapterIds).delete();
-        }
-
-        await db.chapters.where('projectId').equals(id).delete();
-        await db.codex.where('projectId').equals(id).delete();
-        await db.bible.where('projectId').equals(id).delete();
-        await db.aiActions.where('projectId').equals(id).delete();
-        await db.timeline.where('projectId').equals(id).delete();
-        await db.relationships.where('projectId').equals(id).delete();
-        await db.chatSessions.where('projectId').equals(id).delete();
-        // Bersihkan juga data per-proyek yang sebelumnya tertinggal jadi yatim:
-        // kategori kustom + indeks embedding (Codex & Pencarian Semantik).
-        await db.codexCategories.where('projectId').equals(id).delete();
-        await db.plotPromises.where('projectId').equals(id).delete();
-        await db.glossary.where('projectId').equals(id).delete();
-        await db.maps.where('projectId').equals(id).delete();
-        await db.mapMarkers.where('projectId').equals(id).delete();
-        await db.continuityTriage.where('projectId').equals(id).delete();
-        await db.embeddings.where('projectId').equals(id).delete();
-        await db.sceneEmbeddings.where('projectId').equals(id).delete();
-        await db.projects.delete(id);
-      });
+      await deleteProjectData(id);
 
       // Pindah proyek hanya setelah penghapusan sukses.
       if (deletingActive) {

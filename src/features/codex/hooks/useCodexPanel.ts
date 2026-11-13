@@ -1,3 +1,4 @@
+import { deleteCodexEntry } from '@/src/services/entityDeletion';
 import { useState, useMemo, useEffect } from 'react';
 import { db } from '@/src/db';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
@@ -209,12 +210,7 @@ export function useCodexPanel(projectId: number) {
       const id = confirmDeleteId;
       // Hapus entri beserta data turunannya secara atomik agar tidak menyisakan
       // relasi/embedding yatim yang menunjuk entri yang sudah tiada.
-      await db.transaction('rw', db.codex, db.relationships, db.embeddings, async () => {
-        await db.codex.delete(id);
-        await db.relationships.where('sourceId').equals(id).delete();
-        await db.relationships.where('targetId').equals(id).delete();
-        await db.embeddings.where('codexId').equals(id).delete();
-      });
+      await deleteCodexEntry(id);
       // Lore berubah → cache konteks AI (termasuk indeks semantik) harus disegarkan.
       await invalidateContextCache(true);
       setConfirmDeleteId(null);

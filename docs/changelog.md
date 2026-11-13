@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F11 — Penghapusan Entitas dan Integritas Referensi
+
+- Pusatkan penghapusan bab/peta/Codex/proyek dalam transaksi domain. Bersihkan snapshot/embedding, lepaskan referensi terstruktur dan portal masuk; pertahankan teks timeline/chat/janji plot. Workshop entri yang dihapus menjadi sesi studio. Triage proyek terkait direset.
+- Satukan jalur ChapterList dan outline. Penghapusan proyek membersihkan snapshot legacy tanpa parent, mempertahankan snapshot bab hidup serta riwayat backup. Cache konsistensi bab dibersihkan setelah commit dan hasil request lama tidak menulis ulang map cache yang telah dilepas.
+- Verifikasi: 54 berkas/625 tes lulus; typecheck dan build lulus (peringatan build lama tetap ada). Sembilan tes DB sintetis mencakup isolasi proyek, unlink, snapshot orphan, retensi backup dan rollback semua jenis delete. Belum verifikasi browser native atau penulisan lintas-tab bersamaan. F10/F19 tetap terbuka.
+
 ### [Fix] F06/F07 — Duplikasi Bab, Urutan Atomik, dan Persistensi Triage
 
 - Duplikasi ChapterList membaca entitas lengkap setelah flush editor, bukan metadata list dengan content kosong. Pisahkan tipe metadata; normalisasi urutan add/delete/duplicate/move dalam transaksi dengan tie-break ID. Error operasi ditampilkan ke pengguna.
