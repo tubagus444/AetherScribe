@@ -69,6 +69,7 @@ export class OramaStore {
     // sampai re-init. Hanya indeks entri milik proyek yang sedang aktif.
     if (this.currentProjectId != null && entry.projectId !== this.currentProjectId) return;
     try {
+      await this.removeEntry(entry.id);
       const oramaId = await insert(this.db, {
         dexieId: entry.id,
         name: entry.name,
@@ -132,10 +133,10 @@ export class OramaStore {
           entry: entryMap.get(hit.document.dexieId as number)!,
           score: hit.score,
         }))
-        .filter(h => h.entry !== undefined);
+        .filter(h => h.entry !== undefined && h.entry.projectId === this.currentProjectId);
     } catch (e) {
       console.error('Orama searchWithScores failed', e);
-      return [];
+      throw e;
     }
   }
 }

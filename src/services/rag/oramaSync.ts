@@ -23,6 +23,23 @@ function rejectAllPending(reason: string) {
 }
 
 let lastCrashTime = 0;
+let hooksInstalled = false;
+const mutationReads = new Set<Promise<void>>();
+const dirtyTransactions = new WeakMap<object, Set<number>>();
+function scheduleCommitted(transaction: any, key: number) {
+  const existing = dirtyTransactions.get(transaction);
+  if (existing) { existing.add(key); return; }
+  const keys = new Set([key]);
+  dirtyTransactions.set(transaction, keys);
+  transaction.on('complete', () => { for (const id of keys) indexCommitted(id); });
+}
+function indexCommitted(key: number) {
+  const pending = db.codex.get(key).then(entry => {
+    if (entry) oramaSync.updateEntry(entry);
+  }).catch(error => console.error('[Orama] Post-commit index failed:', error));
+  mutationReads.add(pending);
+  void pending.finally(() => mutationReads.delete(pending));
+}
 
 function getWorker(): Worker {
   if (!worker) {
@@ -75,17 +92,16 @@ function getWorker(): Worker {
 export const oramaSync = {
   setupHooks: () => {
     // Only set up hooks if we are in the main window to avoid nested worker loops
-    if (typeof window !== 'undefined') {
-      db.codex.hook('creating', (primKey, obj, transaction) => {
-        transaction.on('complete', () => {
-          oramaSync.indexEntry({ ...obj, id: primKey });
-        });
+    if (typeof window !== 'undefined' && !hooksInstalled) {
+      hooksInstalled = true;
+      db.codex.hook('creating', function (_primKey, obj, transaction) {
+        this.onsuccess = (generatedKey) => {
+          scheduleCommitted(transaction, generatedKey);
+        };
       });
 
       db.codex.hook('updating', (modifications, primKey, obj, transaction) => {
-        transaction.on('complete', () => {
-          oramaSync.updateEntry({ ...obj, ...modifications, id: primKey });
-        });
+        scheduleCommitted(transaction, primKey);
       });
 
       db.codex.hook('deleting', (primKey, obj, transaction) => {
@@ -107,7 +123,12 @@ export const oramaSync = {
   removeEntry: (dexieId: number) => {
     getWorker().postMessage({ type: 'REMOVE_ENTRY', payload: { dexieId } });
   },
-  search: (query: string, limit: number = 5): Promise<CodexEntry[]> => {
+  searchWithScores: (projectId: number, query: string, limit = 5): Promise<{ entry: CodexEntry; score: number }[]> => requestSearch('SEARCH_WITH_SCORES', { projectId, query, limit }),
+  search: (query: string, limit: number = 5): Promise<CodexEntry[]> => requestSearch('SEARCH', { query, limit })
+};
+
+async function requestSearch(type: string, payload: unknown): Promise<any> {
+    await Promise.all(mutationReads);
     return new Promise((resolve, reject) => {
       const id = ++messageIdCounter;
       const timeoutId = setTimeout(() => {
@@ -118,12 +139,11 @@ export const oramaSync = {
       }, SEARCH_TIMEOUT_MS);
       pendingRequests.set(id, { resolve, reject, timeoutId });
       try {
-        getWorker().postMessage({ id, type: 'SEARCH', payload: { query, limit } });
+        getWorker().postMessage({ id, type, payload });
       } catch (err) {
         clearTimeout(timeoutId);
         pendingRequests.delete(id);
         reject(err);
       }
     });
-  }
-};
+}

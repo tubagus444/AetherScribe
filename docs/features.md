@@ -337,3 +337,9 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ## Round-trip Proyek (F10)
 
 Ekspor/impor per-proyek menyertakan continuityTriage. Impor menetapkan ID baru lalu memetakan workshopKey entry:<id> serta findingId gap/unused (Codex), rel (relasi), tl dan chrono (timeline). Pesan chat, HTML naskah, dan new:<seed> tidak diubah. Referensi triage yang sudah tidak punya target dibuang sebagai status basi; format finding asing atau target workshop invalid membatalkan impor secara atomik. Backup lama tanpa triage tetap diterima.
+
+## Pencarian Orama (F08/F09)
+
+Panel gabungan memakai oramaSync.searchWithScores(projectId, query, limit), bukan singleton Orama main-thread. Worker memastikan proyek terinisialisasi dan memproses INIT/mutasi/search secara berurutan. Skor BM25 tetap dinormalisasi sebelum digabung dengan hasil adegan. Codex dapat dicari tanpa indeks adegan; pergantian proyek membatalkan tampilan hasil lama. Error pencarian worker diteruskan ke panel.
+
+Hook creating memakai generated key dari onsuccess dan menjadwalkan pembacaan record final hanya sesudah commit. Mutasi per key dalam transaksi digabung; search menunggu pembacaan post-commit, rollback tidak diindeks. Setup hook idempotent; indexEntry bersifat upsert agar tidak menghasilkan dokumen duplikat. Update/delete tetap melalui worker.

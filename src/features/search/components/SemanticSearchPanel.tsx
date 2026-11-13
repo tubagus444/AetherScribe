@@ -12,7 +12,7 @@ import { useNavigation } from '@/src/contexts/NavigationContext';
 import {
   indexManuscript, searchManuscript, countIndexedScenes, clearManuscriptIndex, SceneSearchHit,
 } from '@/src/services/contextEngine';
-import { oramaStore } from '@/src/services/rag/oramaStore';
+import { oramaSync } from '@/src/services/rag/oramaSync';
 import { CodexEntry } from '@/src/types';
 
 interface SemanticSearchPanelProps {
@@ -55,6 +55,14 @@ export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [indexState, setIndexState] = useState<IndexState>({ phase: 'idle' });
   const searchSeq = useRef(0);
+
+  useEffect(() => {
+    ++searchSeq.current;
+    setResults(null);
+    setSearching(false);
+    setSearchError(null);
+    return () => { ++searchSeq.current; };
+  }, [projectId]);
 
   // Dengarkan progres indexing dari worker (event global).
   useEffect(() => {
@@ -103,8 +111,8 @@ export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
     setSearchError(null);
     try {
       const [sceneHitsRaw, codexHitsRaw] = await Promise.all([
-        searchManuscript(projectId, q, 15),
-        oramaStore.searchWithScores(q, 8) // Limit Orama lebih kecil karena bab biasanya lebih prioritas
+        indexedCount > 0 ? searchManuscript(projectId, q, 15) : Promise.resolve([]),
+        oramaSync.searchWithScores(projectId, q, 8) // Limit Orama lebih kecil karena bab biasanya lebih prioritas
       ]);
       
       if (seq !== searchSeq.current) return; // hasil basi (query berubah)
@@ -130,7 +138,7 @@ export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
     } finally {
       if (seq === searchSeq.current) setSearching(false);
     }
-  }, [projectId, query]);
+  }, [projectId, query, indexedCount]);
 
   const isIndexing = indexState.phase === 'indexing';
   const totalChapters = chapters?.length ?? 0;
@@ -235,13 +243,12 @@ export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') runSearch(); }}
             placeholder="Deskripsikan adegan yang dicari…"
-            disabled={neverIndexed}
             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-11 pr-4 py-3.5 text-sm focus:outline-none focus:border-sky-400 disabled:opacity-50 shadow-sm"
           />
         </div>
         <button
           onClick={runSearch}
-          disabled={searching || neverIndexed || !query.trim()}
+          disabled={searching || !query.trim()}
           className="flex items-center justify-center gap-2 px-6 py-3.5 bg-sky-600 dark:bg-sky-500 text-white rounded-xl text-sm font-semibold hover:bg-sky-700 dark:hover:bg-sky-600 disabled:opacity-50 transition-all active:scale-[0.98] shadow-sm"
         >
           {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
@@ -304,9 +311,9 @@ export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
       {neverIndexed && !isIndexing && (
         <div className="flex flex-col items-center justify-center text-center py-16 px-6 border-2 border-dashed border-sky-200 dark:border-sky-800/50 rounded-3xl bg-sky-50/40 dark:bg-sky-900/10">
           <Sparkles size={24} className="text-sky-400 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1.5">Bangun indeks dulu</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1.5">Bangun indeks untuk adegan</h3>
           <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md">
-            Pencarian semantik perlu meng-index adegan naskah sekali (berjalan lokal, tanpa token). Setelah itu, cukup <span className="font-medium">Perbarui</span> saat menulis lagi.
+            Codex dapat dicari langsung. Pencarian semantik perlu meng-index adegan naskah sekali (berjalan lokal, tanpa token). Setelah itu, cukup <span className="font-medium">Perbarui</span> saat menulis lagi.
           </p>
         </div>
       )}

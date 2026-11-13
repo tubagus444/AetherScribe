@@ -101,8 +101,18 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
   - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
   - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
-- [ ] **[F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi** (Medium; S–M).
-- [ ] **[F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key** (Medium; S).
+- [x] **[F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi** (Medium; S–M).
+  - Tanggal / commit: 13 November 2026; commit `fix(search): gunakan worker dan sinkronkan generated key Codex (F08/F09)` (commit yang menambahkan bukti ini).
+  - Perubahan: facade pencarian berskor dengan projectId, antrean worker dan error propagation; generated key setelah onsuccess, indeks record final setelah commit, coalescing mutasi dan setup hook idempotent.
+  - Bukti awal: panel memakai singleton main-thread yang tidak diinisialisasi; creating hook menimpa ID dengan primKey sebelum auto-increment selesai.
+  - Verifikasi: sembilan tes facade/worker-handler/store dengan transport emulasi, DB terisolasi dan panel mock; 58 berkas/648 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md dan docs/changelog.md. Batas: belum Worker browser native/embedding nyata.
+- [x] **[F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key** (Medium; S).
+  - Tanggal / commit: 13 November 2026; commit `fix(search): gunakan worker dan sinkronkan generated key Codex (F08/F09)` (commit yang menambahkan bukti ini).
+  - Perubahan: facade pencarian berskor dengan projectId, antrean worker dan error propagation; generated key setelah onsuccess, indeks record final setelah commit, coalescing mutasi dan setup hook idempotent.
+  - Bukti awal: panel memakai singleton main-thread yang tidak diinisialisasi; creating hook menimpa ID dengan primKey sebelum auto-increment selesai.
+  - Verifikasi: sembilan tes facade/worker-handler/store dengan transport emulasi, DB terisolasi dan panel mock; 58 berkas/648 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md dan docs/changelog.md. Batas: belum Worker browser native/embedding nyata.
 - [ ] **[F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong** (Medium; M).
 - [ ] **[F14](docs/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt** (Medium; M).
 - [ ] **[F15](docs/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal** (Medium; S).

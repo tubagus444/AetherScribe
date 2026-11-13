@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F08/F09 ? Jalur Worker Pencarian dan Generated Key Codex
+
+- Panel memakai pencarian berskor melalui facade worker dengan projectId eksplisit; worker mengantrekan INIT/mutasi/search. Codex bisa dicari sebelum indeks adegan tersedia dan hasil lama dibatalkan saat ganti proyek. Error worker tampil sebagai kegagalan, bukan hasil kosong.
+- Creating hook menangkap generated key melalui onsuccess, membaca record final setelah commit, dan menggabungkan mutasi key sama dalam satu transaksi. Search menunggu pembacaan post-commit; rollback tidak diindeks. Hook idempotent dan store upsert mencegah dokumen duplikat.
+- Verifikasi: 58 berkas/648 tes lulus; typecheck, build dan diff-check lulus (peringatan build lama tetap ada). Sembilan tes baru mencakup facade/handler/store Orama asli dengan transport Worker emulasi, DB terisolasi, serta panel React dengan facade mock. Batas: belum browser dengan Worker native atau embedding nyata; tidak memakai data pengguna. Skema/dependensi tidak berubah.
+
+
 ### [Fix] F10 ? Round-trip Triage dan Sesi Workshop
 
 - Lengkapi import continuityTriage dalam transaksi proyek baru. Petakan findingId Codex/relasi/timeline/kronologi setelah ID dependen tersedia; pertahankan status/timestamp, lepas primary key sumber.
