@@ -4,7 +4,7 @@ AetherScribe adalah lingkungan penulisan novel berbasis web yang local-first (In
 
 ## Tech Stack & Perintah
 - **Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, TipTap 3 (`3.22.5`), Dexie.js, Web Workers, Express proxy.
-- **Commands:** `npm run dev` (Express + Vite port 3000) | `npm test` (`npx vitest run`) | `npm run lint` (`tsc --noEmit`)
+- **Commands:** `npm run dev` (Express + Vite, PORT default 3000) | `npm test` (`npx vitest run`) | `npm run lint` (`tsc --noEmit`)
 
 ## Aturan Coding & Hal yang Dilarang
 - Gunakan import alias `@/src/` (bukan `@/db`).

@@ -1,7 +1,5 @@
 import type { RequestHandler } from 'express';
 
-const origins = new Set(['http://localhost:3000', 'http://127.0.0.1:3000']);
-const hosts = new Set(['localhost:3000', '127.0.0.1:3000']);
 const providers = new Set(['google', 'claude', 'groq', 'openrouter', 'openai', 'huggingface', 'ollama']);
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 
@@ -16,15 +14,20 @@ export function allowedOllama(value: unknown): boolean {
   } catch { return false; }
 }
 
-export const proxyBoundary: RequestHandler = (req, res, next) => {
-  if (!hosts.has(req.headers.host ?? '') ||
-      (req.headers.origin !== undefined && !origins.has(req.headers.origin)) ||
-      req.headers['sec-fetch-site'] === 'cross-site') {
-    res.status(403).json({ error: 'Proxy hanya menerima origin localhost aplikasi.' });
-    return;
-  }
-  next();
-};
+export function createProxyBoundary(port = 3000): RequestHandler {
+  const hosts = new Set(['localhost', '127.0.0.1'].map(host => new URL(`http://${host}:${port}`).host));
+  const origins = new Set(['localhost', '127.0.0.1'].map(host => new URL(`http://${host}:${port}`).origin));
+  return (req, res, next) => {
+    if (!hosts.has(req.headers.host ?? '') ||
+        (req.headers.origin !== undefined && !origins.has(req.headers.origin)) ||
+        req.headers['sec-fetch-site'] === 'cross-site') {
+      res.status(403).json({ error: 'Proxy hanya menerima origin localhost aplikasi.' });
+      return;
+    }
+    next();
+  };
+}
+export const proxyBoundary = createProxyBoundary();
 
 /** Dipasang setelah JSON parser, sebelum operasi raw input pada handler async. */
 export const validateProxyRequest: RequestHandler = (req, res, next) => {

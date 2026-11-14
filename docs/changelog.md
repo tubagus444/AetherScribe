@@ -6,6 +6,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Fix] F21 — Startup Production Deterministik
+
+- Pisahkan serverDev.ts (Vite dinamis) dan serverProduction.ts (bundle CJS tanpa dependency dev). Server app tidak otomatis listen saat diimpor; npm start selalu production. File statis dicari relatif bundle, termasuk jika cwd berbeda.
+- Muat .env cwd via dotenv tanpa menimpa env proses; validasi PORT 1-65535/default 3000 dan gunakan port yang sama pada Host/Origin proxy. Binding tetap 127.0.0.1; port 80 memakai normalisasi URL browser. Build hilang, port invalid/terpakai menghasilkan exit 1.
+- Tambahkan engines Node sesuai lockfile (22.22.2 pada seri 22, 24.15.0 pada seri 24 atau >=26), petunjuk PowerShell, distribusi npm ci --omit=dev, dan koreksi dokumentasi APP_URL yang tidak digunakan.
+- Tambahkan empat tes konfigurasi dan npm run test:production: build memakai secret sintetis lalu scan dist, clean install production di direktori sementara tanpa Vite/tsx, SPA/deep-link/aset, .env/key mock/mode/port/cwd, penolakan origin, dan kegagalan startup. Upstream mock; tidak memakai key/provider nyata.
+- Baseline 9b57e73 terbukti gagal exit 1 (Cannot find module 'vite') pada dependency production bersih; sesudah perbaikan smoke production dan smoke development lulus di Windows/Node 24.15.0. 70 berkas/700 tes, typecheck, build dan diff-check lulus; peringatan build lama tetap ada. Belum memverifikasi Linux/versi Node lain.
+
+
 ### [Fix] F16 — Kontrak Cancel Context Worker dan Checkpoint
 
 - Gunakan envelope CANCEL dengan payload.cancelId bersama antara sender/receiver melalui union contextProtocol.ts. Lacak request aktif, abaikan cancel terlambat, bersihkan state akhirnya, dan jangan post hasil/error request batal.

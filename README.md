@@ -38,27 +38,57 @@ menjaga konteks, dan mempercepat revisi** — tanpa membutuhkan database backend
 
 ## Menjalankan Secara Lokal
 
-**Prasyarat:** Node.js
+**Prasyarat:** Node.js 22.22.2+ pada seri 22, atau 24.15.0+ pada seri 24 (sesuai `engines` dan dependency terkunci). Verifikasi saat ini memakai Node 24.15.0.
 
 1. Install dependency:
    ```bash
-   npm install
+   npm ci
    ```
 2. (Opsional) Salin `.env.example` menjadi `.env` dan isi kunci API provider yang ingin
    dijadikan default sisi server. Kunci API juga bisa dimasukkan langsung lewat menu
    **Pengaturan** di aplikasi (BYOK) — ini cara yang disarankan untuk pemakaian pribadi.
    ```bash
-   cp .env.example .env
+   # PowerShell (Windows)
+   Copy-Item .env.example .env
    ```
-   Variabel yang didukung: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CLAUDE_API_KEY`, `HF_API_KEY`.
+   Variabel yang didukung: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CLAUDE_API_KEY`, `HF_API_KEY`, `HUGGINGFACE_API_KEY`, `OPENAI_API_KEY`, dan `PORT` (default 3000).
 3. Jalankan server pengembangan:
    ```bash
    npm run dev
    ```
-   Aplikasi berjalan di `http://localhost:3000`.
+   Aplikasi berjalan di `http://localhost:3000`, atau port dari `PORT`. Server tetap bind ke `127.0.0.1`.
 
 > Untuk Ollama, jalankan Ollama secara lokal; aplikasi memakai endpoint OpenAI-compatible
 > (`/v1/chat/completions`) di base URL yang dikonfigurasi pada Pengaturan.
+
+## Menjalankan Build Production
+
+Dari root proyek, jalankan `npm ci`, `npm run build`, lalu `npm start`.
+`npm start` selalu memilih mode production, termasuk bila `NODE_ENV` dari shell
+atau `.env` berisi `development`. Vite/tsx hanya digunakan saat development/build.
+Untuk distribusi ke direktori bersih, salin `dist/`, `package.json`, dan
+`package-lock.json`, lalu jalankan `npm ci --omit=dev` dan `npm start` di sana.
+Jangan menyalin `.env` berisi kunci ke folder `dist`.
+
+Kedua mode memuat `.env` dari working directory; environment proses menang atas
+nilai `.env`. `PORT` harus bilangan bulat 1-65535. Contoh PowerShell:
+
+```powershell
+$env:PORT = "4321"
+npm start
+```
+
+Build statis dicari relatif terhadap `dist/server.cjs`, sehingga pemanggilan
+`node D:\aplikasi\dist\server.cjs` juga bekerja dari working directory lain
+(`.env` tetap dari working directory tersebut). Build yang hilang, port invalid,
+atau port terpakai membuat startup gagal dengan exit code 1. Host/Origin proxy
+mengikuti port aktif dan tetap dibatasi ke HTTP localhost/127.0.0.1. `APP_URL`
+tidak digunakan dan tidak membuka akses publik.
+
+`npm run test:production` membangun dengan kunci sintetis, memeriksa bahwa nilainya
+tidak masuk `dist`, lalu menginstal dependency production di direktori sementara
+dan menguji startup/SPA/API dengan upstream mock. Perintah ini membutuhkan akses
+registry npm dan membersihkan direktori sementara setelah selesai.
 
 ## Skrip
 
@@ -68,4 +98,5 @@ menjaga konteks, dan mempercepat revisi** — tanpa membutuhkan database backend
 | `npm run build` | Build frontend (Vite) dan bundle server (esbuild). |
 | `npm run start` | Jalankan hasil build produksi. |
 | `npm test` | Jalankan unit test (Vitest). |
+| `npm run test:production` | Build dan smoke test instalasi production terisolasi. |
 | `npm run lint` | Type-check via `tsc --noEmit`. |

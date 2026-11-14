@@ -1,8 +1,9 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import fs from "fs";
-import { proxyBoundary, validateProxyRequest } from "./src/server/proxyBoundary";
+import type { RequestHandler } from "express";
+import { runtimePort } from "./src/server/runtimeConfig";
+import { createProxyBoundary, validateProxyRequest } from "./src/server/proxyBoundary";
 
 // SV10: pola penanganan error yang sama dipakai di tiga endpoint → satu helper.
 // Menghormati SV3: bila header sudah terkirim (stream SSE) jangan tulis status lagi.
@@ -15,13 +16,12 @@ function sendError(res: express.Response, status: number, error: any, context: s
   res.status(status).json({ error: error?.message || fallbackMsg || String(error) });
 }
 
-export function createProxyApp() {
+export function createProxyApp(port = 3000) {
   const app = express();
-  const PORT = 3000;
 
   // Body bisa besar pada mode caching (full Story Bible + Codex di system prompt).
   // Default Express 100kb akan menolak (413), jadi limit dinaikkan.
-  app.use('/api', proxyBoundary);
+  app.use('/api', createProxyBoundary(port));
   app.use(express.json({ limit: '25mb' }));
 
   app.use('/api', validateProxyRequest);
@@ -322,29 +322,24 @@ export function createProxyApp() {
   return app;
 }
 
-async function startServer() {
-  const app = createProxyApp();
-  const PORT = 3000;
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+export async function startServer(options: { middleware?: RequestHandler; distPath?: string } = {}) {
+  const port = runtimePort(process.env.PORT);
+  const app = createProxyApp(port);
+  if (options.middleware) {
+    app.use(options.middleware);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get('*', (req, res) => {
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
+    const distPath = options.distPath;
+    if (!distPath || !fs.existsSync(path.join(distPath, 'index.html'))) {
+      throw new Error('Build frontend tidak ditemukan. Jalankan npm run build terlebih dahulu.');
     }
+    app.use(express.static(distPath));
+    app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
-
-  app.listen(PORT, "127.0.0.1", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  return await new Promise<import('http').Server>((resolve, reject) => {
+    const server = app.listen(port, '127.0.0.1', () => {
+      console.log(`Server running on http://localhost:${port}`);
+      resolve(server);
+    });
+    server.once('error', reject);
   });
 }
-
-if (process.env.VITEST !== 'true') void startServer();

@@ -120,10 +120,26 @@ Daftar nama variabel lingkungan yang didukung aplikasi (tanpa nilai rahasia):
 | `OPENAI_API_KEY` | Opsional | Kunci fallback API OpenAI di sisi server. |
 | `HF_API_KEY` | Opsional | Kunci fallback API Hugging Face Inference Router di sisi server. |
 | `HUGGINGFACE_API_KEY` | Opsional | Alias untuk `HF_API_KEY`. |
-| `APP_URL` | Opsional | URL publik host aplikasi (untuk referensi webhook/link balik). |
-| `NODE_ENV` | Opsional | Mode runtime node (`development` atau `production`). |
-| `PORT` | Opsional | Port server Express lokal (default: `3000`). |
+| `APP_URL` | Tidak digunakan | Tidak mengubah binding atau allowlist proxy. |
+| `NODE_ENV` | Ditentukan entry point | `serverDev.ts`: development; `serverProduction.ts`: production. Nilai dari shell/.env tidak mengganti pilihan ini. |
+| `PORT` | Opsional | Port server Express lokal, bilangan bulat 1-65535 (default: `3000`); Host/Origin mengikuti port aktif. |
 
 ## Kontrak Pembatalan Context Worker (F16)
 
 Main thread dan worker memakai contextProtocol.ts: pesan CANCEL membawa payload.cancelId. Task memiliki ID tersendiri, sedangkan INDEX_MANUSCRIPT tetap fire-and-forget. Timeout menghapus pending Promise di main thread dan mengirim cancel; worker memeriksa ID aktif pada checkpoint async/yield serta membersihkan penanda pada finally. Cancel request A tidak membatalkan B atau model bersama. Ini bukan hard termination terhadap komputasi sinkron; pembatalan baru efektif setelah event loop menerima pesan dan checkpoint berikutnya tercapai. Heartbeat progres tetap memperpanjang idle timeout sesuai mekanisme sebelumnya.
+
+## Startup Dev/Production (F21)
+
+`server.ts` mengekspor app/startup tanpa side effect listen dan tanpa import Vite.
+`serverDev.ts` memuat `.env` dengan dotenv, menetapkan development, lalu mengimpor
+Vite secara dinamis. `serverProduction.ts` menetapkan production dan dibundle
+esbuild ke `dist/server.cjs`; aset dicari dari `__dirname` bundle, bukan cwd.
+File `.env` berasal dari cwd dan tidak menimpa environment proses. Hanya boolean
+HAS_GEMINI_KEY masuk define Vite, bukan nilai kuncinya; rahasia jangan memakai
+prefix VITE_ (prefix itu memang diekspos Vite).
+
+Kedua entry menggunakan PORT yang tervalidasi dan binding loopback 127.0.0.1.
+Build hilang, port invalid dan kegagalan listen menghasilkan exit code 1.
+Runtime tidak memerlukan Vite, tsx, atau dependency dev lain. Versi Node yang
+didukung mengikuti engines package.json (termasuk kebutuhan jsdom pada tes).
+Prosedur Windows, distribusi production dan smoke test ada di README.md.

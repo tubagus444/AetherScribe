@@ -1,6 +1,6 @@
 # Dokumentasi API — AetherScribe
 
-> **Arsitektur API:** Aplikasi ini beroperasi secara *local-first*. Server Express (`server.ts`, Port 3000) **bukan database server**, melainkan semata-mata bertindak sebagai **proxy AI** (untuk mengatasi CORS provider dan mengamankan streaming) serta penyaji file statis SPA di mode produksi.
+> **Arsitektur API:** Aplikasi ini beroperasi secara *local-first*. Server Express (`server.ts`, port default 3000) **bukan database server**, melainkan semata-mata bertindak sebagai **proxy AI** (untuk mengatasi CORS provider dan mengamankan streaming) serta penyaji file statis SPA di mode produksi.
 > Batas body JSON server: **25 MB** (`express.json({ limit: '25mb' })`) untuk menampung Knowledge Base besar pada mode prompt caching.
 
 ---
@@ -9,13 +9,13 @@
 
 ### Batas proxy lokal (F02/F18, 13 November 2026)
 
-Server bind `127.0.0.1:3000`. Seluruh `/api` memeriksa Host `localhost:3000`/`127.0.0.1:3000`; Origin bila ada harus `http://localhost:3000` atau `http://127.0.0.1:3000`. Request Sec-Fetch-Site cross-site ditolak 403. Klien lokal tanpa Origin tetap diizinkan; ini bukan autentikasi terhadap proses lokal.
+Server bind `127.0.0.1:PORT` (default 3000). Seluruh `/api` memeriksa Host `localhost:PORT`/`127.0.0.1:PORT`; Origin bila ada harus HTTP localhost atau 127.0.0.1 pada port aktif yang sama (port 80 dinormalisasi sesuai URL browser). Request Sec-Fetch-Site cross-site ditolak 403. Klien lokal tanpa Origin tetap diizinkan; ini bukan autentikasi terhadap proses lokal.
 
 Tujuan Ollama dibatasi ke HTTP localhost/127.0.0.1/[::1] port 11434, tanpa kredensial, path tambahan, query, atau fragment. Ollama remote/LAN dan port kustom tidak didukung oleh kebijakan ini. Semua fetch upstream memakai `redirect:'error'`, sehingga redirect tidak dapat melewati allowlist.
 
 JSON wajib berupa objek; provider harus dikenal, body inferensi bukan array, model bila ada berupa string 1–256 karakter, stream bila ada boolean. Model Gemini hanya menerima nama model aman. URL salah tipe ditolak sebelum includes/replace. Body lebih dari 25 MB menghasilkan 413; JSON malformed menghasilkan 400. Wrapper async menangkap rejection pada semua route POST; error middleware memberi JSON terstruktur tanpa unhandled rejection. BYOK dan fallback key environment tetap berlaku setelah pemeriksaan caller.
 
-Verifikasi memakai fixture/mocked upstream dan HTTP loopback terisolasi; tidak menggunakan key/provider nyata. F21 konfigurasi startup production tetap terpisah.
+Verifikasi memakai fixture/mocked upstream dan HTTP loopback terisolasi; tidak menggunakan key/provider nyata. F21 menyatukan konfigurasi PORT startup dan allowlist; smoke production menguji API dengan upstream mock tanpa key/provider nyata.
 
 ### POST /api/ai/proxy
 - **Deskripsi:** Titik masuk utama untuk semua inferensi AI (Google Gemini, Anthropic Claude, Groq, OpenRouter, OpenAI, Hugging Face, Ollama). Mendukung respons JSON standar dan streaming Server-Sent Events (SSE).

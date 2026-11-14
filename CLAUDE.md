@@ -7,12 +7,12 @@ AetherScribe adalah lingkungan penulisan novel berbasis web yang local-first (In
 - **Penyimpanan Lokal:** Dexie.js (IndexedDB wrapper, skema v33).
 - **Editor Naskah:** TipTap 3 (dipin tepat ke versi `3.22.5`).
 - **Komputasi Latar Belakang:** Web Workers (Aho-Corasick, `@xenova/transformers`, Orama BM25).
-- **Backend / Proxy:** Node.js, Express, TypeScript (port 3000, body limit 25MB).
+- **Backend / Proxy:** Node.js, Express, TypeScript (PORT default 3000, binding loopback, body limit 25MB).
 
 ## Perintah Penting
 ```bash
 npm run dev      # Menjalankan server Express + Vite middleware di http://localhost:3000
-npm run build    # Build frontend Vite + esbuild server.ts -> dist/
+npm run build    # Build frontend Vite + esbuild serverProduction.ts -> dist/
 npm run start    # Menjalankan production server dari dist/
 npm run lint     # Type-check TypeScript (tsc --noEmit)
 npm test         # Menjalankan vitest (mode watch). Gunakan `npx vitest run` untuk single-run
@@ -44,3 +44,5 @@ Setiap selesai mengubah fitur, database, atau API, kamu WAJIB:
 1) memperbarui file docs yang terkait, dan
 2) menambahkan entri di docs/changelog.md.
 Jangan menganggap tugas selesai sebelum dokumentasi diperbarui.
+
+Startup: `serverDev.ts` untuk development; `serverProduction.ts` untuk production. `.env` dimuat dari cwd, environment proses menang. Minimum Node mengikuti engines package.json; lihat README untuk instalasi production dan `npm run test:production`.

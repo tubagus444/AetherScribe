@@ -155,7 +155,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
   - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
   - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
-- [ ] **[F21](docs/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik** (Medium; M).
+- [x] **[F21](docs/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik** (Medium; M).
+  - Tanggal / commit: 14 November 2026; `fix(runtime): pastikan startup production deterministik (F21)` (commit yang menambahkan bukti ini).
+  - Perubahan: entry dev/production terpisah, tanpa import Vite pada runtime production; dotenv cwd dengan prioritas env proses, mode eksplisit, PORT tervalidasi dan allowlist proxy port aktif. Aset relatif bundle; build hilang/port invalid/terpakai gagal dengan exit 1. Engines Node sesuai dependency terkunci.
+  - Bukti sebelum: bundle server baseline 9b57e73 gagal exit 1 pada dependency production bersih karena Cannot find module 'vite'.
+  - Verifikasi: 70 berkas/700 tes, typecheck dan build lulus; smoke dev Windows dan npm run test:production lulus. Smoke production menginstal 514 dependency (tanpa Vite/tsx), menguji SPA/deep-link/aset, cwd berbeda, .env/key sintetis, mode, port, API mock, origin terlarang, error startup dan tidak adanya key sintetis di dist.
+  - Dokumentasi: README, .env.example, docs/architecture.md, docs/api.md, docs/changelog.md dan panduan agen. Batas: Node 24.15.0/Windows; belum diuji Linux atau key/provider nyata; binding tetap loopback dan APP_URL tidak digunakan.
+
 - [ ] **[F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus** (Medium; S–M).
 - [ ] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).
 - [ ] **[F23](docs/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah** (Medium; M–L).
