@@ -6,6 +6,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Fix] F16 — Kontrak Cancel Context Worker dan Checkpoint
+
+- Gunakan envelope CANCEL dengan payload.cancelId bersama antara sender/receiver melalui union contextProtocol.ts. Lacak request aktif, abaikan cancel terlambat, bersihkan state akhirnya, dan jangan post hasil/error request batal.
+- Tambahkan checkpoint sebelum tugas, setelah model siap dan pembacaan preview DB; scan chunk yield setiap 16 chunk untuk menerima cancel. Model bersama/indexing latar tetap terpisah dari request timeout; tidak mengklaim preemption operasi sinkron atau embedding in-flight.
+- Tes timeout gagal pada baseline 0a4e930 karena cancelId dikirim di root, lalu lulus setelah perbaikan. Lima tes baru memakai facade/handler asli dengan transport, tokenizer, model, dan DB mock: timeout/pending cleanup, isolasi request, model loading, scan kooperatif dan late cancel. Belum Worker browser native/model nyata.
+- Verifikasi akhir: 69 berkas/696 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build lama tentang ukuran bundle, import ActionsPanel, eval ONNX, dan data Browserslist tetap ada.
+
+
 ### [Fix] F29/F13 ? Kesegaran Ringkasan dan Parameter/Metrik AI
 
 - Tambahkan hash sumber ringkasan sebagai metadata Chapter inert. Conditional commit dalam transaksi menolak respons jika bab berubah/dihapus atau summary diedit saat request berlangsung. Timestamp freshness memakai versi sumber; legacy tanpa hash diregenerasi saat eligible. Tidak menambah schema DB atau loop retry otomatis.

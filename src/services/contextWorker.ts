@@ -1,3 +1,4 @@
+import type { ContextWorkerMessage } from './contextProtocol';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -31,6 +32,7 @@ let encoders = new Map<string, any>();
 // Worker single-thread → cancel hanya efektif pada operasi async (mis. embedding),
 // di mana checkpoint `checkCancelled` membuat handler berhenti & hasilnya di-drop.
 const cancelledIds = new Set<number>();
+const activeIds = new Set<number>();
 class CancelledError extends Error { constructor() { super('__CANCELLED__'); } }
 function checkCancelled(id?: number) {
   if (id !== undefined && cancelledIds.has(id)) throw new CancelledError();
@@ -549,6 +551,7 @@ async function searchManuscript(projectId: number, query: string, topK: number, 
   const q = (query || '').trim();
   if (!q) return [];
   await getEmbedder();
+  checkCancelled(reqId);
   const queryEmbedding = await getSemanticEmbedding(q);
   checkCancelled(reqId);
 
@@ -567,22 +570,14 @@ async function searchManuscript(projectId: number, query: string, topK: number, 
 
 // Worker message listener
 self.onmessage = async (e: MessageEvent) => {
-  const { type, id, payload } = e.data;
-
-  // C3: sinyal batal (fire-and-forget, tanpa balasan). Tandai id agar handler
-  // async yang sedang berjalan bisa berhenti di checkpoint & hasilnya di-drop.
-  if (type === 'CANCEL') {
-    if (payload && typeof payload.cancelId === 'number') {
-      cancelledIds.add(payload.cancelId);
-      // Batasi pertumbuhan: cancel yang tiba setelah request selesai takkan pernah
-      // dibersihkan, jadi buang yang terlama bila set membengkak.
-      if (cancelledIds.size > 256) {
-        const oldest = cancelledIds.values().next().value;
-        if (oldest !== undefined) cancelledIds.delete(oldest);
-      }
-    }
+  const message = e.data as ContextWorkerMessage;
+  if (message.type === 'CANCEL') {
+    const cancelId = message.payload?.cancelId;
+    if (Number.isSafeInteger(cancelId) && activeIds.has(cancelId)) cancelledIds.add(cancelId);
     return;
   }
+  const { type, payload } = message;
+  const id = 'id' in message ? message.id : undefined;
 
   // Fire-and-forget: indexing naskah tak boleh terikat timeout request 30d.
   // Progres & selesai disiarkan lewat event 'PROGRESS'. Tak ada balasan id.
@@ -591,7 +586,10 @@ self.onmessage = async (e: MessageEvent) => {
     return;
   }
 
+  if (id !== undefined) activeIds.add(id);
   try {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    checkCancelled(id);
     let result;
     switch (type) {
       case 'SEARCH_MANUSCRIPT':
@@ -604,7 +602,10 @@ self.onmessage = async (e: MessageEvent) => {
         const { chunks, allCodex } = payload;
         const ac = getAcInstance(allCodex);
         const matches: Array<{start: number, end: number, codexId: number}> = [];
-        chunks.forEach((chunk: any) => {
+        let processed = 0;
+        for (const chunk of chunks) {
+          if (processed++ % 16 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+          checkCancelled(id);
           const acMatches = ac.search(chunk.text);
           acMatches.forEach(m => {
             // Lewati entri tanpa id — codexId yang undefined merusak highlight downstream. (C5)
@@ -616,7 +617,7 @@ self.onmessage = async (e: MessageEvent) => {
               });
             }
           });
-        });
+        }
         result = matches;
         break;
       }
@@ -682,8 +683,10 @@ self.onmessage = async (e: MessageEvent) => {
 
         // Fetch langsung dari IndexedDB di dalam worker (menghindari O(n) clone postMessage tiap ketikan)
         const allCodex = await db.codex.where('projectId').equals(projectId).toArray();
+        checkCancelled(id);
         const allRules = await db.bible.where('projectId').equals(projectId).toArray();
 
+        checkCancelled(id);
         // (reqId diteruskan ke getRelevantContext di cabang non-fullContext di bawah)
         if (fullContext) {
           // Mode caching: SELURUH Story Bible + Codex dikirim statis (lihat
@@ -732,6 +735,8 @@ self.onmessage = async (e: MessageEvent) => {
       if (id !== undefined) cancelledIds.delete(id);
       return; // dibatalkan; tak perlu balas
     }
-    self.postMessage({ id, error: error.message || 'Worker error' });
+    if (id === undefined || !cancelledIds.has(id)) self.postMessage({ id, error: error.message || 'Worker error' });
+  } finally {
+    if (id !== undefined) { activeIds.delete(id); cancelledIds.delete(id); }
   }
 };

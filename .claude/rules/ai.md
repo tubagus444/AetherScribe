@@ -54,3 +54,7 @@ Jangan memilih fallback hanya berdasarkan adanya key. providerPolicy.ts mengatur
 ## Ringkasan dan usage F29/F13
 
 Auto summary harus menyimpan hash konten sumber dan conditional commit di transaksi DB; jangan memakai waktu selesai request sebagai bukti kesegaran. Hasil saat content/lastModified/summary berubah dibuang, bukan disimpan sebagai fresh. Temperature memakai ?? agar nol valid; usage Claude menggabungkan event input/output/cache dan kalkulasi token menghormati nol. Field summarySourceHash inert dan ikut backup/import.
+
+## Context Worker cancel F16
+
+Pakai contextProtocol.ts untuk pesan sender/receiver. CANCEL selalu payload.cancelId; terima hanya ID aktif, cleanup pada finally dan jangan post hasil request batal. Beri checkpoint setelah await serta yield per batch pada loop panjang. Jangan menjanjikan preemption sinkron atau membatalkan model bersama/indexing fire-and-forget hanya karena satu request timeout.

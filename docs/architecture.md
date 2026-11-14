@@ -123,3 +123,7 @@ Daftar nama variabel lingkungan yang didukung aplikasi (tanpa nilai rahasia):
 | `APP_URL` | Opsional | URL publik host aplikasi (untuk referensi webhook/link balik). |
 | `NODE_ENV` | Opsional | Mode runtime node (`development` atau `production`). |
 | `PORT` | Opsional | Port server Express lokal (default: `3000`). |
+
+## Kontrak Pembatalan Context Worker (F16)
+
+Main thread dan worker memakai contextProtocol.ts: pesan CANCEL membawa payload.cancelId. Task memiliki ID tersendiri, sedangkan INDEX_MANUSCRIPT tetap fire-and-forget. Timeout menghapus pending Promise di main thread dan mengirim cancel; worker memeriksa ID aktif pada checkpoint async/yield serta membersihkan penanda pada finally. Cancel request A tidak membatalkan B atau model bersama. Ini bukan hard termination terhadap komputasi sinkron; pembatalan baru efektif setelah event loop menerima pesan dan checkpoint berikutnya tercapai. Heartbeat progres tetap memperpanjang idle timeout sesuai mekanisme sebelumnya.

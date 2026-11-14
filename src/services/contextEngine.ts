@@ -1,3 +1,4 @@
+import { cancelContextRequest, type ContextTaskType, type ContextWorkerMessage } from './contextProtocol';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -71,7 +72,7 @@ function getWorker(): Worker {
   return worker;
 }
 
-function sendToWorker(type: string, payload: any): Promise<any> {
+function sendToWorker(type: ContextTaskType, payload: any): Promise<any> {
   const id = ++requestId;
   return new Promise((resolve, reject) => {
     // Timeout IDLE (bukan sejak-mulai): 30 dtk tanpa AKTIVITAS worker apa pun. Di-reset
@@ -85,7 +86,7 @@ function sendToWorker(type: string, payload: any): Promise<any> {
           // C3: beri sinyal batal ke worker agar tak membuang siklus pada operasi
           // async (mis. embedding) & tak mem-post hasil basi. Best-effort: hanya
           // berpengaruh di checkpoint await worker (operasi sinkron tak bisa diputus).
-          try { worker?.postMessage({ type: 'CANCEL', cancelId: id }); } catch { /* worker mati */ }
+          try { worker?.postMessage(cancelContextRequest(id)); } catch { /* worker mati */ }
           reject(new Error(`Context engine worker request timed out (${type})`));
         }
       }, WORKER_IDLE_TIMEOUT_MS);
@@ -108,7 +109,7 @@ function sendToWorker(type: string, payload: any): Promise<any> {
     });
 
     try {
-      getWorker().postMessage({ type, id, payload });
+      getWorker().postMessage({ type, id, payload } satisfies ContextWorkerMessage);
     } catch (err) {
       clearTimeout(timeoutId);
       pendingRequests.delete(id);

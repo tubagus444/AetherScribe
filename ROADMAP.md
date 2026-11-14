@@ -131,7 +131,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
   - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
-- [ ] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
+- [x] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
+  - Tanggal / commit: 14 November 2026; `fix(ai): selaraskan pembatalan context worker (F16)` (commit yang menambahkan bukti ini).
+  - Perubahan: union kontrak pesan, CANCEL payload.cancelId, state ID aktif/finally cleanup, checkpoint sebelum tugas/selepas await dan yield batch chunk. Hasil request batal diabaikan, request lain tetap berjalan.
+  - Bukti sebelum: tes timeout pada baseline 0a4e930 gagal karena cancelId dikirim di root, tidak sesuai receiver.
+  - Verifikasi: lima tes facade/handler dengan mock transport/model/tokenizer/DB; hasil akhir di changelog.
+  - Dokumentasi: docs/features.md, docs/architecture.md, docs/changelog.md. Batas: belum Worker native/model nyata; pembatalan kooperatif, bukan preemption operasi sinkron atau penghentian model bersama/indexing latar.
 - [x] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
   - Tanggal / commit: Implementasi 13 November 2026; commit 14 November 2026: `fix(ai): batasi fallback cloud dengan izin eksplisit (F17)` (commit yang menambahkan bukti ini).
   - Perubahan: izin fallback per provider, default tanpa fallback lintas-provider, mode inferensi hanya lokal, pemeriksaan ulang saat dispatch dan guard direct proxy. Kontrol langsung tersimpan dan indikator tujuan efektif ditampilkan.
