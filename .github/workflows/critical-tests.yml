@@ -35,6 +35,8 @@ jobs:
         run: npx playwright install --with-deps chromium --no-shell
       - name: Native browser critical paths
         run: npm run test:e2e
+      - name: Native data-path correctness and benchmark
+        run: npm run test:data-paths -- --output=test-results/data-paths.json
       - name: Build and clean production startup smoke
         run: npm run test:production
       - name: Production startup and offline lazy assets

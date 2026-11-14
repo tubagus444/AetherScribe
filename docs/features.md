@@ -424,3 +424,16 @@ Aset lazy tetap diprecache agar tersedia sesudah instalasi offline selesai.
 Smoke production membuktikan reload editor, worker token baru dan unduhan Markdown
 melalui dialog ekspor saat jaringan offline. Model semantik eksternal tetap butuh
 unduhan/cache tersendiri. Hasil pengukuran dan batas ada di [laporan F22](performance/f22.md).
+
+## Query Naskah Besar (F23)
+
+Daftar bab, statistik header dan dashboard memakai indeks metadata (judul, status,
+urutan, jumlah kata dan waktu edit), sehingga tidak membaca ulang seluruh HTML
+setiap simpan. Metadata diperbarui otomatis dalam transaksi penulisan bab; impor,
+restore, duplikasi, rollback dan penghapusan tetap konsisten. Auto-index membaca
+satu key waktu edit terbaru. Schema naik append-only ke v34, tanpa tabel baru.
+
+Pencarian adegan tetap menilai semua vektor proyek dengan skor exact dan urutan
+seri yang sama, tetapi membacanya per batch dan mempertahankan hanya top-k hit.
+Memori dibatasi; latency pencarian tidak dijanjikan selalu turun. Analisis yang
+memerlukan isi bab tetap membaca teks. Metodologi/hasil: [F23](performance/f23.md).

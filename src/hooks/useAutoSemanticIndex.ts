@@ -1,3 +1,4 @@
+import { readLatestChapterModified } from '@/src/services/chapterQueries';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -21,7 +22,6 @@
 
 import { useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/src/db';
 import { useProject } from '@/src/contexts/ProjectContext';
 import { indexManuscript, countIndexedScenes } from '@/src/services/contextEngine';
 
@@ -32,15 +32,11 @@ export function useAutoSemanticIndex(): void {
   const { projectId } = useProject();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Timestamp simpan terakhir dari bab mana pun di proyek aktif (ringan: satu scan).
+  // Timestamp simpan terakhir dari bab mana pun di proyek aktif (ringan: satu index key).
   const latestModified = useLiveQuery(
     () =>
       projectId
-        ? db.chapters
-            .where('projectId')
-            .equals(projectId)
-            .toArray()
-            .then((chs) => Math.max(0, ...chs.map((c) => c.lastModified ?? 0)))
+        ? readLatestChapterModified(projectId)
         : 0,
     [projectId],
     0,

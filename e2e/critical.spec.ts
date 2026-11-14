@@ -253,3 +253,36 @@ test('F25 busy modal blocks Escape/backdrop until the operation completes', asyn
   await expect(dialog).toHaveCount(0);
   await expect(trigger).toBeFocused();
 });
+
+test('F23 index-only metadata follows real editor writes without losing HTML', async ({ page }) => {
+  await page.locator('.tiptap[contenteditable="true"]').fill('F23 one two three');
+  const result = await page.evaluate(async () => {
+    const bridgePath = '/src/features/editor/editorBridge.ts'; const queryPath = '/src/services/chapterQueries.ts'; const dbPath = '/src/db.ts';
+    await (await import(bridgePath)).flushActiveEditor();
+    const { db } = await import(dbPath); const { readChapterList, readLatestChapterModified } = await import(queryPath);
+    await db.chapters.update(1, { title: 'Renamed native', status: 'done' });
+    await db.projects.update(1, { wordGoal: 4 });
+    return { rows: await readChapterList(1), latest: await readLatestChapterModified(1), source: await db.chapters.get(1) };
+  });
+  expect(result.rows).toHaveLength(1);
+  expect(result.rows[0]).toMatchObject({ title: 'Renamed native', status: 'done', _computedWordCount: 4 });
+  expect(result.rows[0].content).toBeUndefined();
+  expect(result.source.content).toContain('F23 one two three');
+  expect(result.latest).toBe(result.source.lastModified);
+  await expect(page.getByTitle('Progres Naskah')).toContainText('100%');
+  await page.evaluate(() => localStorage.setItem('aether_view_mode', 'dashboard'));
+  await page.reload();
+  await expect(page.locator('main')).toContainText('4 / 4 kata');
+});
+
+test('F23 native v33 upgrade backfills metadata while preserving manuscript', async ({ page }) => {
+  await page.route('**/__f23_migrate', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+  await page.goto('/__f23_migrate');
+  const result = await page.evaluate(async () => {
+    const modulePath = '/e2e/dataPathsFixture.ts';
+    return (await import(modulePath)).migrateV33();
+  });
+  expect(result.version).toBe(34);
+  expect(result.rows[0]).toMatchObject({ id: 7, title: 'Legacy', _computedWordCount: 3, lastModified: 9 });
+  expect(result.chapter.content).toBe('<p>legacy native browser</p>');
+});

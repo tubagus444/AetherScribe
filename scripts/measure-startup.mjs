@@ -40,7 +40,7 @@ try {
       const tx = db.transaction([...db.objectStoreNames], 'readwrite');
       for (const name of db.objectStoreNames) tx.objectStore(name).clear();
       tx.objectStore('projects').put({ id: 1, name: 'F22 Synthetic', description: '', createdAt: 1, lastOpened: 1 });
-      tx.objectStore('chapters').put({ id: 1, projectId: 1, title: 'F22 Chapter', content: '<p>' + 'Fixture novel browser. '.repeat(1000) + '</p>', order: 0, lastModified: 1 });
+      tx.objectStore('chapters').put({ id: 1, projectId: 1, title: 'F22 Chapter', content: '<p>' + 'Fixture novel browser. '.repeat(1000) + '</p>', order: 0, lastModified: 1, listMetadata: [0, 'F22 Chapter', 'outline', 3000, 1] });
       tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
     }); db.close();
     localStorage.setItem('aether_view_mode', 'write');

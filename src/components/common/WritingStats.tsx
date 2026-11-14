@@ -1,3 +1,4 @@
+import { readChapterList } from '@/src/services/chapterQueries';
 /**
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -8,7 +9,7 @@ import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
 import { db } from '@/src/db';
 import { Target, TrendingUp, Edit2, Clock, BarChart2, ChevronDown, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { countWords, cn } from '@/src/lib/utils';
+import { cn } from '@/src/lib/utils';
 import { useDailyProgress } from '@/src/hooks/useDailyProgress';
 
 interface WritingStatsProps {
@@ -23,10 +24,10 @@ export function WritingStats({ projectId }: WritingStatsProps) {
 
   // Optimized query: only return scalar values to avoid memory bloat and deep equality cost
   const stats = useOptimizedLiveQuery(async () => {
-    const allChapters = await db.chapters.where('projectId').equals(projectId).toArray();
+    const allChapters = await readChapterList(projectId);
     let words = 0;
     for (const ch of allChapters) {
-      words += countWords(ch.content);
+      words += ch._computedWordCount;
     }
     return {
       totalWords: words,

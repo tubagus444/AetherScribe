@@ -1,6 +1,6 @@
 # Panduan Agen AI — AetherScribe (AGENTS.md)
 
-AetherScribe adalah lingkungan penulisan novel berbasis web yang local-first (Intelligent Writing Environment / IWE). Seluruh data tersimpan murni di browser via Dexie/IndexedDB (skema v33) tanpa database backend.
+AetherScribe adalah lingkungan penulisan novel berbasis web yang local-first (Intelligent Writing Environment / IWE). Seluruh data tersimpan murni di browser via Dexie/IndexedDB (skema v34) tanpa database backend.
 
 ## Tech Stack & Perintah
 - **Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, TipTap 3 (`3.22.5`), Dexie.js, Web Workers, Express proxy.

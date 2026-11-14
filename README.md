@@ -100,7 +100,8 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm test` | Jalankan unit test (Vitest). |
 | `npm run test:run` | Unit/integrasi sekali jalan. |
 | `npm run test:coverage` | Unit/integrasi dengan laporan coverage V8. |
-| `npm run test:e2e` | Empat belas skenario kritis Chromium terisolasi. |
+| `npm run test:e2e` | Enam belas skenario kritis Chromium terisolasi. |
+| `npm run test:data-paths` | Bandingkan query dan working-set heap dengan fixture sintetis. |
 | `npm run test:startup` | Ukur build dan periksa PWA/worker/ekspor offline (sesudah build). |
 | `npm run test:production` | Build dan smoke test instalasi production terisolasi. |
 | `npm run lint` | Type-check via `tsc --noEmit`. |
@@ -110,3 +111,5 @@ Panduan lengkap, instalasi browser, bukti regresi dan batas coverage ada di [doc
 Pada Pengaturan AI, key baru disimpan selama sesi tab secara default; pilihan Ingat di browser ini tersedia. Penyimpanan browser bukan enkripsi. Tombol hapus key tidak mencabut key di provider atau menghapus key .env server. Detail: [privasi kredensial](docs/features.md#privasi-kredensial-dan-log-f27).
 
 Pengukuran optimasi pemuatan awal: [laporan F22](docs/performance/f22.md). Aset fitur lazy tetap tersedia setelah cache offline selesai.
+
+Optimasi query metadata dan ranking naskah besar (schema v34): [laporan F23](docs/performance/f23.md).

@@ -44,7 +44,7 @@ Aplikasi-Pembuatan-Novel/
 ## 2. Alur Data & State Management
 
 AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reaktif dan lokal:
-- **Penyimpanan Primer:** Browser IndexedDB via wrapper **Dexie.js** (`AetherScribeDB`, skema v33 di `src/db.ts`).
+- **Penyimpanan Primer:** Browser IndexedDB via wrapper **Dexie.js** (`AetherScribeDB`, skema v34 di `src/db.ts`).
 - **Reaktivitas UI:** Menggunakan `dexie-react-hooks` (`useLiveQuery`), dibungkus secara teroptimasi di `src/hooks/useOptimizedLiveQuery.ts` dan `src/hooks/useProjectData.ts`. Setiap perubahan tabel IndexedDB otomatis memicu re-render hanya pada komponen yang berlangganan.
 - **State Sesi & Navigasi:** Menggunakan kombinasi React Contexts terisolasi:
   - `ProjectContext`: Proyek aktif, pemilihan proyek, operasi hapus proyek terkoordinasi.
@@ -205,3 +205,18 @@ Precache glob/limit tetap mencakup chunk baru; tidak mengecualikan fitur lazy da
 offline. Test produksi test:startup mengaktifkan SW untuk assertion offline, tetapi
 memblokirnya pada sample timing agar install cache tidak mencampur ukuran startup.
 Lihat [metodologi dan raw data](performance/f22.md).
+
+## Query Metadata dan Ranking F23
+
+chapterMetadata mendefinisikan tuple covering-index, chapterQueries membaca index
+keys untuk list/stats serta timestamp terbaru. AetherScribeDB v34 memasang hooks
+saat konstruksi, sehingga write path main thread/worker menggunakan kontrak yang
+sama tanpa cache post-commit. Bidang baru bukan FK/tabel tambahan. Field derived
+ikut backup sebagai data Chapter dan dibangun ulang oleh hook sesudah import.
+
+useOptimizedLiveQuery membandingkan hasil baru lewat sameQueryResult tanpa JSON
+serialization; referensi stabil tetap dipertahankan untuk data setara. Tipe non-data
+dipandang berubah secara konservatif. sceneQueries melakukan keyset getAll batch
+256 dalam satu readonly transaction; contextWorker memakai StableTopK dan tetap
+memeriksa cancel. Tidak ada await timer/model di dalam transaksi ranking. Detail
+schema, benchmark, dan tradeoff: [database](database.md), [F23](performance/f23.md).

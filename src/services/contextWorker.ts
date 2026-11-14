@@ -1,3 +1,5 @@
+import { visitSceneEmbeddings } from './sceneQueries';
+import { StableTopK } from '@/src/lib/stableTopK';
 import type { ContextWorkerMessage } from './contextProtocol';
 /**
  * @license
@@ -555,17 +557,13 @@ async function searchManuscript(projectId: number, query: string, topK: number, 
   const queryEmbedding = await getSemanticEmbedding(q);
   checkCancelled(reqId);
 
-  const rows = await db.sceneEmbeddings.where('projectId').equals(projectId).toArray();
+  const best = new StableTopK<SceneSearchHit>(topK);
+  await visitSceneEmbeddings(projectId, row => {
+    const hit = { chapterId: row.chapterId, chunkIndex: row.chunkIndex, snippet: row.snippet, score: cosineSimilarity(queryEmbedding, row.embedding) };
+    best.add(hit, hit.score);
+  }, () => checkCancelled(reqId));
   checkCancelled(reqId);
-
-  const scored = rows.map(r => ({
-    chapterId: r.chapterId,
-    chunkIndex: r.chunkIndex,
-    snippet: r.snippet,
-    score: cosineSimilarity(queryEmbedding, r.embedding),
-  }));
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, Math.max(1, topK));
+  return best.results();
 }
 
 // Worker message listener

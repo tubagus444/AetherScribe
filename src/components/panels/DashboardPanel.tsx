@@ -1,3 +1,4 @@
+import { readChapterList } from '@/src/services/chapterQueries';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -37,7 +38,7 @@ export function DashboardPanel({ projectId }: DashboardPanelProps) {
   const { setActiveChapterId, setViewMode } = useNavigation();
 
   const project = useOptimizedLiveQuery(() => db.projects.get(projectId), [projectId]);
-  const chapters = useOptimizedLiveQuery(() => db.chapters.where('projectId').equals(projectId).toArray(), [projectId]);
+  const chapters = useOptimizedLiveQuery(() => readChapterList(projectId), [projectId]);
   const { codexEntries, aiActions, bibleRules, relationships } = useProjectData(projectId);
   const timelineCount = useOptimizedLiveQuery(() => db.timeline.where('projectId').equals(projectId).count(), [projectId]);
   
@@ -136,7 +137,7 @@ export function DashboardPanel({ projectId }: DashboardPanelProps) {
 
   const totalWords = useMemo(() => {
     if (!chapters) return 0;
-    return chapters.reduce((acc, ch) => acc + countWords(ch.content), 0);
+    return chapters.reduce((acc, ch) => acc + ch._computedWordCount, 0);
   }, [chapters]);
 
   const readTimeMin = Math.ceil(totalWords / 250);
@@ -147,7 +148,7 @@ export function DashboardPanel({ projectId }: DashboardPanelProps) {
   // #3 Bab yang terakhir disentuh → tujuan tombol "Lanjutkan menulis".
   const lastChapter = useMemo(() => {
     if (!chapters || chapters.length === 0) return null;
-    return chapters.reduce((latest, ch) => (ch.lastModified > latest.lastModified ? ch : latest));
+    return chapters.reduce((latest, ch) => (ch.lastModified > latest.lastModified || (ch.lastModified === latest.lastModified && ch.id! < latest.id!) ? ch : latest));
   }, [chapters]);
 
   const continueWriting = () => {

@@ -1,3 +1,4 @@
+import { chapterListKey } from '@/src/lib/chapterMetadata';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -224,6 +225,26 @@ export class AetherScribeDB extends Dexie {
 
     // v33: Triase temuan Peta Kontinuitas. Append-only, tanpa migrasi data.
     this.version(33).stores(STORES_V33);
+
+    // F23: append-only covering key + latest-modified index. Cursor migration
+    // visits one chapter at a time instead of collecting the manuscript in RAM.
+    this.version(34).stores({
+      ...STORES_V33,
+      chapters: '++id, projectId, order, [projectId+listMetadata], [projectId+lastModified]',
+      sceneEmbeddings: 'id, projectId, chapterId, [projectId+chapterId], [projectId+id]',
+    }).upgrade(tx => tx.table('chapters').toCollection().modify(chapter => {
+      chapter.listMetadata = chapterListKey(chapter);
+    }));
+
+    this.chapters.hook('creating', (_key, chapter) => {
+      chapter.listMetadata = chapterListKey(chapter);
+    });
+    this.chapters.hook('updating', (changes, _key, chapter) => {
+      const patch = changes as Partial<Chapter>;
+      const unchangedContent = !Object.prototype.hasOwnProperty.call(changes, 'content') || patch.content === chapter.content;
+      const cached = unchangedContent && chapter.listMetadata ? chapter.listMetadata[3] : undefined;
+      return { listMetadata: chapterListKey({ ...chapter, ...patch }, cached) };
+    });
   }
 }
 

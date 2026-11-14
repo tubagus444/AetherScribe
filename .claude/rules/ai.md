@@ -62,3 +62,5 @@ Pakai contextProtocol.ts untuk pesan sender/receiver. CANCEL selalu payload.canc
 F27: jangan log promptPreview/rawMessage, key atau object error mentah dari provider. ErrorService memakai privateErrorRecord (allowlist diagnostik sebelum console/DB); model/actionType bebas dan stack tidak disimpan. UI pembaca log lama juga harus melalui boundary ini.
 
 F22: transformers hanya diimpor dalam getEmbedder; jangan tarik runtime model ke boot worker/token counting. Worker build format es memungkinkan chunk dinamis. Pertahankan shared init/retry/cancel dan precache aset lazy; validasi test:startup sesudah build.
+
+F23: searchManuscript harus memakai sceneQueries keyset batch/StableTopK dengan skor dan tie order yang tetap exact. Jangan await timer/model dalam transaksi; checkpoint cancel per batch/row. Auto-index timestamp berasal dari index key, bukan clone seluruh chapter.

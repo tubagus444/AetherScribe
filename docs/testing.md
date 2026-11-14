@@ -124,3 +124,12 @@ worker token native dan ekspor Markdown lazy. Port khusus 4181; report opsional
 Guard transformers on-demand di contextCancellation gagal pada worker source
 baseline, kemudian lulus. Total F22: 76 berkas/723 tes dan 14 browser tests.
 Metodologi/batas pengukuran: [performance/f22.md](performance/f22.md).
+
+
+F23: total 82 berkas/738 tes serta 16 browser tests. Tambahan mencakup metadata
+key-only/generated ID, invalidation, rollback, import/restore/delete, migrasi v33,
+query equality tanpa JSON, bounded/stable ranking dan protokol semantic search.
+Native browser memverifikasi migrasi serta statistik header/dashboard sesudah
+flush editor. `npm run test:data-paths` membandingkan hasil fixture kecil/sedang/
+besar dan melaporkan waktu serta working-set heap; tidak perlu key/model nyata.
+CI menyimpan JSON benchmark tanpa ambang timing. Lihat [laporan F23](performance/f23.md).

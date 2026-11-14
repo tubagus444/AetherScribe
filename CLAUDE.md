@@ -4,7 +4,7 @@ AetherScribe adalah lingkungan penulisan novel berbasis web yang local-first (In
 
 ## Tech Stack
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Lucide React, Framer Motion.
-- **Penyimpanan Lokal:** Dexie.js (IndexedDB wrapper, skema v33).
+- **Penyimpanan Lokal:** Dexie.js (IndexedDB wrapper, skema v34).
 - **Editor Naskah:** TipTap 3 (dipin tepat ke versi `3.22.5`).
 - **Komputasi Latar Belakang:** Web Workers (Aho-Corasick, `@xenova/transformers`, Orama BM25).
 - **Backend / Proxy:** Node.js, Express, TypeScript (PORT default 3000, binding loopback, body limit 25MB).

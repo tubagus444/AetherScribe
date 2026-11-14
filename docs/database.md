@@ -1,6 +1,6 @@
 # Dokumentasi Database — AetherScribe
 
-> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v33** di `src/db.ts`).
+> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v34** di `src/db.ts`).
 > Aplikasi tidak menggunakan database SQL server. Seluruh data tersimpan secara lokal di browser pengguna.
 
 ---
@@ -46,7 +46,7 @@ Hapus proyek membersihkan seluruh tabel domain project-scoped; snapshot bab proy
   - `travelSpeeds` | `TravelSpeedProfile[]` | Ya | `undefined` | Field inert: profil kecepatan perjalanan (Atlas)
 - **Relasi:** Induk dari hampir semua data project-scoped.
 - **Index penting:** `++id`, `name`, `lastOpened`
-- **File migration terkait:** `src/db.ts` (v10 s/d v33)
+- **File migration terkait:** `src/db.ts` (v10 s/d v34)
 
 ---
 
@@ -389,3 +389,30 @@ Schema v33 tidak berubah. Transaksi importProjectData kini mencakup continuityTr
 ## Versi Konten Ringkasan (F29)
 
 Chapter.summarySourceHash?: string adalah field JSON inert SHA-256 (64 hex), tanpa indeks atau migrasi v33. Ikut collect/restore/import seperti metadata Chapter lainnya dan divalidasi schema backup. summaryUpdatedAt mencatat lastModified sumber yang berhasil dirangkum. Conditional commit membandingkan record aktual dalam transaksi; edit saat request berlangsung tidak menghasilkan summary stale yang dianggap fresh. Legacy tanpa hash diregenerasi ketika pemicu auto-summary berikutnya berjalan.
+
+## F23: covering metadata dan schema v34
+
+Versi 10-33 tidak diubah. v34 menambah indeks chapters [projectId+listMetadata]
+dan [projectId+lastModified], serta sceneEmbeddings [projectId+id]. listMetadata
+adalah tuple turunan [order,title,status,countWords,lastModified]; bukan tabel
+baru atau FK. Migrasi cursor menghitung tuple dari HTML per bab tanpa toArray
+seluruh manuskrip. Teks/status/order asli tidak diubah.
+
+Hooks creating/updating di AetherScribeDB menjaga tuple pada transaksi yang sama
+dengan insert/update/put/bulkPut. Generated ID dibaca dari primary key cursor,
+bukan dimasukkan ke tuple sebelum ID tersedia. Update tanpa perubahan content
+memakai count lama; import/restore yang membuat record menghitung ulang dari HTML,
+termasuk jika file membawa metadata palsu. Unknown metadata tidak dipercaya.
+
+Delete/clear dan rollback otomatis menghapus/mengembalikan index key bersama
+record. Tidak ada tabel project-scoped baru yang perlu ditambah ke FK remap atau
+collect/delete; field ikut serialisasi Chapter yang sudah ada dan hook membangun
+ulang setelah import/restore. Format backup tetap v8, legacy tetap diterima.
+
+readChapterList hanya membaca index key, bukan record HTML. readLatestChapterModified
+mengambil satu key tertinggi pada proyek. Scene search memakai getAll keyset batch
+256 dalam transaksi readonly untuk snapshot/order yang konsisten. Lihat laporan
+[performa F23](performance/f23.md) untuk angka, overhead index/tulis, batas dan tes.
+Migrasi membutuhkan ruang untuk indeks tambahan; kegagalan transaksi tidak boleh
+memicu clear database. Penulisan harus melalui instance Dexie aplikasi agar hook
+berlaku; raw fixture native wajib menyediakan tuple yang valid.

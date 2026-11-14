@@ -190,6 +190,8 @@ export interface ChatSession {
 export type TensionLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface Chapter {
+  /** Derived covering-index tuple; rebuilt by DB hooks, never trusted on import. */
+  listMetadata?: import('./lib/chapterMetadata').ChapterListKey;
   id?: number;
   projectId: number;
   title: string;

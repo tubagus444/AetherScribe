@@ -6,6 +6,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Perf] F23 — Metadata Terindeks dan Bounded Exact Ranking
+
+- Tambahkan schema v34 append-only: covering metadata/timestamp index bab dan scene keyset index. Migrasi cursor tidak mengumpulkan seluruh manuskrip; creating/updating hook menjaga tuple dalam transaksi yang sama, menghitung kata hanya jika content berubah. Import/restore tidak mempercayai tuple file; rollback/delete tidak meninggalkan cache terpisah. Tidak menambah tabel/FK/dependency; backup tetap v8.
+- ChapterList, WritingStats dan Dashboard memakai key metadata tanpa HTML; latest-modified auto-index membaca satu key. Ganti JSON stringify comparison dengan structural equality, konservatif untuk objek non-data. Preserve ID/order/status/count dan last-chapter tie berdasarkan ID.
+- Exact semantic search membaca batch 256 dalam readonly snapshot dan menyimpan stable top-k; skor/tie/project isolation dan cancel tetap diuji. Tidak mengklaim semua pencarian lebih cepat atau menghindari seluruh vector scoring.
+- Benchmark native IndexedDB kecil/sedang/besar mempertahankan hasil. Fixture 500 bab: list 193,3 ke 7 ms, timestamp 79,5 ke 0,4 ms, working-set full rows 12,59 MB ke metadata 32,2 KB (+5,4 KB backing); bukan peak heap seluruh app. Scene 10.000: 416 ke 427 ms, dengan bounded memory. Raw/metodologi/tradeoff ada di docs/performance/f23.md; test:data-paths ditambahkan ke CI.
+- Guard tanpa serialisasi gagal pada source baseline 1c693f8 lalu lulus. 82 berkas/738 tes, 16 Chromium tests, typecheck/build/diff-check dan startup/offline smoke lulus. Migration v33 diuji di fake-indexeddb dan browser native; data/HTML serta statistik header/dashboard utuh. Peringatan build lama tetap ada; GitHub/Linux, multi-tab upgrade/quota, browser lain dan model nyata belum diverifikasi.
+
+
 ### [Perf] F22 — Pisahkan Dependency Berat dari Startup
 
 - Lazy-load ExportManager sehingga library PDF/DOCX tidak dievaluasi saat editor dibuka. Pisahkan actionIcons dari ActionsPanel untuk menghilangkan import statis panel melalui menu seleksi; peringatan mixed import ActionsPanel hilang.

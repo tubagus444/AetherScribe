@@ -35,3 +35,5 @@ collectAllData/collectProjectData dan ekspor manuskrip membaca melalui backupSna
 ## Round-trip F10
 
 collectProjectData menyertakan continuityTriage. Import transaction harus mencakup tabel ini. Setelah insert timeline/relationships, bangun peta generated ID lalu panggil remapTriage. Remap workshopKey entry:<id> via codexIdMap; jangan mengganti angka dalam pesan/HTML atau new:<seed>. Format finding asing membatalkan transaksi; target finding hilang dilewati sebagai status basi.
+
+F23: Chapter.listMetadata adalah field derived covering-index, bukan FK. Insert/put/update/import/restore wajib lewat Dexie aplikasi agar hook menghitung ulang metadata dari content; jangan percaya count/tuple file. Schema v34 menambah indeks tanpa tabel baru, jadi koleksi/FK lama tetap; rollback/delete menjaga key secara atomik.

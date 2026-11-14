@@ -1,6 +1,7 @@
-import { changeChapters, compareChapters } from '@/src/services/chapterOperations';
+import { changeChapters } from '@/src/services/chapterOperations';
 import { useToast } from '@/src/hooks/useToast';
-type ChapterListMetadata = Omit<Chapter, 'content'> & { _computedWordCount: number };
+import type { ChapterListMetadata } from '@/src/lib/chapterMetadata';
+import { readChapterList } from '@/src/services/chapterQueries';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -8,10 +9,8 @@ type ChapterListMetadata = Omit<Chapter, 'content'> & { _computedWordCount: numb
 
 import React, { useState, useRef, useMemo } from 'react';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
-import { db } from '@/src/db';
 import { Plus, FileText, Trash2, Copy, ChevronUp, ChevronDown } from 'lucide-react';
-import { cn, countWords } from '@/src/lib/utils';
-import { Chapter } from '@/src/types';
+import { cn } from '@/src/lib/utils';
 import { STATUS_DOTS } from '@/src/lib/constants';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -25,12 +24,7 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
   const { toast } = useToast();
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const chapters = useOptimizedLiveQuery(async () => {
-    const all = await db.chapters.where('projectId').equals(projectId).toArray();
-    const sorted = all.sort(compareChapters);
-    
-    return sorted.map(({ content, ...metadata }): ChapterListMetadata => ({ ...metadata, _computedWordCount: countWords(content) }));
-  }, [projectId]);
+  const chapters = useOptimizedLiveQuery(() => readChapterList(projectId), [projectId]);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
@@ -57,7 +51,7 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
       await changeChapters(projectId, 'delete', id);
       setDeleteConfirmId(null);
       if (activeChapterId === id) {
-        const remaining = (await db.chapters.where('projectId').equals(projectId).toArray()).sort(compareChapters)[0];
+        const remaining = (await readChapterList(projectId))[0];
         if (remaining) {
           onSelect(remaining.id!);
         } else {
