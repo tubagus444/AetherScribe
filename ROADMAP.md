@@ -167,7 +167,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi: 70 berkas/700 tes, typecheck dan build lulus; smoke dev Windows dan npm run test:production lulus. Smoke production menginstal 514 dependency (tanpa Vite/tsx), menguji SPA/deep-link/aset, cwd berbeda, .env/key sintetis, mode, port, API mock, origin terlarang, error startup dan tidak adanya key sintetis di dist.
   - Dokumentasi: README, .env.example, docs/architecture.md, docs/api.md, docs/changelog.md dan panduan agen. Batas: Node 24.15.0/Windows; belum diuji Linux atau key/provider nyata; binding tetap loopback dan APP_URL tidak digunakan.
 
-- [ ] **[F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus** (Medium; S–M).
+- [x] **[F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus** (Medium; S–M).
+  - Tanggal / commit: 14 November 2026; `fix(ui): kelola fokus dialog dan pulihkan navigasi legacy (F25/F26)` (commit yang menambahkan bukti ini).
+  - Perubahan: ConfirmDialog memakai dialog/showModal native dengan alertdialog, label/deskripsi, fokus awal Batal, Tab/Shift+Tab berputar, inert/top-layer dan pemulihan fokus. Busy memblokir Escape/backdrop/aksi; dialog bertingkat diuji.
+  - Bukti sebelum: dua tes browser pada source df1f875 gagal (arc tetap tersimpan/tampilan kosong; dialog tidak memiliki role/nama/deskripsi aksesibel). Source dipulihkan lalu suite lulus.
+  - Verifikasi batch F25/F26: 12 tes baru komponen/normalisasi/context dan enam browser tests; total 76 berkas/722 tes, 14 browser tests, typecheck, build dan diff-check lulus. Data proyek/bab tetap utuh; tanpa dependency/schema baru.
+  - Dokumentasi: docs/features.md, docs/architecture.md, docs/testing.md, docs/changelog.md, README. Batas: Chromium/Windows; belum screen reader manual atau Firefox/Safari. Dialog membutuhkan showModal native; pemetaan legacy membuka panel induk, tanpa merekonstruksi target karakter/tab lama.
 - [ ] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).
 - [ ] **[F23](docs/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah** (Medium; M–L).
 
@@ -179,7 +184,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti sebelum: lima probe pada de55cd9 gagal (race konten ringkasan, temperature nol pada tiga keluarga provider, output-token nol); ekspor entry point test-only untuk probe summarizer.
   - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
-- [ ] **[F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong** (Low; S).
+- [x] **[F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong** (Low; S).
+  - Tanggal / commit: 14 November 2026; `fix(ui): kelola fokus dialog dan pulihkan navigasi legacy (F25/F26)` (commit yang menambahkan bukti ini).
+  - Perubahan: Normalisasi tujuan dari definisi studio: arc ke continuity, orphans ke completeness, unknown ke write, workshop tanpa target ke codex. Storage awal, setter, riwayat studio dan fallback render memakai tujuan valid; deep link Codex/Atlas dan workshop bertarget tetap bekerja.
+  - Bukti sebelum: dua tes browser pada source df1f875 gagal (arc tetap tersimpan/tampilan kosong; dialog tidak memiliki role/nama/deskripsi aksesibel). Source dipulihkan lalu suite lulus.
+  - Verifikasi batch F25/F26: 12 tes baru komponen/normalisasi/context dan enam browser tests; total 76 berkas/722 tes, 14 browser tests, typecheck, build dan diff-check lulus. Data proyek/bab tetap utuh; tanpa dependency/schema baru.
+  - Dokumentasi: docs/features.md, docs/architecture.md, docs/testing.md, docs/changelog.md, README. Batas: Chromium/Windows; belum screen reader manual atau Firefox/Safari. Dialog membutuhkan showModal native; pemetaan legacy membuka panel induk, tanpa merekonstruksi target karakter/tab lama.
 - [x] **[F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia** (Medium; S).
   - Tanggal / commit: 14 November 2026; `fix(privacy): batasi penyimpanan key dan minimalkan log (F27)` (commit yang menambahkan bukti ini).
   - Perubahan: credentialStore dipakai hook dan facade; default baru sesi, legacy permanen dipertahankan sampai pengguna menyimpan pilihan. Save sesi memindahkan key tanpa salinan permanen; hapus membersihkan dua storage/isian tab ini. UI menjelaskan Base64 bukan enkripsi, tab restore, env server, tab lain dan request/retry berjalan.

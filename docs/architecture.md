@@ -175,3 +175,21 @@ record lama melalui boundary yang sama; bytes lama tidak dihapus otomatis.
 Jalur console AI dan sendError server memakai pesan statis tanpa object error.
 Ini meminimalkan log aplikasi, tidak memberi perlindungan terhadap script XSS,
 profil browser, console dari library/browser, atau salinan data sebelumnya.
+
+## Boundary Modal dan Navigasi (F25/F26)
+
+ConfirmDialog menggunakan primitive browser dialog.showModal, bukan overlay div.
+Native top-layer/inert melindungi interaksi latar; handler Tab membatasi rotasi
+fokus ke kontrol yang aktif/terlihat, termasuk saat tidak ada kontrol aktif.
+Layout effect membuka/menutup modal serta memulihkan pemicu, aria-busy menandai
+proses. Escape ditangani melalui cancel event dengan preventDefault agar state
+open tetap dikendalikan React. Busy memblokir callback dismissal. Keyboard dialog
+tidak diteruskan ke shortcut global aplikasi. Unit jsdom mengemulasi metode native;
+bukti trap/nesting/backdrop berasal dari browser Chromium.
+
+studioNavigation.normalizeViewMode memakai STUDIOS sebagai daftar tujuan aktif,
+mengalihkan legacy arc/orphans dan memberi fallback unknown/workshop tanpa target.
+NavigationContext menerapkannya pada pemuatan/setter; MainView juga memvalidasi
+sebelum memilih renderer. Riwayat studio menormalisasi sebelum membaca/menyimpan.
+ViewMode legacy tetap dikenali untuk kompatibilitas, tetapi bukan tujuan render
+mandiri. openCodexEntry/openAtlasMarker/openWorkshop tetap mempertahankan target.

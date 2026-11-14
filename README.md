@@ -100,7 +100,7 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm test` | Jalankan unit test (Vitest). |
 | `npm run test:run` | Unit/integrasi sekali jalan. |
 | `npm run test:coverage` | Unit/integrasi dengan laporan coverage V8. |
-| `npm run test:e2e` | Delapan skenario kritis Chromium terisolasi. |
+| `npm run test:e2e` | Empat belas skenario kritis Chromium terisolasi. |
 | `npm run test:production` | Build dan smoke test instalasi production terisolasi. |
 | `npm run lint` | Type-check via `tsc --noEmit`. |
 

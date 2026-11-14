@@ -1,3 +1,4 @@
+import { normalizeViewMode } from '@/src/lib/studioNavigation';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -10,18 +11,10 @@ import { ViewMode, WorkshopTarget } from '@/src/types';
 import { useProject } from '@/src/contexts/ProjectContext';
 
 const VIEW_MODE_STORAGE_KEY = 'aether_view_mode';
-const VALID_VIEW_MODES: ViewMode[] = [
-  'write', 'outline', 'codex', 'bible', 'settings', 'actions', 'relationships',
-  'guide', 'errors', 'brainstorm', 'dashboard', 'consistency', 'timeline', 'orphans', 'continuity', 'arc', 'prose', 'workshop', 'search', 'promises', 'glossary', 'completeness', 'heatmap', 'graph', 'factions', 'worldcalendar', 'atlas',
-];
-
 /** Baca panel terakhir dari localStorage; fallback ke 'write' bila kosong/tidak valid. */
 function loadInitialViewMode(): ViewMode {
   try {
-    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
-    if (saved && VALID_VIEW_MODES.includes(saved as ViewMode)) {
-      return saved as ViewMode;
-    }
+    return normalizeViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY));
   } catch {
     // localStorage tidak tersedia (mode privasi/SSR) — pakai default.
   }
@@ -162,7 +155,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
       activeChapterId,
       setActiveChapterId,
       viewMode,
-      setViewMode,
+      setViewMode: mode => setViewMode(normalizeViewMode(mode, !!workshopTarget)),
       pendingHighlight,
       jumpToText,
       clearPendingHighlight,

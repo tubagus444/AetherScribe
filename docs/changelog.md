@@ -6,6 +6,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Fix] F25/F26 — Fokus Dialog dan Pemulihan Navigasi Legacy
+
+- Gunakan native dialog/showModal untuk ConfirmDialog: role alertdialog, nama/deskripsi, top-layer/inert, fokus awal Batal, Tab/Shift+Tab berputar dan fokus kembali ke pemicu yang masih ada. Busy menahan Escape/backdrop dan menonaktifkan aksi; keyboard tidak meneruskan shortcut ke aplikasi di belakang. Penutupan dikendalikan prop open; fokus/nesting diuji di browser native.
+- Normalisasikan mode melalui definisi studio: arc ke continuity, orphans ke completeness (panel induk Kesehatan Codex), unknown ke write, workshop tersimpan/tanpa target ke codex. Terapkan pada pemuatan preferensi, setter, riwayat studio dan fallback MainView. Workshop dengan target tetap valid; deep link Codex/Atlas dan ID bab dipertahankan.
+- Dua tes browser pada source baseline df1f875 gagal pada migrasi arc dan role/deskripsi dialog. Sesudah fix, 12 tes baru komponen/helper/context dan enam browser skenario lulus; total 76 berkas/722 tes, 14 Chromium tests, typecheck, build serta diff-check lulus. Peringatan build lama tetap ada.
+- Tidak menambah dependency atau mengubah schema DB. Dokumentasi fitur, arsitektur, testing, README dan ROADMAP diperbarui. Verifikasi lokal Windows/Chromium; belum screen reader manual, Firefox/Safari atau workflow GitHub. Dialog membutuhkan dukungan showModal native; mode lama diarahkan ke panel induk, bukan memulihkan target karakter/tab yang tidak tersimpan.
+
+
 ### [Fix] F27 — Pilihan Penyimpanan Key dan Minimisasi Log
 
 - Pusatkan read/write key di credentialStore: default instalasi baru sesi, preferensi legacy permanen tetap dipakai sampai pengguna memilih dan menyimpan perubahan. Mode sesi tidak fallback ke key lokal; target ditulis sebelum salinan lama dibuang. Storage failure tampil tanpa klaim sukses.

@@ -145,7 +145,7 @@ const VIEW_MODE_TO_STUDIO: Record<ViewMode, StudioId> = {
 
 /** Mengambil StudioId dari ViewMode */
 export function getStudioForViewMode(mode: ViewMode): StudioId {
-  return VIEW_MODE_TO_STUDIO[mode] || 'writing';
+  return VIEW_MODE_TO_STUDIO[normalizeViewMode(mode, true)] || 'writing';
 }
 
 /** Mengambil definisi Studio dari StudioId */
@@ -159,7 +159,8 @@ const LAST_TAB_STORAGE_PREFIX = 'aether_last_tab_';
 export function getLastActiveTabForStudio(studioId: StudioId): ViewMode {
   const studio = getStudioDef(studioId);
   try {
-    const saved = localStorage.getItem(`${LAST_TAB_STORAGE_PREFIX}${studioId}`) as ViewMode | null;
+    const raw = localStorage.getItem(`${LAST_TAB_STORAGE_PREFIX}${studioId}`);
+    const saved = raw === 'workshop' ? null : normalizeViewMode(raw);
     if (saved && studio.tabs.some((t) => t.mode === saved)) {
       return saved;
     }
@@ -174,8 +175,19 @@ export function rememberLastActiveTab(studioId: StudioId, mode: ViewMode): void 
   // Jangan simpan mode transien seperti workshop
   if (mode === 'workshop') return;
   try {
-    localStorage.setItem(`${LAST_TAB_STORAGE_PREFIX}${studioId}`, mode);
+    const normalized = normalizeViewMode(mode);
+    if (getStudioDef(studioId).tabs.some(tab => tab.mode === normalized)) {
+      localStorage.setItem(`${LAST_TAB_STORAGE_PREFIX}${studioId}`, normalized);
+    }
   } catch {
     // Ignore
   }
+}
+
+/** Only modes with a renderer may enter navigation; workshop requires a live target. */
+export function normalizeViewMode(value: unknown, allowWorkshop = false): ViewMode {
+  if (value === 'arc') return 'continuity';
+  if (value === 'orphans') return 'completeness';
+  if (value === 'workshop' && !allowWorkshop) return 'codex';
+  return STUDIOS.some(studio => studio.tabs.some(tab => tab.mode === value)) ? value as ViewMode : 'write';
 }

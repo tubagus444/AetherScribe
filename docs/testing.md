@@ -58,6 +58,8 @@ Ini tidak menguji bootstrap DB kosong atau service worker offline.
 | Proxy F02/F18 | proxyBoundary dan proxyHttp: validasi/malformed/Host/Origin melalui HTTP loopback | Smoke production memakai HTTP dan upstream preload mock; tidak memakai key/provider nyata |
 | Drive F20 | driveBackupService: gagal download/upload, upload sebelum prune, missing ID dan warning retensi | Token/fetch Drive dimock; belum OAuth/Drive nyata |
 | Ringkasan/parameter F29/F13 | autoSummarizer/proxyUsage: race versi, penghapusan/edit dan nilai nol | DB/fetch mock; belum browser daemon/provider nyata |
+| Dialog F25 | ConfirmDialog: role/label/deskripsi, fokus awal/restore, busy cancel | Chromium native: Tab/Shift+Tab, Escape/backdrop, top-layer/inert dan nesting; belum screen reader manual |
+| Navigasi F26 | studioNavigation/NavigationContext: normalisasi, riwayat, deep link dan target workshop | Chromium memulihkan arc/orphans/unknown/workshop dan memastikan record proyek/bab utuh |
 | Startup F21 | runtimeConfig dan test:production | Clean install production tanpa Vite/tsx, SPA/aset/deep-link, cwd/env/mode/port, invalid/busy port, missing build dan secret sintetis tidak masuk dist |
 | XSS Atlas F01 | MapCanvas jsdom memeriksa markup dan handler tidak dibentuk | Belum uji eksekusi payload di browser native |
 
@@ -111,3 +113,5 @@ Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 [upload-artifact](https://github.com/actions/upload-artifact).
 
 Verifikasi F27: 73 berkas/710 tes dan delapan skenario browser lulus. Angka coverage di atas adalah snapshot F24, bukan pengukuran ulang F27. Tiga probe F27 gagal pada source 2d50625 sebelum fix; key/naskah yang dipakai seluruhnya sintetis.
+
+Verifikasi F25/F26: total 76 berkas/722 tes dan 14 skenario browser lulus. Dua probe browser pada source df1f875 gagal (arc dan semantik dialog), kemudian lulus setelah fix. Fixture dialog berada di e2e/dialogFixture.tsx dan tidak dibundle ke production.

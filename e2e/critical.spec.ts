@@ -186,3 +186,70 @@ test('F27 settings keep session keys out of persistent storage and clear saved k
   await expect(key).toHaveValue('');
   expect(await page.evaluate(() => localStorage.getItem('ai_key_openai'))).toBeNull();
 });
+
+for (const [legacy, current] of [['arc', 'continuity'], ['orphans', 'completeness'], ['unknown-panel', 'write'], ['workshop', 'codex']]) {
+  test(`F26 restores ${legacy} into ${current} without changing manuscript`, async ({ page }) => {
+    await page.evaluate(mode => localStorage.setItem('aether_view_mode', mode), legacy);
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('aether_view_mode'))).toBe(current);
+    if (current === 'write') await expect(page.locator('.tiptap[contenteditable="true"]')).toBeVisible();
+    else await expect(page.locator('main')).toContainText(current === 'continuity' ? 'Peta Kontinuitas' : current === 'completeness' ? 'Saran Entitas (Yatim)' : 'Codex');
+    const records = await page.evaluate(async () => {
+      const modulePath = '/src/db.ts'; const { db } = await import(modulePath);
+      return { projects: await db.projects.count(), chapters: await db.chapters.toArray() };
+    });
+    expect(records.projects).toBe(1);
+    expect(records.chapters).toHaveLength(1);
+    expect(records.chapters[0].content).toContain('F24 starting manuscript');
+  });
+}
+
+test('F25 native modal contains keyboard focus, handles nesting and restores triggers', async ({ page }) => {
+  await page.evaluate(async () => {
+    const modulePath = '/e2e/dialogFixture.tsx';
+    (window as any).dialogFixture = (await import(modulePath)).mountDialogFixture();
+  });
+  const trigger = page.getByRole('button', { name: 'Buka dialog uji', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('alertdialog', { name: 'Dialog uji F25' });
+  await expect(dialog).toHaveAccessibleDescription('Konfirmasi fixture sintetis. Buka dialog kedua');
+  await expect(dialog.getByRole('button', { name: 'Batal' })).toBeFocused();
+  for (let index = 0; index < 8; index++) {
+    await page.keyboard.press('Tab');
+    expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
+  }
+  for (let index = 0; index < 8; index++) {
+    await page.keyboard.press('Shift+Tab');
+    expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
+  }
+  await dialog.getByRole('button', { name: 'Buka dialog kedua' }).click();
+  await expect(page.getByRole('alertdialog', { name: 'Dialog kedua' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog.getByRole('button', { name: 'Buka dialog kedua' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('F25 busy modal blocks Escape/backdrop until the operation completes', async ({ page }) => {
+  await page.evaluate(async () => {
+    const modulePath = '/e2e/dialogFixture.tsx';
+    (window as any).dialogFixture = (await import(modulePath)).mountDialogFixture();
+  });
+  const trigger = page.getByRole('button', { name: 'Buka dialog uji', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('alertdialog', { name: 'Dialog uji F25' });
+  await dialog.getByRole('button', { name: 'Lanjutkan' }).click();
+  await expect(dialog).toHaveAttribute('aria-busy', 'true');
+  await expect(dialog.getByRole('button', { name: 'Batal' })).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await page.mouse.click(2, 2);
+  await expect(dialog).toBeVisible();
+  await page.evaluate(() => (window as any).dialogFixture.finish());
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.mouse.click(2, 2);
+  await expect(dialog).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});

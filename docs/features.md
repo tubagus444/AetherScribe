@@ -391,3 +391,24 @@ bebas dan stack tidak masuk log baru. Log lama disaring saat ditampilkan; salina
 asli di DB tetap sampai pengguna memilih Hapus Log Manual atau retensi 30 hari.
 Pesan error langsung untuk pengguna tidak dihapus; detail debugging pada log
 menjadi lebih terbatas. Tidak ada schema/dependency baru untuk perubahan ini.
+
+## Dialog Konfirmasi dan Navigasi Legacy (F25/F26)
+
+ConfirmDialog pada impor/restore memakai dialog native dengan showModal, role
+alertdialog dan label/deskripsi yang terhubung ke judul/isi. Fokus awal memilih
+Batal; Tab dan Shift+Tab berputar di kontrol dialog. Bagian aplikasi di belakang
+menjadi inert; top-layer menangani modal bertingkat. Escape/backdrop meminta
+pembatalan ketika tidak busy. Saat busy kedua aksi dinonaktifkan, dismissal ditahan
+dan fokus tetap di modal. Sesudah close/unmount, fokus kembali ke pemicu bila
+masih terhubung. Browser harus mendukung HTMLDialogElement.showModal; kontrak
+keyboard/nesting diuji pada Chromium, belum screen reader manual.
+
+Preferensi navigasi lama dipulihkan ke panel aktif: arc membuka Peta Kontinuitas,
+orphans membuka Kesehatan Codex (tempat tab Saran Entitas/Yatim tersedia), nilai
+asing kembali ke Editor. Mode workshop tersimpan tanpa target kembali ke Codex;
+openWorkshop dengan target tetap membuka Lokakarya dan Kembali memulihkan panel
+asal. Mode canonical ditulis kembali ke preferensi panel aktif. Riwayat tab studio
+menormalisasi legacy dan tidak menyimpan workshop. MainView memberi fallback
+untuk mode yang tidak valid; proyek/bab dan deep link Codex/Atlas tetap utuh.
+Pemetaan legacy membuka panel induk, tanpa merekonstruksi karakter atau subtab
+lama yang tidak tersimpan. Tidak ada migrasi data novel.

@@ -1,3 +1,4 @@
+import { normalizeViewMode } from '@/src/lib/studioNavigation';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -51,7 +52,8 @@ function LoadingFallback() {
 
 export function MainView() {
   const { projectId } = useProject();
-  const { viewMode, activeChapterId } = useNavigation();
+  const { viewMode: requestedMode, activeChapterId, workshopTarget } = useNavigation();
+  const viewMode = normalizeViewMode(requestedMode, !!workshopTarget);
   const { isFocusMode, setIsFocusMode } = useUI();
 
   return (
