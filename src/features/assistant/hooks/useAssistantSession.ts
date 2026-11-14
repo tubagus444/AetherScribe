@@ -115,7 +115,7 @@ export function useAssistantSession({
         await db.chatSessions.update(newId, { title: newTitle });
         await sendMessage(textToSend, chapterContext);
       } catch (err: any) {
-        console.error(err);
+        console.error('Assistant operation failed; sensitive details omitted.');
         toast.error(err.message || 'Gagal mengirim pesan.');
       }
     }
@@ -142,7 +142,7 @@ export function useAssistantSession({
 
       await sendMessage(textToSend, chapterContext);
     } catch (err: any) {
-      console.error(err);
+      console.error('Assistant operation failed; sensitive details omitted.');
       const errorMessage = err.message || 'Gagal mengirim pesan ke AI.';
 
       if (err.code === 'INVALID_KEY' || err.code === 'QUOTA_EXCEEDED') {
@@ -177,7 +177,7 @@ export function useAssistantSession({
     try {
       await regenerate(chapterContext);
     } catch (err: any) {
-      console.error(err);
+      console.error('Assistant operation failed; sensitive details omitted.');
       toast.error(err.message || 'Gagal meregenerasi respons.');
     }
   };

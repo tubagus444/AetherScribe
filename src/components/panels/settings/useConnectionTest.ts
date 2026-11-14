@@ -24,7 +24,7 @@ export function useConnectionTest() {
       }
     } catch (error: any) {
       setStatuses(prev => ({ ...prev, [prov]: 'error' }));
-      console.error(error);
+      console.error('Connection test failed; sensitive details omitted.');
       const msg = error.rawMessage || error.message || String(error);
       setErrors(prev => ({ ...prev, [prov]: msg }));
     } finally {

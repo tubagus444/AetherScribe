@@ -192,7 +192,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
     if (timedOut) throw timeoutError();
     if (networkError?.name === 'AbortError') throw networkError; // dibatalkan oleh pemanggil
     ErrorService.log({
-      message: networkError.message,
+      message: 'Koneksi proxy AI gagal.',
       type: 'error',
       source: `AI-Proxy (${provider})`,
       metadata: { networkError: true, provider }
@@ -337,7 +337,7 @@ function logUsageToDB(params: AIRenderParams, provider: string, usage: any, comp
     provider,
     model: params.model || getModelForProvider(provider),
     actionType: params.actionType || 'other'
-  }).catch(console.error);
+  }).catch(() => console.error('Gagal mencatat penggunaan AI.'));
 }
 
 // Model tier-murah/cepat per provider untuk tugas MEKANIS (extract/summarize).

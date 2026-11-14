@@ -157,3 +157,21 @@ CI menjalankan typecheck, unit/integrasi+coverage, browser kritis, lalu build da
 smoke production bersih pada Windows/Ubuntu. Laporan coverage/trace/screenshot
 disimpan sebagai artefak tujuh hari. Batas, inventaris alur, serta perbedaan
 coverage Vitest dan bukti browser/child process dijelaskan di [testing.md](testing.md).
+
+## Boundary Kredensial dan Diagnostik (F27)
+
+credentialStore.ts adalah kontrak bersama hook useAISettings dan facade AI untuk
+mode ai_key_storage (session/persistent) dan key ai_key_<provider>. Tanpa flag,
+keberadaan key lokal legacy mempertahankan mode persistent; instalasi baru sesi.
+Mode sesi tidak membaca fallback key lokal. Save menulis target dahulu, membuang
+salinan storage lain, lalu menyimpan flag. Web Storage tidak transaksional; bila
+operasi gagal pengguna menerima error, bukan status sukses. Tidak ada migrasi DB.
+
+ErrorService menerapkan privateErrorRecord sebelum console/IndexedDB. Diagnostik
+hanya berupa allowlist source/provider/code dan angka ID/lineno/colno serta boolean
+networkError. Pesan bebas, stack, model, actionType bebas, nested error, reason,
+promptPreview dan rawMessage tidak diteruskan. Panel/getRecent juga memproyeksi
+record lama melalui boundary yang sama; bytes lama tidak dihapus otomatis.
+Jalur console AI dan sendError server memakai pesan statis tanpa object error.
+Ini meminimalkan log aplikasi, tidak memberi perlindungan terhadap script XSS,
+profil browser, console dari library/browser, atau salinan data sebelumnya.

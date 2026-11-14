@@ -44,7 +44,7 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
         setError("Invalid response format.");
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Ollama model listing failed; sensitive details omitted.');
       setError(err.message || "Failed to load models. Check base URL.");
     } finally {
       setIsLoading(false);

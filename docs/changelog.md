@@ -6,6 +6,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Fix] F27 — Pilihan Penyimpanan Key dan Minimisasi Log
+
+- Pusatkan read/write key di credentialStore: default instalasi baru sesi, preferensi legacy permanen tetap dipakai sampai pengguna memilih dan menyimpan perubahan. Mode sesi tidak fallback ke key lokal; target ditulis sebelum salinan lama dibuang. Storage failure tampil tanpa klaim sukses.
+- Pengaturan menyediakan pilihan sesi/ingat browser dan hapus key langsung. Jelaskan penyimpanan tidak terenkripsi, reload/tab restore, serta batas clear terhadap sesi tab lain, env server dan request/retry berjalan. Key/model/naskah pengguna tidak dihapus otomatis saat upgrade; tidak mengubah schema DB atau dependency.
+- Hapus promptPreview/rawMessage dari log facade; raw error console pada AI, koneksi, model listing, summarizer, rewrite/chat dan proxy server diganti pesan statis. ErrorService hanya menyimpan diagnostik allowlist (source, provider, kode, angka lokasi/ID, networkError); pesan/stack/metadata bebas dibuang sebelum DB/console. Log lama disaring pada getRecent/panel, record aslinya tetap sampai clear manual/retensi.
+- Tiga probe baseline 2d50625 gagal, lalu sepuluh tes baru hook/UI/facade/IndexedDB sintetis lulus. Suite akhir 73 berkas/710 tes, delapan Chromium tests, typecheck, build dan diff-check lulus. Tes browser baru memakai native storage dan model listing mock, tanpa key/provider nyata. Peringatan build lama tetap ada; workflow GitHub belum dieksekusi.
+- Dokumentasi fitur, arsitektur, API, testing, README dan aturan AI/settings diperbarui. Base64 tetap kompatibel untuk key permanen, bukan enkripsi atau mitigasi XSS; log lebih minim mengurangi detail debugging. Tidak mengklaim semua console di seluruh aplikasi tersanitasi atau menghapus salinan historis dari perangkat/provider.
+
+
 ### [Test] F24 — Harness Integrasi Kritis, Browser dan CI
 
 - Pisahkan discovery Vitest dari Playwright; tambahkan test:run, test:coverage dan test:e2e. Coverage V8 melaporkan seluruh src/entry server, termasuk area tanpa tes, dengan HTML dan JSON summary; tidak menggabungkan coverage browser/child process.

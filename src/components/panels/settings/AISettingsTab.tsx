@@ -42,6 +42,10 @@ export function AISettingsTab() {
         setModels={s.setModels}
         isSaved={s.isSaved}
         onSave={s.handleSave}
+        credentialMode={s.credentialMode}
+        setCredentialMode={s.setCredentialMode}
+        saveError={s.saveError}
+        onClear={s.handleClearCredentials}
       />
 
       <OllamaConfig

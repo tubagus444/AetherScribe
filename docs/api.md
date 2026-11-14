@@ -166,3 +166,12 @@ HTTP 200 bukan jaminan keberhasilan inferensi: error SSE provider diteruskan seb
 ## Kebijakan Provider Klien (F17)
 
 providerPolicy.ts membatasi dispatch inferensi di facade dan callProxy. Mode hanya lokal memblokir provider selain Ollama; fallback memerlukan izin per target dan key. API key tersimpan bukan izin fallback. Kebijakan ini milik aplikasi klien, bukan autentikasi server terhadap proses lokal lain. Host/Origin/tujuan proxy tetap mengikuti F02. Izin disimpan lokal, dibaca ulang sebelum request berikutnya; tidak menghapus data yang sudah terkirim ke provider.
+
+## Penyimpanan BYOK dan Log (F27)
+
+Header x-api-key dan fallback env server tetap sama. Klien memilih penyimpanan
+sesi/permanen melalui credentialStore; clear di browser tidak mencabut key di
+provider atau .env dan tidak membatalkan request/retry yang sedang berjalan.
+Server sendError tidak mencetak object error mentah (misalnya URL provider dengan
+query key). ErrorService klien membuang prompt/pesan mentah sebelum log DB/console;
+metadata hanya allowlist diagnostik. Respons error untuk UI tetap tersedia.

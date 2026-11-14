@@ -8,7 +8,7 @@ import { createProxyBoundary, validateProxyRequest } from "./src/server/proxyBou
 // SV10: pola penanganan error yang sama dipakai di tiga endpoint → satu helper.
 // Menghormati SV3: bila header sudah terkirim (stream SSE) jangan tulis status lagi.
 function sendError(res: express.Response, status: number, error: any, context: string, fallbackMsg?: string) {
-  console.error(`${context}:`, error);
+  console.error(`${context}: request failed (status ${status}); sensitive details omitted.`);
   if (res.headersSent) {
     res.end();
     return;

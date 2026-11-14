@@ -54,6 +54,7 @@ Ini tidak menguji bootstrap DB kosong atau service worker offline.
 | Streaming F12/F14/F15 | SSE parser, proxyStream, useChatSession, useEditorAI: error, abort, retry/reset dan cleanup | Stream sintetis; belum provider atau jaringan eksternal nyata |
 | Cancel F16 | contextTimeout/contextCancellation: payload CANCEL, timeout, isolasi, checkpoint dan late cancel | Context worker native menguji token count dan Aho-Corasick; timeout/cancel tetap diuji dengan transport/model mock |
 | Privasi F17 | providerPolicy, providerPrivacy dan AIProviderIndicator | Belum alur consent UI browser menyeluruh |
+| Kredensial/log F27 | credentialPrivacy, logPrivacy, errorService: sesi/legacy/migrasi eksplisit/clear, gagal write, sanitasi sebelum DB/console dan pembacaan log lama | UI Chromium menguji sesi/reload/persistent/clear dengan storage native; model listing mock |
 | Proxy F02/F18 | proxyBoundary dan proxyHttp: validasi/malformed/Host/Origin melalui HTTP loopback | Smoke production memakai HTTP dan upstream preload mock; tidak memakai key/provider nyata |
 | Drive F20 | driveBackupService: gagal download/upload, upload sebelum prune, missing ID dan warning retensi | Token/fetch Drive dimock; belum OAuth/Drive nyata |
 | Ringkasan/parameter F29/F13 | autoSummarizer/proxyUsage: race versi, penghapusan/edit dan nilai nol | DB/fetch mock; belum browser daemon/provider nyata |
@@ -108,3 +109,5 @@ Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 [setup-node](https://github.com/actions/setup-node),
 [checkout](https://github.com/actions/checkout), dan
 [upload-artifact](https://github.com/actions/upload-artifact).
+
+Verifikasi F27: 73 berkas/710 tes dan delapan skenario browser lulus. Angka coverage di atas adalah snapshot F24, bukan pengukuran ulang F27. Tiga probe F27 gagal pada source 2d50625 sebelum fix; key/naskah yang dipakai seluruhnya sintetis.

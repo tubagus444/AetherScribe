@@ -5,6 +5,7 @@ import { ConnectionTestButton } from '@/src/components/panels/settings/Connectio
 import { ConnectionTestError } from '@/src/components/panels/settings/ConnectionTestError';
 import { useConnectionTest } from '@/src/components/panels/settings/useConnectionTest';
 import type { ProviderKeys, ProviderModels } from '@/src/components/panels/settings/useAISettings';
+import type { CredentialMode } from '@/src/services/ai/credentialStore';
 
 interface Props {
   keys: ProviderKeys;
@@ -13,6 +14,10 @@ interface Props {
   setModels: (v: ProviderModels) => void;
   isSaved: boolean;
   onSave: () => void;
+  credentialMode: CredentialMode;
+  setCredentialMode: (mode: CredentialMode) => void;
+  saveError: string;
+  onClear: () => void;
 }
 
 const PROVIDERS = [
@@ -24,7 +29,7 @@ const PROVIDERS = [
   { id: 'huggingface', name: 'Hugging Face', placeholder: 'hf_...', modelHint: 'Cth: meta-llama/Llama-3.3-70B-Instruct' },
 ] as const;
 
-export function ApiCredentials({ keys, setKeys, models, setModels, isSaved, onSave }: Props) {
+export function ApiCredentials({ keys, setKeys, models, setModels, isSaved, onSave, credentialMode, setCredentialMode, saveError, onClear }: Props) {
   const { statusOf, errors, runTest } = useConnectionTest();
 
   const handleTest = (prov: string) => {
@@ -50,6 +55,19 @@ export function ApiCredentials({ keys, setKeys, models, setModels, isSaved, onSa
         </button>
       </div>
 
+      <div className="space-y-2 text-sm">
+        <label className="block font-medium" htmlFor="credential-storage">Penyimpanan API key</label>
+        <select id="credential-storage" value={credentialMode} onChange={event => setCredentialMode(event.target.value as CredentialMode)} className="rounded border p-2 bg-background">
+          <option value="session">Selama sesi tab ini</option>
+          <option value="persistent">Ingat di browser ini</option>
+        </select>
+        <p className="text-xs text-slate-500">Pilihan berlaku setelah Simpan Kredensial. Mode sesi menghapus salinan permanen dan mempertahankan key di tab ini. Reload tetap menyimpan sesi; browser dapat memulihkannya saat memulihkan tab.</p>
+        <p className="text-xs text-slate-500">Key di browser tidak dienkripsi. Situs ini dan siapa pun yang dapat mengakses profil browser dapat membacanya. Pilih Ingat di browser ini hanya pada perangkat pribadi.</p>
+        <button type="button" onClick={onClear} className="text-red-600 underline">Hapus semua API key dari browser ini</button>
+        <p className="text-xs text-slate-500">Hapus langsung membersihkan key tersimpan dan isian di tab ini. Tab lain mungkin masih memiliki sesi atau isian sendiri. Key di .env server dan request yang sedang berlangsung, termasuk retry, tidak dibatalkan.</p>
+        {saveError && <p role="alert" className="text-red-600">{saveError}</p>}
+      </div>
+
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm divide-y divide-slate-100 dark:divide-slate-800/60">
         {PROVIDERS.map((item) => (
           <div key={item.id} className="p-5 flex flex-col md:flex-row md:items-start gap-4">
@@ -65,6 +83,7 @@ export function ApiCredentials({ keys, setKeys, models, setModels, isSaved, onSa
             <div className="md:w-2/3 flex flex-col gap-2">
               <div className="flex gap-2">
                  <input
+                   aria-label={`API key ${item.name}`}
                    type="password"
                    value={keys[item.id as keyof ProviderKeys]}
                    onChange={(e) => setKeys({...keys, [item.id]: e.target.value})}

@@ -203,7 +203,7 @@ export function useChatSession({
         onMessageAdded?.(stoppedMessages, targetSessionId);
         return partial;
       }
-      console.error('Chat error:', err);
+      console.error('Chat error; sensitive details omitted.');
       const errorMessage = err.message || 'Maaf, terjadi kesalahan pada layanan AI.';
       onError?.(errorMessage);
       throw err;

@@ -1,3 +1,4 @@
+import { readCredential } from './credentialStore';
 import { readProviderPolicy, enforceProviderPolicy } from './providerPolicy';
 import { StoryBibleRule, CodexEntry, ContextDepth, Relationship, ConsistencyFinding } from '@/src/types';
 import { getRelevantContext, getRelevantBibleRules } from '@/src/services/contextEngine';
@@ -122,27 +123,16 @@ function buildCachedContextSegments(bibleRules: StoryBibleRule[], codexEntries: 
 }
 
 function getSettings() {
-  const loadKey = (name: string) => {
-    try {
-      const session = sessionStorage.getItem(`ai_key_${name}`);
-      if (session) return session;
-      const stored = localStorage.getItem(`ai_key_${name}`);
-      return stored ? atob(stored) : '';
-    } catch (e) {
-      return '';
-    }
-  };
-
   return {
     provider: localStorage.getItem('ai_provider') || 'google',
     contextDepth: (localStorage.getItem('ai_context_depth') as ContextDepth) || 'balanced',
     keys: {
-      google: loadKey('google'),
-      groq: loadKey('groq'),
-      openrouter: loadKey('openrouter'),
-      claude: loadKey('claude'),
-      huggingface: loadKey('huggingface'),
-      openai: loadKey('openai'),
+      google: readCredential('google'),
+      groq: readCredential('groq'),
+      openrouter: readCredential('openrouter'),
+      claude: readCredential('claude'),
+      huggingface: readCredential('huggingface'),
+      openai: readCredential('openai'),
       ollama: '' // Ollama doesn't use API key
     },
     models: {
@@ -339,19 +329,14 @@ export async function callAI(params: AIRenderParams): Promise<string> {
       provider
     );
 
-    // Metadata harus serializable untuk IndexedDB (structured clone): JANGAN sertakan
-    // fungsi (onChunk/onRetry) atau AbortSignal, dan potong prompt agar tidak membengkak.
+    // Log hanya kode/provider; jangan simpan prompt atau pesan mentah provider.
     ErrorService.log({
-      message: aiError.message,
+      message: 'Permintaan AI gagal.',
       type: 'error',
       source: `AI-Service (${provider})`,
       metadata: {
         provider,
         code: aiError.code,
-        actionType: params.actionType,
-        model: params.model,
-        rawMessage: typeof error.rawMessage === 'string' ? error.rawMessage.slice(0, 1000) : undefined,
-        promptPreview: params.userPrompt?.slice(0, 500)
       }
     });
     throw aiError;
@@ -863,7 +848,7 @@ export async function testConnection(provider: string, apiKey: string, model?: s
     
     return result.includes('OK') || result.length > 0;
   } catch (error) {
-    console.error(`Connection test failed for ${provider}:`, error);
+    console.error('Connection test failed; sensitive details omitted.');
     throw error;
   }
 }

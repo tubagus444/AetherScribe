@@ -130,7 +130,7 @@ export async function summarizeChapterBackground(chapterId: number) {
     }
 
   } catch (error) {
-    console.error(`[AutoSummarize] Failed to summarize chapter ${chapterId}:`, error);
+    console.error('[AutoSummarize] Failed; sensitive details omitted.');
   } finally {
     inFlight.delete(chapterId);
   }

@@ -1,3 +1,4 @@
+import { privateErrorRecord } from '@/src/lib/errorPrivacy';
 import { db } from '@/src/db';
 import { AppError } from '@/src/types';
 
@@ -20,14 +21,7 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 
 export const ErrorService = {
   async log(error: Partial<AppError>) {
-    const appError: AppError = {
-      message: error.message || 'Unknown error',
-      timestamp: Date.now(),
-      type: error.type || 'error',
-      stack: error.stack || new Error().stack,
-      source: error.source || 'Unknown',
-      metadata: error.metadata
-    };
+    const appError = privateErrorRecord({ ...error, timestamp: Date.now() });
 
     // Console DULU: tak bergantung DB → error tetap terlihat walau IndexedDB bermasalah.
     console.error(`[AppError] ${appError.message}`, appError);
@@ -37,7 +31,7 @@ export const ErrorService = {
     } catch (e) {
       // Gagal/menggantung → abaikan (sudah tercatat di console). Jangan biarkan kegagalan
       // logging menjatuhkan/menghang jalur error global.
-      console.error('Gagal menyimpan error ke DB (diabaikan):', e);
+      console.error('Gagal menyimpan error ke DB (diabaikan).');
     }
   },
 
@@ -46,6 +40,6 @@ export const ErrorService = {
   },
 
   async getRecent(limit = 100) {
-    return await db.errors.orderBy('timestamp').reverse().limit(limit).toArray();
+    return (await db.errors.orderBy('timestamp').reverse().limit(limit).toArray()).map(privateErrorRecord);
   }
 };

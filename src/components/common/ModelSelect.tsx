@@ -51,7 +51,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
         setError('Tidak ada model ditemukan, atau key tidak valid.');
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Model listing failed; sensitive details omitted.');
       setError(err?.message || 'Gagal memuat daftar model.');
     } finally {
       setIsLoading(false);

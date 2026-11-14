@@ -180,7 +180,13 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
 - [ ] **[F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong** (Low; S).
-- [ ] **[F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia** (Medium; S).
+- [x] **[F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia** (Medium; S).
+  - Tanggal / commit: 14 November 2026; `fix(privacy): batasi penyimpanan key dan minimalkan log (F27)` (commit yang menambahkan bukti ini).
+  - Perubahan: credentialStore dipakai hook dan facade; default baru sesi, legacy permanen dipertahankan sampai pengguna menyimpan pilihan. Save sesi memindahkan key tanpa salinan permanen; hapus membersihkan dua storage/isian tab ini. UI menjelaskan Base64 bukan enkripsi, tab restore, env server, tab lain dan request/retry berjalan.
+  - Log: hilangkan promptPreview/rawMessage dan raw error console jalur AI/proxy. ErrorService menggunakan allowlist diagnostik sebelum DB/console; panel/getRecent menyaring log lama saat baca tanpa menghapus record lama otomatis. Pesan/stack/metadata bebas tidak dicatat.
+  - Bukti sebelum: tiga probe pada source 2d50625 gagal (preferensi/key legacy, payload log facade, DB/console berisi key/naskah). Sepuluh tes baru lulus setelah fix.
+  - Verifikasi: 73 berkas/710 tes, delapan browser tests, typecheck, build dan diff-check lulus. Browser menguji sesi/reload/persistent/clear lewat UI; model listing dimock, tanpa key/provider nyata. Peringatan build lama tetap ada.
+  - Dokumentasi: docs/features.md, docs/architecture.md, docs/api.md, docs/testing.md, README, changelog dan aturan AI/settings. Batas: bukan perlindungan dari XSS/akses profil; sesi dapat dipulihkan browser; clear tidak mencabut key di provider/env, tab lain atau request/retry berjalan; log lama di DB perlu clear manual/retensi.
 - [ ] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).
 
 ### Format bukti penyelesaian

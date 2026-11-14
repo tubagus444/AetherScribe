@@ -26,7 +26,7 @@ export async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
       const { data, timestamp } = JSON.parse(cached);
       if (Date.now() - timestamp < CACHE_TTL) return data;
     } catch (e) {
-      console.warn('Error parsing OpenRouter models cache', e);
+      console.warn('Error parsing OpenRouter models cache.');
     }
   }
 
@@ -48,7 +48,7 @@ export async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
 
     return models;
   } catch (error) {
-    console.error('Error fetching OpenRouter models:', error);
+    console.error('Error fetching OpenRouter models; sensitive details omitted.');
     // Return empty or fallback if fetch fails but we have stale cache
     if (cached) {
       const { data } = JSON.parse(cached);

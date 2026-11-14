@@ -1,3 +1,4 @@
+import { privateErrorRecord } from '@/src/lib/errorPrivacy';
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/src/db';
@@ -8,7 +9,7 @@ import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function ErrorLogPanel() {
-  const errors = useLiveQuery(() => db.errors.orderBy('timestamp').reverse().toArray());
+  const errors = useLiveQuery(async () => (await db.errors.orderBy('timestamp').reverse().toArray()).map(privateErrorRecord));
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showClearMenu, setShowClearMenu] = useState(false);
 
@@ -54,7 +55,7 @@ export function ErrorLogPanel() {
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Log Sistem</h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Riwayat aktivitas dan error untuk memantau performa aplikasi. Auto-cleanup bekerja di belakang layar selama 30 hari.
+            Diagnostik tanpa isi naskah, key, atau pesan mentah provider. Salinan log lama tetap di penyimpanan sampai dihapus manual atau dibersihkan otomatis setelah 30 hari.
           </p>
         </div>
         

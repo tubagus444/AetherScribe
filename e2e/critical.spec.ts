@@ -160,3 +160,29 @@ test('F16 context facade communicates with a native worker without a model downl
   expect(result.tokens).toBeGreaterThan(0);
   expect(result.matches).toEqual([{ codexId: 991, start: 0, end: 9 }]);
 });
+
+test('F27 settings keep session keys out of persistent storage and clear saved keys', async ({ page }) => {
+  await page.route('**/api/ai/ollama-models', route => route.fulfill({ json: { models: [] } }));
+  await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
+  const mode = page.getByLabel('Penyimpanan API key');
+  const key = page.getByLabel('API key OpenAI', { exact: true });
+  const save = page.getByRole('button', { name: /Simpan Kredensial|Tersimpan!/ });
+  await expect(mode).toHaveValue('session');
+  await key.fill('F27-SYNTHETIC-SESSION');
+  await save.click();
+  expect(await page.evaluate(() => localStorage.getItem('ai_key_openai'))).toBeNull();
+  await page.reload();
+  await expect(key).toHaveValue('F27-SYNTHETIC-SESSION');
+  await page.evaluate(() => sessionStorage.clear());
+  await page.reload();
+  await expect(key).toHaveValue('');
+  await key.fill('F27-SYNTHETIC-PERSISTENT');
+  await mode.selectOption('persistent');
+  await save.click();
+  await page.evaluate(() => sessionStorage.clear());
+  await page.reload();
+  await expect(key).toHaveValue('F27-SYNTHETIC-PERSISTENT');
+  await page.getByRole('button', { name: 'Hapus semua API key dari browser ini' }).click();
+  await expect(key).toHaveValue('');
+  expect(await page.evaluate(() => localStorage.getItem('ai_key_openai'))).toBeNull();
+});

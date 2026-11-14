@@ -124,7 +124,7 @@ export function useEditorAI(
     } catch (err: any) {
       if (run !== runRef.current) return;
       setRewritePreview(null);
-      console.error(err);
+      console.error('Rewrite failed; sensitive details omitted.');
       if (err.code === 'INVALID_KEY' || err.code === 'QUOTA_EXCEEDED') {
         toast.error(err.message, {
           action: {

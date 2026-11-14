@@ -367,3 +367,27 @@ F13: temperature 0 dipertahankan pada payload Claude, Gemini, dan OpenAI-compati
 contextProtocol.ts mendefinisikan union pesan task/CANCEL/indexing. Timeout idle contextEngine mengirim { type: CANCEL, payload: { cancelId } } yang sama dengan receiver. Worker hanya menandai ID aktif; cancel terlambat/tidak dikenal diabaikan dan state request dibersihkan pada finally. Hasil/error dari request yang dibatalkan tidak dipost ke pemanggil yang sudah timeout.
 
 Checkpoint dilakukan sebelum pekerjaan, setelah pemuatan model dan embedding, serta di jalur preview DB. Scan chunk Codex memberi kesempatan event loop setiap 16 chunk agar cancel dapat diterima. Pembatalan kooperatif: operasi sinkron tunggal atau embedding yang sedang berlangsung tidak dipreempt di tengah instruksi. Unduhan model bersama dan indexing latar fire-and-forget dapat tetap berjalan karena tidak eksklusif milik request yang timeout.
+
+## Privasi Kredensial dan Log (F27)
+
+Pengaturan AI memiliki pilihan **Selama sesi tab ini** dan **Ingat di browser ini**,
+berlaku sesudah **Simpan Kredensial**. Instalasi baru memakai sesi; key lama yang
+sudah permanen tetap tersedia sampai pengguna menyimpan pilihan lain. Mode sesi
+menulis hanya ke sessionStorage dan membuang salinan localStorage; reload tetap
+mempertahankan sesi, dan browser dapat menyalin/memulihkan sesi saat membuka atau
+memulihkan tab. Pilihan permanen memakai Base64 legacy yang dapat dibalik, bukan
+enkripsi. Script pada origin yang sama atau akses profil browser tetap dapat
+membaca key. Pembacaan hook dan facade memakai credentialStore yang sama.
+
+**Hapus semua API key dari browser ini** langsung menghapus salinan permanen,
+sesi dan isian tab aktif; tab lain dapat masih memiliki sesi/isian sendiri.
+Penghapusan tidak mencabut key pada provider, key .env server, atau membatalkan
+request/retry yang sedang berjalan. Tidak ada key lama yang dihapus otomatis
+saat membuka pengaturan/upgrade. Kegagalan storage ditampilkan sebagai error.
+
+Log Sistem mengutamakan privasi: hanya source/kode/provider yang dikenal serta
+diagnostik angka/boolean yang diizinkan. Prompt, respons mentah, key, model/nama
+bebas dan stack tidak masuk log baru. Log lama disaring saat ditampilkan; salinan
+asli di DB tetap sampai pengguna memilih Hapus Log Manual atau retensi 30 hari.
+Pesan error langsung untuk pengguna tidak dihapus; detail debugging pada log
+menjadi lebih terbatas. Tidak ada schema/dependency baru untuk perubahan ini.
