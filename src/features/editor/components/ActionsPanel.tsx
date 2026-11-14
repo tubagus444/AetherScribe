@@ -1,3 +1,4 @@
+import { ACTION_ICONS, ICON_OPTIONS, DEFAULT_ICON, getActionIcon } from './actionIcons';
 /**
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -7,36 +8,14 @@ import React, { useState } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
-  Plus, Trash2, Cpu, Zap, Sparkles, Command, MessageSquare, ChevronRight, PenTool,
-  Pencil, X, Check, Wand2, Feather, Flame, Eye, Drama, Quote, Scissors, Languages,
+  Plus, Trash2, Zap, Sparkles, Command, MessageSquare, ChevronRight, PenTool,
+  Pencil, X, Check,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 interface ActionsPanelProps {
   projectId: number;
-}
-
-// Registry ikon yang boleh dipilih untuk sebuah aksi kustom. Disimpan sebagai
-// slug string di `AIAction.icon`; resolusi ke komponen lewat ACTION_ICONS.
-const ACTION_ICONS: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  cpu: Cpu,
-  wand: Wand2,
-  feather: Feather,
-  flame: Flame,
-  eye: Eye,
-  drama: Drama,
-  quote: Quote,
-  scissors: Scissors,
-  languages: Languages,
-  sparkles: Sparkles,
-};
-
-const ICON_OPTIONS = Object.keys(ACTION_ICONS);
-const DEFAULT_ICON = 'cpu';
-
-export function getActionIcon(slug?: string) {
-  return ACTION_ICONS[slug || ''] || ACTION_ICONS[DEFAULT_ICON];
 }
 
 export function ActionsPanel({ projectId }: ActionsPanelProps) {

@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { Editor } from '@tiptap/react';
 import { AIAction } from '@/src/types';
-import { getActionIcon } from './ActionsPanel';
+import { getActionIcon } from './actionIcons';
 import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
 
 interface SelectionFloatingMenuProps {

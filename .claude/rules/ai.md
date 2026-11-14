@@ -60,3 +60,5 @@ Auto summary harus menyimpan hash konten sumber dan conditional commit di transa
 Pakai contextProtocol.ts untuk pesan sender/receiver. CANCEL selalu payload.cancelId; terima hanya ID aktif, cleanup pada finally dan jangan post hasil request batal. Beri checkpoint setelah await serta yield per batch pada loop panjang. Jangan menjanjikan preemption sinkron atau membatalkan model bersama/indexing fire-and-forget hanya karena satu request timeout.
 
 F27: jangan log promptPreview/rawMessage, key atau object error mentah dari provider. ErrorService memakai privateErrorRecord (allowlist diagnostik sebelum console/DB); model/actionType bebas dan stack tidak disimpan. UI pembaca log lama juga harus melalui boundary ini.
+
+F22: transformers hanya diimpor dalam getEmbedder; jangan tarik runtime model ke boot worker/token counting. Worker build format es memungkinkan chunk dinamis. Pertahankan shared init/retry/cancel dan precache aset lazy; validasi test:startup sesudah build.

@@ -1,0 +1,41 @@
+{
+  "label": "baseline-786cc5d",
+  "commit": "786cc5d",
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "fixtureWords": 3000,
+  "conditions": "5 fresh isolated contexts, localhost, unthrottled, service worker blocked for startup timings; same synthetic IndexedDB fixture",
+  "entryBytes": 2026553,
+  "entryGzipBytes": 631768,
+  "contextWorkerBytes": 6560002,
+  "samples": [
+    {
+      "editorReadyMs": 484.6485,
+      "scriptMs": 222.189,
+      "jsBytes": 2198463
+    },
+    {
+      "editorReadyMs": 469.31939999999986,
+      "scriptMs": 219.51100000000002,
+      "jsBytes": 2198463
+    },
+    {
+      "editorReadyMs": 474.0173,
+      "scriptMs": 220.25,
+      "jsBytes": 2198463
+    },
+    {
+      "editorReadyMs": 483.54439999999977,
+      "scriptMs": 220.203,
+      "jsBytes": 2198463
+    },
+    {
+      "editorReadyMs": 463.22630000000026,
+      "scriptMs": 218.64700000000002,
+      "jsBytes": 2198463
+    }
+  ],
+  "medianEditorReadyMs": 474.0173,
+  "medianScriptMs": 220.203,
+  "medianJsBytes": 2198463
+}

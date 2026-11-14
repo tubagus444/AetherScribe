@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { cancelContextRequest } from './contextProtocol';
 import { AhoCorasick } from '@/src/lib/ahoCorasick';
-const { pipeline, encode, rows } = vi.hoisted(() => ({ pipeline: vi.fn(), encode: vi.fn(() => [1]), rows: vi.fn().mockResolvedValue([]) }));
-vi.mock('@xenova/transformers', () => ({ pipeline, env: { backends: { onnx: { wasm: {} } } } }));
+const { pipeline, imported, encode, rows } = vi.hoisted(() => ({ pipeline: vi.fn(), imported: vi.fn(), encode: vi.fn(() => [1]), rows: vi.fn().mockResolvedValue([]) }));
+vi.mock('@xenova/transformers', () => { imported(); return { pipeline, env: { backends: { onnx: { wasm: {} } } } }; });
 vi.mock('js-tiktoken', () => ({ getEncoding: () => ({ encode }), encodingForModel: () => ({ encode }) }));
 vi.mock('@/src/db', () => ({ db: { sceneEmbeddings: { where: () => ({ equals: () => ({ toArray: rows }) }) } } }));
 let handler: (event: MessageEvent) => Promise<void>;
@@ -13,6 +13,12 @@ beforeAll(async () => {
 });
 afterAll(() => vi.unstubAllGlobals());
 const send = (data: any) => handler({ data } as MessageEvent);
+
+it('F22 counts tokens without importing the embedding runtime', async () => {
+  await send({ type: 'COUNT_TOKENS', id: 222, payload: { text: 'local only' } });
+  expect(posted.mock.calls.some(call => call[0].id === 222 && call[0].result === 1)).toBe(true);
+  expect(imported).not.toHaveBeenCalled();
+});
 
 it('F16 shares the cancel envelope and cancels only the selected request before work begins', async () => {
   posted.mockClear(); encode.mockClear();

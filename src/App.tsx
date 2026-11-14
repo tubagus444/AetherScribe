@@ -22,12 +22,13 @@ import { MainView } from '@/src/components/layout/MainView';
 import { ProjectManagerModal } from '@/src/components/modals/ProjectManagerModal';
 import { GlobalSearch } from '@/src/components/common/GlobalSearch';
 import { CrossChapterReplace } from '@/src/components/modals/CrossChapterReplace';
-import { ExportManager } from '@/src/components/modals/ExportManager';
 import { IndexingIndicator } from '@/src/components/common/IndexingIndicator';
 import { Suspense, useEffect } from 'react';
 
 import { db, cleanupAILogs } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
+
+const ExportManager = React.lazy(() => import('@/src/components/modals/ExportManager').then(module => ({ default: module.ExportManager })));
 
 export default function App() {
   const { projectId, project, isLoading } = useProject();

@@ -115,3 +115,12 @@ Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 Verifikasi F27: 73 berkas/710 tes dan delapan skenario browser lulus. Angka coverage di atas adalah snapshot F24, bukan pengukuran ulang F27. Tiga probe F27 gagal pada source 2d50625 sebelum fix; key/naskah yang dipakai seluruhnya sintetis.
 
 Verifikasi F25/F26: total 76 berkas/722 tes dan 14 skenario browser lulus. Dua probe browser pada source df1f875 gagal (arc dan semantik dialog), kemudian lulus setelah fix. Fixture dialog berada di e2e/dialogFixture.tsx dan tidak dibundle ke production.
+
+
+F22 menambahkan `npm run test:startup` (sesudah build): benchmark lima browser
+context terisolasi dan smoke production offline dengan service worker aktif,
+worker token native dan ekspor Markdown lazy. Port khusus 4181; report opsional
+`--output=test-results/startup.json`. CI menjalankannya sesudah test:production.
+Guard transformers on-demand di contextCancellation gagal pada worker source
+baseline, kemudian lulus. Total F22: 76 berkas/723 tes dan 14 browser tests.
+Metodologi/batas pengukuran: [performance/f22.md](performance/f22.md).

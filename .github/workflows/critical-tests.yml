@@ -37,6 +37,8 @@ jobs:
         run: npm run test:e2e
       - name: Build and clean production startup smoke
         run: npm run test:production
+      - name: Production startup and offline lazy assets
+        run: npm run test:startup -- --output=test-results/startup.json
       - name: Preserve coverage and browser diagnostics
         if: always()
         uses: actions/upload-artifact@v7

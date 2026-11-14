@@ -412,3 +412,15 @@ menormalisasi legacy dan tidak menyimpan workshop. MainView memberi fallback
 untuk mode yang tidak valid; proyek/bab dan deep link Codex/Atlas tetap utuh.
 Pemetaan legacy membuka panel induk, tanpa merekonstruksi karakter atau subtab
 lama yang tidak tersimpan. Tidak ada migrasi data novel.
+
+## Pemuatan Awal dan Offline (F22)
+
+Dialog ekspor memuat kode PDF/DOCX ketika dibuka; editor tidak perlu memuatnya di
+awal. Registry ikon menu aksi berdiri sendiri sehingga panel Snippet tetap lazy.
+Worker konteks memuat transformers ketika fitur embedding memerlukannya; tugas
+token/eksak tidak mengimpor runtime model. Tokenizer tetap ada di entry worker.
+
+Aset lazy tetap diprecache agar tersedia sesudah instalasi offline selesai.
+Smoke production membuktikan reload editor, worker token baru dan unduhan Markdown
+melalui dialog ekspor saat jaringan offline. Model semantik eksternal tetap butuh
+unduhan/cache tersendiri. Hasil pengukuran dan batas ada di [laporan F22](performance/f22.md).

@@ -16,12 +16,8 @@ import { buildProseReport } from '@/src/lib/proseAnalysis';
 import { buildPacingReport } from '@/src/lib/pacingHeatmap';
 import { chunkChapter, hashChunk } from '@/src/lib/manuscriptChunker';
 import { SceneEmbedding } from '@/src/types';
-import { pipeline, env } from '@xenova/transformers';
 import { getEncoding, encodingForModel } from 'js-tiktoken';
 
-// Configure transformers environment
-env.allowLocalModels = false;
-env.backends.onnx.wasm.numThreads = 1;
 
 let embedder: any = null;
 let backgroundIndexing = false; // cegah indexing embedding latar berjalan ganda
@@ -99,10 +95,14 @@ function getAcInstance(allCodex: CodexEntry[]): AhoCorasick {
 async function getEmbedder() {
   if (embedder) return embedder;
   if (!modelInitPromise) {
-    modelInitPromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
-      progress_callback: (info: any) => {
-         self.postMessage({ type: 'PROGRESS', payload: { type: 'model_download', info } });
-      }
+    modelInitPromise = import('@xenova/transformers').then(({ pipeline, env }) => {
+      env.allowLocalModels = false;
+      env.backends.onnx.wasm.numThreads = 1;
+      return pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        progress_callback: (info: any) => {
+          self.postMessage({ type: 'PROGRESS', payload: { type: 'model_download', info } });
+        }
+      });
     });
   }
   try {

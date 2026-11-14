@@ -41,6 +41,7 @@ export default defineConfig(({mode}) => {
     define: {
       'process.env.HAS_GEMINI_KEY': JSON.stringify(!!env.GEMINI_API_KEY),
     },
+    worker: { format: 'es' },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -173,7 +173,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti sebelum: dua tes browser pada source df1f875 gagal (arc tetap tersimpan/tampilan kosong; dialog tidak memiliki role/nama/deskripsi aksesibel). Source dipulihkan lalu suite lulus.
   - Verifikasi batch F25/F26: 12 tes baru komponen/normalisasi/context dan enam browser tests; total 76 berkas/722 tes, 14 browser tests, typecheck, build dan diff-check lulus. Data proyek/bab tetap utuh; tanpa dependency/schema baru.
   - Dokumentasi: docs/features.md, docs/architecture.md, docs/testing.md, docs/changelog.md, README. Batas: Chromium/Windows; belum screen reader manual atau Firefox/Safari. Dialog membutuhkan showModal native; pemetaan legacy membuka panel induk, tanpa merekonstruksi target karakter/tab lama.
-- [ ] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).
+- [x] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).
+  - Tanggal / commit: 14 November 2026; `perf: kurangi beban startup dan pertahankan fitur offline (F22)` (commit yang menambahkan bukti ini).
+  - Perubahan: lazy ExportManager/PDF/DOCX, pisahkan registry ikon dari ActionsPanel, lazy transformers di worker ES module. Precache aset lazy dipertahankan untuk offline; schema/dependency tidak berubah.
+  - Bukti: entry JS 2.026.553 ke 1.251.421 byte (-38,2%); worker entry 6.560.002 ke 5.737.026. Lima sample fixture 3.000 kata: median editor terlihat 474 ke 408 ms, ScriptDuration 220 ke 174 ms. Raw JSON/prosedur/batas di docs/performance/f22.md; bukan klaim universal atau pengurangan seluruh precache.
+  - Verifikasi: guard import runtime gagal pada source worker baseline 786cc5d lalu lulus; 76 berkas/723 tes, 14 browser tests, typecheck/build/diff-check lulus. test:startup production memverifikasi reload terkontrol, worker token native dan unduhan ekspor lazy saat offline. Peringatan ActionsPanel hilang; bundle/ONNX/Browserslist masih ada.
+  - Dokumentasi: docs/performance/f22.md, docs/features.md, docs/architecture.md, docs/testing.md, README, changelog, aturan AI. Batas: Windows/Chromium localhost; precache tetap sekitar 10,8 MiB, tokenizer statis masih besar; model embedding/seluruh format offline/perangkat lambat belum diuji. Workflow GitHub belum dieksekusi.
 - [ ] **[F23](docs/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah** (Medium; M–L).
 
 ### P3 — Perbaikan terencana

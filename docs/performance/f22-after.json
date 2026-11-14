@@ -1,0 +1,46 @@
+{
+  "label": "F22-working-tree-after-786cc5d",
+  "commit": "786cc5d",
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "fixtureWords": 3000,
+  "conditions": "5 fresh isolated contexts, localhost, unthrottled, service worker blocked for startup timings; same synthetic IndexedDB fixture",
+  "entryBytes": 1251421,
+  "entryGzipBytes": 392884,
+  "contextWorkerBytes": 5737026,
+  "samples": [
+    {
+      "editorReadyMs": 393.06399999999985,
+      "scriptMs": 167.80100000000002,
+      "jsBytes": 1423289
+    },
+    {
+      "editorReadyMs": 407.9788999999996,
+      "scriptMs": 176.308,
+      "jsBytes": 1423289
+    },
+    {
+      "editorReadyMs": 438.16539999999986,
+      "scriptMs": 198.90800000000002,
+      "jsBytes": 1423289
+    },
+    {
+      "editorReadyMs": 399.3775999999998,
+      "scriptMs": 172.77100000000002,
+      "jsBytes": 1423289
+    },
+    {
+      "editorReadyMs": 411.97489999999925,
+      "scriptMs": 173.529,
+      "jsBytes": 1423289
+    }
+  ],
+  "medianEditorReadyMs": 407.9788999999996,
+  "medianScriptMs": 173.529,
+  "medianJsBytes": 1423289,
+  "offline": {
+    "controlledReload": true,
+    "nativeWorkerTokens": 2,
+    "lazyExportDownload": "F22 Synthetic.md"
+  }
+}

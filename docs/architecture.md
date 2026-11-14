@@ -193,3 +193,15 @@ NavigationContext menerapkannya pada pemuatan/setter; MainView juga memvalidasi
 sebelum memilih renderer. Riwayat studio menormalisasi sebelum membaca/menyimpan.
 ViewMode legacy tetap dikenali untuk kompatibilitas, tetapi bukan tujuan render
 mandiri. openCodexEntry/openAtlasMarker/openWorkshop tetap mempertahankan target.
+
+## Pemuatan Dependency F22
+
+App memakai React.lazy untuk ExportManager di dalam Suspense yang sudah ada.
+ActionsPanel dan SelectionFloatingMenu berbagi actionIcons tanpa menarik panel
+penuh ke startup. Worker Vite memakai format es; getEmbedder mengimpor transformers
+secara dinamis lalu mengatur env sebelum pipeline. Promise init dibagi, kegagalan
+mengosongkan promise untuk retry, dan checkpoint cancellation tetap berlaku.
+Precache glob/limit tetap mencakup chunk baru; tidak mengecualikan fitur lazy dari
+offline. Test produksi test:startup mengaktifkan SW untuk assertion offline, tetapi
+memblokirnya pada sample timing agar install cache tidak mencampur ukuran startup.
+Lihat [metodologi dan raw data](performance/f22.md).

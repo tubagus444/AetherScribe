@@ -13,7 +13,8 @@
     "test:production": "node scripts/verify-production.mjs",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:startup": "node scripts/measure-startup.mjs --verify-offline"
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",

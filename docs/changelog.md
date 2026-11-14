@@ -6,6 +6,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Perf] F22 — Pisahkan Dependency Berat dari Startup
+
+- Lazy-load ExportManager sehingga library PDF/DOCX tidak dievaluasi saat editor dibuka. Pisahkan actionIcons dari ActionsPanel untuk menghilangkan import statis panel melalui menu seleksi; peringatan mixed import ActionsPanel hilang.
+- Impor transformers hanya di getEmbedder; worker ES module mendukung chunk dinamis. Promise bersama/retry, konfigurasi model dan checkpoint cancel tetap dipertahankan. Tokenizer masih statis. Precache seluruh aset lazy dipertahankan untuk offline; tidak menambah dependency/schema atau mengurangi cakupan offline.
+- Tambahkan measure-startup.mjs/test:startup dan langkah CI: lima sample context sintetis baru, ukuran entry/gzip/worker, Resource Timing dan CDP ScriptDuration; lalu production PWA offline reload, native token worker dan unduhan ekspor Markdown lazy. Laporan/batas ada di docs/performance/f22.md beserta raw sebelum/sesudah.
+- Hasil lokal: entry JS 2.026.553 ke 1.251.421 byte; median editor terlihat 474 ke 408 ms, script 220 ke 174 ms. Precache sekitar 10,8 MiB hampir tetap; bukan klaim percepatan universal. Guard import transformer gagal pada source baseline 786cc5d lalu lulus. 76 berkas/723 tes, 14 browser tests, typecheck/build/diff-check dan production startup/offline smoke lulus. Peringatan bundle/ONNX/Browserslist lama tetap ada; GitHub/Linux dan model embedding nyata belum diverifikasi.
+
+
 ### [Fix] F25/F26 — Fokus Dialog dan Pemulihan Navigasi Legacy
 
 - Gunakan native dialog/showModal untuk ConfirmDialog: role alertdialog, nama/deskripsi, top-layer/inert, fokus awal Batal, Tab/Shift+Tab berputar dan fokus kembali ke pemicu yang masih ada. Busy menahan Escape/backdrop dan menonaktifkan aksi; keyboard tidak meneruskan shortcut ke aplikasi di belakang. Penutupan dikendalikan prop open; fokus/nesting diuji di browser native.
