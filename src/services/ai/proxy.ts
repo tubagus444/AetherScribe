@@ -1,3 +1,4 @@
+import { enforceProviderPolicy } from './providerPolicy';
 import { readAIStream } from './sse';
 import { AIRenderParams } from '@/src/services/ai/types';
 import { ErrorService } from '@/src/services/errorService';
@@ -13,6 +14,7 @@ function historyText(h: { role: string; parts: { text: string }[] }): string {
 }
 
 export async function callProxy(provider: string, params: AIRenderParams, apiKey?: string): Promise<string> {
+  enforceProviderPolicy(provider);
   const history = (params.history || []).slice(-MAX_PROXY_HISTORY);
 
   const body: any = {
@@ -178,6 +180,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
 
   let response: Response;
   try {
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('ai-provider-dispatched', { detail: provider }));
     response = await fetch('/api/ai/proxy', {
       method: 'POST',
       headers,

@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-13
 
+### [Fix] F17 ? Izin Fallback dan Mode Inferensi Lokal
+
+- Default fallback lintas-provider menjadi kosong. Provider cadangan harus diizinkan eksplisit dan memiliki key; penyimpanan key saja tidak mengizinkan pengiriman naskah. Mode lokal memblokir semua inferensi cloud termasuk override per aksi dan callProxy langsung.
+- Kontrol privasi dipersist langsung melalui useAISettings dan dibaca ulang sebelum setiap request/retry. Nilai lokal rusak/storage tidak tersedia menolak cloud. Tampilkan provider tujuan inferensi terakhir; jangan menambah hitungan circuit-breaker untuk penolakan kebijakan.
+- Dua probe gagal pada baseline d093244 (callAI diekspor sementara hanya untuk akses tes): fallback Ollama ke cloud tanpa izin dan override cloud dalam mode lokal. Verifikasi: 65 berkas/679 tes lulus; typecheck, build dan diff-check lulus (peringatan build lama tetap ada). Tiga belas tes baru mencakup facade, direct proxy, izin/revokasi, storage, kontrol UI/persistensi serta indikator provider dengan mock jaringan. Belum provider/browser nyata; request yang sudah dikirim tidak dapat ditarik kembali. Tidak menambah dependensi atau schema DB.
+
+
 ### [Fix] F12/F14/F15 ? Error Streaming, Isolasi Retry, dan Cleanup Rewrite
 
 - Parser SSE provider-aware menolak error frame/JSON rusak/teks kosong/EOF tanpa terminasi, memproses CRLF/multiline dan buffer akhir, serta meneruskan error callback. Reader dibatalkan/dilepas; stream tanpa callback dan abort body macet ditangani.

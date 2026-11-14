@@ -1,3 +1,4 @@
+import { readProviderPolicy } from '@/src/services/ai/providerPolicy';
 import { useState, useEffect } from 'react';
 import { ContextDepth } from '@/src/types';
 import { DEFAULT_MAX_CACHED_LORE_CHARS, DEFAULT_CLAUDE_CACHE_TTL, DEFAULT_REWRITE_TEMPERATURE } from '@/src/lib/aiTuning';
@@ -10,6 +11,22 @@ export type ProviderModels = { google: string; groq: string; openrouter: string;
  * Memisahkan logika persist dari presentasi (RENCANA-AUDIT-KODE UI1).
  */
 export function useAISettings() {
+  const [localOnly, setLocalOnlyState] = useState(() => readProviderPolicy().localOnly);
+  const [allowedFallbacks, setAllowedFallbacksState] = useState(() => readProviderPolicy().allowedFallbacks);
+  const setLocalOnly = (value: boolean) => {
+    localStorage.setItem('ai_local_only', String(value)); setLocalOnlyState(value); window.dispatchEvent(new Event('storage'));
+  };
+  const setAllowedFallbacks = (value: string[]) => {
+    localStorage.setItem('ai_fallback_providers', JSON.stringify(value)); setAllowedFallbacksState(value); window.dispatchEvent(new Event('storage'));
+  };
+  useEffect(() => {
+    const refresh = () => {
+      const policy = readProviderPolicy();
+      setLocalOnlyState(policy.localOnly); setAllowedFallbacksState(policy.allowedFallbacks);
+    };
+    window.addEventListener('storage', refresh);
+    return () => window.removeEventListener('storage', refresh);
+  }, []);
   const [provider, setProvider] = useState('google');
   const [contextDepth, setContextDepth] = useState<ContextDepth>('balanced');
   const [keys, setKeys] = useState<ProviderKeys>({
@@ -169,6 +186,7 @@ export function useAISettings() {
   };
 
   return {
+    localOnly, setLocalOnly, allowedFallbacks, setAllowedFallbacks,
     provider, setProvider,
     contextDepth, setContextDepth,
     keys, setKeys,

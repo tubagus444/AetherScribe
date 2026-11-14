@@ -162,3 +162,7 @@ Verifikasi memakai fixture/mocked upstream dan HTTP loopback terisolasi; tidak m
 ## Konsumsi SSE pada Klien (F12)
 
 HTTP 200 bukan jaminan keberhasilan inferensi: error SSE provider diteruskan sebagai rejection. Klien memeriksa frame akhir/teks kosong/terminasi, membaca buffer akhir dan mengakhiri reader pada error/abort. Ini berlaku pada proxy.ts/sse.ts, bukan perubahan payload provider server. Retry/fallback membersihkan preview parsial melalui onRetry; hasil final attempt sukses bersifat otoritatif.
+
+## Kebijakan Provider Klien (F17)
+
+providerPolicy.ts membatasi dispatch inferensi di facade dan callProxy. Mode hanya lokal memblokir provider selain Ollama; fallback memerlukan izin per target dan key. API key tersimpan bukan izin fallback. Kebijakan ini milik aplikasi klien, bukan autentikasi server terhadap proses lokal lain. Host/Origin/tujuan proxy tetap mengikuti F02. Izin disimpan lokal, dibaca ulang sebelum request berikutnya; tidak menghapus data yang sudah terkirim ke provider.

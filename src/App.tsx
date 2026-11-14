@@ -1,3 +1,4 @@
+import { AIProviderIndicator } from '@/src/components/common/AIProviderIndicator';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -89,7 +90,8 @@ export default function App() {
       "h-screen bg-background text-foreground overflow-hidden font-sans transition-colors duration-700 flex flex-col",
       isFocusMode && "bg-secondary"
     )}>
-      <div className="flex h-full overflow-hidden relative">
+      <AIProviderIndicator />
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Mobile Sidebar Overlay */}
         {isSidebarActuallyOpen && (
           <div 

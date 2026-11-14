@@ -11,6 +11,10 @@ export function AISettingsTab() {
   return (
     <>
       <AIPreferences
+        localOnly={s.localOnly}
+        setLocalOnly={s.setLocalOnly}
+        allowedFallbacks={s.allowedFallbacks}
+        setAllowedFallbacks={s.setAllowedFallbacks}
         provider={s.provider}
         setProvider={s.setProvider}
         contextDepth={s.contextDepth}

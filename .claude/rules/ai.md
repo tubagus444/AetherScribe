@@ -46,3 +46,7 @@ Seluruh item optimasi token/biaya AI telah **selesai** (arsip lengkap di `docs/a
 ## Streaming/retry F12/F14/F15
 
 Jangan menelan error frame SSE sebagai parse error: sse.ts menangani framing dan terminasi provider. Teruskan onRetry dari facade; consumer reset buffer attempt lama dan memakai return final sukses. Rewrite timer wajib cleanup pada finally/unmount/ganti bab; callback memakai run guard. Pertahankan AbortError agar pembatalan tidak dianggap kegagalan biasa. Kebijakan izin fallback lokal/cloud tetap F17.
+
+## Batas provider F17
+
+Jangan memilih fallback hanya berdasarkan adanya key. providerPolicy.ts mengatur local-only dan allowlist fallback; enforce sebelum setiap dispatch, termasuk callProxy langsung. Default fallback kosong; mode lokal menolak cloud walau ada override per aksi. Izin dipersist di useAISettings dan tidak mengubah provider utama otomatis. Event ai-provider-dispatched hanya membawa nama provider, tanpa prompt/key.

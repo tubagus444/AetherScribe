@@ -1,3 +1,4 @@
+import { readProviderPolicy, enforceProviderPolicy } from './providerPolicy';
 import { StoryBibleRule, CodexEntry, ContextDepth, Relationship, ConsistencyFinding } from '@/src/types';
 import { getRelevantContext, getRelevantBibleRules } from '@/src/services/contextEngine';
 import { callProxy, getLightModelForProvider } from '@/src/services/ai/proxy';
@@ -262,6 +263,7 @@ async function callAIWithBackoff(
     }
 
     try {
+      enforceProviderPolicy(provider, isFallback);
       const result = await callProxy(provider, { ...params, model }, apiKey);
 
       breaker.recordSuccess(provider);
@@ -273,10 +275,11 @@ async function callAIWithBackoff(
         throw error;
       }
 
+      if (error.code === 'PROVIDER_POLICY') throw new AIError(error.message, error.code, provider);
       breaker.recordFailure(provider);
 
       // Kunci salah / kuota habis: percuma diulang, lempar segera agar user tahu.
-      if (error.code === 'INVALID_KEY' || error.code === 'QUOTA_EXCEEDED') {
+      if (error.code === 'INVALID_KEY' || error.code === 'QUOTA_EXCEEDED' || error.code === 'PROVIDER_POLICY') {
         throw new AIError(error.message, error.code, provider);
       }
 
@@ -300,7 +303,7 @@ async function callAIWithBackoff(
   throw new AIError(`Gagal menghubungi ${provider} setelah percobaan maksimal.`, 'TIMEOUT', provider);
 }
 
-async function callAI(params: AIRenderParams): Promise<string> {
+export async function callAI(params: AIRenderParams): Promise<string> {
   const settings = getSettings();
   const provider = params.provider || settings.provider;
   
@@ -311,11 +314,11 @@ async function callAI(params: AIRenderParams): Promise<string> {
     
     // Only attempt fallback if we know it's a connection/server/rate limit issue
     // NOT if there's no API key or Invalid API Key.
-    if (shouldAttemptFallback(error.code)) {
+    if (error.code !== 'PROVIDER_POLICY' && shouldAttemptFallback(error.code) && !readProviderPolicy().localOnly) {
       const candidates = selectFallbackProviders(
         FALLBACK_ORDER,
         provider,
-        (p) => !!settings.keys[p as keyof typeof settings.keys],
+        (p) => readProviderPolicy().allowedFallbacks.includes(p) && !!settings.keys[p as keyof typeof settings.keys],
       );
       for (const fallback of candidates) {
         try {

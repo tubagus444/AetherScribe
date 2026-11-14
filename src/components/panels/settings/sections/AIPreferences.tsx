@@ -1,16 +1,19 @@
+import { CLOUD_PROVIDERS } from '@/src/services/ai/providerPolicy';
 import React from 'react';
 import { Shield } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { ContextDepth } from '@/src/types';
 
 interface Props {
+  localOnly: boolean; setLocalOnly: (value: boolean) => void;
+  allowedFallbacks: string[]; setAllowedFallbacks: (value: string[]) => void;
   provider: string;
   setProvider: (v: string) => void;
   contextDepth: ContextDepth;
   setContextDepth: (v: ContextDepth) => void;
 }
 
-export function AIPreferences({ provider, setProvider, contextDepth, setContextDepth }: Props) {
+export function AIPreferences({ provider, setProvider, contextDepth, setContextDepth, localOnly, setLocalOnly, allowedFallbacks, setAllowedFallbacks }: Props) {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -71,6 +74,15 @@ export function AIPreferences({ provider, setProvider, contextDepth, setContextD
             <option value="deep">Mendalam (Detail Terkaya)</option>
           </select>
         </div>
+      </div>
+      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+        <label className="flex gap-2 items-center"><input type="checkbox" checked={localOnly} onChange={e => setLocalOnly(e.target.checked)} />Hanya AI lokal (Ollama)</label>
+        <p className="text-xs text-slate-500">Mode lokal memblokir semua inferensi cloud, termasuk pilihan provider per aksi. Pilih Ollama sebagai penyedia utama saat mode ini aktif. Izin ini langsung tersimpan. Request yang sudah dikirim tidak dapat ditarik kembali.</p>
+        <fieldset disabled={localOnly} className="space-y-2">
+          <legend className="text-sm font-semibold">Izinkan provider cadangan</legend>
+          <p className="text-xs text-slate-500">Jika provider utama gagal, konteks naskah dapat dikirim ke provider yang dicentang dan memiliki API key. Default: tidak ada fallback lintas-provider.</p>
+          {CLOUD_PROVIDERS.map(p => <label key={p} className="flex gap-2 items-center text-sm"><input type="checkbox" checked={allowedFallbacks.includes(p)} onChange={e => setAllowedFallbacks(e.target.checked ? [...allowedFallbacks, p] : allowedFallbacks.filter(value => value !== p))} />{p}</label>)}
+        </fieldset>
       </div>
     </section>
   );

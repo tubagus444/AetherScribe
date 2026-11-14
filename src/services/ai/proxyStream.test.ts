@@ -1,3 +1,4 @@
+vi.mock('./providerPolicy', () => ({ enforceProviderPolicy: vi.fn() }));
 import { afterEach, expect, it, vi } from 'vitest';
 import { callProxy } from './proxy';
 vi.mock('@/src/db', () => ({ db: { aiUsageLogs: { add: vi.fn().mockResolvedValue(1) } } }));

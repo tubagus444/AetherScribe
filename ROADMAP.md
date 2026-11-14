@@ -132,7 +132,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
 - [ ] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
-- [ ] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
+- [x] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
+  - Tanggal / commit: Implementasi 13 November 2026; commit 14 November 2026: `fix(ai): batasi fallback cloud dengan izin eksplisit (F17)` (commit yang menambahkan bukti ini).
+  - Perubahan: izin fallback per provider, default tanpa fallback lintas-provider, mode inferensi hanya lokal, pemeriksaan ulang saat dispatch dan guard direct proxy. Kontrol langsung tersimpan dan indikator tujuan efektif ditampilkan.
+  - Bukti sebelum: dua probe pada d093244 gagal (akses test-only callAI): cloud fallback Ollama tanpa izin dan cloud override mode lokal.
+  - Verifikasi: 13 tes baru kebijakan/facade/proxy/settings/indikator memakai mock; 65 berkas/679 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; izin baru berlaku untuk dispatch berikutnya, bukan menarik request terkirim.
 - [ ] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).
 - [x] **[F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses** (Medium; S).
   - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
