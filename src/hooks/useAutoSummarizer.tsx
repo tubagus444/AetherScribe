@@ -59,7 +59,7 @@ export function useAutoSummarizer() {
   }, []);
 }
 
-async function summarizeChapterBackground(chapterId: number) {
+export async function summarizeChapterBackground(chapterId: number) {
   if (inFlight.has(chapterId)) return; // sudah diproses; cegah panggilan kembar
   inFlight.add(chapterId);
   try {
@@ -68,8 +68,10 @@ async function summarizeChapterBackground(chapterId: number) {
       return; // Too short to summarize
     }
 
-    // Check if it's already summarized and not modified since
-    if (chapter.summaryUpdatedAt && chapter.summaryUpdatedAt >= chapter.lastModified) {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(chapter.content));
+    const sourceHash = Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+    // Legacy summaries without a source hash are revalidated by regeneration.
+    if (chapter.summarySourceHash === sourceHash && chapter.summaryUpdatedAt !== undefined && chapter.summaryUpdatedAt >= chapter.lastModified) {
       return; // Already up to date
     }
 
@@ -115,11 +117,16 @@ async function summarizeChapterBackground(chapterId: number) {
     const summaryRes = await callProxy(provider, params, apiKey);
     
     if (summaryRes && summaryRes.trim().length > 0) {
-      await db.chapters.update(chapterId, {
-        summary: summaryRes.trim(),
-        summaryUpdatedAt: Date.now()
+      await db.transaction('rw', db.chapters, async () => {
+        const fresh = await db.chapters.get(chapterId);
+        if (!fresh || fresh.projectId !== chapter.projectId || fresh.content !== chapter.content || fresh.lastModified !== chapter.lastModified || fresh.summary !== chapter.summary || fresh.summaryUpdatedAt !== chapter.summaryUpdatedAt) return;
+        await db.chapters.update(chapterId, {
+          summary: summaryRes.trim(),
+          summaryUpdatedAt: chapter.lastModified,
+          summarySourceHash: sourceHash,
+        });
       });
-      console.log(`[AutoSummarize] Success for chapter ${chapterId}`);
+
     }
 
   } catch (error) {

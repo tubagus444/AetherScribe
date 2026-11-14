@@ -138,7 +138,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti sebelum: dua probe pada d093244 gagal (akses test-only callAI): cloud fallback Ollama tanpa izin dan cloud override mode lokal.
   - Verifikasi: 13 tes baru kebijakan/facade/proxy/settings/indikator memakai mock; 65 berkas/679 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
   - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; izin baru berlaku untuk dispatch berikutnya, bukan menarik request terkirim.
-- [ ] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).
+- [x] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).
+  - Tanggal / commit: 14 November 2026; commit `fix(ai): validasi versi ringkasan dan pertahankan parameter nol (F29/F13)` (commit yang menambahkan bukti ini).
+  - Perubahan: hash konten sumber dan conditional commit ringkasan, timestamp versi sumber; nullish temperature dan usage token nol. Tidak ada migrasi schema DB.
+  - Bukti sebelum: lima probe pada de55cd9 gagal (race konten ringkasan, temperature nol pada tiga keluarga provider, output-token nol); ekspor entry point test-only untuk probe summarizer.
+  - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
 - [x] **[F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses** (Medium; S).
   - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
   - Perubahan: snapshot readonly setelah flush editor, serialisasi di luar transaksi; ekspor membaca data terbaru. Upload Drive diverifikasi sukses/ID sebelum prune; kegagalan retensi dilaporkan terpisah.
@@ -152,7 +157,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 
 ### P3 — Perbaikan terencana
 
-- [ ] **[F13](docs/audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan** (Low; S).
+- [x] **[F13](docs/audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan** (Low; S).
+  - Tanggal / commit: 14 November 2026; commit `fix(ai): validasi versi ringkasan dan pertahankan parameter nol (F29/F13)` (commit yang menambahkan bukti ini).
+  - Perubahan: hash konten sumber dan conditional commit ringkasan, timestamp versi sumber; nullish temperature dan usage token nol. Tidak ada migrasi schema DB.
+  - Bukti sebelum: lima probe pada de55cd9 gagal (race konten ringkasan, temperature nol pada tiga keluarga provider, output-token nol); ekspor entry point test-only untuk probe summarizer.
+  - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
+  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
 - [ ] **[F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong** (Low; S).
 - [ ] **[F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia** (Medium; S).
 - [ ] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).

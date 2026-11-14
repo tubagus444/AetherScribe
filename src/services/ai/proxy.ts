@@ -27,7 +27,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
   }
 
   if (provider === 'claude') {
-    body.temperature = params.temperature || 0.7;
+    body.temperature = params.temperature ?? 0.7;
     body.max_tokens = params.maxTokens || 4000;
     // P0/P3: tiap segmen KB statis (params.cachedContext, stabil→volatil) jadi blok system
     // di DEPAN instruksi, masing-masing dengan cache breakpoint sendiri. Karena segmen
@@ -93,12 +93,12 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
       { role: "user", parts: [{ text: params.userPrompt }] }
     ];
     body.generationConfig = {
-      temperature: params.temperature || 0.7,
+      temperature: params.temperature ?? 0.7,
       maxOutputTokens: params.maxTokens || 4000,
     };
   } else {
     // OpenAI Compatible (groq, openrouter, ollama)
-    body.temperature = params.temperature || 0.7;
+    body.temperature = params.temperature ?? 0.7;
     body.max_tokens = params.maxTokens || 4000;
     // P0/P3: tiap segmen KB statis (cachedContext) jadi bagian PERTAMA system. Untuk
     // OpenRouter, kirim multipart dengan cache_control per-segmen (diteruskan ke provider
@@ -314,18 +314,18 @@ function logUsageToDB(params: AIRenderParams, provider: string, usage: any, comp
     const cacheCreation = usage.cache_creation_input_tokens ?? 0;
     cachedTokens = cacheRead;
 
-    if (usage.promptTokens) promptTokens = usage.promptTokens;
-    else if (usage.prompt_tokens) promptTokens = usage.prompt_tokens; // OpenAI/OpenRouter (sudah termasuk cached)
-    else if (usage.promptTokenCount) promptTokens = usage.promptTokenCount; // Google (sudah termasuk cached)
+    if (usage.promptTokens != null) promptTokens = usage.promptTokens;
+    else if (usage.prompt_tokens != null) promptTokens = usage.prompt_tokens; // OpenAI/OpenRouter (sudah termasuk cached)
+    else if (usage.promptTokenCount != null) promptTokens = usage.promptTokenCount; // Google (sudah termasuk cached)
     // Claude: input_tokens TIDAK termasuk token cache → jumlahkan agar total mencerminkan ukuran prompt asli.
     else if (usage.input_tokens != null) promptTokens = usage.input_tokens + cacheRead + cacheCreation;
-    else if (usage.inputTokenCount) promptTokens = usage.inputTokenCount; // Claude/Bedrock style
+    else if (usage.inputTokenCount != null) promptTokens = usage.inputTokenCount; // Claude/Bedrock style
 
-    if (usage.completionTokens) completionTokens = usage.completionTokens;
-    else if (usage.completion_tokens) completionTokens = usage.completion_tokens;
-    else if (usage.output_tokens) completionTokens = usage.output_tokens; // Claude native
-    else if (usage.outputTokenCount) completionTokens = usage.outputTokenCount; // Claude/Bedrock style
-    else if (usage.candidatesTokenCount) completionTokens = usage.candidatesTokenCount; // Google style
+    if (usage.completionTokens != null) completionTokens = usage.completionTokens;
+    else if (usage.completion_tokens != null) completionTokens = usage.completion_tokens;
+    else if (usage.output_tokens != null) completionTokens = usage.output_tokens; // Claude native
+    else if (usage.outputTokenCount != null) completionTokens = usage.outputTokenCount; // Claude/Bedrock style
+    else if (usage.candidatesTokenCount != null) completionTokens = usage.candidatesTokenCount; // Google style
   }
 
   db.aiUsageLogs.add({

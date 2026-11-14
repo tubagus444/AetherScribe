@@ -36,7 +36,7 @@ const schemas: Record<string, Check> = {
     calendar, travelSpeeds: array(object({ id: text, name: text, speedPerDay: number, unit: text })),
   }),
   chapters: object({ id, projectId: id, title: text, content: text, order: nonnegative, lastModified: nonnegative }, {
-    summary: text, summaryUpdatedAt: nonnegative, status: choice('outline', 'draft', 'edit', 'polish', 'done'),
+    summary: text, summaryUpdatedAt: nonnegative, summarySourceHash: (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); }, status: choice('outline', 'draft', 'edit', 'polish', 'done'),
     pov: text, wordGoal: nonnegative, tension: choice(1, 2, 3, 4, 5), act: choice('act-1', 'act-2a', 'act-2b', 'act-3', 'unassigned'),
   }),
   codex: object({ id, projectId: id, name: text, category: text, description: text, aliases: array(text), tags: array(text) }, {

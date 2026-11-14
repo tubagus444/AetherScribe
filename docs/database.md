@@ -385,3 +385,7 @@ Hapus proyek membersihkan seluruh tabel domain project-scoped; snapshot bab proy
 ## Impor Identitas Triage dan Workshop (F10)
 
 Schema v33 tidak berubah. Transaksi importProjectData kini mencakup continuityTriage. ID timeline/relationships dikumpulkan dari hasil bulkAdd untuk remap findingId, selain chapterIdMap/codexIdMap/mapIdMap. Primary key triage lama dilepas, projectId diganti, status/timestamp dipertahankan. workshopKey entry:<id> mengikuti ID Codex baru; teks chat tetap literal. Format findingId yang tidak dikenal membatalkan seluruh transaksi, sedangkan finding lama dengan target yang sudah hilang dibuang. Tidak memodifikasi proyek sumber atau tabel proyek lain.
+
+## Versi Konten Ringkasan (F29)
+
+Chapter.summarySourceHash?: string adalah field JSON inert SHA-256 (64 hex), tanpa indeks atau migrasi v33. Ikut collect/restore/import seperti metadata Chapter lainnya dan divalidasi schema backup. summaryUpdatedAt mencatat lastModified sumber yang berhasil dirangkum. Conditional commit membandingkan record aktual dalam transaksi; edit saat request berlangsung tidak menghasilkan summary stale yang dianggap fresh. Legacy tanpa hash diregenerasi ketika pemicu auto-summary berikutnya berjalan.

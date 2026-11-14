@@ -195,6 +195,8 @@ export interface Chapter {
   title: string;
   summary?: string;
   summaryUpdatedAt?: number;
+  /** SHA-256 konten sumber ringkasan; field inert, ikut backup/impor. */
+  summarySourceHash?: string;
   content: string;
   order: number;
   lastModified: number;

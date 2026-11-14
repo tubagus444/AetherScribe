@@ -4,6 +4,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-14
+
+### [Fix] F29/F13 ? Kesegaran Ringkasan dan Parameter/Metrik AI
+
+- Tambahkan hash sumber ringkasan sebagai metadata Chapter inert. Conditional commit dalam transaksi menolak respons jika bab berubah/dihapus atau summary diedit saat request berlangsung. Timestamp freshness memakai versi sumber; legacy tanpa hash diregenerasi saat eligible. Tidak menambah schema DB atau loop retry otomatis.
+- Gunakan nullish default untuk temperature agar nol tetap diteruskan. Usage stream Claude yang sudah digabung sejak F12 diverifikasi hingga message_stop, termasuk cache-read/cache-creation dan output nol; angka usage nol kini dihormati pada kalkulasi token.
+- Lima probe gagal pada baseline de55cd9 (entry point summarizer diekspor sementara hanya untuk tes): race konten, temperature nol pada tiga keluarga provider, dan output-token nol. Verifikasi: 67 berkas/691 tes lulus; typecheck, build dan diff-check lulus (peringatan build lama tetap ada). Dua belas tes baru memakai IndexedDB sintetis dan provider mock, mencakup stale/version/deletion/manual-summary, concurrency, legacy, timestamp nol dan payload/usage. Belum provider/browser nyata; prompt ringkasan tetap dibatasi 15.000 karakter seperti sebelumnya.
+
 ## 2026-11-13
 
 ### [Fix] F17 ? Izin Fallback dan Mode Inferensi Lokal

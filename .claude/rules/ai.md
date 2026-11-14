@@ -50,3 +50,7 @@ Jangan menelan error frame SSE sebagai parse error: sse.ts menangani framing dan
 ## Batas provider F17
 
 Jangan memilih fallback hanya berdasarkan adanya key. providerPolicy.ts mengatur local-only dan allowlist fallback; enforce sebelum setiap dispatch, termasuk callProxy langsung. Default fallback kosong; mode lokal menolak cloud walau ada override per aksi. Izin dipersist di useAISettings dan tidak mengubah provider utama otomatis. Event ai-provider-dispatched hanya membawa nama provider, tanpa prompt/key.
+
+## Ringkasan dan usage F29/F13
+
+Auto summary harus menyimpan hash konten sumber dan conditional commit di transaksi DB; jangan memakai waktu selesai request sebagai bukti kesegaran. Hasil saat content/lastModified/summary berubah dibuang, bukan disimpan sebagai fresh. Temperature memakai ?? agar nol valid; usage Claude menggabungkan event input/output/cache dan kalkulasi token menghormati nol. Field summarySourceHash inert dan ikut backup/import.
