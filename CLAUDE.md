@@ -46,3 +46,5 @@ Setiap selesai mengubah fitur, database, atau API, kamu WAJIB:
 Jangan menganggap tugas selesai sebelum dokumentasi diperbarui.
 
 Startup: `serverDev.ts` untuk development; `serverProduction.ts` untuk production. `.env` dimuat dari cwd, environment proses menang. Minimum Node mengikuti engines package.json; lihat README untuk instalasi production dan `npm run test:production`.
+
+Pengujian: `npm run test:run` (single-run), `npm run test:coverage`, `npm run test:e2e`, dan `npm run test:production`. Persiapan browser, isolasi fixture dan batas coverage: `docs/testing.md`.

@@ -98,5 +98,10 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm run build` | Build frontend (Vite) dan bundle server (esbuild). |
 | `npm run start` | Jalankan hasil build produksi. |
 | `npm test` | Jalankan unit test (Vitest). |
+| `npm run test:run` | Unit/integrasi sekali jalan. |
+| `npm run test:coverage` | Unit/integrasi dengan laporan coverage V8. |
+| `npm run test:e2e` | Tujuh skenario kritis Chromium terisolasi. |
 | `npm run test:production` | Build dan smoke test instalasi production terisolasi. |
 | `npm run lint` | Type-check via `tsc --noEmit`. |
+
+Panduan lengkap, instalasi browser, bukti regresi dan batas coverage ada di [docs/testing.md](docs/testing.md). Workflow CI menguji Windows/Ubuntu tanpa repository secrets.

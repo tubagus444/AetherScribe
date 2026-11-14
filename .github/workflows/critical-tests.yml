@@ -1,0 +1,50 @@
+name: Critical regression tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: critical-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  critical:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.15.0'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run lint
+      - name: Unit and integration tests with coverage
+        run: npm run test:coverage
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium --no-shell
+      - name: Native browser critical paths
+        run: npm run test:e2e
+      - name: Build and clean production startup smoke
+        run: npm run test:production
+      - name: Preserve coverage and browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: critical-reports-${{ matrix.os }}
+          path: |
+            coverage/
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore

@@ -30,3 +30,5 @@ Setiap selesai mengubah fitur, database, atau API, kamu WAJIB:
 1) memperbarui file docs yang terkait, dan
 2) menambahkan entri di docs/changelog.md.
 Jangan menganggap tugas selesai sebelum dokumentasi diperbarui.
+
+Pengujian: `npm run test:run` (single-run), `npm run test:coverage`, `npm run test:e2e`, dan `npm run test:production`. Persiapan browser, isolasi fixture dan batas coverage: `docs/testing.md`.

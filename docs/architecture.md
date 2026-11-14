@@ -143,3 +143,17 @@ Build hilang, port invalid dan kegagalan listen menghasilkan exit code 1.
 Runtime tidak memerlukan Vite, tsx, atau dependency dev lain. Versi Node yang
 didukung mengikuti engines package.json (termasuk kebutuhan jsdom pada tes).
 Prosedur Windows, distribusi production dan smoke test ada di README.md.
+
+## Harness Regresi dan CI (F24)
+
+Vitest memiliki konfigurasi terpisah untuk discovery src/**/*.test.{ts,tsx}, alias
+src dan coverage V8 seluruh src/entry server. Playwright memakai browser context
+baru, IndexedDB/Blob/worker native, fixture sebelum React dimuat, dan server
+Express + Vite khusus uji dengan cache serta port HMR terpisah dari dev pengguna.
+Harness berada di e2e/ dan tidak masuk bundle production. Dependency baru hanya
+untuk development; skema DB dan runtime fitur tidak berubah.
+
+CI menjalankan typecheck, unit/integrasi+coverage, browser kritis, lalu build dan
+smoke production bersih pada Windows/Ubuntu. Laporan coverage/trace/screenshot
+disimpan sebagai artefak tujuh hari. Batas, inventaris alur, serta perbedaan
+coverage Vitest dan bukti browser/child process dijelaskan di [testing.md](testing.md).

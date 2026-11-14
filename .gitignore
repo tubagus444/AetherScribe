@@ -12,3 +12,6 @@ coverage/
 # nama folder kode bikin Tailwind v4 (yang menghormati .gitignore) melewatkan kode itu.
 # Dulu folder ini "lore/" (tak ter-anchor) & bentrok dengan src/features/lore.
 /bahan-dunia/
+# Browser test artifacts (may include traces/screenshots).
+playwright-report/
+test-results/

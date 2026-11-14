@@ -82,7 +82,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
 
 ### P2 — Correctness dan reliabilitas berikutnya
 
-- [ ] **[F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia** (Medium; L).
+- [x] **[F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia** (Medium; L).
+  - Tanggal / commit: 14 November 2026; `test: tambahkan harness browser, coverage dan CI (F24)` (commit yang menambahkan bukti ini).
+  - Perubahan: konfigurasi Vitest/coverage V8, tujuh skenario browser Chromium dengan fixture/IndexedDB/Blob/worker native, cache dan HMR terisolasi; workflow CI Windows/Ubuntu untuk typecheck, coverage, browser dan build/smoke production. Report/trace kegagalan menjadi artefak, tanpa repository secrets.
+  - Bukti regresi: browser failed-save gagal pada source useEditorSave sebelum 270b5f2 (6237f1e), karena flush tidak reject; source diperbaiki dipulihkan dan tujuh tes browser lulus.
+  - Verifikasi: 70 berkas/700 tes, tujuh browser tests, typecheck, build/clean production smoke dan diff-check lulus di Windows/Node 24.15.0. Coverage baris Vitest 29.38%; tidak digabung dengan browser/child process.
+  - Dokumentasi: docs/testing.md memetakan alur yang diuji dan gap, README, architecture, changelog, panduan agen. Batas: workflow belum dijalankan di GitHub/Linux; Chromium saja; belum provider/Drive nyata, native XSS, bootstrap kosong, PWA/offline, aksesibilitas/performa. Tidak mengklaim coverage menyeluruh atau ambang persentase global.
 - [x] **[F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip** (Medium; M).
   - Tanggal / commit: 13 November 2026; commit `fix(import): pulihkan triage dan remap sesi workshop (F10)` (commit yang menambahkan bukti ini).
   - Perubahan: impor triage dalam transaksi; remap findingId Codex/relasi/timeline dan workshopKey entry:<id>, pertahankan teks bebas. Format asing ditolak atomik; status target hilang dianggap basi.

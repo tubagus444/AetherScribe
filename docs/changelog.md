@@ -6,6 +6,15 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-14
 
+### [Test] F24 — Harness Integrasi Kritis, Browser dan CI
+
+- Pisahkan discovery Vitest dari Playwright; tambahkan test:run, test:coverage dan test:e2e. Coverage V8 melaporkan seluruh src/entry server, termasuk area tanpa tes, dengan HTML dan JSON summary; tidak menggabungkan coverage browser/child process.
+- Tambahkan tujuh tes Chromium: persist/reload editor, failed-save/flush/retry, duplikasi draft aktif, round-trip triage/invalid restore, sinkronisasi worker Orama lintas proyek, Blob/gzip Atlas dengan snapshot pengaman, serta context worker native. Context baru, DB fixture sebelum React, local-only, env key kosong dan request eksternal diblokir; cache/HMR uji terpisah dari dev.
+- Browser failed-save terbukti gagal pada source sebelum fix F05 (6237f1e, parent 270b5f2): flush resolve alih-alih reject. Source saat ini dipulihkan lalu suite browser lulus. Tidak memakai profil/data/key pengguna.
+- Workflow critical-tests.yml untuk push/PR/manual menyiapkan Node 24.15.0, menjalankan typecheck, unit/integrasi+coverage, Chromium dan build/clean production smoke di Windows/Ubuntu. Coverage dan trace/screenshot kegagalan disimpan tujuh hari; workflow tidak memakai repository secrets.
+- Verifikasi lokal Windows: 70 berkas/700 tes, tujuh browser tests, typecheck, build/production smoke dan diff-check lulus. Coverage: baris 29.38%, statements 29.24%, branches 22.19%, functions 17.80%. Build masih memberi peringatan lama; CI GitHub/Linux belum dieksekusi. Inventaris/gap dan prosedur ada di docs/testing.md; belum mengklaim seluruh UI, browser lain, provider/Drive nyata, native XSS atau offline teruji.
+
+
 ### [Fix] F21 — Startup Production Deterministik
 
 - Pisahkan serverDev.ts (Vite dinamis) dan serverProduction.ts (bundle CJS tanpa dependency dev). Server app tidak otomatis listen saat diimpor; npm start selalu production. File statis dicari relatif bundle, termasuk jika cwd berbeda.
