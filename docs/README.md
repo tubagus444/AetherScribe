@@ -55,3 +55,4 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 
 - [L06: editor aktif dan peak heap tersampel](performance/l06-editor-load.md). Respons input, biaya memori dan batas RSS/otomatisasi.
 - [L06: kegagalan fasilitas browser dan storage](performance/l06-storage-failures.md). Fallback kompresi, checksum, kuota dan pembatalan restore.
+- [L06: integrasi worker internal](performance/l06-integration.md). Antrean, fallback, pengaman restore dan production/offline.

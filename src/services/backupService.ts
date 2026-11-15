@@ -7,7 +7,8 @@ import { readBackupSnapshot } from './backupSnapshot';
 import { db } from '@/src/db';
 import { BackupRecord } from '@/src/types';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
-import { assembleBackupJson } from '@/src/lib/backupEnvelope';
+import { backupChecksum, compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
+import { prepareAutoBackup, serializeInternalBackup } from './internalBackupWorker';
 import { blobToDataUrl, dataUrlToBlob } from '@/src/lib/blobCodec';
 import { validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation';
 import { decodeBackupText } from '@/src/lib/backupIO';
@@ -173,14 +174,7 @@ export const backupService = {
    * kembalikan undefined → cadangan dibuat tanpa checksum, restore melewati verifikasi.
    */
   async computeChecksum(dataString: string): Promise<string | undefined> {
-    try {
-      if (typeof crypto === 'undefined' || !crypto.subtle) return undefined;
-      const bytes = new TextEncoder().encode(dataString);
-      const digest = await crypto.subtle.digest('SHA-256', bytes);
-      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch {
-      return undefined;
-    }
+    return backupChecksum(dataString);
   },
 
   /**
@@ -190,64 +184,21 @@ export const backupService = {
    * didukung/gagal, simpan JSON string mentah (tetap dapat dipulihkan).
    */
   async saveToInternalDB(data: BackupData, kind: 'auto' | 'pre-restore' = 'auto'): Promise<void> {
-    validateBackup(data, data.scope ?? 'all');
-    if (kind === 'pre-restore' && data.imageMode === 'references') {
-      throw new Error('Cadangan pengaman harus menyertakan gambar lengkap.');
-    }
-    // Hanya rolling AUTO yang ramping. Pre-restore harus mampu memulihkan gambar
-    // walaupun live maps sudah diganti oleh restore berikutnya.
-    let leanData = data.data;
-    if (kind === 'auto' && data.data?.maps?.length) {
-      const leanMaps = await Promise.all(data.data.maps.map(async (m: any) => {
-        const { imageDataUrl, ...rest } = m;
-        if (imageDataUrl && !rest.imageAssetId) {
-          rest.imageAssetId = await this.computeChecksum(imageDataUrl);
-          if (!rest.imageAssetId) throw new Error('Gagal menghitung identitas gambar cadangan.');
-        }
-        return rest;
-      }));
-      leanData = { ...data.data, maps: leanMaps };
-    }
+    return serializeInternalBackup(async () => {
+      const prepared = kind === 'auto' ? await prepareAutoBackup(data) : await prepareInternalBackup(data, kind);
+      await this.addBackupResilient({
+        timestamp: data.timestamp,
+        ...prepared,
+        kind
+      });
 
-    // Serialisasi data BESAR sekali saja (dulu 2×: checksum + payload → puncak memori &
-    // jank main thread tiap siklus). Checksum DIHITUNG ULANG atas data ramping ini (kalau
-    // tidak, verifikasi restore gagal vs checksum data penuh), lalu envelope dirakit dengan
-    // menyisipkan `dataString` tanpa men-stringify ulang data besar.
-    const dataString = JSON.stringify(leanData);
-    const checksum = await this.computeChecksum(dataString);
-    const meta: Record<string, unknown> = { version: data.version, timestamp: data.timestamp };
-    if (data.scope) meta.scope = data.scope;
-    if (data.projectName) meta.projectName = data.projectName;
-    if (data.version >= 8) meta.imageMode = kind === 'auto' ? 'references' : 'full';
-    if (checksum) meta.checksum = checksum;
-    const jsonString = assembleBackupJson(meta, dataString);
-    const { blob, compressed } = await this.compressData(jsonString);
-
-    let stored: string | Uint8Array;
-    let size: number;
-    if (compressed) {
-      stored = new Uint8Array(await blob.arrayBuffer());
-      size = stored.byteLength;
-    } else {
-      stored = jsonString;
-      size = new Blob([jsonString]).size;
-    }
-
-    await this.addBackupResilient({
-      timestamp: data.timestamp,
-      data: stored,
-      size,
-      compressed,
-      kind
+      // Safety snapshots remain available independently of auto retention.
+      const allBackups = await db.backups.orderBy('timestamp').toArray();
+      const toDelete = selectBackupsToDelete(allBackups.filter(b => b.kind !== 'pre-restore'), b => b.timestamp);
+      if (toDelete.length) {
+        await db.backups.bulkDelete(toDelete.map(b => b.id!));
+      }
     });
-
-    // Rotasi berjenjang (#3): simpan perwakilan terbaru + harian + mingguan alih-alih
-    // sekadar 5 terbaru, agar titik pulih lama selamat dari korupsi yang lambat disadari.
-    const allBackups = await db.backups.orderBy('timestamp').toArray();
-    const toDelete = selectBackupsToDelete(allBackups, b => b.timestamp);
-    if (toDelete.length) {
-      await db.backups.bulkDelete(toDelete.map(b => b.id!));
-    }
   },
 
   /**
@@ -317,24 +268,7 @@ export const backupService = {
    * DecompressionStream pada data mentah.
    */
   async compressData(dataString: string): Promise<{ blob: Blob; compressed: boolean }> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(dataString);
-    const blob = new Blob([data]);
-
-    if (typeof CompressionStream === 'undefined') {
-      console.warn("CompressionStream not supported in this browser. Backup will be uncompressed.");
-      return { blob, compressed: false };
-    }
-
-    try {
-      const stream = blob.stream();
-      // @ts-ignore
-      const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
-      return { blob: await new Response(compressedStream).blob(), compressed: true };
-    } catch (err) {
-      console.error("Compression failed:", err);
-      return { blob, compressed: false };
-    }
+    return compressBackup(dataString);
   },
 
   /**

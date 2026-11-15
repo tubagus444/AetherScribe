@@ -98,13 +98,41 @@ try {
       } finally { worker.terminate(); }
     }, `/assets/${worker}`);
     assert.equal(workerResult, 2);
+    const backupWorker = assets.find(file => /^backupWorker-.*\.js$/.test(file));
+    assert.ok(backupWorker, 'Production backup worker asset must exist');
+    const backupResult = await page.evaluate(async workerPath => {
+      const input = {
+        version: 8, timestamp: 1, scope: 'all', imageMode: 'full',
+        data: {
+          projects: [{ id: 1, name: 'Offline backup', description: '', createdAt: 1, lastOpened: 1 }],
+          chapters: [{ id: 1, projectId: 1, title: 'Offline', content: '<p>' + 'Offline text '.repeat(30000) + '</p>', order: 0, lastModified: 1 }],
+          codex: [], bible: [], aiActions: [], snapshots: [], timeline: [], relationships: [], chatSessions: [],
+          codexCategories: [], plotPromises: [], glossary: [], maps: [], mapMarkers: [], continuityTriage: [],
+        },
+      };
+      const worker = new Worker(workerPath, { type: 'module' });
+      try {
+        const bytes = await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('Offline backup worker timeout')), 30000);
+          worker.onerror = event => { clearTimeout(timer); reject(new Error(event.message)); };
+          worker.onmessage = ({ data }) => { clearTimeout(timer); data.type === 'prepared' ? resolve(data.bytes) : reject(new Error('Backup preparation failed')); };
+          worker.postMessage(input);
+        });
+        const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+        const parsed = JSON.parse(json);
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(parsed.data)));
+        const checksum = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+        return { same: JSON.stringify(parsed.data) === JSON.stringify(input.data), checksum: parsed.checksum === checksum, imageMode: parsed.imageMode };
+      } finally { worker.terminate(); }
+    }, `/assets/${backupWorker}`);
+    assert.deepEqual(backupResult, { same: true, checksum: true, imageMode: 'references' });
     await page.getByTitle('Ekspor Proyek', { exact: true }).click();
     await page.getByRole('heading', { name: 'Ekspor Naskah' }).waitFor();
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Buat Ekspor MD', exact: true }).click();
     const file = await download;
     assert.ok(file.suggestedFilename().endsWith('.md'));
-    report.offline = { controlledReload: true, nativeWorkerTokens: workerResult, lazyExportDownload: file.suggestedFilename() };
+    report.offline = { controlledReload: true, nativeWorkerTokens: workerResult, backupWorker: backupResult, lazyExportDownload: file.suggestedFilename() };
     await context.close();
   }
   if (output) {

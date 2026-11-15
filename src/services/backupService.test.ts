@@ -249,6 +249,23 @@ describe('bounded decoding and raster-only images', () => {
     await expect(readBackupFile(new Blob([new Uint8Array([0x1f, 0x8b, 0x01])]))).rejects.toThrow();
   });
 
+  it('retains full pre-restore snapshots while rotating automatic history', async () => {
+    const full = await backupService.collectAllData();
+    full.timestamp = 1;
+    await backupService.saveToInternalDB(full, 'pre-restore');
+    for (let index = 0; index < 9; index++) {
+      await backupService.saveToInternalDB({ ...full, timestamp: 1000 + index });
+    }
+    const records = await db.backups.toArray();
+    expect(records.filter(row => row.kind === 'auto')).toHaveLength(5);
+    const safety = records.find(row => row.kind === 'pre-restore');
+    expect(safety).toBeDefined();
+    if (!safety) throw new Error('Missing safety backup');
+    const parsed = JSON.parse(await backupService.decodeInternalBackup(safety));
+    expect(parsed.imageMode).toBe('full');
+    expect(parsed.data.maps[0].imageDataUrl).toBe(image);
+  });
+
   it('rejects oversized raster payloads before allocating decoded bytes', async () => {
     const original = BACKUP_LIMITS.imageBytes;
     try {

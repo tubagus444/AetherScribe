@@ -1,6 +1,11 @@
 # Format Backup dan Pemulihan
 
-Format yang dihasilkan saat ini adalah **v8**; skema IndexedDB tetap **v33**. Implementasi utama: `src/services/backupService.ts`, schema `src/lib/backupValidation.ts`, pembaca terbatas `src/lib/backupIO.ts`, dan batas `src/lib/backupLimits.ts`.
+Format yang dihasilkan saat ini adalah **v8**; skema IndexedDB tetap **v34**. Implementasi utama: `src/services/backupService.ts`, schema `src/lib/backupValidation.ts`, pembaca terbatas `src/lib/backupIO.ts`, dan batas `src/lib/backupLimits.ts`.
+
+Persiapan auto internal besar memakai worker dengan fallback main dan antrean
+save per tab. Pre-restore tetap lengkap dan dikecualikan dari rotasi auto normal
+maupun degradasi kuota. Format/checksum/referensi gambar tetap sama.
+[Kontrak integrasi L06](performance/l06-integration.md).
 
 ## Scope dan validasi
 

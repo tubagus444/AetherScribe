@@ -24,7 +24,7 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 | 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Selesai 15 Nov 2026 |
 | 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Selesai 15 Nov 2026 |
 | 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Selesai 15 Nov 2026 |
-| 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Pengukuran selesai; keputusan optimasi terbuka |
+| 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Pengukuran dan integrasi worker internal selesai |
 
 L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](docs/audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](docs/audits/2026-11-15-l04-atlas-ui.md). L05 selesai untuk batch backup/Atlas; [cakupan dan pengecualian](docs/audits/2026-11-15-l05-strict.md). L06 berikutnya mengukur backup besar. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
@@ -33,8 +33,8 @@ awal tetap memakai mock, kredensial sintetis dan database terisolasi.
 
 ## Batas verifikasi yang masih berlaku
 
-- Strict saat ini mencakup **28 root/41 source**, bukan seluruh aplikasi. Budget
-  maintenance menjaga 51 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
+- Strict saat ini mencakup **31 root/44 source**, bukan seluruh aplikasi. Budget
+  maintenance menjaga 54 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
 - Tes browser memakai Chromium, lokal dan pada runner GitHub yang diverifikasi. Firefox/Safari,
   screen reader manual dan workflow provider/Drive nyata belum dibuktikan.
 - Native Blob/backup/restore, worker, reload editor, metadata, draw/drag/filter/delete
@@ -211,3 +211,13 @@ backup aplikasi. Round-trip bab/gambar, retensi aman saat kuota penuh, pembatala
 restore dan retry lulus pada fixture browser native. [Bukti dan batas simulasi](docs/performance/l06-storage-failures.md).
 Seluruh 49 skenario Chromium dan typecheck umum/strict/maintenance lulus lokal;
 worker tetap belum diintegrasikan.
+
+## Integrasi worker L06
+
+Status eksperimen di atas adalah riwayat sebelum integrasi. Auto internal besar
+kini memakai worker dengan antrean per tab, timeout/cleanup dan fallback main.
+Pre-restore tetap lengkap dan dilindungi dari rotasi auto normal. Folder/Drive,
+format v8 dan schema v34 tetap kompatibel. [Kontrak, bukti dan batas](docs/performance/l06-integration.md).
+Strict menjadi 31 root/44 source dan maintenance 54 berkas; budget lama tetap.
+Hasil akhir regresi ada di [panduan tes](docs/testing.md). Optimasi lanjutan
+collect/Blob, koordinasi lintas tab dan pengukuran RSS bukan bagian batch ini.

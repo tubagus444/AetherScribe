@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Perf/Fix] L06 - Integrasi Worker Backup Internal
+
+- Pindahkan persiapan auto internal besar ke worker native, dengan algoritme bersama fallback main, timeout/cleanup dan antrean save per tab. Snapshot/flush, format v8, folder/Drive dan schema v34 tetap kompatibel.
+- Lindungi pre-restore lama dari rotasi auto normal. Tambahkan tes UI save/restore, konkurensi, kegagalan worker, timeout, recovery antrean dan retensi; perluas strict/maintenance untuk tiga modul baru tanpa menambah budget escape lama.
+- Perluas pemeriksaan production/offline untuk memuat worker backup dari PWA dan memverifikasi isi/checksum. Hasil regresi dan batas dicatat di docs/testing.md serta laporan integrasi L06.
+- Verifikasi lokal lulus: typecheck umum/strict/maintenance, 91 berkas/792 tes beserta coverage, 55 tes Chromium, build/clean production dan startup/offline. Tidak mengklaim run GitHub atau benchmark integrasi baru.
+
 ### [Test] L06 - Kegagalan Fasilitas Browser dan Penyimpanan
 
 - Enam tes Chromium memakai service backup dan IndexedDB native: kompresi hilang/gagal, crypto hilang, kuota sementara/permanen serta kegagalan snapshot pra-pemulihan dan retry.

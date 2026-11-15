@@ -17,6 +17,9 @@ for (const mode of ['missing', 'throwing'] as const) {
       const { backupService: service } = await import(s), { db } = await import(d);
       const before = await service.collectAllData();
       const descriptor = Object.getOwnPropertyDescriptor(window, 'CompressionStream');
+      const nativeWorker = window.Worker;
+      // Exercise the main-thread compatibility fallback; worker has its own globals.
+      Reflect.set(window, 'Worker', undefined);
       Object.defineProperty(window, 'CompressionStream', { configurable: true, value: mode === 'missing' ? undefined : class { constructor() { throw new Error('Synthetic compression failure'); } } });
       try {
         await service.saveToInternalDB(before);
@@ -29,6 +32,7 @@ for (const mode of ['missing', 'throwing'] as const) {
         const safety = await db.backups.filter(item => item.kind === 'pre-restore').count();
         return { plain: record.compressed === false && typeof record.data === 'string', same: JSON.stringify(before.data) === JSON.stringify(after.data), safety };
       } finally {
+        window.Worker = nativeWorker;
         if (descriptor) Object.defineProperty(window, 'CompressionStream', descriptor);
         else Reflect.deleteProperty(window, 'CompressionStream');
       }

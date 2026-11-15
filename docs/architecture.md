@@ -57,6 +57,11 @@ AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reakt
 
 ## 3. Komputasi Berat di Web Worker
 
+L06 menambahkan `src/workers/backupWorker.ts` untuk persiapan auto-backup internal
+besar, dengan antrean save per tab, timeout dan fallback main. Algoritme bersama
+ada di `src/lib/internalBackupPreparation.ts`; snapshot dan penyimpanan tetap
+milik service. [Kontrak dan batas](performance/l06-integration.md).
+
 Kontrak data context/Orama, respons AI dan pemisahan metadata/input bab dijelaskan
 di [F28.2](audits/2026-11-15-f28-contracts.md). Payload dan hasil tiap task worker
 memakai tipe bersama dan pemeriksaan runtime; JSON provider diperlakukan sebagai

@@ -280,3 +280,18 @@ maintenance dan enam tes terarah juga lulus. Run pertama memiliki satu inspector
 timeout pada tes beban editor saat dokumentasi ditulis; run ulang tanpa perubahan
 workspace lulus. Detail dan batas diagnosis ada di laporan storage.
 Unit/build/coverage tidak diulang pada batch tes/dokumentasi ini.
+
+Integrasi L06 berikutnya menambahkan enam tes backupIntegration.spec.ts: save/
+restore lewat Pengaturan, tiga request bersamaan dengan satu worker, serta
+startup/crash/respons invalid/timeout 30 detik dengan fallback yang disimpan dan
+di-restore. Suite menjadi 55 Chromium tests. Unit bertambah menjadi 91 berkas/
+792 tes (antrean, timeout, pemilihan ukuran dan retensi pre-restore).
+test:startup kini memeriksa worker backup production setelah PWA reload offline,
+kesamaan isi dan checksum. Strict 31 root/44 source, maintenance 54 berkas.
+[Kontrak dan batas integrasi](performance/l06-integration.md). Verifikasi lokal
+lulus: typecheck umum/strict/maintenance, 91 berkas/792 tes beserta coverage,
+seluruh 55 tes Chromium (3.1 menit), build, clean production smoke dan startup/
+offline. Coverage V8: 32.32% baris, 32.15% statement, 25.46% branch, 20.99% fungsi;
+coverage tidak menggabungkan worker/browser native. Peringatan build lama tentang
+chunk besar, eval ONNX dan usia Browserslist tetap ada. Belum ada run GitHub baru;
+angka eksperimen performa lama tidak dianggap pengukuran ulang implementasi ini.

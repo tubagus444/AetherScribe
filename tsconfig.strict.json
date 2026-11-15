@@ -29,7 +29,10 @@
     "src/lib/mapGeometry.ts",
     "src/lib/atlasColors.ts",
     "src/lib/atlasAnalytics.ts",
-    "src/lib/atlasHierarchy.ts"
+    "src/lib/atlasHierarchy.ts",
+    "src/lib/internalBackupPreparation.ts",
+    "src/services/internalBackupWorker.ts",
+    "src/workers/backupWorker.ts"
   ],
   "exclude": []
 }

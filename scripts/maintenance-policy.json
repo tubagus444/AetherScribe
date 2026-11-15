@@ -1,6 +1,9 @@
 {
   "baseline": "c5af3ed",
   "files": {
+    "src/lib/internalBackupPreparation.ts": { "any": 0, "nonNull": 0, "assertions": 0, "directives": 0 },
+    "src/services/internalBackupWorker.ts": { "any": 0, "nonNull": 0, "assertions": 0, "directives": 0 },
+    "src/workers/backupWorker.ts": { "any": 0, "nonNull": 0, "assertions": 0, "directives": 0 },
     "src/contracts/f28Contracts.typecheck.ts": {
       "any": 0,
       "nonNull": 0,
@@ -309,6 +312,9 @@
     }
   },
   "strictFiles": [
+    "src/lib/internalBackupPreparation.ts",
+    "src/services/internalBackupWorker.ts",
+    "src/workers/backupWorker.ts",
     "src/contracts/f28Contracts.typecheck.ts",
     "src/contracts/strict/backupAtlas.typecheck.ts",
     "src/contracts/strict/strictSafety.typecheck.ts",
