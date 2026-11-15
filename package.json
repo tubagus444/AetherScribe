@@ -17,6 +17,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:startup": "node scripts/measure-startup.mjs --verify-offline",
+    "measure:backup": "node scripts/measure-backup.mjs",
     "test:data-paths": "node scripts/measure-data-paths.mjs"
   },
   "dependencies": {

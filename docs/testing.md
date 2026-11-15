@@ -227,3 +227,21 @@ browser asli. Tidak memock Leaflet/service/IndexedDB atau mengubah source aplika
 Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 35 Chromium tests lulus
 lokal; build/coverage tidak diulang. Catatan gap Atlas pada F28 adalah historis;
 [bukti dan batas L04](audits/2026-11-15-l04-atlas-ui.md) merinci cakupan saat ini.
+
+
+L05 memperluas lint:strict ke helper backup/remap dan Atlas (28 root/41 source
+termasuk import transitif). backupAtlas.typecheck.ts menjaga unknown hasil parse,
+input yang tidak nullable, koordinat dan nullable centroid. Policy maintenance
+menjaga 51 file tanpa menaikkan budget file lama. Probe kesalahan tipe, explicit
+any baru dan penyusutan cakupan ditolak. Typecheck umum/strict/maintenance,
+90 berkas/787 tes dan build lulus lokal; browser/coverage tidak diulang karena
+implementasi runtime tidak berubah. [Bukti dan pengecualian](audits/2026-11-15-l05-strict.md).
+
+
+Pengukuran L06: `npm run measure:backup -- --output=test-results/backup-benchmark.json`
+menjalankan server terisolasi port 4183 dan empat dataset, tiga sampel tiap ukuran.
+Merekam elapsed time/timer delay serta sampled heap CDP; checksum dan restore
+penuh/internal memverifikasi seluruh bab serta byte gambar di luar timing.
+Tidak memasang React/editor, tidak memakai akun/data pengguna atau menambahkan
+threshold CI. Typecheck umum/strict/maintenance lulus; suite runtime tidak diulang.
+[Metode dan batas L06](performance/l06-backup.md). Optimasi belum dilakukan.

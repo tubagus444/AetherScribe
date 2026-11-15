@@ -21,7 +21,15 @@
     "src/services/ai/providerPolicy.ts",
     "src/services/ai/credentialStore.ts",
     "src/services/ai/settings.ts",
-    "src/services/ai/resultParsing.ts"
+    "src/services/ai/resultParsing.ts",
+    "src/lib/importRemap.ts",
+    "src/lib/backupIO.ts",
+    "src/lib/backupEnvelope.ts",
+    "src/lib/backupRetention.ts",
+    "src/lib/mapGeometry.ts",
+    "src/lib/atlasColors.ts",
+    "src/lib/atlasAnalytics.ts",
+    "src/lib/atlasHierarchy.ts"
   ],
   "exclude": []
 }

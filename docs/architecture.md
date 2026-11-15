@@ -281,3 +281,10 @@ tes perilaku atau pemeriksaan tipe. Policy diperbarui melalui review dengan alas
 bukan regenerasi otomatis untuk meloloskan CI. Lihat
 [review akhir F28](audits/2026-11-15-f28-review.md) untuk inventaris, pengecualian,
 perbandingan baseline dan batas penutupan.
+
+
+L05 memperluas cakupan strict ke helper backup/Atlas, termasuk dependensi nyata:
+28 root/41 source, dengan 51 file di maintenance policy. Pengaman compile-only
+backupAtlas.typecheck.ts ditambahkan tanpa perubahan perilaku runtime. Angka
+cakupan tahap F28 di atas merupakan snapshot historis. Daftar modul, escape lama
+serta cara verifikasi ada di [laporan L05](audits/2026-11-15-l05-strict.md).

@@ -7,7 +7,7 @@ Bukti historis disimpan di [arsip](docs/archive/) dan riwayat perubahan di
 ## Ringkasan status
 
 - **Audit F01-F29: 29 dari 29 item selesai**, termasuk seluruh tahap F28.1-F28.6.
-- **Pekerjaan lanjutan:** L01-L04 selesai; L05-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
+- **Pekerjaan lanjutan:** L01-L05 selesai; pengukuran L06 selesai, keputusan optimasi masih terbuka; tidak berarti temuan audit lama dibuka kembali.
 - **Verifikasi terbaru:** pengujian lokal Windows/Node 24.15.0 pada F28.6, source
   dasar `c5af3ed`, dicatat dalam commit `7527305`.
 - **CI GitHub:** Ubuntu dan Windows lulus pada commit `7527305`; [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
@@ -23,18 +23,18 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 | 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Selesai 15 Nov 2026 |
 | 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Selesai 15 Nov 2026 |
 | 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Selesai 15 Nov 2026 |
-| 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Belum dimulai |
-| 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Belum dimulai |
+| 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Selesai 15 Nov 2026 |
+| 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Pengukuran selesai; keputusan optimasi terbuka |
 
-L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](docs/audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](docs/audits/2026-11-15-l04-atlas-ui.md). L05 berikutnya memperluas strict bertahap. L05 dikerjakan dalam
+L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](docs/audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](docs/audits/2026-11-15-l04-atlas-ui.md). L05 selesai untuk batch backup/Atlas; [cakupan dan pengecualian](docs/audits/2026-11-15-l05-strict.md). L06 berikutnya mengukur backup besar. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
 Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
 awal tetap memakai mock, kredensial sintetis dan database terisolasi.
 
 ## Batas verifikasi yang masih berlaku
 
-- Strict saat ini mencakup **19 root/28 source**, bukan seluruh aplikasi. Budget
-  maintenance menjaga 38 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
+- Strict saat ini mencakup **28 root/41 source**, bukan seluruh aplikasi. Budget
+  maintenance menjaga 51 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
 - Tes browser memakai Chromium, lokal dan pada runner GitHub yang diverifikasi. Firefox/Safari,
   screen reader manual dan workflow provider/Drive nyata belum dibuktikan.
 - Native Blob/backup/restore, worker, reload editor, metadata, draw/drag/filter/delete
@@ -155,4 +155,25 @@ portal induk-anak/unlink, deep-link Codex serta pergantian proyek dan URL Blob
 cleanup. Pin baru diverifikasi masuk ke proyek/peta yang benar. Typecheck
 umum/strict/maintenance, 90 berkas/787 tes dan 35 tes Chromium lulus lokal.
 Tidak mengubah source aplikasi; [batas pengujian L04](docs/audits/2026-11-15-l04-atlas-ui.md)
-tetap berlaku. L05-L06 belum dimulai.
+tetap berlaku. L05-Pengukuran L06 selesai; optimasi belum diputuskan.
+
+
+## Verifikasi lanjutan L05
+
+Delapan helper backup/Atlas, empat dependensi transitif dan satu pengaman tipe
+baru memperluas strict menjadi 28 root/41 source. Maintenance policy menjadi
+51 berkas; semua budget file lama tetap. Probe type error/explicit any/penyusutan
+cakupan ditolak. Typecheck umum/strict/maintenance, 90 berkas/787 tes dan build
+lulus lokal, tanpa perubahan implementasi runtime. [Laporan L05](docs/audits/2026-11-15-l05-strict.md)
+mencatat escape lama dan batas strict; Pengukuran L06 selesai; optimasi belum diputuskan.
+
+
+## Pengukuran L06 - backup besar
+
+Empat dataset sintetis, tiga sampel per ukuran, native IndexedDB/Blob/gzip:
+200 ribu kata memiliki estimasi collect + auto-save 132 ms; 2.5 juta kata dengan
+empat PNG sekitar 1.67 detik. Jeda timer terburuk 222 ms pada sampel besar;
+bukan klaim editor membeku sepanjang durasi backup. Checksum, restore penuh dan
+internal mempertahankan seluruh bab dan byte gambar. [Metode, data mentah dan batas](docs/performance/l06-backup.md).
+Implementasi backup belum dioptimasi. Profiling terarah diperlukan sebelum memilih
+worker atau perubahan lain; tahap optimasi perlu keputusan berikutnya.

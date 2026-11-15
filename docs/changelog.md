@@ -6,6 +6,18 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Perf] L06 - Ukur Backup Besar Sebelum Optimasi
+
+- Tambahkan harness manual measure:backup dengan native IndexedDB/gzip/Blob, empat workload sintetis dan tiga sampel tiap ukuran. Ukur collect, JSON, gzip, auto-save, timer delay dan sampled heap; verifikasi checksum/restore seluruh bab dan byte gambar.
+- Simpan laporan/raw JSON. Kasus 200 ribu kata: estimasi auto 132 ms; 2.5 juta kata + empat PNG: 1.67 detik, jeda timer terburuk 222 ms. Ini bukan pengukuran latensi editor aktif atau atribusi CPU stack.
+- Tanpa perubahan implementasi backup/dependensi/schema; optimasi belum diputuskan. Typecheck umum/strict/maintenance dan semua pemeriksaan integritas benchmark lulus; unit/browser/coverage tidak diulang pada harness ini. Perubahan L05 yang belum di-commit tetap dipertahankan.
+
+### [Chore] L05 - Perluas TypeScript Strict ke Helper Backup dan Atlas
+
+- Tambahkan delapan root helper, empat import transitif dan pengaman tipe compile-only: cakupan menjadi 28 root/41 source. Jaga hasil parse unknown, nullability, koordinat dan nullable centroid.
+- Perluas maintenance policy dari 38 menjadi 51 berkas tanpa menaikkan budget lama; dokumentasikan 11 explicit any dan assertion legacy pada helper tambahan. Strict global/opsi tambahan belum diaktifkan; tidak mengubah implementasi runtime.
+- Probe implicit any/null, explicit any baru dan penyusutan scope ditolak; source/config dipulihkan. Typecheck umum/strict/maintenance, 90 berkas/787 tes dan build lulus lokal; browser/coverage tidak diulang. Perbarui roadmap dan dokumentasi cakupan/pengecualian L05.
+
 ### [Test] L04 - Interaksi Atlas Native Melalui UI
 
 - Tambahkan enam skenario panel Atlas produksi: upload PNG/penolakan SVG/reload, edit vertex area dan rute beserta minimum/persistence, portal induk-anak/unlink, deep-link Codex, serta pergantian proyek dan cleanup URL Blob.

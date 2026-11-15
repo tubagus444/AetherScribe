@@ -44,3 +44,7 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [L03: impor, restore dan penghapusan melalui UI](audits/2026-11-15-l03-data-ui.md). Delapan skenario, rollback dan batas verifikasi.
 
 - [L04: upload, edit vertex, portal/deep-link dan pergantian proyek Atlas](audits/2026-11-15-l04-atlas-ui.md).
+
+- [L05: perluasan strict ke backup/Atlas](audits/2026-11-15-l05-strict.md). Cakupan compiler, pengaman tipe dan budget legacy.
+
+- [L06: pengukuran backup besar](performance/l06-backup.md). Waktu, jeda timer, memori, data mentah dan batas kesimpulan.

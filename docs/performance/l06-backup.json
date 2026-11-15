@@ -1,0 +1,441 @@
+{
+  "baseCommit": "3f027fb",
+  "workingTree": true,
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "conditions": "Isolated blank browser page and native IndexedDB, Vite dev modules, no React editor/model/network; 3 sequential samples including first run, 16ms timer heartbeat, CDP heap sampling 50ms (not total process/native memory), forced GC outside timed operations",
+  "samples": [
+    {
+      "chapters": 10,
+      "words": 1000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 5.399999998509884,
+            "maxTimerDelayMs": 1.1000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0.19999999925494194,
+            "maxTimerDelayMs": 1.6000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 5.699999999254942,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 9,
+            "maxTimerDelayMs": 0.8999999985098839,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "heap": {
+            "sampledPeakDeltaBytes": 928252,
+            "sampledPeakBackingDeltaBytes": 614560,
+            "retainedDeltaBytes": 230768
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 3.300000000745058,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0.09999999776482582,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 6.799999997019768,
+            "maxTimerDelayMs": 0.6000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 7.5,
+            "maxTimerDelayMs": 1.1000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "heap": {
+            "sampledPeakDeltaBytes": 793364,
+            "sampledPeakBackingDeltaBytes": 634485,
+            "retainedDeltaBytes": 111384
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 3.199999999254942,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0.10000000149011612,
+            "maxTimerDelayMs": 0.6000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 6.099999997764826,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 7.799999997019768,
+            "maxTimerDelayMs": 0.6000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "heap": {
+            "sampledPeakDeltaBytes": 770784,
+            "sampledPeakBackingDeltaBytes": 654425,
+            "retainedDeltaBytes": 88392
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 10,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 100,
+      "words": 2000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 26.800000000745058,
+            "maxTimerDelayMs": 4.800000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 2.399999998509884,
+            "maxTimerDelayMs": 2,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 114.69999999925494,
+            "maxTimerDelayMs": 80.10000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 105.80000000074506,
+            "maxTimerDelayMs": 68.69999999925494,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "heap": {
+            "sampledPeakDeltaBytes": 4433940,
+            "sampledPeakBackingDeltaBytes": 13453749,
+            "retainedDeltaBytes": 1398088
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 26.399999998509884,
+            "maxTimerDelayMs": 3.800000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 2.199999999254942,
+            "maxTimerDelayMs": 0.6999999992549419,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 110.5,
+            "maxTimerDelayMs": 76.39999999850988,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 105.5,
+            "maxTimerDelayMs": 68.30000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "heap": {
+            "sampledPeakDeltaBytes": 4452844,
+            "sampledPeakBackingDeltaBytes": 13834287,
+            "retainedDeltaBytes": 1415608
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 24.600000001490116,
+            "maxTimerDelayMs": 2.100000001490116,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 2.099999997764826,
+            "maxTimerDelayMs": 0.19999999925494194,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 133.39999999850988,
+            "maxTimerDelayMs": 101.60000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 106.10000000149012,
+            "maxTimerDelayMs": 67.80000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "heap": {
+            "sampledPeakDeltaBytes": 4424768,
+            "sampledPeakBackingDeltaBytes": 14214825,
+            "retainedDeltaBytes": 1406364
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 100,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 231.60000000149012,
+            "maxTimerDelayMs": 88.10000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 20.399999998509884,
+            "maxTimerDelayMs": 13.099999997764826,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1108.6000000014901,
+            "maxTimerDelayMs": 113.69999999925494,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1280.5999999977648,
+            "maxTimerDelayMs": 175.5,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799136,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "heap": {
+            "sampledPeakDeltaBytes": 76380828,
+            "sampledPeakBackingDeltaBytes": 140686224,
+            "retainedDeltaBytes": 17347692
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 232.59999999776483,
+            "maxTimerDelayMs": 93,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 13.5,
+            "maxTimerDelayMs": 6.600000001490116,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1146.699999999255,
+            "maxTimerDelayMs": 119.69999999925494,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1339.199999999255,
+            "maxTimerDelayMs": 180.39999999850988,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799136,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "heap": {
+            "sampledPeakDeltaBytes": 52732592,
+            "sampledPeakBackingDeltaBytes": 108925667,
+            "retainedDeltaBytes": 17382764
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 231.10000000149012,
+            "maxTimerDelayMs": 91.60000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 13.100000001490116,
+            "maxTimerDelayMs": 6.800000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1133.1000000014901,
+            "maxTimerDelayMs": 117.5,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1350.9000000022352,
+            "maxTimerDelayMs": 178.80000000074506,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799136,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "heap": {
+            "sampledPeakDeltaBytes": 52734012,
+            "sampledPeakBackingDeltaBytes": 108925667,
+            "retainedDeltaBytes": 17391960
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 4,
+      "imageBytes": 2286249,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 318,
+            "maxTimerDelayMs": 177.10000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 29.100000001490116,
+            "maxTimerDelayMs": 23.299999997019768,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1234.6000000014901,
+            "maxTimerDelayMs": 116,
+            "delayedTicksOver50Ms": 9
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1356.699999999255,
+            "maxTimerDelayMs": 218.30000000074506,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "heap": {
+            "sampledPeakDeltaBytes": 76096100,
+            "sampledPeakBackingDeltaBytes": 113586509,
+            "retainedDeltaBytes": 17357388
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 322.19999999925494,
+            "maxTimerDelayMs": 173,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 28.899999998509884,
+            "maxTimerDelayMs": 22.899999998509884,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1239.699999999255,
+            "maxTimerDelayMs": 119.79999999701977,
+            "delayedTicksOver50Ms": 9
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1337.6000000014901,
+            "maxTimerDelayMs": 220.5,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "heap": {
+            "sampledPeakDeltaBytes": 76077768,
+            "sampledPeakBackingDeltaBytes": 118420592,
+            "retainedDeltaBytes": 17433248
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 319.8999999985099,
+            "maxTimerDelayMs": 179.19999999925494,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 28.300000000745058,
+            "maxTimerDelayMs": 21.300000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1221.300000000745,
+            "maxTimerDelayMs": 123.89999999850988,
+            "delayedTicksOver50Ms": 9
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1384.6000000014901,
+            "maxTimerDelayMs": 221.5,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "heap": {
+            "sampledPeakDeltaBytes": 76045636,
+            "sampledPeakBackingDeltaBytes": 123220090,
+            "retainedDeltaBytes": 17347016
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 4
+      }
+    }
+  ]
+}
