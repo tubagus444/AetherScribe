@@ -1,0 +1,315 @@
+{
+  "baseCommit": "0647d07",
+  "workingTree": true,
+  "profiling": false,
+  "workerComparison": true,
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "conditions": "Paired isolated native-browser preparation experiment; shared algorithm on main/worker, structured clone and transfer included, 4 alternating-order pairs (first excluded for warm summary), no heap sampling or React/editor, no production integration",
+  "samples": [
+    {
+      "chapters": 10,
+      "words": 1000,
+      "images": 0,
+      "imageBytes": 0,
+      "comparison": {
+        "pairs": [
+          {
+            "main": {
+              "elapsedMs": 7.5,
+              "maxTimerDelayMs": 0.30000000074505806,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            },
+            "worker": {
+              "elapsedMs": 195.59999999776483,
+              "maxTimerDelayMs": 2.099999997764826,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 6.899999998509884,
+              "maxTimerDelayMs": 2.100000001490116,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            },
+            "worker": {
+              "elapsedMs": 6.199999999254942,
+              "maxTimerDelayMs": 1.800000000745058,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 6,
+              "maxTimerDelayMs": 1,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            },
+            "worker": {
+              "elapsedMs": 6.400000002235174,
+              "maxTimerDelayMs": 0.6999999992549419,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 8.199999999254942,
+              "maxTimerDelayMs": 1.0999999977648258,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            },
+            "worker": {
+              "elapsedMs": 7.899999998509884,
+              "maxTimerDelayMs": 0.7000000029802322,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 19940
+            }
+          }
+        ],
+        "productionCompatibility": true,
+        "workerRestore": true,
+        "malformedRejected": true
+      },
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 10,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 100,
+      "words": 2000,
+      "images": 0,
+      "imageBytes": 0,
+      "comparison": {
+        "pairs": [
+          {
+            "main": {
+              "elapsedMs": 104,
+              "maxTimerDelayMs": 71.30000000074506,
+              "delayedTicksOver50Ms": 1,
+              "bytes": 380539
+            },
+            "worker": {
+              "elapsedMs": 106.60000000149012,
+              "maxTimerDelayMs": 0.8999999985098839,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 380539
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 107.39999999850988,
+              "maxTimerDelayMs": 71.89999999850988,
+              "delayedTicksOver50Ms": 1,
+              "bytes": 380539
+            },
+            "worker": {
+              "elapsedMs": 107.19999999925494,
+              "maxTimerDelayMs": 1.1000000014901161,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 380539
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 103,
+              "maxTimerDelayMs": 69.89999999850988,
+              "delayedTicksOver50Ms": 1,
+              "bytes": 380539
+            },
+            "worker": {
+              "elapsedMs": 107.10000000149012,
+              "maxTimerDelayMs": 1,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 380539
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 101.40000000223517,
+              "maxTimerDelayMs": 68.80000000074506,
+              "delayedTicksOver50Ms": 1,
+              "bytes": 380539
+            },
+            "worker": {
+              "elapsedMs": 106.89999999850988,
+              "maxTimerDelayMs": 0.6999999992549419,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 380539
+            }
+          }
+        ],
+        "productionCompatibility": true,
+        "workerRestore": true,
+        "malformedRejected": true
+      },
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 100,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 0,
+      "imageBytes": 0,
+      "comparison": {
+        "pairs": [
+          {
+            "main": {
+              "elapsedMs": 1237.300000000745,
+              "maxTimerDelayMs": 167.20000000298023,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799141
+            },
+            "worker": {
+              "elapsedMs": 1290.3999999985099,
+              "maxTimerDelayMs": 10.300000000745058,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799141
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1282.5999999977648,
+              "maxTimerDelayMs": 181.79999999701977,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799141
+            },
+            "worker": {
+              "elapsedMs": 1319.4000000022352,
+              "maxTimerDelayMs": 11,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799141
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1266.7999999970198,
+              "maxTimerDelayMs": 171.89999999850988,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799141
+            },
+            "worker": {
+              "elapsedMs": 1319.199999999255,
+              "maxTimerDelayMs": 9.400000002235174,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799141
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1274.699999999255,
+              "maxTimerDelayMs": 173.09999999776483,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799141
+            },
+            "worker": {
+              "elapsedMs": 1310.3999999985099,
+              "maxTimerDelayMs": 11.5,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799141
+            }
+          }
+        ],
+        "productionCompatibility": true,
+        "workerRestore": true,
+        "malformedRejected": true
+      },
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 4,
+      "imageBytes": 2286249,
+      "comparison": {
+        "pairs": [
+          {
+            "main": {
+              "elapsedMs": 1323.9000000022352,
+              "maxTimerDelayMs": 214.30000000074506,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799498
+            },
+            "worker": {
+              "elapsedMs": 1354.9000000022352,
+              "maxTimerDelayMs": 13.099999997764826,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799498
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1312.2999999970198,
+              "maxTimerDelayMs": 207,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799498
+            },
+            "worker": {
+              "elapsedMs": 1346,
+              "maxTimerDelayMs": 13.5,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799498
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1275.6000000014901,
+              "maxTimerDelayMs": 201.69999999925494,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799498
+            },
+            "worker": {
+              "elapsedMs": 1306.6000000014901,
+              "maxTimerDelayMs": 13.900000002235174,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799498
+            }
+          },
+          {
+            "main": {
+              "elapsedMs": 1282.4000000022352,
+              "maxTimerDelayMs": 209.19999999925494,
+              "delayedTicksOver50Ms": 9,
+              "bytes": 4799498
+            },
+            "worker": {
+              "elapsedMs": 1305.1000000014901,
+              "maxTimerDelayMs": 11.400000002235174,
+              "delayedTicksOver50Ms": 0,
+              "bytes": 4799498
+            }
+          }
+        ],
+        "productionCompatibility": true,
+        "workerRestore": true,
+        "malformedRejected": true
+      },
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 4
+      }
+    }
+  ]
+}

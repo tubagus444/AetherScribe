@@ -48,3 +48,5 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [L05: perluasan strict ke backup/Atlas](audits/2026-11-15-l05-strict.md). Cakupan compiler, pengaman tipe dan budget legacy.
 
 - [L06: pengukuran backup besar](performance/l06-backup.md). Waktu, jeda timer, memori, data mentah dan batas kesimpulan.
+
+- [L06: eksperimen worker persiapan backup](performance/l06-worker.md). A/B respons main thread dan batas integrasi.

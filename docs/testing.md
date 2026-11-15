@@ -245,3 +245,9 @@ penuh/internal memverifikasi seluruh bab serta byte gambar di luar timing.
 Tidak memasang React/editor, tidak memakai akun/data pengguna atau menambahkan
 threshold CI. Typecheck umum/strict/maintenance lulus; suite runtime tidak diulang.
 [Metode dan batas L06](performance/l06-backup.md). Optimasi belum dilakukan.
+
+L06 worker: measure:backup -- --worker membandingkan empat pasangan per ukuran,
+termasuk clone/transfer, kesamaan payload produksi, penolakan input dan restore
+seluruh bab/gambar. Typecheck umum/strict/maintenance lulus. Eksperimen di e2e/
+tidak mengubah aplikasi atau mengklaim worker memory/startup/fallback siap rilis;
+[bukti dan batas](performance/l06-worker.md).

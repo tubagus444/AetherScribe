@@ -6,6 +6,18 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Perf] L06 - Eksperimen Worker Persiapan Backup
+
+- Tambahkan mode --worker dan helper/worker khusus e2e untuk membandingkan persiapan auto-backup identik pada main thread dan worker, dengan clone/transfer ikut pengukuran. Simpan empat pasangan per workload, ringkasan memakai tiga pasangan warm.
+- Cocokkan payload dengan service produksi, uji penolakan input lalu recovery dan restore seluruh bab/byte gambar. Typecheck umum/strict/maintenance dan semua eksperimen integritas lulus.
+- Kasus 2.5 juta kata + empat gambar: median persiapan 1282/1307 ms main/worker, jeda timer 209/14 ms. Dokumentasikan keterbatasan memori/startup/fallback. Tidak mengintegrasikan worker ke aplikasi atau mengubah schema/dependensi.
+
+### [Perf] L06 - Profiling CPU Backup Besar
+
+- Tambahkan flag --profile pada harness backup untuk sampling CPU CDP, simpan frame self-time tertinggi per sampel dan snapshot profiling terpisah.
+- Empat dataset kembali lulus checksum dan restore seluruh bab/gambar. Identifikasi encoding/digest/Blob sebagai kandidat biaya; dokumentasikan waktu native yang belum teratribusi, overhead profiler dan rancangan eksperimen worker berikutnya.
+- Perbarui roadmap/laporan tanpa mengubah implementasi backup, schema atau dependency. Pengukuran/profiling selesai; optimasi belum diimplementasikan. Sintaks script dan integritas benchmark lulus; suite aplikasi tidak diulang.
+
 ### [Perf] L06 - Ukur Backup Besar Sebelum Optimasi
 
 - Tambahkan harness manual measure:backup dengan native IndexedDB/gzip/Blob, empat workload sintetis dan tiga sampel tiap ukuran. Ukur collect, JSON, gzip, auto-save, timer delay dan sampled heap; verifikasi checksum/restore seluruh bab dan byte gambar.

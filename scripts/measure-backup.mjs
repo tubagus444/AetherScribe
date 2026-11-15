@@ -27,8 +27,17 @@ try {
   await page.goto(`${base}/__backup_bench`);
   const session = await context.newCDPSession(page);
   const samples = [];
+  const profiling = process.argv.includes('--profile');
+  if (profiling) await session.send('Profiler.enable');
   for (const scenario of [{chapters:10,words:1000,images:0},{chapters:100,words:2000,images:0},{chapters:500,words:5000,images:0},{chapters:500,words:5000,images:4}]) {
     const fixture = await page.evaluate(async scenario => { const modulePath='/e2e/backupBenchmarkFixture.ts'; return (await import(modulePath)).seed(scenario); }, scenario);
+    if (process.argv.includes('--worker')) {
+      const comparison = await page.evaluate(async()=>{ const modulePath='/e2e/backupBenchmarkFixture.ts'; return (await import(modulePath)).compareWorker(); });
+      const integrity = await page.evaluate(async()=>{ const modulePath='/e2e/backupBenchmarkFixture.ts'; return (await import(modulePath)).verify(); });
+      samples.push({...scenario,...fixture,comparison,integrity});
+      console.log(`Worker comparison ${scenario.chapters} chapters, ${scenario.images} images passed`);
+      continue;
+    }
     const runs=[];
     for(let iteration=0;iteration<3;iteration++) {
       await page.evaluate(async()=>{const modulePath='/e2e/backupBenchmarkFixture.ts';(await import(modulePath)).release();});
@@ -37,19 +46,34 @@ try {
       let peak=before.usedSize, peakBacking=before.backingStorageSize??0;
       let pending=Promise.resolve();
       const timer=setInterval(()=>{pending=pending.then(async()=>{const h=await session.send('Runtime.getHeapUsage');peak=Math.max(peak,h.usedSize);peakBacking=Math.max(peakBacking,h.backingStorageSize??0);}).catch(()=>{});},50);
-      let timing;
+      let timing, cpu;
+      if (profiling) await session.send('Profiler.start');
       try { timing=await page.evaluate(async()=>{const modulePath='/e2e/backupBenchmarkFixture.ts';return (await import(modulePath)).measure();}); }
-      finally { clearInterval(timer); await pending; }
+      finally {
+        clearInterval(timer); await pending;
+        if (profiling) {
+          const { profile } = await session.send('Profiler.stop');
+          const nodes = new Map(profile.nodes.map(node => [node.id, node]));
+          const totals = new Map();
+          for (let i = 0; i < (profile.samples?.length ?? 0); i++) {
+            const frame = nodes.get(profile.samples[i])?.callFrame;
+            if (!frame) continue;
+            const key = `${frame.functionName || '(anonymous)'} | ${frame.url.replace(base, '')}:${frame.lineNumber + 1}`;
+            totals.set(key, (totals.get(key) || 0) + (profile.timeDeltas?.[i] || 0));
+          }
+          cpu = { durationMs: (profile.endTime - profile.startTime) / 1000, selfSamples: [...totals].map(([frame, microseconds]) => ({frame, ms: microseconds / 1000})).sort((a,b)=>b.ms-a.ms).slice(0,25) };
+        }
+      }
       const after=await session.send('Runtime.getHeapUsage');peak=Math.max(peak,after.usedSize);peakBacking=Math.max(peakBacking,after.backingStorageSize??0);
       await session.send('HeapProfiler.collectGarbage');
       const held=await session.send('Runtime.getHeapUsage');
-      runs.push({...timing,heap:{sampledPeakDeltaBytes:peak-before.usedSize,sampledPeakBackingDeltaBytes:peakBacking-(before.backingStorageSize??0),retainedDeltaBytes:held.usedSize-before.usedSize}});
+      runs.push({...timing,...(profiling ? {cpu} : {}),heap:{sampledPeakDeltaBytes:peak-before.usedSize,sampledPeakBackingDeltaBytes:peakBacking-(before.backingStorageSize??0),retainedDeltaBytes:held.usedSize-before.usedSize}});
     }
     const integrity=await page.evaluate(async()=>{const modulePath='/e2e/backupBenchmarkFixture.ts';return (await import(modulePath)).verify();});
     samples.push({...scenario,...fixture,runs,integrity});
     console.log(`Measured ${scenario.chapters} chapters x ${scenario.words} words, ${scenario.images} images; integrity passed`);
   }
-  const report={baseCommit:execFileSync('git',['rev-parse','--short','HEAD'],{cwd:root,encoding:'utf8'}).trim(),workingTree:true,node:process.version,chromium:browser.version(),conditions:'Isolated blank browser page and native IndexedDB, Vite dev modules, no React editor/model/network; 3 sequential samples including first run, 16ms timer heartbeat, CDP heap sampling 50ms (not total process/native memory), forced GC outside timed operations',samples};
+  const report={baseCommit:execFileSync('git',['rev-parse','--short','HEAD'],{cwd:root,encoding:'utf8'}).trim(),workingTree:true,profiling,workerComparison:process.argv.includes('--worker'),node:process.version,chromium:browser.version(),conditions:process.argv.includes('--worker') ? 'Paired isolated native-browser preparation experiment; shared algorithm on main/worker, structured clone and transfer included, 4 alternating-order pairs (first excluded for warm summary), no heap sampling or React/editor, no production integration' : 'Isolated blank browser page and native IndexedDB, Vite dev modules, no React editor/model/network; 3 sequential samples including first run, 16ms timer heartbeat, CDP heap sampling 50ms (not total process/native memory), forced GC outside timed operations',samples};
   const output = process.argv.find(arg => arg.startsWith('--output='))?.slice(9);
   if (output) { const target = path.resolve(root, output); mkdirSync(path.dirname(target), { recursive: true }); writeFileSync(target, JSON.stringify(report, null, 2) + '\n'); }
   console.log(JSON.stringify(report, null, 2));

@@ -1,0 +1,1274 @@
+{
+  "baseCommit": "0647d07",
+  "workingTree": true,
+  "profiling": true,
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "conditions": "Isolated blank browser page and native IndexedDB, Vite dev modules, no React editor/model/network; 3 sequential samples including first run, 16ms timer heartbeat, CDP heap sampling 50ms (not total process/native memory), forced GC outside timed operations",
+  "samples": [
+    {
+      "chapters": 10,
+      "words": 1000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 6.599999997764826,
+            "maxTimerDelayMs": 1.5,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0.09999999776482582,
+            "maxTimerDelayMs": 1,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 5.600000001490116,
+            "maxTimerDelayMs": 1.4000000022351742,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 8.900000002235174,
+            "maxTimerDelayMs": 0.19999999925494194,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "cpu": {
+            "durationMs": 261.465,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 208.046
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 45.193
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 1.944
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1085",
+                "ms": 1.559
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:48",
+                "ms": 1.522
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 1.508
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 1.497
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 988412,
+            "sampledPeakBackingDeltaBytes": 614560,
+            "retainedDeltaBytes": 258036
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 4.100000001490116,
+            "maxTimerDelayMs": 0.5,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0.10000000149011612,
+            "maxTimerDelayMs": 0.6000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 5.100000001490116,
+            "maxTimerDelayMs": 0.8999999985098839,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 9.299999997019768,
+            "maxTimerDelayMs": 0.3999999985098839,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "cpu": {
+            "durationMs": 242.237,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 207.379
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 27.375
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 2.911
+              },
+              {
+                "frame": "mutate | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:4870",
+                "ms": 2.021
+              },
+              {
+                "frame": "switchToZone | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1036",
+                "ms": 1.259
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 1.119
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 797136,
+            "sampledPeakBackingDeltaBytes": 634485,
+            "retainedDeltaBytes": 113696
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 4.299999997019768,
+            "maxTimerDelayMs": 0.5999999977648258,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 0,
+            "maxTimerDelayMs": 0.3999999985098839,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 23.800000000745058,
+            "maxTimerDelayMs": 16.199999999254942,
+            "delayedTicksOver50Ms": 0
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 7.699999999254942,
+            "maxTimerDelayMs": 0.3999999985098839,
+            "delayedTicksOver50Ms": 0
+          },
+          "jsonBytes": 70922,
+          "gzipBytes": 19931,
+          "gzipUsed": true,
+          "autoBytes": 19940,
+          "cpu": {
+            "durationMs": 254.079,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 206.525
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 37.452
+              },
+              {
+                "frame": "pipeThrough | :0",
+                "ms": 2.343
+              },
+              {
+                "frame": "tempTransaction | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1111",
+                "ms": 2.039
+              },
+              {
+                "frame": "getAll | :0",
+                "ms": 1.914
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 1.894
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 1.549
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 772136,
+            "sampledPeakBackingDeltaBytes": 654425,
+            "retainedDeltaBytes": 88392
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 10,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 100,
+      "words": 2000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 24.300000000745058,
+            "maxTimerDelayMs": 1.1000000014901161,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 3.099999997764826,
+            "maxTimerDelayMs": 0.30000000074505806,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 92.40000000223517,
+            "maxTimerDelayMs": 85.10000000149012,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 112.19999999925494,
+            "maxTimerDelayMs": 74.20000000298023,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "cpu": {
+            "durationMs": 456.964,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 216.423
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 191.048
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 12.096
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 9.339
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 3.608
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 3.492
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 2.862
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 2.095
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:5810",
+                "ms": 2.033
+              },
+              {
+                "frame": "switchToZone | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1036",
+                "ms": 1.999
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 1.968
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 1.591
+              },
+              {
+                "frame": "clearInterval | :0",
+                "ms": 1.546
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 1.515
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 1.511
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 1.503
+              },
+              {
+                "frame": "abort | :0",
+                "ms": 1.107
+              },
+              {
+                "frame": "add | :0",
+                "ms": 1.073
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 4444548,
+            "sampledPeakBackingDeltaBytes": 13453749,
+            "retainedDeltaBytes": 1402376
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 24.900000002235174,
+            "maxTimerDelayMs": 2.5,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 1.699999999254942,
+            "maxTimerDelayMs": 0.8000000007450581,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 93.10000000149012,
+            "maxTimerDelayMs": 86.40000000223517,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 111.89999999850988,
+            "maxTimerDelayMs": 73.80000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "cpu": {
+            "durationMs": 456.115,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 218.811
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 195.74
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 13.642
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 6.928
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 2.579
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 2.507
+              },
+              {
+                "frame": "snapShot | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1062",
+                "ms": 2.042
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 2.027
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:69",
+                "ms": 2.025
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 2.009
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 1.982
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:48",
+                "ms": 1.953
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 1.449
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 1.193
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 1.074
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 4441720,
+            "sampledPeakBackingDeltaBytes": 13834287,
+            "retainedDeltaBytes": 1415732
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 25.100000001490116,
+            "maxTimerDelayMs": 1.800000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "fileJson": {
+            "elapsedMs": 1.7999999970197678,
+            "maxTimerDelayMs": 0.7999999970197678,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 95.90000000223517,
+            "maxTimerDelayMs": 72.69999999925494,
+            "delayedTicksOver50Ms": 1
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 112,
+            "maxTimerDelayMs": 72.59999999776483,
+            "delayedTicksOver50Ms": 1
+          },
+          "jsonBytes": 1397646,
+          "gzipBytes": 380522,
+          "gzipUsed": true,
+          "autoBytes": 380538,
+          "cpu": {
+            "durationMs": 461.16,
+            "selfSamples": [
+              {
+                "frame": "(idle) | :0",
+                "ms": 223.799
+              },
+              {
+                "frame": "(program) | :0",
+                "ms": 189.538
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 11.558
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 9.588
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 5.216
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 3.499
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 3.095
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 2.002
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:48",
+                "ms": 1.995
+              },
+              {
+                "frame": "clearInterval | :0",
+                "ms": 1.961
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:2887",
+                "ms": 1.959
+              },
+              {
+                "frame": "switchToZone | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:1036",
+                "ms": 1.565
+              },
+              {
+                "frame": "(anonymous) | /src/lib/backupValidation.ts:29",
+                "ms": 1.519
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 1.461
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 1.139
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 1.08
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 4430728,
+            "sampledPeakBackingDeltaBytes": 14214825,
+            "retainedDeltaBytes": 1407012
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 100,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 0,
+      "imageBytes": 0,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 239,
+            "maxTimerDelayMs": 100.30000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 17.5,
+            "maxTimerDelayMs": 9.600000001490116,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1134.8999999985099,
+            "maxTimerDelayMs": 118.39999999850988,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1310.199999999255,
+            "maxTimerDelayMs": 180.39999999850988,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799136,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "cpu": {
+            "durationMs": 2969.301,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2195.063
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 343.078
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 170.379
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 96.085
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 45.14
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 20.013
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 17.409
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 16.356
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 11.919
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 11.015
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 10.408
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 9.405
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 6.954
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 5.103
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 3.486
+              },
+              {
+                "frame": "timed | /e2e/backupBenchmarkFixture.ts:45",
+                "ms": 3.221
+              },
+              {
+                "frame": "validateBackup | /src/lib/backupValidation.ts:183",
+                "ms": 2.046
+              },
+              {
+                "frame": "add | :0",
+                "ms": 1.998
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 76385340,
+            "sampledPeakBackingDeltaBytes": 131087942,
+            "retainedDeltaBytes": 17347692
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 238.80000000074506,
+            "maxTimerDelayMs": 99.09999999776483,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 13.399999998509884,
+            "maxTimerDelayMs": 5.600000001490116,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1140,
+            "maxTimerDelayMs": 119.80000000074506,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1317,
+            "maxTimerDelayMs": 181,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799135,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "cpu": {
+            "durationMs": 2975.831,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2202.356
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 339.565
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 165.593
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 94.669
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 44.809
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 21.064
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 18.077
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 18.063
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 15.183
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 14.004
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 10.223
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 9.945
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 6.023
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 3.551
+              },
+              {
+                "frame": "add | :0",
+                "ms": 2.027
+              },
+              {
+                "frame": "setTimeout | :0",
+                "ms": 2
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:53",
+                "ms": 1.999
+              },
+              {
+                "frame": "postMessage | :0",
+                "ms": 1.956
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 1.905
+              },
+              {
+                "frame": "Dexie3.transaction | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:5797",
+                "ms": 1.432
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 1.172
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 52698112,
+            "sampledPeakBackingDeltaBytes": 108925666,
+            "retainedDeltaBytes": 17382740
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 234.80000000074506,
+            "maxTimerDelayMs": 95.80000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 23.699999999254942,
+            "maxTimerDelayMs": 17.300000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1148.9000000022352,
+            "maxTimerDelayMs": 128.10000000149012,
+            "delayedTicksOver50Ms": 8
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1325.6000000014901,
+            "maxTimerDelayMs": 181.40000000223517,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 17363128,
+          "gzipBytes": 4799135,
+          "gzipUsed": true,
+          "autoBytes": 4799141,
+          "cpu": {
+            "durationMs": 3006.869,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2205.212
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 348.653
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 161.953
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 91.091
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 48.555
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 23.82
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 22.551
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 22.449
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 18.367
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 17.561
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 12.599
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 9.483
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 3.98
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 3.628
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 2.379
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:48",
+                "ms": 2.024
+              },
+              {
+                "frame": "validateJsonBudget | /src/lib/backupValidation.ts:153",
+                "ms": 2.007
+              },
+              {
+                "frame": "add | :0",
+                "ms": 2.002
+              },
+              {
+                "frame": "(anonymous) | /src/lib/backupValidation.ts:29",
+                "ms": 1.99
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 1.96
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:597",
+                "ms": 1.715
+              },
+              {
+                "frame": "result.result | /e2e/backupBenchmarkFixture.ts:58",
+                "ms": 1.55
+              },
+              {
+                "frame": "Collection2.limit | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:2088",
+                "ms": 1.138
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 52700504,
+            "sampledPeakBackingDeltaBytes": 108925666,
+            "retainedDeltaBytes": 17392372
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 0
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "images": 4,
+      "imageBytes": 2286249,
+      "runs": [
+        {
+          "collect": {
+            "elapsedMs": 320.5,
+            "maxTimerDelayMs": 178,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 29.5,
+            "maxTimerDelayMs": 22.699999999254942,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1244.5,
+            "maxTimerDelayMs": 116.80000000074506,
+            "delayedTicksOver50Ms": 9
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1350.0999999977648,
+            "maxTimerDelayMs": 220,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "cpu": {
+            "durationMs": 3253.322,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2242.105
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 370.934
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 248.592
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 102.871
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 82.42
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 28.057
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 27.412
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 21.791
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 20.002
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 17.748
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 17.185
+              },
+              {
+                "frame": "RegExp: ^data:image\\/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$ | :0",
+                "ms": 16.395
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 13.438
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 12.435
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 11.461
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 10.3
+              },
+              {
+                "frame": "reader.onload | /src/lib/blobCodec.ts:13",
+                "ms": 2.035
+              },
+              {
+                "frame": "add | :0",
+                "ms": 2.031
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 1.955
+              },
+              {
+                "frame": "Transaction2 | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:2994",
+                "ms": 1.576
+              },
+              {
+                "frame": "(anonymous) | :1",
+                "ms": 1.328
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:48",
+                "ms": 1.083
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 76073832,
+            "sampledPeakBackingDeltaBytes": 113621094,
+            "retainedDeltaBytes": 17357892
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 347.4000000022352,
+            "maxTimerDelayMs": 205.30000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 35,
+            "maxTimerDelayMs": 28.300000000745058,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1242.3999999985099,
+            "maxTimerDelayMs": 115.5,
+            "delayedTicksOver50Ms": 10
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1350.3999999985099,
+            "maxTimerDelayMs": 222.59999999776483,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "cpu": {
+            "durationMs": 3285.978,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2239.793
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 367.577
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 261.627
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 119.829
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 80.13
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 30.357
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 26.741
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 23.747
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 21.406
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 19.192
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 17.741
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 17.146
+              },
+              {
+                "frame": "RegExp: ^data:image\\/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$ | :0",
+                "ms": 15.151
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 14.923
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 12.917
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 9.473
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 3.07
+              },
+              {
+                "frame": "add | :0",
+                "ms": 2.14
+              },
+              {
+                "frame": "setInterval | :0",
+                "ms": 1.512
+              },
+              {
+                "frame": "evaluate | :364",
+                "ms": 1.281
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 76124448,
+            "sampledPeakBackingDeltaBytes": 118420592,
+            "retainedDeltaBytes": 17442300
+          }
+        },
+        {
+          "collect": {
+            "elapsedMs": 317.6000000014901,
+            "maxTimerDelayMs": 172.30000000074506,
+            "delayedTicksOver50Ms": 1
+          },
+          "fileJson": {
+            "elapsedMs": 29,
+            "maxTimerDelayMs": 22.099999997764826,
+            "delayedTicksOver50Ms": 0
+          },
+          "gzip": {
+            "elapsedMs": 1279.199999999255,
+            "maxTimerDelayMs": 123.5,
+            "delayedTicksOver50Ms": 10
+          },
+          "autoSaveAfterCollect": {
+            "elapsedMs": 1381.5,
+            "maxTimerDelayMs": 221.89999999850988,
+            "delayedTicksOver50Ms": 9
+          },
+          "jsonBytes": 20412259,
+          "gzipBytes": 7093220,
+          "gzipUsed": true,
+          "autoBytes": 4799498,
+          "cpu": {
+            "durationMs": 3314.519,
+            "selfSamples": [
+              {
+                "frame": "(program) | :0",
+                "ms": 2284.198
+              },
+              {
+                "frame": "(idle) | :0",
+                "ms": 371.706
+              },
+              {
+                "frame": "encode | :0",
+                "ms": 258.845
+              },
+              {
+                "frame": "digest | :0",
+                "ms": 103.626
+              },
+              {
+                "frame": "Blob | :0",
+                "ms": 78.466
+              },
+              {
+                "frame": "compressData | /src/services/backupService.ts:238",
+                "ms": 37.017
+              },
+              {
+                "frame": "req.onsuccess | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3356",
+                "ms": 28.687
+              },
+              {
+                "frame": "(anonymous) | /e2e/backupBenchmarkFixture.ts:67",
+                "ms": 26.977
+              },
+              {
+                "frame": "collectAllData | /src/services/backupService.ts:75",
+                "ms": 26.822
+              },
+              {
+                "frame": "saveToInternalDB | /src/services/backupService.ts:131",
+                "ms": 17.229
+              },
+              {
+                "frame": "visit | /src/lib/backupValidation.ts:157",
+                "ms": 16.773
+              },
+              {
+                "frame": "RegExp: ^data:image\\/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$ | :0",
+                "ms": 16.6
+              },
+              {
+                "frame": "computeChecksum | /src/services/backupService.ts:115",
+                "ms": 14.874
+              },
+              {
+                "frame": "measure | /e2e/backupBenchmarkFixture.ts:64",
+                "ms": 10.488
+              },
+              {
+                "frame": "TextEncoder | :0",
+                "ms": 8.492
+              },
+              {
+                "frame": "(garbage collector) | :0",
+                "ms": 5.877
+              },
+              {
+                "frame": "(anonymous) | /node_modules/.vite-e2e/deps/chunk-3NXQ4SUY.js?v=d8db0186:3182",
+                "ms": 3.543
+              },
+              {
+                "frame": "add | :0",
+                "ms": 2.137
+              },
+              {
+                "frame": "validateBackup | /src/lib/backupValidation.ts:183",
+                "ms": 1.649
+              },
+              {
+                "frame": "(anonymous) | /src/lib/backupValidation.ts:29",
+                "ms": 0.321
+              }
+            ]
+          },
+          "heap": {
+            "sampledPeakDeltaBytes": 76052776,
+            "sampledPeakBackingDeltaBytes": 123220090,
+            "retainedDeltaBytes": 17338244
+          }
+        }
+      ],
+      "integrity": {
+        "checksum": true,
+        "fullRestore": true,
+        "internalRestore": true,
+        "chapters": 500,
+        "images": 4
+      }
+    }
+  ]
+}

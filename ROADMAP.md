@@ -177,3 +177,16 @@ bukan klaim editor membeku sepanjang durasi backup. Checksum, restore penuh dan
 internal mempertahankan seluruh bab dan byte gambar. [Metode, data mentah dan batas](docs/performance/l06-backup.md).
 Implementasi backup belum dioptimasi. Profiling terarah diperlukan sebelum memilih
 worker atau perubahan lain; tahap optimasi perlu keputusan berikutnya.
+
+Profiling CPU tahap kedua L06 juga selesai: encoding/checksum/Blob menjadi kandidat
+optimasi; waktu native belum seluruhnya teratribusi. Hasil dan rancangan eksperimen
+worker dicatat dalam [laporan L06](docs/performance/l06-backup.md#tahap-kedua-profiling-cpu).
+Implementasi optimasi belum dilakukan.
+
+
+Eksperimen worker L06 selesai pada empat workload. Pada 2.5 juta kata + empat
+PNG, median persiapan main/worker sekitar 1282/1307 ms dan jeda timer terburuk
+209/14 ms. Payload cocok dengan service produksi, input invalid ditolak dan
+restore bab/gambar lulus. [Metode dan keputusan eksperimen](docs/performance/l06-worker.md).
+Belum mengaktifkan worker dalam aplikasi; integrasi memerlukan pengukuran memori,
+startup/fallback, regresi dan end-to-end yang dijelaskan pada laporan.

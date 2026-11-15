@@ -1,3 +1,4 @@
+import { prepareAuto } from './backupPreparation';
 import { db } from '../src/db';
 import { backupService, type BackupData } from '../src/services/backupService';
 import { readBackupFile } from '../src/lib/backupIO';
@@ -88,4 +89,53 @@ export async function verify() {
   }
   retained = null;
   return { checksum: true, fullRestore: true, internalRestore: true, chapters: restored.length, images: restoredMaps.length };
+}
+
+
+export async function compareWorker() {
+  const backup = await backupService.collectAllData();
+  retained = backup;
+  const worker = new Worker(new URL('./backupExperimentWorker.ts', import.meta.url), { type: 'module' });
+  const runWorker = (payload: unknown = backup) => new Promise<ArrayBuffer>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Experimental worker timeout')), 30000);
+    worker.onmessage = event => { clearTimeout(timeout); if (event.data.error) reject(new Error(event.data.error)); else resolve(event.data.bytes); };
+    worker.onerror = () => { clearTimeout(timeout); reject(new Error('Experimental worker error')); };
+    worker.postMessage(payload);
+  });
+  try {
+    const pairs = [];
+    for (let i = 0; i < 4; i++) {
+      // Alternate order; first pair includes worker startup/JIT.
+      const first = await timed(i % 2 ? () => runWorker() : () => prepareAuto(backup));
+      const second = await timed(i % 2 ? () => prepareAuto(backup) : () => runWorker());
+      const main = i % 2 ? second : first, offload = i % 2 ? first : second;
+      const a = await readBackupFile(new Blob([main.result]));
+      const b = await readBackupFile(new Blob([offload.result]));
+      if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error('Worker payload mismatch');
+      await backupService.validateInput(b, 'all');
+      const stats = (v: typeof main) => ({ elapsedMs: v.elapsedMs, maxTimerDelayMs: v.maxTimerDelayMs, delayedTicksOver50Ms: v.delayedTicksOver50Ms, bytes: v.result.byteLength });
+      pairs.push({ main: stats(main), worker: stats(offload) });
+    }
+    let malformedRejected = false;
+    try { await runWorker(null); } catch { malformedRejected = true; }
+    if (!malformedRejected) throw new Error('Malformed worker input accepted');
+    // Compare to production service output before testing worker bytes via real restore.
+    await backupService.saveToInternalDB(backup, 'auto');
+    const production = await db.backups.orderBy('timestamp').last();
+    if (!production) throw new Error('Production auto backup missing');
+    const actual = JSON.parse(await backupService.decodeInternalBackup(production));
+    const bytes = await runWorker();
+    const experimental = await readBackupFile(new Blob([bytes]));
+    if (JSON.stringify(actual) !== JSON.stringify(experimental)) throw new Error('Production compatibility mismatch');
+    await db.chapters.update(1, { content: '<p>Worker restore check</p>' });
+    await backupService.restoreData(experimental);
+    if (JSON.stringify(await db.chapters.toArray()) !== JSON.stringify(backup.data.chapters)) throw new Error('Worker restore mismatch');
+    for (const source of await backupService.deserializeMaps(backup.data.maps)) {
+      const restored = await db.maps.get(source.id);
+      if (!source.imageBlob || !restored?.imageBlob) throw new Error('Worker image missing');
+      const a = new Uint8Array(await source.imageBlob.arrayBuffer()), b = new Uint8Array(await restored.imageBlob.arrayBuffer());
+      if (a.length !== b.length || a.some((value, index) => value !== b[index])) throw new Error('Worker image mismatch');
+    }
+    return { pairs, productionCompatibility: true, workerRestore: true, malformedRejected };
+  } finally { worker.terminate(); }
 }

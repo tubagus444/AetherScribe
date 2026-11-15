@@ -99,3 +99,46 @@ bergantung perangkat dan workload; belum dijalankan pada runner GitHub, perangka
 lambat, banyak proyek/snapshot/chat, quota rendah atau editor aktif. Typecheck
 umum/strict/maintenance lulus. Unit/browser suite tidak diulang untuk harness ini;
 bukti sebelumnya tetap memiliki scope dan SHA masing-masing.
+
+
+## Tahap kedua: profiling CPU
+
+Sesudah commit 0647d07, jalankan:
+
+```powershell
+npm run measure:backup -- --profile --output=test-results/backup-profile.json
+```
+
+Hasil ada di [snapshot profiling](l06-profile.json). Empat dataset dan tiga sampel
+per ukuran kembali lulus checksum, restore penuh/internal, seluruh bab dan byte
+gambar. Tidak mengubah implementasi backup. Script tetap mendukung mode ukur
+biasa; flag --profile mengaktifkan CDP CPU profiler hanya selama rangkaian operasi,
+bukan seed atau pemeriksaan restore. Snapshot menyimpan 25 frame dengan self-time
+tersampel tertinggi tiap sampel, bukan call tree lengkap.
+
+Pada kasus 2.5 juta kata + empat PNG, akumulasi tiga sampel mencatat sekitar
+769 ms pada frame native encode, 326 ms digest dan 241 ms Blob. Nilai ini mencakup
+semua tahap ukur (collect, file JSON, gzip lengkap dan auto-save), bukan biaya
+satu auto-backup. Frame program yang tidak teratribusi sekitar 6766 ms dan idle
+1110 ms; keduanya tidak boleh dianggap waktu JavaScript fungsi tertentu atau
+bukti seluruh durasi membekukan UI. Nama file/baris berasal dari modul transformasi
+Vite dan bukan nomor baris source asli yang stabil. Profiler menambah overhead;
+jangan langsung membandingkan elapsed mode profiling dengan baseline sebelumnya.
+
+Kesimpulan yang dapat dipakai: encoding/checksum/pembuatan buffer merupakan
+kandidat optimasi yang lebih konkret daripada hanya memindahkan stringify.
+Namun sampling ini belum memisahkan biaya native gzip, scheduler dan GC dengan
+pasti. Tahap implementasi yang disarankan adalah prototipe worker untuk pekerjaan
+CPU setelah snapshot (validasi/serialisasi/encoding/checksum/kompresi), lalu A/B
+terhadap baseline pada workload yang sama. Snapshot/flush dan commit DB tetap
+memakai alur konsisten yang ada. Ukur biaya transfer/clone, peak memori, fallback
+jika worker gagal, serta pertahankan byte/checksum dan kebijakan aset/rollback.
+Ini rancangan eksperimen berikutnya, belum keputusan mengirim semua pekerjaan
+ke worker atau klaim akan mempercepat elapsed time.
+
+Profiling dan pemeriksaan sintaks script lulus. Tidak menjalankan ulang suite
+aplikasi karena perubahan hanya pada harness/report; tidak ada perubahan schema,
+dependency, source runtime atau kebijakan backup. L06 tetap pada tahap pengukuran/
+profiling selesai, implementasi optimasi belum dilakukan.
+
+Eksperimen berikutnya sudah tersedia: [perbandingan worker dan batas integrasi](l06-worker.md). Hasil tersebut tidak mengganti baseline pengukuran awal.
