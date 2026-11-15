@@ -51,8 +51,8 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 | Save F05 | useEditorSave dan CrossChapterReplace: reject, update nol baris, draft, retry, flush/reload | Editor TipTap asli: autosave/reload serta injeksi write failure, flush reject, draft tetap utuh dan retry |
 | Bab/triage F06/F07 | chapterTriage: duplikasi HTML/metadata, urutan, rollback, concurrency dan reopen DB | Duplikasi melalui service produksi menyalin draft editor aktif ke IndexedDB native |
 | Backup F03/F04/F19 | backupService/backupConsistency: validasi, snapshot wajib, aset, atomic restore dan konsistensi snapshot | Blob/FileReader/Web Crypto/gzip native: Atlas dipulihkan dan snapshot pengaman dibuat; restore versi asing ditolak |
-| Round-trip F10 | projectRoundTrip: remap FK/triage/workshop, rollback dan legacy | Export/import service produksi memakai native IndexedDB dan remap triage; tidak menguji file picker/wizard UI |
-| Delete F11 | entityDeletion: relasi turunannya, rollback dan cache | Belum browser UI deletion |
+| Round-trip F10 | projectRoundTrip: remap FK/triage/workshop, rollback dan legacy | Export/import service produksi memakai native IndexedDB dan remap triage; L03 melengkapi ekspor/impor lewat tombol, filechooser dan dialog aplikasi |
+| Delete F11 | entityDeletion: relasi turunannya, rollback dan cache | L03 menguji delete bab/Codex/proyek, pembatalan, cleanup dan isolasi proyek lain |
 | Search F08/F09 | oramaSearch dan SemanticSearchPanel: protokol, generated ID, rollback, isolasi dan hasil basi | Worker Orama native: insert/search/delete serta isolasi antarproyek |
 | Streaming F12/F14/F15 | SSE parser, proxyStream, useChatSession, useEditorAI: error, abort, retry/reset dan cleanup | Stream sintetis; belum provider atau jaringan eksternal nyata |
 | Cancel F16 | contextTimeout/contextCancellation: payload CANCEL, timeout, isolasi, checkpoint dan late cancel | Context worker native menguji token count dan Aho-Corasick; timeout/cancel tetap diuji dengan transport/model mock |
@@ -206,3 +206,13 @@ Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes, build,
 21 tes Chromium lulus. CI menemukan spec baru melalui npm run test:e2e; belum
 memverifikasi run GitHub untuk L02. Coverage tidak diukur ulang.
 [Bukti dan batas migrasi](audits/2026-11-15-l02-installation.md).
+
+
+L03 menambahkan delapan skenario e2e/dataUi.spec.ts: file hasil ekspor UI dipilih
+ulang untuk impor/restore, cancel/konfirmasi, penolakan format/scope, injeksi hook
+creating Dexie untuk rollback impor/restore, dan delete bab/Codex/proyek lewat UI.
+Tes membandingkan record asli serta referensi, menggunakan dua proyek terisolasi
+untuk memastikan proyek lain utuh. Model listing dimock; tanpa provider/Drive.
+Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 29 Chromium tests lulus
+lokal. Tidak mengubah source aplikasi; build/coverage tidak diulang pada tahap ini.
+[Bukti dan batas L03](audits/2026-11-15-l03-data-ui.md).

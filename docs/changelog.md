@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Test] L03 - Pengujian Alur Data Melalui UI
+
+- Tambahkan delapan skenario browser melalui tombol, download/filechooser dan dialog produksi: impor novel/restore penuh, cancel, scope/format invalid, kegagalan tulis dan rollback, serta delete bab/Codex/proyek dengan cleanup referensi dan isolasi proyek lain.
+- Gunakan database native terisolasi; kegagalan disuntik lewat hook Dexie, tanpa mock service. Daftar model dimock dan request eksternal diblokir. Tidak mengubah kode aplikasi, schema atau dependency.
+- Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes dan 29 browser tests lulus. Perbarui roadmap/testing/README/indeks dan bukti L03; build/coverage tidak diulang untuk perubahan tes/dokumentasi.
+
 ### [Fix/Test] L02 - Bootstrap Atomik dan Pengujian Instalasi/Migrasi
 
 - Tes browser tanpa seed menemukan dua proyek bawaan pada instalasi kosong. Jadikan ensureDefaultProject atomik pada projects/chapters/bible agar panggilan bersamaan tidak membuat duplikat dan kegagalan insert melakukan rollback; data/migrasi lama tidak diubah.
