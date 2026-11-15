@@ -50,3 +50,8 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [L06: pengukuran backup besar](performance/l06-backup.md). Waktu, jeda timer, memori, data mentah dan batas kesimpulan.
 
 - [L06: eksperimen worker persiapan backup](performance/l06-worker.md). A/B respons main thread dan batas integrasi.
+
+- [L06: matriks kesiapan eksperimen worker](performance/l06-readiness.md). Kegagalan, snapshot/typing, offline dan batas pengukuran heap.
+
+- [L06: editor aktif dan peak heap tersampel](performance/l06-editor-load.md). Respons input, biaya memori dan batas RSS/otomatisasi.
+- [L06: kegagalan fasilitas browser dan storage](performance/l06-storage-failures.md). Fallback kompresi, checksum, kuota dan pembatalan restore.

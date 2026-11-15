@@ -190,3 +190,24 @@ PNG, median persiapan main/worker sekitar 1282/1307 ms dan jeda timer terburuk
 restore bab/gambar lulus. [Metode dan keputusan eksperimen](docs/performance/l06-worker.md).
 Belum mengaktifkan worker dalam aplikasi; integrasi memerlukan pengukuran memori,
 startup/fallback, regresi dan end-to-end yang dijelaskan pada laporan.
+
+
+Pengujian kesiapan worker L06 menambahkan tujuh skenario: startup/crash/timeout/
+respons invalid, fallback offline, batas snapshot saat mengetik dan enam siklus
+worker dengan pemeriksaan cleanup/heap. Typecheck umum/strict/maintenance,
+90 berkas/787 tes dan 42 browser tests lulus lokal. [Matriks lulus/belum teruji](docs/performance/l06-readiness.md)
+mencatat bahwa peak RAM, latency editor saat CPU penuh dan integrasi produksi
+belum dibuktikan. Worker tetap eksperimen, belum diaktifkan pada aplikasi.
+
+
+Uji L06 berikutnya memakai TipTap aktif tanpa delay buatan. Pada run terarah,
+perintah ketik terburuk main/worker 407/48 ms, tetapi sampled V8 heap gabungan
+88.5/112.3 MiB. Seluruh 120 karakter tersimpan/reload. [Metode dan batas](docs/performance/l06-editor-load.md)
+menjelaskan bahwa angka bukan latensi input murni atau peak RAM/RSS total.
+43 browser tests lulus; worker tetap eksperimen dan belum diintegrasikan.
+
+Enam tes L06 berikutnya memeriksa kegagalan kompresi/crypto/storage pada service
+backup aplikasi. Round-trip bab/gambar, retensi aman saat kuota penuh, pembatalan
+restore dan retry lulus pada fixture browser native. [Bukti dan batas simulasi](docs/performance/l06-storage-failures.md).
+Seluruh 49 skenario Chromium dan typecheck umum/strict/maintenance lulus lokal;
+worker tetap belum diintegrasikan.

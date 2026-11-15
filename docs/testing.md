@@ -251,3 +251,32 @@ termasuk clone/transfer, kesamaan payload produksi, penolakan input dan restore
 seluruh bab/gambar. Typecheck umum/strict/maintenance lulus. Eksperimen di e2e/
 tidak mengubah aplikasi atau mengklaim worker memory/startup/fallback siap rilis;
 [bukti dan batas](performance/l06-worker.md).
+
+
+L06 readiness: tujuh skenario e2e/backupReadiness.spec.ts menguji startup/crash/
+timeout/malformed response dan fallback offline; data/cadangan asal tetap.
+TipTap asli menguji snapshot dan ketikan dengan jendela delay in-flight yang
+disengaja, bukan benchmark typing latency. Enam siklus memeriksa request/worker
+bersih dan sampel V8 heap (attachment worker-stability.json). Total 42 Chromium
+tests lulus lokal, bersama 787 tes unit/integrasi serta typecheck/strict/maintenance.
+[Status per kriteria dan batas memori/integrasi](performance/l06-readiness.md).
+
+
+L06 backupLoad.spec.ts menambah satu test aplikasi/editor aktif: enam run main/
+worker bergantian, input saat CPU berjalan tanpa delay buatan, CDP heap main dan
+worker selama pekerjaan, seluruh 120 karakter tersimpan/reload. Attachment dan
+file output backup-load.json merekam tiap run. Tanpa threshold performa universal;
+[hasil dan batas interpretasi](performance/l06-editor-load.md). Typecheck umum/
+strict/maintenance, 787 tes unit/integrasi serta 43 Chromium tests lulus lokal.
+
+L06 backupStorage.spec.ts menambah enam skenario service backup aplikasi dengan
+IndexedDB native: kompresi hilang/gagal, crypto hilang, kuota sementara/permanen
+dan kegagalan penyimpanan pre-restore lalu retry. Cocokkan seluruh data/gambar,
+validasi record tersisa dan pelestarian draft/riwayat. Error diinjeksi melalui
+property browser/hook Dexie, bukan disk nyata penuh.
+[Metode dan batas](performance/l06-storage-failures.md). Suite kini berisi 49
+skenario Chromium, seluruhnya lulus lokal (2.2 menit); typecheck umum/strict/
+maintenance dan enam tes terarah juga lulus. Run pertama memiliki satu inspector
+timeout pada tes beban editor saat dokumentasi ditulis; run ulang tanpa perubahan
+workspace lulus. Detail dan batas diagnosis ada di laporan storage.
+Unit/build/coverage tidak diulang pada batch tes/dokumentasi ini.

@@ -6,6 +6,24 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Test] L06 - Kegagalan Fasilitas Browser dan Penyimpanan
+
+- Enam tes Chromium memakai service backup dan IndexedDB native: kompresi hilang/gagal, crypto hilang, kuota sementara/permanen serta kegagalan snapshot pra-pemulihan dan retry.
+- Periksa round-trip seluruh data/gambar, pelestarian auto terbaru/pre-restore, serta workspace/riwayat yang tetap saat restore ditolak. Error kuota diinjeksi melalui hook Dexie; tidak memenuhi disk nyata.
+- Typecheck umum/strict/maintenance, enam tes terarah dan seluruh 49 tes Chromium lulus lokal. Run ulang dilakukan setelah inspector timeout saat workspace berubah; diagnosis/batas di laporan storage. Tidak mengubah runtime, schema atau dependensi dan tidak mengintegrasikan worker.
+
+### [Perf/Test] L06 - Editor Aktif dan Heap Saat Kompresi
+
+- Tambahkan tes TipTap aktif pada dataset besar tanpa delay buatan, enam run main/worker bergantian dan sampling V8 heap kedua thread selama pekerjaan. Verifikasi seluruh 120 karakter tersimpan setelah reload.
+- Snapshot terarah: perintah ketik terburuk 407/48 ms main/worker, sampled heap 88.5/112.3 MiB. Jelaskan IPC/otomatisasi, sampling dan batas peak RSS; tidak menetapkan threshold CI atau mengklaim worker lebih hemat RAM.
+- Typecheck umum/strict/maintenance, 787 tes unit/integrasi dan 43 browser tests lulus lokal. Perbarui status/bukti tanpa mengintegrasikan worker atau mengubah schema/dependensi; build/coverage tidak diulang.
+
+### [Test] L06 - Pengaman Kegagalan dan Kesiapan Eksperimen Worker
+
+- Tambahkan client khusus e2e dengan timeout, penolakan respons invalid, cleanup worker/listener dan fallback main; tanpa mengintegrasikan worker ke aplikasi.
+- Tujuh tes native mencakup startup/crash/timeout/invalid response, fallback offline, snapshot saat mengetik dan enam siklus berulang dengan inspeksi heap main/worker. Dokumentasikan status lulus/belum teruji, terutama peak RAM dan typing latency saat CPU penuh.
+- Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes dan 42 browser tests lulus. Tanpa perubahan schema/dependensi; build/coverage tidak diulang. Semua data sintetis, bukan proyek pengguna.
+
 ### [Perf] L06 - Eksperimen Worker Persiapan Backup
 
 - Tambahkan mode --worker dan helper/worker khusus e2e untuk membandingkan persiapan auto-backup identik pada main thread dan worker, dengan clone/transfer ikut pengukuran. Simpan empat pasangan per workload, ringkasan memakai tiga pasangan warm.
