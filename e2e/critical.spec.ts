@@ -286,3 +286,79 @@ test('F23 native v33 upgrade backfills metadata while preserving manuscript', as
   expect(result.rows[0]).toMatchObject({ id: 7, title: 'Legacy', _computedWordCount: 3, lastModified: 9 });
   expect(result.chapter.content).toBe('<p>legacy native browser</p>');
 });
+
+
+test('F28.5 native Atlas draws and edits geometry, filters without deleting, and keeps labels inert', async ({ page }) => {
+  await page.evaluate(() => {
+    const active = new Set<string>();
+    const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL);
+    URL.createObjectURL = blob => { const url = create(blob); active.add(url); return url; };
+    URL.revokeObjectURL = url => { active.delete(url); revoke(url); };
+    Reflect.set(window, 'atlasActiveUrls', active);
+  });
+  await page.evaluate(async () => {
+    const fixturePath = '/e2e/atlasFixture.tsx';
+    await (await import(fixturePath)).mountAtlasFixture();
+  });
+  const canvas = page.locator('.leaflet-container');
+  await expect(canvas).toBeVisible();
+  await page.getByRole('button', { name: 'Draw pin', exact: true }).click();
+  await canvas.click({ position: { x: 350, y: 230 } });
+  await expect(page.getByTestId('atlas-count')).toHaveText('1');
+  const geometry = () => page.evaluate(async () => {
+    const path = '/src/db.ts'; const { db } = await import(path);
+    return (await db.mapMarkers.toArray()).find(m => m.kind === 'pin')?.geometry;
+  });
+  const before = await geometry();
+  await page.getByRole('button', { name: 'Edit geometry' }).click();
+  const handle = page.locator('.leaflet-marker-draggable').first();
+  await expect(handle).toBeVisible();
+  const box = await handle.boundingBox();
+  if (!box) throw new Error('Missing edit handle');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down(); await page.mouse.move(box.x + 80, box.y + 50, { steps: 8 }); await page.mouse.up();
+  await expect.poll(geometry).not.toEqual(before);
+  for (const kind of ['area', 'route']) {
+    await page.getByRole('button', { name: `Draw ${kind}`, exact: true }).click();
+    await canvas.click({ position: { x: 280, y: 160 } });
+    await canvas.click({ position: { x: 400, y: 160 } });
+    if (kind === 'area') await canvas.click({ position: { x: 400, y: 300 } });
+    await canvas.click({ position: { x: 280, y: 300 } });
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('atlas-count')).toHaveText(kind === 'area' ? '2' : '3');
+  }
+  await expect(page.getByTestId('atlas-count')).toHaveText('3');
+  await page.getByRole('button', { name: 'Hide pins' }).click();
+  await expect(page.getByTestId('atlas-count')).toHaveText('2');
+  await page.getByRole('button', { name: 'Show all' }).click();
+  await expect(page.getByTestId('atlas-count')).toHaveText('3');
+  await expect(page.locator('[onerror], img[src="x"], script:not([type])')).toHaveCount(0);
+  expect(await page.evaluate(() => Reflect.get(window, '__atlasXss'))).toBeUndefined();
+  await page.getByRole('button', { name: 'Unmount canvas' }).click();
+  await expect(canvas).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, 'atlasActiveUrls').size)).toBe(0);
+});
+
+
+test('F28.5 Atlas panel restores its map and creates/deletes a pin through the real sidebar', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts'; const { db } = await import(path);
+    const image = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII='), c => c.charCodeAt(0));
+    await db.maps.add({ projectId: 1, name: 'Native panel map', imageBlob: new Blob([image], { type: 'image/png' }), width: 600, height: 400, createdAt: 1 });
+    localStorage.setItem('aether_view_mode', 'atlas');
+  });
+  await page.reload();
+  const canvas = page.locator('.leaflet-container');
+  await expect(canvas).toBeVisible();
+  await page.getByRole('button', { name: 'Pin', exact: true }).first().click();
+  await canvas.click({ position: { x: 300, y: 200 } });
+  await expect(page.getByRole('button', { name: 'Ubah posisi/bentuk' })).toBeVisible();
+  const count = () => page.evaluate(async () => { const path = '/src/db.ts'; return (await import(path)).db.mapMarkers.count(); });
+  await expect.poll(count).toBe(1);
+  await page.reload();
+  await expect(canvas).toBeVisible();
+  await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
+  await page.locator('.leaflet-marker-icon').first().click();
+  await page.getByRole('button', { name: 'Hapus penanda' }).click();
+  await expect.poll(count).toBe(0);
+});

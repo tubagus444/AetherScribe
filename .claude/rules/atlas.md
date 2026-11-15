@@ -40,3 +40,10 @@ Faksi bukan tabel/id di app ini — faksi = entri Codex ber-`factionTag` (lihat 
 Mode edit per-penanda terpilih (toggle di `MarkerSidebar`, eksklusif dgn mode gambar, mati saat pilihan berganti). `editLayer` di `MapCanvas`: pin = satu handle draggable; area/route = handle vertex (seret), handle titik-tengah (klik = sisip), klik-kanan vertex = hapus (min area 3 / route 2). **Persist saat `dragend`/ubah struktur** (bukan tiap piksel); saat drag hanya `shape.setLatLngs` live. Penanda yang sedang diedit **di-skip** dari `markerLayer` (digambar di `editLayer`) agar tak dobel. Nol dependensi (belum pakai `leaflet-editable`).
 
 **Saat menambah analitik/tampilan (wilayah yatim, overlay timeline, heatmap): turunkan dari `PresenceIndex`/`mapGeometry.ts` di `src/lib/atlasAnalytics.ts` + tes, tambah SATU layer — jangan tambah tabel/FK.**
+
+F28.5: useAtlasSelection memiliki seleksi/draw/edit; useAtlasFilters memiliki filter
+jenis/kategori/faksi dan lookup Codex. AtlasControls memiliki thumbnail/cleanup URL
+serta chip filter. useAtlas melakukan live-query, memakai createAtlasOperations
+untuk CRUD; deleteMap harus tetap melalui entityDeletion F11. Jangan mengimpor
+AtlasPanel dari hook/service. Fixture native ada di e2e/atlasFixture.tsx; batasnya
+tercatat di docs/testing.md. Deep-link tetap ditangani orchestrator AtlasPanel.

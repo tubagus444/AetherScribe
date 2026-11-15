@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Refactor] F28.5 - Rapikan Tanggung Jawab Atlas
+
+- Pisahkan state seleksi/mode edit, filter/lookup Codex, serta thumbnail/kontrol filter ke hook dan komponen tersendiri. useAtlas fokus live-query; operasi map/marker dipindahkan ke atlasOperations dengan penghapusan tetap melalui cleanup domain F11.
+- Pertahankan Leaflet/propsRef, geometri relatif, label DOM teks, presence worker, navigasi/deep-link dan format data. Tanpa perubahan skema/dependensi.
+- Tambahkan tes filter kategori/faksi, reset edit dan operasi persistence/unlink; fixture browser memakai komponen/service produksi untuk draw pin/area/rute, drag pin, filter tanpa delete, label inert dan cleanup URL Blob. Batas fixture/UI lengkap dicatat di arsitektur/testing.
+- Skenario panel produksi membuat/reload/menghapus pin lulus pada source baseline 827c36b dan sesudah ekstraksi. Verifikasi: typecheck umum/strict, 89 berkas/785 tes, build dan 18 browser tests lulus lokal. F28.5 selesai; F28 induk tetap terbuka.
+
 ### [Refactor] F28.4 - Pisahkan Tanggung Jawab Layanan AI
 
 - Ekstrak settings, penyusunan konteks, dispatch/retry/fallback, lifecycle abort dan parsing hasil ke modul internal terpisah. Pertahankan ekspor publik melalui facade index.ts, identitas AIError, state circuit breaker/controller dan dedup rewrite.

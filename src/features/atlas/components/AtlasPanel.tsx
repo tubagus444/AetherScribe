@@ -29,6 +29,9 @@ import { cn } from '@/src/lib/utils';
 import { AtlasMap, CodexEntry, MapMarker, MapPoint } from '@/src/types';
 import { analyzeRegions, findOrphanMarkers, getMarkerFirstAppearanceChapter, RegionAnalytic } from '@/src/lib/atlasAnalytics';
 import { findBreadcrumbChain, findParentMap } from '@/src/lib/atlasHierarchy';
+import { MapMiniThumbnail, FilterGroup, FilterChip } from './AtlasControls';
+import { useAtlasFilters } from '../hooks/useAtlasFilters';
+import { useAtlasSelection } from '../hooks/useAtlasSelection';
 import { useAtlas } from '../hooks/useAtlas';
 import { useMapImageUpload } from '../hooks/useMapImageUpload';
 import { calculateRelativeDistance } from '@/src/lib/mapGeometry';
@@ -41,36 +44,6 @@ import type { PresenceChapter } from './MarkerSidebar';
 const MapCanvas = lazy(() => import('./MapCanvas'));
 const MarkerSidebar = lazy(() => import('./MarkerSidebar'));
 import { TerritoryListSidebar } from './TerritoryListSidebar';
-
-function MapMiniThumbnail({ blob }: { blob?: Blob }) {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!blob) {
-      setUrl(null);
-      return;
-    }
-    const u = URL.createObjectURL(blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [blob]);
-
-  if (!url) {
-    return (
-      <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 text-slate-400">
-        <MapIcon size={16} />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={url}
-      alt="Thumbnail peta"
-      className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-900"
-    />
-  );
-}
 
 const KIND_BTN: { kind: 'pin' | 'area' | 'route'; icon: typeof MapPin; label: string }[] = [
   { kind: 'pin', icon: MapPin, label: 'Pin' },
@@ -92,7 +65,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
     [projectId],
   );
 
-  const [selectedMapId, setSelectedMapId] = useState<number | undefined>(undefined);
+  const { selectedMapId, setSelectedMapId, drawMode, setDrawMode, selectedMarkerId, setSelectedMarkerId, editingGeometry, setEditingGeometry, draftCount, setDraftCount, sidebarView, setSidebarView } = useAtlasSelection();
   const { maps, markers, mapsLoading, createMap, renameMap, setMapImage, deleteMap, addMarker, updateMarker, deleteMarker } = useAtlas(selectedMapId);
   const { process, processing, error: uploadError } = useMapImageUpload();
 
@@ -111,10 +84,6 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
     [projectId],
   );
 
-  const [drawMode, setDrawMode] = useState<DrawMode>(null);
-  const [selectedMarkerId, setSelectedMarkerId] = useState<number | undefined>(undefined);
-  const [editingGeometry, setEditingGeometry] = useState(false);
-  const [draftCount, setDraftCount] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [showSpeedModal, setShowSpeedModal] = useState(false);
   const [showHierarchyModal, setShowHierarchyModal] = useState(false);
@@ -125,7 +94,6 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const [fogMode, setFogMode] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [sidebarView, setSidebarView] = useState<'list' | 'detail'>('list');
   const [showMapMenu, setShowMapMenu] = useState(false);
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const [editingMapName, setEditingMapName] = useState(false);
@@ -167,14 +135,9 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const reuploadRef = useRef<HTMLInputElement>(null);
-  
+
   // Ambil travelSpeeds dari project
   const { project } = useProject();
-
-  // Filter: set jenis/kategori/faksi yang DIMATIKAN (data tetap penuh).
-  const [offKinds, setOffKinds] = useState<Set<string>>(new Set());
-  const [offCategories, setOffCategories] = useState<Set<string>>(new Set());
-  const [offFactions, setOffFactions] = useState<Set<string>>(new Set());
 
   // Peta aktif = pilihan eksplisit atau peta pertama.
   const activeMap = useMemo(
@@ -234,47 +197,12 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
     }
   }, [pendingAtlasTarget, clearPendingAtlasTarget]);
 
-  // Mode edit hanya berlaku untuk penanda yang sedang dipilih → matikan saat pilihan
-  // berganti / hilang (mis. klik penanda lain, tutup sidebar, mulai menggambar).
-  useEffect(() => {
-    setEditingGeometry(false);
-  }, [selectedMarkerId]);
-
-  const entryById = useMemo(() => {
-    const m = new Map<number, CodexEntry>();
-    for (const e of codexEntries) if (e.id != null) m.set(e.id, e);
-    return m;
-  }, [codexEntries]);
+  const { offKinds, setOffKinds, offCategories, setOffCategories, offFactions, setOffFactions, entryById, presentCategories, presentFactions, visibleMarkers } = useAtlasFilters(markers, codexEntries);
 
   const colorFor = useMemo(
     () => (mk: MapMarker) => resolveMarkerColor(mk.kind, mk.color, mk.codexId != null ? entryById.get(mk.codexId) : undefined, categories),
     [entryById, categories],
   );
-
-  // Kategori & faksi yang HADIR di antara penanda peta ini (untuk daftar filter).
-  const { presentCategories, presentFactions } = useMemo(() => {
-    const cats = new Set<string>();
-    const facs = new Set<string>();
-    for (const mk of markers) {
-      const e = mk.codexId != null ? entryById.get(mk.codexId) : undefined;
-      if (!e) continue;
-      cats.add(e.category);
-      if (e.factionTag && e.factionTag.trim()) facs.add(e.factionTag.trim());
-    }
-    return { presentCategories: [...cats], presentFactions: [...facs] };
-  }, [markers, entryById]);
-
-  const visibleMarkers = useMemo(() => {
-    return markers.filter((mk) => {
-      if (offKinds.has(mk.kind)) return false;
-      const e = mk.codexId != null ? entryById.get(mk.codexId) : undefined;
-      if (e) {
-        if (offCategories.has(e.category)) return false;
-        if (e.factionTag && offFactions.has(e.factionTag.trim())) return false;
-      }
-      return true;
-    });
-  }, [markers, offKinds, offCategories, offFactions, entryById]);
 
   // Teks bab polos di-memo (ref stabil) untuk feed worker.
   const presenceChaptersPlain = useMemo(() => {
@@ -306,14 +234,14 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const presenceChapters: PresenceChapter[] = useMemo(() => {
     if (!presenceIndex) return [];
     let indices: number[] = [];
-    
+
     if (selectedRegionAnalytic) {
       indices = selectedRegionAnalytic.associatedChapters;
     } else if (selectedEntry?.id) {
       const rec = presenceIndex.index.byEntity.get(selectedEntry.id);
       if (rec) indices = rec.indices;
     }
-    
+
     return indices.map((i) => ({
       id: presenceIndex.chapters[i].id,
       title: presenceIndex.chapters[i].title,
@@ -420,7 +348,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
 
   const handleCreateGeometry = async (geometry: MapPoint | MapPoint[]) => {
     if (!activeMap?.id || !drawMode) return;
-    
+
     if (drawMode === 'scale' && Array.isArray(geometry) && geometry.length === 2) {
       setDrawMode(null);
       // Hitung jarak relatif lalu buka modal
@@ -743,7 +671,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
             <Icon size={14} /> {label}
           </button>
         ))}
-        
+
         <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />
 
         {/* Menu Popover: Ukur & Skala */}
@@ -1208,7 +1136,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
           )
         )}
       </div>
-      
+
       {showSpeedModal && (
         <TravelSpeedSettingsModal
           projectId={projectId}
@@ -1216,7 +1144,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
           onClose={() => setShowSpeedModal(false)}
         />
       )}
-      
+
       {pendingScaleDist !== null && activeMap?.id && (
         <ScaleCalibrationModal
           mapId={activeMap.id}
@@ -1291,28 +1219,5 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
         document.body
       )}
     </div>
-  );
-}
-
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className="font-bold uppercase tracking-wider text-slate-400">{title}</span>
-      <div className="flex flex-wrap gap-1">{children}</div>
-    </div>
-  );
-}
-
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn('px-2 py-0.5 rounded-md border',
-        active
-          ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300'
-          : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-400 line-through')}
-    >
-      {children}
-    </button>
   );
 }

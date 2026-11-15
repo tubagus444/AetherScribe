@@ -155,3 +155,18 @@ null/undefined dan catch tanpa narrowing ditolak. Typecheck umum/strict,
 87 berkas/782 tes dan build lulus lokal; tidak mengukur ulang coverage atau
 menjalankan ulang browser/production/offline. Cakupan, pengecualian lama dan cara
 memperluas check ada di [laporan F28.3](audits/2026-11-15-f28-strict.md).
+
+
+F28.5 menambahkan tes hook Atlas/filter kategori-faksi dan service CRUD/cleanup,
+serta satu skenario native Leaflet/IndexedDB melalui `e2e/atlasFixture.tsx`.
+Skenario menggambar pin/area/rute (Enter untuk selesai), drag pin dan persistence,
+filter tanpa penghapusan, label tersimpan berupa markup yang tetap inert, serta
+revoke URL Blob kanvas/thumbnail saat unmount. Fixture tidak dibundle ke production.
+Ini belum mencakup upload, portal/deep-link atau pergantian proyek melalui UI
+Atlas lengkap; handler dan pengaman jsdom/domain sebelumnya dipertahankan.
+
+Skenario native kedua membuka AtlasPanel produksi, membuat pin melalui toolbar,
+memuat ulang peta dan menghapus pin lewat MarkerSidebar. Karakterisasi yang sama
+lulus pada source AtlasPanel/useAtlas baseline 827c36b dan setelah ekstraksi;
+source dipulihkan setelah probe. Verifikasi F28.5: typecheck umum/strict,
+89 berkas/785 tes, build dan 18 browser tests lulus lokal. Coverage tidak diukur ulang.

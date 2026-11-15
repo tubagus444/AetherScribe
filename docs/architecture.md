@@ -240,3 +240,33 @@ registry AbortController dan cleanup aksi. `resultParsing.ts` menangani sanitasi
 finding/audit dan pembersihan wrapper respons. Modul internal tidak mengimpor facade,
 sehingga tidak membentuk siklus import. State breaker/controller tetap satu instance
 per modul; dedup rewrite tetap di facade. Kontrak publik dan kebijakan privasi tetap.
+
+## Pemisahan Atlas F28.5
+
+AtlasPanel tetap menjadi orchestrator data, navigasi/deep-link dan modal.
+`useAtlasSelection` memiliki state peta/penanda, mode gambar/edit dan reset edit
+saat seleksi berubah. `useAtlasFilters` memiliki filter jenis/kategori/faksi,
+lookup Codex serta daftar penanda terlihat tanpa mengubah data sumber.
+`AtlasControls` memiliki thumbnail (termasuk cleanup URL Blob) dan kontrol filter.
+`useAtlas` mempertahankan live-query dan membentuk operasi stabil per proyek
+melalui `createAtlasOperations` di `src/services/atlasOperations.ts`.
+Operasi penghapusan peta tetap mendelegasikan cleanup relasi ke entityDeletion F11.
+Leaflet/propsRef, geometri relatif, ikon DOM teks, dan worker presence tetap
+memakai implementasi yang sama. Tidak ada perubahan skema atau dependency.
+
+Pengaman F28.5: unit filter/selections dan CRUD/domain cleanup; fixture native
+`e2e/atlasFixture.tsx` menggunakan MapCanvas, hook dan service produksi dengan
+IndexedDB/Blob asli untuk menggambar pin/area/rute, drag pin, filter jenis,
+label markup inert dan cleanup URL saat unmount. Penyelesaian area/rute diuji
+melalui Enter. Fixture tidak menggantikan alur upload/modal/sidebar penuh;
+portal/deep-link dan pergantian proyek UI belum diuji browser menyeluruh.
+Tes jsdom MapCanvas/geometry, domain deletion serta native backup/restore yang
+sudah ada tetap menjadi pengaman tambahan. Panel toolbar/modal belum seluruhnya
+dipisahkan; pengurangan tanggung jawab tahap ini terfokus pada state/filter,
+CRUD dan kontrol bersama.
+
+Skenario native kedua membuka AtlasPanel produksi, membuat pin melalui toolbar,
+memuat ulang peta dan menghapus pin lewat MarkerSidebar. Karakterisasi yang sama
+lulus pada source AtlasPanel/useAtlas baseline 827c36b dan setelah ekstraksi;
+source dipulihkan setelah probe. Verifikasi F28.5: typecheck umum/strict,
+89 berkas/785 tes, build dan 18 browser tests lulus lokal. Coverage tidak diukur ulang.
