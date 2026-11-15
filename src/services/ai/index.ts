@@ -1,3 +1,4 @@
+import { record } from '@/src/lib/dataContracts';
 import { readCredential } from './credentialStore';
 import { readProviderPolicy, enforceProviderPolicy } from './providerPolicy';
 import { StoryBibleRule, CodexEntry, ContextDepth, Relationship, ConsistencyFinding } from '@/src/types';
@@ -536,14 +537,14 @@ export async function processChat(params: ChatParams): Promise<string> {
 const MAX_CONSISTENCY_CHARS = 48000;
 
 /** Membersihkan & memvalidasi satu temuan mentah dari model menjadi ConsistencyFinding. */
-function sanitizeFinding(raw: any): ConsistencyFinding | null {
-  if (!raw || typeof raw !== 'object') return null;
+function sanitizeFinding(raw: unknown): ConsistencyFinding | null {
+  if (!record(raw)) return null;
   const quote = typeof raw.quote === 'string' ? raw.quote.trim() : '';
   const explanation = typeof raw.explanation === 'string' ? raw.explanation.trim() : '';
   // Butuh minimal kutipan + penjelasan agar temuan bermakna & bisa dilacak penulis.
   if (!quote || !explanation) return null;
 
-  const severity = ['high', 'medium', 'low'].includes(raw.severity) ? raw.severity : 'medium';
+  const severity = raw.severity === 'high' || raw.severity === 'low' ? raw.severity : 'medium';
   return {
     severity,
     type: typeof raw.type === 'string' && raw.type.trim() ? raw.type.trim() : 'Lainnya',
@@ -605,11 +606,11 @@ export interface CodexAuditFinding {
   suggestion?: string;
 }
 
-function sanitizeAuditFinding(raw: any): CodexAuditFinding | null {
-  if (!raw || typeof raw !== 'object') return null;
+function sanitizeAuditFinding(raw: unknown): CodexAuditFinding | null {
+  if (!record(raw)) return null;
   const issue = typeof raw.issue === 'string' ? raw.issue.trim() : '';
   if (!issue) return null; // tanpa deskripsi masalah, temuan tak bermakna
-  const severity = ['high', 'medium', 'low'].includes(raw.severity) ? raw.severity : 'medium';
+  const severity = raw.severity === 'high' || raw.severity === 'low' ? raw.severity : 'medium';
   return {
     severity,
     type: typeof raw.type === 'string' && raw.type.trim() ? raw.type.trim() : 'Lainnya',
@@ -717,14 +718,14 @@ export async function enrichEntities(
   const arr = parseJsonArray(res);
   const out: EnrichedEntity[] = [];
   for (const raw of arr) {
-    if (!raw || typeof raw !== 'object') continue;
+    if (!record(raw)) continue;
     const rawName = typeof raw.name === 'string' ? raw.name.trim() : '';
     if (!rawName) continue;
     const name = requestedByLower.get(rawName.toLowerCase()) || rawName;
-    const category = ENRICH_CATEGORIES.has(raw.category) ? raw.category : 'other';
+    const category = typeof raw.category === 'string' && ENRICH_CATEGORIES.has(raw.category) ? raw.category : 'other';
     const description = typeof raw.description === 'string' ? raw.description.trim().slice(0, 1000) : '';
     const aliases = Array.isArray(raw.aliases)
-      ? raw.aliases.filter((a: any) => typeof a === 'string' && a.trim()).map((a: string) => a.trim()).slice(0, 10)
+      ? raw.aliases.filter((alias): alias is string => typeof alias === 'string' && !!alias.trim()).map(alias => alias.trim()).slice(0, 10)
       : [];
     out.push({ name, category, description, aliases });
   }

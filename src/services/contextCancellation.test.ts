@@ -14,6 +14,14 @@ beforeAll(async () => {
 afterAll(() => vi.unstubAllGlobals());
 const send = (data: any) => handler({ data } as MessageEvent);
 
+it('F28.2 malformed input returns an error without running tokenizer or model', async () => {
+  encode.mockClear(); posted.mockClear();
+  await send({ type: 'COUNT_TOKENS', id: 991, payload: { text: 42 } });
+  expect(posted).toHaveBeenCalledWith({ id: 991, error: 'Invalid context worker request' });
+  expect(encode).not.toHaveBeenCalled();
+  expect(pipeline).not.toHaveBeenCalled();
+});
+
 it('F22 counts tokens without importing the embedding runtime', async () => {
   await send({ type: 'COUNT_TOKENS', id: 222, payload: { text: 'local only' } });
   expect(posted.mock.calls.some(call => call[0].id === 222 && call[0].result === 1)).toBe(true);
@@ -54,7 +62,7 @@ it('F16 long chunk scans yield and stop at the next cancellation checkpoint', as
     return original.call(this, text);
   });
   try {
-    await send({ type: 'GET_CODEX_MATCHES', id: 5, payload: { chunks: Array.from({ length: 64 }, (_, pos) => ({ pos, text: 'Dragon' })), allCodex: [{ id: 1, projectId: 1, name: 'Dragon', aliases: [] }] } });
+    await send({ type: 'GET_CODEX_MATCHES', id: 5, payload: { chunks: Array.from({ length: 64 }, (_, pos) => ({ pos, text: 'Dragon' })), allCodex: [{ id: 1, projectId: 1, name: 'Dragon', aliases: [], tags: [], category: 'character', description: '' }] } });
     expect(search.mock.calls.length).toBeGreaterThan(0); expect(search.mock.calls.length).toBeLessThan(64);
     expect(posted.mock.calls.some(c => c[0].id === 5)).toBe(false);
   } finally { search.mockRestore(); }

@@ -133,3 +133,14 @@ Native browser memverifikasi migrasi serta statistik header/dashboard sesudah
 flush editor. `npm run test:data-paths` membandingkan hasil fixture kecil/sedang/
 besar dan melaporkan waktu serta working-set heap; tidak perlu key/model nyata.
 CI menyimpan JSON benchmark tanpa ambang timing. Lihat [laporan F23](performance/f23.md).
+
+F28.2: 87 berkas/782 tes, typecheck, build, 16 Chromium tests dan startup/offline
+lulus lokal (15 November 2026). Matriks input/output context dan pesan Orama,
+malformed response/progress, timer cleanup, antrean sesudah input invalid,
+completion/SSE/usage invalid serta input duplikasi bab diuji dengan fixture.
+`src/contracts/f28Contracts.typecheck.ts` otomatis diperiksa oleh `npm run lint`
+di CI; memeriksa kontrak negatif tanpa directive penekan error. Dua probe pada
+source dec2940 membuktikan completion objek dan COUNT_TOKENS dengan input angka
+belum ditolak sebelum perubahan. Snapshot coverage F24 di atas tidak diukur ulang.
+Lihat [rincian F28.2](audits/2026-11-15-f28-contracts.md); provider nyata dan workflow
+Atlas menyeluruh tetap belum tercakup.

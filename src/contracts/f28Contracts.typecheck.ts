@@ -1,0 +1,22 @@
+import type { Chapter } from '@/src/types';
+import type { ChapterListMetadata } from '@/src/lib/chapterMetadata';
+import type { ChapterCreateInput, PersistedChapter } from '@/src/lib/chapterContracts';
+import type { ContextPayloads, ContextResults, ContextWorkerMessage } from '@/src/services/contextProtocol';
+import type { OramaMessage } from '@/src/services/rag/oramaProtocol';
+import type { AIRenderParams } from '@/src/services/ai/types';
+// Compile-only negative contracts, checked by tsc --noEmit (not skipLibCheck).
+type True<T extends true> = T;
+type False<T extends false> = T;
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+type ListIsNotEntity = False<ChapterListMetadata extends Chapter ? true : false>;
+type EntityNeedsId = False<Chapter extends PersistedChapter ? true : false>;
+type CreateRejectsExistingEntity = False<Chapter extends ChapterCreateInput ? true : false>;
+type CreateHasNoId = True<Equal<NonNullable<ChapterCreateInput['id']>, never>>;
+type CreateHasNoDerivedTuple = True<Equal<NonNullable<ChapterCreateInput['listMetadata']>, never>>;
+type TaskCoverage = True<Equal<keyof ContextPayloads, keyof ContextResults>>;
+type InvalidTokenRequest = False<{ type: 'COUNT_TOKENS'; id: 1; payload: { projectId: 1 } } extends ContextWorkerMessage ? true : false>;
+type InvalidCancel = False<{ type: 'CANCEL'; cancelId: 1 } extends ContextWorkerMessage ? true : false>;
+type TokenIsNumber = True<Equal<ContextResults['COUNT_TOKENS'], number>>;
+type InvalidOrama = False<{ type: 'SEARCH_WITH_SCORES'; id: 1; payload: { query: ''; limit: 5 } } extends OramaMessage ? true : false>;
+type RetryErrorIsUnknown = True<Equal<Parameters<NonNullable<AIRenderParams['onRetry']>>[1], unknown>>;
+export {};

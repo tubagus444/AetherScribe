@@ -57,6 +57,11 @@ AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reakt
 
 ## 3. Komputasi Berat di Web Worker
 
+Kontrak data context/Orama, respons AI dan pemisahan metadata/input bab dijelaskan
+di [F28.2](audits/2026-11-15-f28-contracts.md). Payload dan hasil tiap task worker
+memakai tipe bersama dan pemeriksaan runtime; JSON provider diperlakukan sebagai
+unknown sebelum teks/usage/error dinormalisasi.
+
 Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI freezing*), tugas-tugas berat dieksekusi di background Web Worker:
 
 1. **`src/services/contextWorker.ts`** (dikendalikan `contextEngine.ts`):

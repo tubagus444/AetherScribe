@@ -36,7 +36,7 @@ export interface AIRenderParams {
    */
   cacheable?: boolean;
   onChunk?: (chunk: string) => void;
-  onRetry?: (attempt: number, error: any, provider: string) => void;
+  onRetry?: (attempt: number, error: unknown, provider: string) => void;
 }
 
 export interface GenerateParams {
@@ -52,7 +52,7 @@ export interface GenerateParams {
   ragContextText?: string;
   stream?: boolean;
   onChunk?: (chunk: string) => void;
-  onRetry?: (attempt: number, error: any, provider: string) => void;
+  onRetry?: (attempt: number, error: unknown, provider: string) => void;
 }
 
 export interface ConsistencyParams {
@@ -73,7 +73,7 @@ export interface ConsistencyParams {
    * inline memakai 'consistency-inline' agar tak saling membatalkan dengan panel.
    */
   actionType?: string;
-  onRetry?: (attempt: number, error: any, provider: string) => void;
+  onRetry?: (attempt: number, error: unknown, provider: string) => void;
 }
 
 export interface ChatParams {
@@ -88,7 +88,7 @@ export interface ChatParams {
   sessionMode?: SessionMode;
   stream?: boolean;
   onChunk?: (chunk: string) => void;
-  onRetry?: (attempt: number, error: any, provider: string) => void;
+  onRetry?: (attempt: number, error: unknown, provider: string) => void;
   /**
    * Instruksi tambahan yang ditempelkan di AKHIR systemInstruction (mis. protokol
    * blok `codex-draft` di Lokakarya). Sengaja terpisah dari knowledge base agar

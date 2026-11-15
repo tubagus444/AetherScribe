@@ -1,4 +1,6 @@
-import { cancelContextRequest, type ContextTaskType, type ContextWorkerMessage } from './contextProtocol';
+import { chapterIdentity } from '@/src/lib/chapterContracts';
+import { cancelContextRequest, record, isContextProgress, validContextResult, type SceneSearchHit, type ContextPayloads, type ContextResults, type ContextTaskType, type ContextWorkerMessage } from './contextProtocol';
+export type { SceneSearchHit } from './contextProtocol';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -16,7 +18,7 @@ import type { PacingReport, ChapterTensionInput } from '@/src/lib/pacingHeatmap'
 // Worker instance and communication state
 let worker: Worker | null = null;
 let requestId = 0;
-const pendingRequests = new Map<number, { resolve: (val: any) => void, reject: (err: any) => void, resetTimeout: () => void }>();
+const pendingRequests = new Map<number, { resolve: (val: unknown) => void, reject: (err: unknown) => void, resetTimeout: () => void }>();
 
 const WORKER_IDLE_TIMEOUT_MS = 30000;
 
@@ -39,8 +41,11 @@ function getWorker(): Worker {
     }
     worker = new ContextWorker();
     worker.onmessage = (e: MessageEvent) => {
-      const { id, result, error, type, payload } = e.data;
+      const data: unknown = e.data;
+      if (!record(data)) { terminateWorker(); return; }
+      const { id, result, error, type, payload } = data;
       if (type === 'PROGRESS') {
+        if (!isContextProgress(payload)) { terminateWorker(); return; }
         window.dispatchEvent(new CustomEvent('semantic-indexing-progress', { detail: payload }));
         // Heartbeat: worker sedang bekerja (unduh model / embedding) → perpanjang timeout
         // SEMUA request tertunda. Tanpa ini, query sah yang antre di belakang indexing
@@ -48,10 +53,11 @@ function getWorker(): Worker {
         pendingRequests.forEach((p) => p.resetTimeout());
         return;
       }
+      if (typeof id !== 'number') { terminateWorker(); return; }
       const deferred = pendingRequests.get(id);
       if (deferred) {
         pendingRequests.delete(id);
-        if (error) deferred.reject(new Error(error));
+        if (error !== undefined) deferred.reject(new Error(typeof error === 'string' ? error : 'Invalid worker error'));
         else deferred.resolve(result);
       }
     };
@@ -72,7 +78,7 @@ function getWorker(): Worker {
   return worker;
 }
 
-function sendToWorker(type: ContextTaskType, payload: any): Promise<any> {
+function sendToWorker<K extends ContextTaskType>(type: K, payload: ContextPayloads[K]): Promise<ContextResults[K]> {
   const id = ++requestId;
   return new Promise((resolve, reject) => {
     // Timeout IDLE (bukan sejak-mulai): 30 dtk tanpa AKTIVITAS worker apa pun. Di-reset
@@ -96,7 +102,8 @@ function sendToWorker(type: ContextTaskType, payload: any): Promise<any> {
     pendingRequests.set(id, {
       resolve: (val) => {
         clearTimeout(timeoutId);
-        resolve(val);
+        if (validContextResult(type, val)) resolve(val);
+        else reject(new Error('Invalid context worker result'));
       },
       reject: (err) => {
         clearTimeout(timeoutId);
@@ -109,7 +116,7 @@ function sendToWorker(type: ContextTaskType, payload: any): Promise<any> {
     });
 
     try {
-      getWorker().postMessage({ type, id, payload } satisfies ContextWorkerMessage);
+      getWorker().postMessage({ type, id, payload });
     } catch (err) {
       clearTimeout(timeoutId);
       pendingRequests.delete(id);
@@ -174,7 +181,7 @@ export async function clearEmbeddingCache() {
  */
 export async function getEntryAppearances(entry: CodexEntry, projectId: number): Promise<number[]> {
   const chapters = await db.chapters.where('projectId').equals(projectId).toArray();
-  return sendToWorker('SCAN_APPEARANCES', { entry, chapters });
+  return sendToWorker('SCAN_APPEARANCES', { entry, chapters: chapters.map(chapter => ({ id: chapterIdentity(chapter), content: chapter.content })) });
 }
 
 /**
@@ -196,13 +203,6 @@ export async function getRelevantBibleRules(
 
 // ---- Pencarian Semantik naskah ---------------------------------------------
 
-export interface SceneSearchHit {
-  chapterId: number;
-  chunkIndex: number;
-  snippet: string;
-  score: number;
-}
-
 /**
  * Memicu indexing embedding seluruh adegan naskah (fire-and-forget). Aman dipanggil
  * berulang: worker mengabaikan bila indexing sedang berjalan, dan hanya meng-embed
@@ -213,10 +213,10 @@ export async function indexManuscript(projectId: number): Promise<void> {
   const chapters = await db.chapters.where('projectId').equals(projectId).toArray();
   const payload = {
     projectId,
-    chapters: chapters.map(c => ({ id: c.id, content: c.content || '' })),
+    chapters: chapters.map(c => ({ id: chapterIdentity(c), content: c.content || '' })),
   };
   // Fire-and-forget: TANPA id → worker tak membalas & tak terikat timeout 30d.
-  getWorker().postMessage({ type: 'INDEX_MANUSCRIPT', payload });
+  getWorker().postMessage({ type: 'INDEX_MANUSCRIPT', payload } satisfies ContextWorkerMessage);
 }
 
 /** Mencari adegan yang paling dekat maknanya dengan query (nol token, lokal). */

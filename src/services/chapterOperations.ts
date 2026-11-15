@@ -1,3 +1,4 @@
+import { chapterCreateInput, type ChapterCreateInput } from '@/src/lib/chapterContracts';
 import { domainTables, removeChapterRelations, notifyDeletedChapters } from './entityDeletion';
 import { db } from '@/src/db';
 import type { Chapter } from '@/src/types';
@@ -15,13 +16,11 @@ export async function changeChapters(projectId: number, action: 'add' | 'duplica
     let result: number | undefined;
     if (action === 'add' || action === 'duplicate') {
       const source = action === 'duplicate' ? rows[index] : undefined;
-      const row: Chapter = source
-        ? { ...source, title: `${source.title} (Copy)`, lastModified: Date.now() }
+      const row: ChapterCreateInput = source
+        ? { ...chapterCreateInput(source), title: `${source.title} (Copy)`, lastModified: Date.now() }
         : { projectId, title: `Chapter ${rows.length + 1}`, content: '', summary: '', status: 'outline', order: rows.length, lastModified: Date.now() };
-      delete row.id;
       result = await db.chapters.add(row) as number;
-      row.id = result;
-      rows.splice(source ? index + 1 : rows.length, 0, row);
+      rows.splice(source ? index + 1 : rows.length, 0, { ...row, id: result });
     } else if (action === 'delete') {
       await removeChapterRelations(projectId, chapterId!);
       await db.chapters.delete(chapterId!);

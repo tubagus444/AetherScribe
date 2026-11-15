@@ -25,3 +25,8 @@ Laporan audit adalah snapshot temuan, bukan daftar perbaikan yang sudah diterapk
 ## Arsip
 
 Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan keputusan audit terdahulu. Dokumen tersebut bukan tracker aktif dan tidak diubah oleh pencatatan audit baru.
+
+## Inventaris sebelum refactor F28
+
+- [F28.1: kontrak, dependensi, ekspor publik dan gap tes (15 November 2026)](audits/2026-11-15-f28-inventory.md). Snapshot dasar untuk pekerjaan bertahap; status aktif tetap di ROADMAP.
+- [F28.2: kontrak data worker, AI dan bab (15 November 2026)](audits/2026-11-15-f28-contracts.md). Sumber tipe bersama, penolakan data invalid, pengaman dan batas validasi.

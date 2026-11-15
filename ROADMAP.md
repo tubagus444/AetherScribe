@@ -209,6 +209,46 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Dokumentasi: docs/features.md, docs/architecture.md, docs/api.md, docs/testing.md, README, changelog dan aturan AI/settings. Batas: bukan perlindungan dari XSS/akses profil; sesi dapat dipulihkan browser; clear tidak mencabut key di provider/env, tab lain atau request/retry berjalan; log lama di DB perlu clear manual/retensi.
 - [ ] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).
 
+### Urutan kerja F28 (bertahap)
+
+Rencana 14 November 2026. Status per tahap mengikuti bukti di bawah; tahap selain F28.1 dan F28.2 masih belum
+diimplementasikan. Rencana ini tidak menutup F28 induk. Sasaran utamanya
+adalah memperjelas kontrak dan tanggung jawab kode dengan perilaku aplikasi tetap.
+Fondasi yang sudah ada (service domain F11, protocol F16, metadata F23) diperkuat,
+bukan dibuat ulang.
+
+| Urutan | Subitem | Lingkup konkret | Syarat selesai |
+|---|---|---|---|
+| 1 | F28.1 - Inventaris dan pengaman (selesai 15 Nov 2026) | Petakan any/cast/ignore, dependensi, ekspor publik dan tes pada jalur DB, worker, AI, Atlas. Tentukan daftar modul awal dan gap tes perilaku penting sebelum kode dipindah. | Baseline typecheck/tes/build dan daftar risiko/kontrak tercatat; tidak ada perubahan fitur. |
+| 2 | F28.2 - Kontrak data pada batas modul (selesai 15 Nov 2026) | Bedakan metadata daftar, entitas lengkap, input operasi dan hasil query. Lengkapi payload/response tiap pesan context/Orama worker. Gunakan unknown + pemeriksaan bentuk pada respons provider/error. | Kontrak bersama sender/receiver, matriks input/output dan pengaman tipe negatif lulus; proyeksi tanpa content ditolak sebagai entitas penuh. |
+| 3 | F28.3 - Pemeriksaan strict bertahap | Mulai kontrak/helper yang dependensinya terkendali, lalu tangani modul/dependensi yang ikut diperiksa. Perketat null/undefined dan implicit any melalui konfigurasi/check khusus yang dijalankan CI. | Cakupan strict awal lulus tanpa menutupi error memakai any, non-null assertion atau ts-ignore baru; progres cakupan tercatat. |
+| 4 | F28.4 - Pisahkan layanan AI | Pisahkan settings/provider configuration, pembentukan konteks, dispatch/retry/cancel, dan parsing hasil dari facade. Pertahankan entry point publik dan service kebijakan/kredensial yang sudah ada. | Regresi streaming/retry/abort/consent/log/parameter nol dan ringkasan tetap lulus; konsumen fitur tidak perlu mengganti alur. |
+| 5 | F28.5 - Pisahkan Atlas | Tambahkan tes interaksi yang masih kurang sebelum ekstraksi. Pisahkan state/filter/seleksi ke hook, operasi map/marker ke service domain, dan bagian UI ke komponen kecil. Tetap gunakan cleanup domain F11. | Pin/area/rute, edit geometri, deep link, tooltip aman, delete/unlink dan restore tetap bekerja; tidak ada perubahan visual/data tanpa tes yang sesuai. |
+| 6 | F28.6 - Pengaman pemeliharaan dan penutupan | Audit ulang ekspor/dependensi setelah pemisahan; hapus hanya yang terbukti tidak digunakan. Jalankan strict check di CI dan tetapkan aturan any/ignore pada modul yang sudah dirapikan. Perbarui dokumentasi serta bandingkan dengan baseline. | Typecheck/build/unit/browser/check strict lulus, tanggung jawab modul jelas, pengecualian tersisa dijelaskan dan semua acceptance F28 ditinjau. |
+
+**Bukti F28.1 (15 November 2026):** inventaris AST dan peta kontrak/dependensi,
+ekspor publik, pengaman serta gap sebelum refactor ada di
+[laporan F28.1](docs/audits/2026-11-15-f28-inventory.md) dan snapshot JSON terkait.
+Baseline source dec2940: 272 file non-test, 247 explicit any, 266 assertion,
+220 non-null; tidak ada ts-ignore/nocheck/expect-error dalam lingkup scan.
+82 berkas/738 tes, 16 Chromium tests, typecheck/build dan diff-check lulus lokal.
+Tahap inventaris tidak mengubah runtime/strict/schema.
+F28 induk tetap terbuka. Perubahan rencana F28 dari sesi sebelumnya dipertahankan.
+
+**Bukti F28.2 (15 November 2026):** kontrak payload/hasil 12 task context dan
+pesan Orama, validasi input/hasil/progress, respons AI unknown dengan parser
+teks/usage/error, serta pemisahan metadata/input create/identitas bab tersimpan.
+Pengaman tipe negatif, typecheck, 87 berkas/782 tes, build, 16 tes browser dan
+startup/offline lulus. Dua probe pada source dec2940 gagal sebelum guard dan lulus
+sesudah perbaikan. Lihat [kontrak dan batas validasi F28.2](docs/audits/2026-11-15-f28-contracts.md).
+Skema/dependensi tetap; strict bertahap dan pemisahan modul belum dimulai.
+
+**Batch yang disarankan:** F28.1 + F28.2 selesai; F28.3 sesudah kontrak stabil;
+F28.4 dan F28.5 masing-masing dalam commit/batch terpisah; F28.6 terakhir.
+Strict global menjadi target lanjutan setelah ketergantungan siap, bukan diaktifkan
+sekaligus di awal. Daftar jumlah any hanya indikator: menghapusnya lewat cast
+atau memindahkan baris tanpa memperjelas tanggung jawab tidak dianggap selesai.
+
 ### Format bukti penyelesaian
 
 Tambahkan di bawah item terkait setelah dikerjakan:

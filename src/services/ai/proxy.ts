@@ -1,3 +1,5 @@
+import { assertAIProvider } from './providerTypes';
+import { object, parseUsage, extractCompleteText, extractProviderError, type AIUsage } from './responseContracts';
 import { enforceProviderPolicy } from './providerPolicy';
 import { readAIStream } from './sse';
 import { AIRenderParams } from '@/src/services/ai/types';
@@ -14,6 +16,7 @@ function historyText(h: { role: string; parts: { text: string }[] }): string {
 }
 
 export async function callProxy(provider: string, params: AIRenderParams, apiKey?: string): Promise<string> {
+  assertAIProvider(provider);
   enforceProviderPolicy(provider);
   const history = (params.history || []).slice(-MAX_PROXY_HISTORY);
 
@@ -215,7 +218,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
   }
 
   try {
-    let usageData: any = null;
+    let usageData: AIUsage | null = null;
 
     if (params.stream) {
       const reader = response.body?.getReader();
@@ -236,9 +239,9 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
       return completeText;
     }
 
-    const data = await response.json();
-    if (data.usage) usageData = data.usage;
-    if (data.usageMetadata) usageData = data.usageMetadata;
+    const data = object(await response.json() as unknown);
+    if (data.usage) usageData = parseUsage(data.usage);
+    if (data.usageMetadata) usageData = parseUsage(data.usageMetadata);
 
     const completeText = extractCompleteText(provider, data);
     if (!completeText) {
@@ -260,13 +263,6 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
   }
 }
 
-/** Mengambil teks hasil dari berbagai bentuk respons provider dengan aman. */
-function extractCompleteText(provider: string, data: any): string {
-  if (provider === 'claude') return data?.content?.[0]?.text ?? '';
-  if (provider === 'google') return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  return data?.choices?.[0]?.message?.content ?? '';
-}
-
 /**
  * server.ts membungkus error provider sebagai { error: "<teks/JSON mentah>" }.
  * Fungsi ini mengupas pembungkus itu untuk mendapatkan pesan asli yang berguna.
@@ -274,23 +270,22 @@ function extractCompleteText(provider: string, data: any): string {
 function extractErrorMessage(errorText: string): string {
   let inner = errorText;
   try {
-    const outer = JSON.parse(errorText);
-    if (typeof outer?.error === 'string') inner = outer.error;
-    else if (typeof outer?.error?.message === 'string') return outer.error.message;
-    else if (typeof outer?.message === 'string') return outer.message;
+    const outer: unknown = JSON.parse(errorText);
+    const message = extractProviderError(outer);
+    if (message) inner = message;
   } catch {
     return errorText;
   }
   // 'inner' bisa berupa JSON provider asli, mis. {"error":{"message":"..."}}
   try {
-    const parsed = JSON.parse(inner);
-    return parsed?.error?.message || parsed?.message || inner;
+    const parsed: unknown = JSON.parse(inner);
+    return extractProviderError(parsed) || inner;
   } catch {
     return inner;
   }
 }
 
-function logUsageToDB(params: AIRenderParams, provider: string, usage: any, completeText: string) {
+function logUsageToDB(params: AIRenderParams, provider: string, usage: AIUsage | null, completeText: string) {
   // Estimate tokens if usage missing. Sertakan cachedContext (KB, dipisah dari
   // systemInstruction di P0) DAN riwayat chat agar estimasi fallback tak meremehkan
   // ukuran prompt (#P4). Riwayat dihitung dari MAX_PROXY_HISTORY pesan terakhir — persis

@@ -1,6 +1,6 @@
 import { visitSceneEmbeddings } from './sceneQueries';
 import { StableTopK } from '@/src/lib/stableTopK';
-import type { ContextWorkerMessage } from './contextProtocol';
+import { isContextRequest, validContextResult, record, type ContextResults, type ContextTaskType } from './contextProtocol';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -568,7 +568,11 @@ async function searchManuscript(projectId: number, query: string, topK: number, 
 
 // Worker message listener
 self.onmessage = async (e: MessageEvent) => {
-  const message = e.data as ContextWorkerMessage;
+  const message: unknown = e.data;
+  if (!isContextRequest(message)) {
+    if (record(message) && typeof message.id === 'number') self.postMessage({ id: message.id, error: 'Invalid context worker request' });
+    return;
+  }
   if (message.type === 'CANCEL') {
     const cancelId = message.payload?.cancelId;
     if (Number.isSafeInteger(cancelId) && activeIds.has(cancelId)) cancelledIds.add(cancelId);
@@ -588,7 +592,7 @@ self.onmessage = async (e: MessageEvent) => {
   try {
     await new Promise(resolve => setTimeout(resolve, 0));
     checkCancelled(id);
-    let result;
+    let result: ContextResults[ContextTaskType];
     switch (type) {
       case 'SEARCH_MANUSCRIPT':
         result = await searchManuscript(payload.projectId, payload.query, payload.topK ?? 12, id);
@@ -638,7 +642,7 @@ self.onmessage = async (e: MessageEvent) => {
         const aliasesRegex = (entry.aliases || []).map((a: string) => getBoundaryRegex(a));
         
         result = chapters
-          .filter((ch: any) => {
+          .filter(ch => {
             // Strip tag HTML agar tak ada false-match di dalam tag/atribut. (C6)
             const lowerContent = (ch.content || '').replace(/<[^>]*>/g, ' ').toLowerCase();
             // Reset lastIndex for test() because the regex is global/cached
@@ -649,7 +653,7 @@ self.onmessage = async (e: MessageEvent) => {
               return r.test(lowerContent);
             });
           })
-          .map((ch: any) => ch.id);
+          .map(ch => ch.id);
         break;
       case 'COUNT_TOKENS':
         result = countTokens(payload.text, payload.model);
@@ -727,6 +731,7 @@ self.onmessage = async (e: MessageEvent) => {
       return;
     }
 
+    if (!validContextResult(type, result)) throw new Error('Invalid context result');
     self.postMessage({ id, result });
   } catch (error: any) {
     if (error instanceof CancelledError) {

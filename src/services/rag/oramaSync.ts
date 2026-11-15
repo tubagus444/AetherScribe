@@ -1,3 +1,4 @@
+import { validOramaResult, isOramaMessage, isOramaReply, type OramaPayloads, type OramaSearch, type OramaResults, type OramaMessage } from './oramaProtocol';
 import { CodexEntry } from '@/src/types';
 import { db } from '@/src/db';
 
@@ -7,8 +8,8 @@ let messageIdCounter = 0;
 const SEARCH_TIMEOUT_MS = 15000;
 
 interface PendingRequest {
-  resolve: (val: any) => void;
-  reject: (err: any) => void;
+  resolve: (val: unknown) => void;
+  reject: (err: unknown) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 }
 const pendingRequests = new Map<number, PendingRequest>();
@@ -66,20 +67,28 @@ function getWorker(): Worker {
     };
 
     worker.onmessage = (e) => {
-      const { type, id, result, error, op, payload, retry } = e.data;
-      if (type === 'SEARCH_RESULT' && id !== undefined && pendingRequests.has(id)) {
+      const data: unknown = e.data;
+      if (!isOramaReply(data)) { rejectAllPending('Invalid Orama response'); return; }
+      const type = data.type;
+      const id = 'id' in data ? data.id : undefined;
+      const result = 'result' in data ? data.result : undefined;
+      const error = 'error' in data ? data.error : undefined;
+      if (type === 'SEARCH_RESULT' && typeof id === 'number' && pendingRequests.has(id)) {
         const pending = pendingRequests.get(id)!;
         clearTimeout(pending.timeoutId);
         pendingRequests.delete(id);
-        if (error) pending.reject(new Error(error));
+        if (error !== undefined) pending.reject(new Error(typeof error === 'string' ? error : 'Invalid worker error'));
         else pending.resolve(result);
-      } else if (type === 'MUTATION_ERROR') {
+      } else if (data.type === 'MUTATION_ERROR') {
+        const { op, payload, retry } = data;
         // RG3: kegagalan mutasi indeks tak lagi senyap. Coba ulang SEKALI (menyembuhkan
         // kegagalan transien); bila masih gagal, log peringatan agar drift indeks fallback
         // diketahui (Orama hanya jalur RAG cadangan — tak memblokir fitur utama).
-        const attempt = (retry || 0) + 1;
+        const original = { type: op, payload, retry };
+        if (!isOramaMessage(original)) { rejectAllPending('Invalid mutation response'); return; }
+        const attempt = (original.retry || 0) + 1;
         if (attempt <= 1) {
-          try { getWorker().postMessage({ type: op, payload, retry: attempt }); } catch { /* worker mati */ }
+          try { getWorker().postMessage({ ...original, retry: attempt }); } catch { /* worker mati */ }
         } else {
           console.warn(`[Orama] Mutasi ${op} gagal setelah ${attempt} percobaan; indeks pencarian fallback mungkin melenceng:`, error);
         }
@@ -112,22 +121,22 @@ export const oramaSync = {
     }
   },
   init: (projectId: number) => {
-    getWorker().postMessage({ type: 'INIT_ORAMA', payload: { projectId } });
+    getWorker().postMessage({ type: 'INIT_ORAMA', payload: { projectId } } satisfies OramaMessage);
   },
   indexEntry: (entry: CodexEntry) => {
-    getWorker().postMessage({ type: 'INDEX_ENTRY', payload: { entry } });
+    getWorker().postMessage({ type: 'INDEX_ENTRY', payload: { entry } } satisfies OramaMessage);
   },
   updateEntry: (entry: CodexEntry) => {
-    getWorker().postMessage({ type: 'UPDATE_ENTRY', payload: { entry } });
+    getWorker().postMessage({ type: 'UPDATE_ENTRY', payload: { entry } } satisfies OramaMessage);
   },
   removeEntry: (dexieId: number) => {
-    getWorker().postMessage({ type: 'REMOVE_ENTRY', payload: { dexieId } });
+    getWorker().postMessage({ type: 'REMOVE_ENTRY', payload: { dexieId } } satisfies OramaMessage);
   },
   searchWithScores: (projectId: number, query: string, limit = 5): Promise<{ entry: CodexEntry; score: number }[]> => requestSearch('SEARCH_WITH_SCORES', { projectId, query, limit }),
   search: (query: string, limit: number = 5): Promise<CodexEntry[]> => requestSearch('SEARCH', { query, limit })
 };
 
-async function requestSearch(type: string, payload: unknown): Promise<any> {
+async function requestSearch<K extends OramaSearch>(type: K, payload: OramaPayloads[K]): Promise<OramaResults[K]> {
     await Promise.all(mutationReads);
     return new Promise((resolve, reject) => {
       const id = ++messageIdCounter;
@@ -137,7 +146,7 @@ async function requestSearch(type: string, payload: unknown): Promise<any> {
           reject(new Error('Orama search timed out'));
         }
       }, SEARCH_TIMEOUT_MS);
-      pendingRequests.set(id, { resolve, reject, timeoutId });
+      pendingRequests.set(id, { resolve: value => validOramaResult(type, value) ? resolve(value) : reject(new Error('Invalid Orama search result')), reject, timeoutId });
       try {
         getWorker().postMessage({ id, type, payload });
       } catch (err) {

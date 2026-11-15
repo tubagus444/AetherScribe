@@ -64,3 +64,5 @@ F27: jangan log promptPreview/rawMessage, key atau object error mentah dari prov
 F22: transformers hanya diimpor dalam getEmbedder; jangan tarik runtime model ke boot worker/token counting. Worker build format es memungkinkan chunk dinamis. Pertahankan shared init/retry/cancel dan precache aset lazy; validasi test:startup sesudah build.
 
 F23: searchManuscript harus memakai sceneQueries keyset batch/StableTopK dengan skor dan tie order yang tetap exact. Jangan await timer/model dalam transaksi; checkpoint cancel per batch/row. Auto-index timestamp berasal dari index key, bukan clone seluruh chapter.
+
+F28.2: payload/result context dan pesan/error Orama berasal dari contextProtocol.ts dan rag/oramaProtocol.ts. Pertahankan guard unknown di receiver serta validasi hasil sesuai task; jangan JSON-serialize Map/Set. JSON provider melewati responseContracts.ts; teks wajib string, usage finite nonnegatif dan nol tetap valid. parseJsonArray mengembalikan unknown[]; narrow record/field sebelum dipakai. Pengaman tipe negatif ada di src/contracts/f28Contracts.typecheck.ts dan ikut npm run lint. Lihat docs/audits/2026-11-15-f28-contracts.md untuk batas validasi.

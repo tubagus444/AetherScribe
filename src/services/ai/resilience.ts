@@ -52,7 +52,7 @@ export function rewriteDedupKey(
  * Mengupas respons model (kerap dibungkus code fence/prosa) menjadi array JSON.
  * Melempar bila hasil bukan array valid.
  */
-export function parseJsonArray(raw: string): any[] {
+export function parseJsonArray(raw: string): unknown[] {
   let text = raw.trim();
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenceMatch) text = fenceMatch[1].trim();
@@ -63,7 +63,7 @@ export function parseJsonArray(raw: string): any[] {
     text = text.substring(start, end + 1);
   }
 
-  const data = JSON.parse(text);
+  const data: unknown = JSON.parse(text);
   if (!Array.isArray(data)) throw new Error('Hasil ekstraksi bukan array JSON.');
   return data;
 }

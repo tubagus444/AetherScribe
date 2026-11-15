@@ -23,3 +23,18 @@ it('F16 timeout sends the shared cancel payload, removes pending state, and leav
   state.worker.onmessage({ data: { id: requests[1].id, result: 2 } });
   expect(await second).toBe(2); expect(vi.getTimerCount()).toBe(0);
 });
+it('F28.2 rejects a mismatched result immediately and clears its timer', async () => {
+  vi.useFakeTimers();
+  const pending = countTokens('fixture');
+  const id = state.sent.at(-1).id;
+  state.worker.onmessage({ data: { id, result: { textTokens: 2 } } });
+  await expect(pending).rejects.toThrow('Invalid context worker result');
+  expect(vi.getTimerCount()).toBe(0);
+});
+it('F28.2 invalid progress rejects pending work without extending the heartbeat', async () => {
+  vi.useFakeTimers();
+  const pending = countTokens('fixture');
+  state.worker.onmessage({ data: { type: 'PROGRESS', payload: { type: 'embedding_progress', completed: 'bad', total: 2 } } });
+  await expect(pending).rejects.toThrow('terminated');
+  expect(vi.getTimerCount()).toBe(0);
+});

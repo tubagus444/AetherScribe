@@ -4,7 +4,28 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-15
+
+### [Refactor] F28.2 - Kontrak Data Worker, AI dan Bab
+
+- Definisikan payload/result setiap task context serta pesan/result/error Orama; sender dan receiver memakai kontrak bersama. Periksa input sebelum komputasi dan hasil/progress sebelum diterima, pertahankan cancellation, cleanup timer, antrean, retry serta Map/Set native.
+- Respons JSON/SSE provider masuk sebagai unknown; validasi teks, usage finite nonnegatif (termasuk nol), nama provider dan field error. Parser array model serta callback retry memakai unknown dan narrowing.
+- Bedakan metadata daftar ber-ID, entitas tersimpan dan input pembuatan bab tanpa ID/metadata turunan. Duplikasi membentuk input baru tanpa menyalin identitas. Tambahkan pengaman tipe negatif dan tes boundary; facade publik tetap tersedia.
+- Verifikasi lokal: typecheck, 87 berkas/782 tes, build, 16 Chromium tests dan startup/offline lulus. Dua probe pada source dec2940 gagal sesuai ekspektasi lalu lulus dengan guard. Dokumentasikan kontrak/batasnya; DB v34/dependensi tetap. F28.2 selesai, F28 induk dan F28.3-F28.6 masih terbuka.
+
+### [Docs] F28.1 - Inventaris Kode, Kontrak dan Tes
+
+- Tambahkan inventory-f28.mjs berbasis AST TypeScript serta snapshot per-file dan detail 19 modul fokus. Catat any/assertion/non-null/directive, konfigurasi compiler, import/konsumen dan ekspor publik; bukan bukti dead code atau jumlah bug.
+- Petakan batas DB/worker/AI/Atlas, pengaman yang tersedia dan gap tes sebelum ekstraksi. Rekomendasikan kontrak worker, lalu boundary AI/DTO sebelum strict dan pemisahan modul besar. Pertahankan fondasi F11/F16/F23 serta facade publik.
+- Baseline dec2940: 82 berkas/738 tes, 16 browser tests, typecheck dan build lulus lokal; peringatan build lama tetap ada. Tidak mengubah runtime/schema/dependency/strict; F28.1 selesai, F28 induk dan tahap lanjutan tetap terbuka. Rencana dokumentasi yang belum di-commit sebelumnya tetap dipertahankan.
+
 ## 2026-11-14
+
+### [Docs] Prioritas Pelaksanaan F28
+
+- Uraikan F28 menjadi enam tahap di ROADMAP: inventaris/pengaman, kontrak data, strict bertahap, ekstraksi layanan AI, pemisahan Atlas, lalu guard CI dan review acceptance.
+- Tentukan lingkup serta syarat selesai per tahap; mulai F28.1/F28.2 sebelum strict/refactor besar. Gunakan fondasi F11/F16/F23 yang sudah ada dan pertahankan perilaku aplikasi. F28 tetap terbuka; tidak mengubah runtime atau konfigurasi TypeScript.
+
 
 ### [Perf] F23 — Metadata Terindeks dan Bounded Exact Ranking
 

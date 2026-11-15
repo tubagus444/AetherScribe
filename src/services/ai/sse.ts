@@ -1,6 +1,7 @@
+import { object, array, string, parseUsage, extractProviderError, type AIUsage } from './responseContracts';
 /** Provider-aware SSE reader. Framing/parsing errors must not become empty success. */
-export async function readAIStream(provider: string, reader: ReadableStreamDefaultReader<Uint8Array>, onChunk: (text: string) => void, onData?: () => void): Promise<{ text: string; usage: any }> {
-  let buffer = '', text = '', usage: any = {}, ended = false;
+export async function readAIStream(provider: string, reader: ReadableStreamDefaultReader<Uint8Array>, onChunk: (text: string) => void, onData?: () => void): Promise<{ text: string; usage: AIUsage }> {
+  let buffer = '', text = '', usage: AIUsage = {}, ended = false;
   const decoder = new TextDecoder();
   const frame = (raw: string) => {
     const lines = raw.split('\n');
@@ -8,24 +9,25 @@ export async function readAIStream(provider: string, reader: ReadableStreamDefau
     const payload = lines.filter(line => line.startsWith('data:')).map(line => line.slice(5).replace(/^ /, '')).join('\n');
     if (!payload) return;
     if (payload.trim() === '[DONE]') { ended = true; return; }
-    let data: any;
-    try { data = JSON.parse(payload); } catch { throw new Error('Malformed SSE data frame.'); }
+    let parsed: unknown;
+    let data: Record<string, unknown>;
+    try { parsed = JSON.parse(payload); data = object(parsed); } catch { throw new Error('Malformed SSE data frame.'); }
     if (data.error || data.type === 'error' || event === 'error') {
-      const error = new Error(data.error?.message || data.message || 'AI stream error') as any;
+      const error = Object.assign(new Error(extractProviderError(data) || 'AI stream error'), { code: 'API_ERROR', provider });
       error.code = 'API_ERROR'; error.provider = provider; throw error;
     }
-    usage = { ...usage, ...data.usage, ...data.usageMetadata, ...data.message?.usage, ...data.amazon_bedrock_invocation_metrics };
+    usage = { ...usage, ...parseUsage(data.usage), ...parseUsage(data.usageMetadata), ...parseUsage(object(data.message).usage), ...parseUsage(data.amazon_bedrock_invocation_metrics) };
     let chunk = '';
     if (provider === 'claude') {
-      if (data.type === 'content_block_delta') chunk = data.delta?.text ?? '';
+      if (data.type === 'content_block_delta') chunk = string(object(data.delta).text);
       if (data.type === 'message_stop') ended = true;
     } else if (provider === 'google') {
-      chunk = (data.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? '').join('');
-      if (data.candidates?.[0]?.finishReason) ended = true;
-      if (data.promptFeedback?.blockReason) throw new Error('AI response blocked.');
+      chunk = array(object(object(array(data.candidates)[0]).content).parts).map(part => string(object(part).text)).join('');
+      if (object(array(data.candidates)[0]).finishReason) ended = true;
+      if (object(data.promptFeedback).blockReason) throw new Error('AI response blocked.');
     } else {
-      chunk = data.choices?.[0]?.delta?.content ?? '';
-      if (data.choices?.[0]?.finish_reason) ended = true;
+      chunk = string(object(object(array(data.choices)[0]).delta).content);
+      if (object(array(data.choices)[0]).finish_reason) ended = true;
     }
     if (typeof chunk !== 'string') throw new Error('Invalid SSE text chunk.');
     if (chunk) { text += chunk; onChunk(chunk); }

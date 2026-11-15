@@ -3,7 +3,7 @@ import { countWords } from './utils';
 
 /** Covering index payload: native key cursors can read the list without HTML. */
 export type ChapterListKey = [order: number, title: string, status: ChapterStatus, words: number, modified: number];
-export type ChapterListMetadata = Pick<Chapter, 'id' | 'projectId' | 'title' | 'order' | 'status' | 'lastModified'> & { _computedWordCount: number };
+export type ChapterListMetadata = Pick<Chapter, 'projectId' | 'title' | 'order' | 'status' | 'lastModified'> & { id: number; _computedWordCount: number };
 export const CHAPTER_LIST_INDEX = '[projectId+listMetadata]';
 
 export function chapterListKey(chapter: Chapter, cachedWords?: number): ChapterListKey {
