@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Refactor] F28.4 - Pisahkan Tanggung Jawab Layanan AI
+
+- Ekstrak settings, penyusunan konteks, dispatch/retry/fallback, lifecycle abort dan parsing hasil ke modul internal terpisah. Pertahankan ekspor publik melalui facade index.ts, identitas AIError, state circuit breaker/controller dan dedup rewrite.
+- Pertahankan kebijakan provider/kredensial, pemisahan cachedContext, formatter lore bersama, parameter nol, callback retry dan cleanup pembatalan. Tanpa perubahan skema/dependensi.
+- Perbarui arsitektur dan roadmap; validasi memakai typecheck umum/strict, suite regresi dan build. Cakupan strict tetap bertahap; pemisahan ini tidak menyatakan seluruh layanan AI sudah strict.
+
 ### [Refactor] F28.3 - Pemeriksaan TypeScript Strict Bertahap
 
 - Tambahkan tsconfig.strict.json dan npm run lint:strict; aktifkan strict pada 17 root/26 berkas termasuk dependensi transitif kontrak/helper. Typecheck umum tetap terpisah; belum mengaktifkan strict seluruh aplikasi.

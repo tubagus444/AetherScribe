@@ -229,3 +229,14 @@ dipandang berubah secara konservatif. sceneQueries melakukan keyset getAll batch
 256 dalam satu readonly transaction; contextWorker memakai StableTopK dan tetap
 memeriksa cancel. Tidak ada await timer/model di dalam transaksi ranking. Detail
 schema, benchmark, dan tradeoff: [database](database.md), [F23](performance/f23.md).
+
+## Pemisahan layanan AI F28.4
+
+`src/services/ai/index.ts` mempertahankan facade publik dan prompt tiap aksi.
+Konfigurasi provider/model/kredensial dibaca oleh `settings.ts`; `context.ts`
+menyusun KB caching/RAG dengan formatter lore bersama. `dispatch.ts` memiliki
+AIError, circuit breaker dan dispatch/retry/fallback; `execution.ts` memiliki
+registry AbortController dan cleanup aksi. `resultParsing.ts` menangani sanitasi
+finding/audit dan pembersihan wrapper respons. Modul internal tidak mengimpor facade,
+sehingga tidak membentuk siklus import. State breaker/controller tetap satu instance
+per modul; dedup rewrite tetap di facade. Kontrak publik dan kebijakan privasi tetap.
