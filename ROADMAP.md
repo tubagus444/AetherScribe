@@ -7,7 +7,7 @@ Bukti historis disimpan di [arsip](docs/archive/) dan riwayat perubahan di
 ## Ringkasan status
 
 - **Audit F01-F29: 29 dari 29 item selesai**, termasuk seluruh tahap F28.1-F28.6.
-- **Pekerjaan lanjutan:** L01 selesai; L02-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
+- **Pekerjaan lanjutan:** L01-L02 selesai; L03-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
 - **Verifikasi terbaru:** pengujian lokal Windows/Node 24.15.0 pada F28.6, source
   dasar `c5af3ed`, dicatat dalam commit `7527305`.
 - **CI GitHub:** Ubuntu dan Windows lulus pada commit `7527305`; [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
@@ -20,13 +20,13 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 | Urutan | ID | Pekerjaan | Kriteria selesai | Status |
 |---|---|---|---|---|
 | 1 | L01 | Verifikasi workflow CI di GitHub | Catat run/commit dan hasil job Windows/Ubuntu; diagnosis dan perbaiki kegagalan yang ditemukan. | Selesai 15 Nov 2026 |
-| 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Belum dimulai |
+| 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Selesai 15 Nov 2026 |
 | 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Belum dimulai |
 | 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Belum dimulai |
 | 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Belum dimulai |
 | 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Belum dimulai |
 
-L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 berikutnya menguji instalasi awal/migrasi. L05 dikerjakan dalam
+L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 berikutnya melengkapi alur data melalui UI. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
 Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
 awal tetap memakai mock, kredensial sintetis dan database terisolasi.
@@ -127,3 +127,13 @@ Belum menjadi komitmen implementasi atau pekerjaan aktif:
 - [Katalog fitur](docs/features.md)
 - [Keputusan arsitektur](docs/decisions.md)
 - [Arsip audit dan rencana lama](docs/archive/)
+
+
+## Verifikasi lanjutan L02
+
+Instalasi IndexedDB kosong dan upgrade v17/v33 diuji sebelum React mengisi database.
+Bug proyek bawaan ganda diperbaiki dengan transaksi bootstrap atomik; tes rollback
+storage failure dan retry ditambahkan. Typecheck umum/strict/maintenance,
+90 berkas/787 tes, build dan 21 tes Chromium lulus lokal. Angka ini melengkapi
+snapshot F28.6 di atas; bukan hasil runner GitHub baru. Batas versi/tab/browser
+ada di [laporan L02](docs/audits/2026-11-15-l02-installation.md).

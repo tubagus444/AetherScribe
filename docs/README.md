@@ -38,3 +38,5 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 ## Verifikasi lanjutan
 
 - [L01: hasil CI Windows/Ubuntu untuk commit 7527305](audits/2026-11-15-l01-ci.md). Run, job, artefak dan batas verifikasi.
+
+- [L02: instalasi kosong, migrasi v17/v33 dan bootstrap atomik](audits/2026-11-15-l02-installation.md).

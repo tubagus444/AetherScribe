@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Fix/Test] L02 - Bootstrap Atomik dan Pengujian Instalasi/Migrasi
+
+- Tes browser tanpa seed menemukan dua proyek bawaan pada instalasi kosong. Jadikan ensureDefaultProject atomik pada projects/chapters/bible agar panggilan bersamaan tidak membuat duplikat dan kegagalan insert melakukan rollback; data/migrasi lama tidak diubah.
+- Tambahkan spec native instalasi kosong dan upgrade schema historis v17/v33 sebelum React/current db dimuat, lalu edit/reload naskah. Tambahkan tes concurrency, rollback storage failure dan retry.
+- Perbarui roadmap, database, testing, README dan indeks; schema tetap v34/dependensi tetap. Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes, build dan 21 browser tests lulus. Belum mengklaim run GitHub L02 atau semua versi/data legacy.
+
 ### [Docs] L01 - Verifikasi CI GitHub Windows dan Ubuntu
 
 - Verifikasi run 43696531716 pada commit 7527305: job Ubuntu/Windows dan seluruh step completed/success. Periksa log coverage/browser/maintenance/production serta metadata artefak.

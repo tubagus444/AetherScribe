@@ -318,33 +318,37 @@ db.open().catch((err: any) => {
 
 // Inisialisasi proyek bawaan bila belum ada satu pun proyek di DB.
 export async function ensureDefaultProject() {
-  const count = await db.projects.count();
-  if (count === 0) {
-    const projectId = await db.projects.add({
-      name: 'Novel Tanpa Judul',
-      description: 'Mulailah mahakarya Anda di sini.',
-      createdAt: Date.now(),
-      lastOpened: Date.now(),
-    });
-    
-    await db.chapters.add({
-      projectId,
-      title: 'Bab 1',
-      content: 'Pada suatu hari…',
-      order: 0,
-      lastModified: Date.now(),
-    });
+  // Serialize concurrent bootstrap calls (including StrictMode/multiple tabs).
+  // Roll back the project too if initial chapter or Bible creation fails.
+  return db.transaction('rw', db.projects, db.chapters, db.bible, async () => {
+    const count = await db.projects.count();
+    if (count === 0) {
+      const projectId = await db.projects.add({
+        name: 'Novel Tanpa Judul',
+        description: 'Mulailah mahakarya Anda di sini.',
+        createdAt: Date.now(),
+        lastOpened: Date.now(),
+      });
 
-    await db.bible.add({
-      projectId,
-      key: 'Nada',
-      instruction: 'Gelap dan atmosferik'
-    });
-    
-    return projectId;
-  }
-  const latest = await db.projects.orderBy('lastOpened').reverse().first();
-  return latest?.id;
+      await db.chapters.add({
+        projectId,
+        title: 'Bab 1',
+        content: 'Pada suatu hari…',
+        order: 0,
+        lastModified: Date.now(),
+      });
+
+      await db.bible.add({
+        projectId,
+        key: 'Nada',
+        instruction: 'Gelap dan atmosferik'
+      });
+
+      return projectId;
+    }
+    const latest = await db.projects.orderBy('lastOpened').reverse().first();
+    return latest?.id;
+  });
 }
 
 export async function cleanupAILogs() {

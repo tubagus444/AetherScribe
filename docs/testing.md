@@ -41,7 +41,8 @@ Setiap tes browser membuat context baru tanpa storageState/profile persisten.
 Fixture proyek/bab dimasukkan ke IndexedDB native sebelum React dimuat untuk
 membuat kondisi awal deterministik. Local-only diaktifkan, env key server
 dikosongkan, service worker diblokir dan request browser keluar origin dibatalkan.
-Ini tidak menguji bootstrap DB kosong atau service worker offline.
+Skenario critical.spec ini tidak menguji bootstrap DB kosong; installation.spec L02
+memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 
 ## Inventaris alur kritis
 
@@ -194,3 +195,14 @@ Windows, termasuk typecheck/strict/maintenance, coverage (89 berkas), 18 browser
 tests, data-path, clean production, offline dan upload artefak. Tidak ada perubahan
 kode/workflow atau rerun. HEAD lokal b9a9437 berbeda hanya pada dokumentasi dari
 SHA yang diuji 7527305; tidak mengklaim run tersebut memeriksa commit berikutnya.
+
+
+L02 menambahkan e2e/installation.spec.ts dengan context baru tanpa seed database:
+bootstrap kosong, upgrade v17 dan v33 sebelum React/current db dimuat, edit dan
+reload naskah. Fixture schema lama hanya mengimpor Dexie. Tes kosong mendeteksi
+proyek bawaan ganda pada baseline 5357bd1; transaksi projects/chapters/bible
+memperbaikinya. projectBootstrap menguji concurrency, rollback dan retry.
+Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes, build,
+21 tes Chromium lulus. CI menemukan spec baru melalui npm run test:e2e; belum
+memverifikasi run GitHub untuk L02. Coverage tidak diukur ulang.
+[Bukti dan batas migrasi](audits/2026-11-15-l02-installation.md).

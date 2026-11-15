@@ -416,3 +416,14 @@ mengambil satu key tertinggi pada proyek. Scene search memakai getAll keyset bat
 Migrasi membutuhkan ruang untuk indeks tambahan; kegagalan transaksi tidak boleh
 memicu clear database. Penulisan harus melalui instance Dexie aplikasi agar hook
 berlaku; raw fixture native wajib menyediakan tuple yang valid.
+
+
+## Bootstrap proyek atomik (L02)
+
+ensureDefaultProject membaca keberadaan proyek dan membuat projects/chapters/bible
+awal dalam satu transaksi readwrite. Pemanggilan bersamaan (termasuk StrictMode)
+tidak membuat proyek ganda; kegagalan salah satu insert membatalkan semuanya.
+Data proyek yang sudah ada tetap dipilih lewat lastOpened. Tidak mengubah schema
+v34, migrasi lama atau membersihkan duplikat historis otomatis.
+Tes browser dimulai dari IndexedDB kosong atau schema historis v17/v33 sebelum
+React dimuat; lihat [bukti L02](audits/2026-11-15-l02-installation.md).
