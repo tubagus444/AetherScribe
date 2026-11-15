@@ -100,7 +100,7 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm test` | Jalankan unit test (Vitest). |
 | `npm run test:run` | Unit/integrasi sekali jalan. |
 | `npm run test:coverage` | Unit/integrasi dengan laporan coverage V8. |
-| `npm run test:e2e` | 29 skenario Chromium terisolasi, termasuk instalasi, migrasi dan alur data UI. |
+| `npm run test:e2e` | 35 skenario Chromium terisolasi, termasuk instalasi, migrasi, alur data dan Atlas UI. |
 | `npm run test:data-paths` | Bandingkan query dan working-set heap dengan fixture sintetis. |
 | `npm run test:startup` | Ukur build dan periksa PWA/worker/ekspor offline (sesudah build). |
 | `npm run test:production` | Build dan smoke test instalasi production terisolasi. |

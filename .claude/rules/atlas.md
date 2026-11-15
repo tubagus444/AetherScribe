@@ -47,3 +47,5 @@ serta chip filter. useAtlas melakukan live-query, memakai createAtlasOperations
 untuk CRUD; deleteMap harus tetap melalui entityDeletion F11. Jangan mengimpor
 AtlasPanel dari hook/service. Fixture native ada di e2e/atlasFixture.tsx; batasnya
 tercatat di docs/testing.md. Deep-link tetap ditangani orchestrator AtlasPanel.
+
+L04: e2e/atlasUi.spec.ts menguji panel produksi untuk upload, vertex area/rute, portal/unlink, deep-link Codex dan ganti proyek. Gunakan kartu Detail/double-click untuk membuka sidebar; satu klik hanya seleksi. Batas fixture dan format yang belum diuji ada di docs/audits/2026-11-15-l04-atlas-ui.md.

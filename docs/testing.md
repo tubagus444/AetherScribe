@@ -64,7 +64,7 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 | Dialog F25 | ConfirmDialog: role/label/deskripsi, fokus awal/restore, busy cancel | Chromium native: Tab/Shift+Tab, Escape/backdrop, top-layer/inert dan nesting; belum screen reader manual |
 | Navigasi F26 | studioNavigation/NavigationContext: normalisasi, riwayat, deep link dan target workshop | Chromium memulihkan arc/orphans/unknown/workshop dan memastikan record proyek/bab utuh |
 | Startup F21 | runtimeConfig dan test:production | Clean install production tanpa Vite/tsx, SPA/aset/deep-link, cwd/env/mode/port, invalid/busy port, missing build dan secret sintetis tidak masuk dist |
-| XSS Atlas F01 | MapCanvas jsdom memeriksa markup dan handler tidak dibentuk | Belum uji eksekusi payload di browser native |
+| XSS Atlas F01 | MapCanvas jsdom memeriksa markup dan handler tidak dibentuk | Native F28.5 memeriksa label markup tetap inert; bukan bukti seluruh permukaan XSS |
 
 ## Laporan coverage
 
@@ -216,3 +216,14 @@ untuk memastikan proyek lain utuh. Model listing dimock; tanpa provider/Drive.
 Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 29 Chromium tests lulus
 lokal. Tidak mengubah source aplikasi; build/coverage tidak diulang pada tahap ini.
 [Bukti dan batas L03](audits/2026-11-15-l03-data-ui.md).
+
+
+L04 menambahkan enam skenario e2e/atlasUi.spec.ts pada panel Atlas produksi:
+PNG upload/Blob/reload dan penolakan SVG, drag/sisip/hapus vertex area-rute beserta
+batas minimum/persistence, portal anak-induk/unlink, deep-link Codex, pergantian
+proyek serta penulisan pin ke proyek/peta yang benar. URL Blob lama diperiksa
+sudah dicabut setelah pergantian proyek, dengan wrapper yang tetap memanggil API
+browser asli. Tidak memock Leaflet/service/IndexedDB atau mengubah source aplikasi.
+Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 35 Chromium tests lulus
+lokal; build/coverage tidak diulang. Catatan gap Atlas pada F28 adalah historis;
+[bukti dan batas L04](audits/2026-11-15-l04-atlas-ui.md) merinci cakupan saat ini.

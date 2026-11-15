@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Test] L04 - Interaksi Atlas Native Melalui UI
+
+- Tambahkan enam skenario panel Atlas produksi: upload PNG/penolakan SVG/reload, edit vertex area dan rute beserta minimum/persistence, portal induk-anak/unlink, deep-link Codex, serta pergantian proyek dan cleanup URL Blob.
+- Verifikasi pin baru tersimpan pada proyek/peta yang benar tanpa mengubah geometri proyek lain. Gunakan Leaflet, File API dan IndexedDB native; tidak mengubah source aplikasi, schema atau dependency.
+- Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 35 browser tests lulus lokal. Perbarui roadmap, testing, README dan bukti L04; build/coverage tidak diulang pada perubahan tes/dokumentasi.
+
 ### [Test] L03 - Pengujian Alur Data Melalui UI
 
 - Tambahkan delapan skenario browser melalui tombol, download/filechooser dan dialog produksi: impor novel/restore penuh, cancel, scope/format invalid, kegagalan tulis dan rollback, serta delete bab/Codex/proyek dengan cleanup referensi dan isolasi proyek lain.

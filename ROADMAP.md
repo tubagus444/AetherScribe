@@ -7,7 +7,7 @@ Bukti historis disimpan di [arsip](docs/archive/) dan riwayat perubahan di
 ## Ringkasan status
 
 - **Audit F01-F29: 29 dari 29 item selesai**, termasuk seluruh tahap F28.1-F28.6.
-- **Pekerjaan lanjutan:** L01-L03 selesai; L04-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
+- **Pekerjaan lanjutan:** L01-L04 selesai; L05-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
 - **Verifikasi terbaru:** pengujian lokal Windows/Node 24.15.0 pada F28.6, source
   dasar `c5af3ed`, dicatat dalam commit `7527305`.
 - **CI GitHub:** Ubuntu dan Windows lulus pada commit `7527305`; [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
@@ -22,11 +22,11 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 | 1 | L01 | Verifikasi workflow CI di GitHub | Catat run/commit dan hasil job Windows/Ubuntu; diagnosis dan perbaiki kegagalan yang ditemukan. | Selesai 15 Nov 2026 |
 | 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Selesai 15 Nov 2026 |
 | 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Selesai 15 Nov 2026 |
-| 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Belum dimulai |
+| 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Selesai 15 Nov 2026 |
 | 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Belum dimulai |
 | 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Belum dimulai |
 
-L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](docs/audits/2026-11-15-l03-data-ui.md). L04 berikutnya melengkapi interaksi Atlas. L05 dikerjakan dalam
+L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](docs/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](docs/audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](docs/audits/2026-11-15-l04-atlas-ui.md). L05 berikutnya memperluas strict bertahap. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
 Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
 awal tetap memakai mock, kredensial sintetis dan database terisolasi.
@@ -146,3 +146,13 @@ penolakan file/scope, rollback write failure serta delete bab/Codex/proyek dan
 isolasi proyek lain. Typecheck umum/strict/maintenance, 90 berkas/787 tes dan
 29 tes Chromium lulus lokal. Tidak mengubah kode produksi; batas fixture dan
 kegagalan yang belum diuji ada di [laporan L03](docs/audits/2026-11-15-l03-data-ui.md).
+
+
+## Verifikasi lanjutan L04
+
+Enam skenario UI Atlas melengkapi upload PNG/penolakan SVG, edit vertex area/rute,
+portal induk-anak/unlink, deep-link Codex serta pergantian proyek dan URL Blob
+cleanup. Pin baru diverifikasi masuk ke proyek/peta yang benar. Typecheck
+umum/strict/maintenance, 90 berkas/787 tes dan 35 tes Chromium lulus lokal.
+Tidak mengubah source aplikasi; [batas pengujian L04](docs/audits/2026-11-15-l04-atlas-ui.md)
+tetap berlaku. L05-L06 belum dimulai.

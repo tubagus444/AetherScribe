@@ -42,3 +42,5 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [L02: instalasi kosong, migrasi v17/v33 dan bootstrap atomik](audits/2026-11-15-l02-installation.md).
 
 - [L03: impor, restore dan penghapusan melalui UI](audits/2026-11-15-l03-data-ui.md). Delapan skenario, rollback dan batas verifikasi.
+
+- [L04: upload, edit vertex, portal/deep-link dan pergantian proyek Atlas](audits/2026-11-15-l04-atlas-ui.md).
