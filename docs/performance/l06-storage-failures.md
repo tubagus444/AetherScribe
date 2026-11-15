@@ -1,5 +1,10 @@
 # L06 - Kegagalan fasilitas browser dan penyimpanan backup
 
+> Riwayat sebelum integrasi worker pada commit 4816258. Angka dan status di bawah
+> berlaku pada tahap pengujian ini. Kondisi aplikasi sekarang ada di
+> [laporan integrasi L06](l06-integration.md).
+
+
 15 November 2026. Enam skenario Chromium baru di
 `e2e/backupStorage.spec.ts` memakai service backup aplikasi, IndexedDB native,
 10 bab / 20 ribu kata dan satu PNG sintetis dalam context terisolasi.

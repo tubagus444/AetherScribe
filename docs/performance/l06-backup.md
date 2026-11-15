@@ -1,5 +1,10 @@
 # L06 - Pengukuran backup besar
 
+> Riwayat sebelum integrasi worker pada commit 4816258. Angka dan status di bawah
+> berlaku pada tahap pengujian ini. Kondisi aplikasi sekarang ada di
+> [laporan integrasi L06](l06-integration.md).
+
+
 15 November 2026. [Data mentah tiga sampel per ukuran](l06-backup.json).
 Source HEAD `3f027fb`, working tree mencakup L05 dan harness pengukuran; layanan
 backup belum dioptimasi/diubah. Windows, Node 24.15.0, Chromium 159.0.8154.6.

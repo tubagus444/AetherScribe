@@ -1,5 +1,10 @@
 # L06 - Pengujian otomatis kesiapan eksperimen worker
 
+> Riwayat sebelum integrasi worker pada commit 4816258. Angka dan status di bawah
+> berlaku pada tahap pengujian ini. Kondisi aplikasi sekarang ada di
+> [laporan integrasi L06](l06-integration.md).
+
+
 15 November 2026, source dasar 01bf781. Pengujian memakai data sintetis dan
 context browser baru; tidak mengubah jalur backup aplikasi atau membuka data pengguna.
 

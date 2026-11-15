@@ -10,6 +10,7 @@
 | Memeriksa tabel, indeks, dan aturan migrasi | [Database](database.md) |
 | Memeriksa format backup, aset gambar, validasi, dan batas pemulihan | [Format backup](backup-format.md) |
 | Memeriksa endpoint proxy | [API](api.md) |
+| Menjalankan tes dan memeriksa hasil serta batas verifikasi terbaru | [Pengujian](testing.md) |
 | Memahami keputusan historis | [Keputusan arsitektur](decisions.md) |
 | Melihat riwayat perubahan | [Changelog](changelog.md) |
 | Memilih dan melacak pekerjaan berikutnya | [ROADMAP — tracker aktif](../ROADMAP.md) |
@@ -18,7 +19,7 @@
 
 - [Laporan analisis aplikasi: 21 bagian](audits/2026-11-09-application-audit.md).
 - [Register F01–F29: bukti, dampak, rekomendasi, dan kriteria penerimaan](audits/2026-11-09-findings.md).
-- [Status audit selesai](../ROADMAP.md#audit-2026-11-09) dan [prioritas lanjutan L01-L06](../ROADMAP.md#prioritas-lanjutan).
+- [Status audit selesai](../ROADMAP.md#audit-2026-11-09) dan [hasil L01-L06](../ROADMAP.md#prioritas-lanjutan).
 - [Arsip pelaksanaan F01-F29](archive/2026-11-15-roadmap-audit-completed.md): bukti per batch dan batas verifikasi historis.
 
 Laporan audit adalah snapshot temuan, bukan daftar perbaikan yang sudah diterapkan. Status pekerjaan hanya diperbarui di `ROADMAP.md`. Label historis **Selesai** dalam katalog/arsip tidak menggantikan verifikasi atas source saat ini. Batas pengujian dan perbedaan dengan dokumentasi lama dijelaskan dalam laporan audit.
@@ -35,24 +36,31 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 
 - [F28.6: review akhir, pengaman CI dan perbandingan baseline](audits/2026-11-15-f28-review.md). Penutupan F28 beserta pengecualian dan gap lanjutan.
 
-## Verifikasi lanjutan
+## Hasil L01-L06
 
-- [L01: hasil CI Windows/Ubuntu untuk commit 7527305](audits/2026-11-15-l01-ci.md). Run, job, artefak dan batas verifikasi.
+Seluruh item selesai. Kondisi aplikasi sekarang dirangkum di
+[ROADMAP](../ROADMAP.md), sedangkan hasil suite terbaru ada di
+[panduan pengujian](testing.md).
 
-- [L02: instalasi kosong, migrasi v17/v33 dan bootstrap atomik](audits/2026-11-15-l02-installation.md).
+| Item | Rujukan utama |
+|---|---|
+| L01 - CI Windows/Ubuntu pada commit 7527305 | [Run, job dan batas verifikasi](audits/2026-11-15-l01-ci.md) |
+| L02 - Instalasi dan migrasi | [Bootstrap kosong, upgrade v17/v33](audits/2026-11-15-l02-installation.md) |
+| L03 - Alur data UI | [Impor, restore, delete dan rollback](audits/2026-11-15-l03-data-ui.md) |
+| L04 - Interaksi Atlas | [Upload, vertex, portal dan perpindahan proyek](audits/2026-11-15-l04-atlas-ui.md) |
+| L05 - Strict bertahap | [Batch backup/Atlas dan pengecualian](audits/2026-11-15-l05-strict.md) |
+| L06 - Worker backup internal | [Integrasi, antrean, fallback dan production/offline](performance/l06-integration.md) |
 
-- [L03: impor, restore dan penghapusan melalui UI](audits/2026-11-15-l03-data-ui.md). Delapan skenario, rollback dan batas verifikasi.
+## Riwayat eksperimen L06
 
-- [L04: upload, edit vertex, portal/deep-link dan pergantian proyek Atlas](audits/2026-11-15-l04-atlas-ui.md).
+Laporan berikut mendahului integrasi pada commit `4816258`. Angka benchmark dan
+keterangan belum diintegrasikan berlaku pada tahap tersebut.
 
-- [L05: perluasan strict ke backup/Atlas](audits/2026-11-15-l05-strict.md). Cakupan compiler, pengaman tipe dan budget legacy.
+- [Pengukuran awal dan profiling CPU](performance/l06-backup.md).
+- [Eksperimen A/B worker](performance/l06-worker.md).
+- [Matriks kesiapan eksperimen](performance/l06-readiness.md).
+- [Respons editor dan heap tersampel](performance/l06-editor-load.md).
+- [Kegagalan fasilitas browser dan storage](performance/l06-storage-failures.md).
 
-- [L06: pengukuran backup besar](performance/l06-backup.md). Waktu, jeda timer, memori, data mentah dan batas kesimpulan.
-
-- [L06: eksperimen worker persiapan backup](performance/l06-worker.md). A/B respons main thread dan batas integrasi.
-
-- [L06: matriks kesiapan eksperimen worker](performance/l06-readiness.md). Kegagalan, snapshot/typing, offline dan batas pengukuran heap.
-
-- [L06: editor aktif dan peak heap tersampel](performance/l06-editor-load.md). Respons input, biaya memori dan batas RSS/otomatisasi.
-- [L06: kegagalan fasilitas browser dan storage](performance/l06-storage-failures.md). Fallback kompresi, checksum, kuota dan pembatalan restore.
-- [L06: integrasi worker internal](performance/l06-integration.md). Antrean, fallback, pengaman restore dan production/offline.
+Catatan bertahap tetap tersedia di [arsip roadmap L01-L06](archive/2026-11-15-roadmap-l01-l06-completed.md)
+dan [arsip verifikasi F24-L06](archive/2026-11-15-testing-history.md).

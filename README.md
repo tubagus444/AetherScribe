@@ -116,3 +116,9 @@ Pada Pengaturan AI, key baru disimpan selama sesi tab secara default; pilihan In
 Pengukuran optimasi pemuatan awal: [laporan F22](docs/performance/f22.md). Aset fitur lazy tetap tersedia setelah cache offline selesai.
 
 Optimasi query metadata dan ranking naskah besar (schema v34): [laporan F23](docs/performance/f23.md).
+
+Backup otomatis internal besar memakai worker dengan antrean per tab dan fallback
+saat gagal. Backup pengaman sebelum restore tetap lengkap. [Perilaku dan batas L06](docs/performance/l06-integration.md).
+Seluruh F01-F29 dan L01-L06 selesai; hasil lokal terakhir mencakup 792 tes unit/
+integrasi dan 55 tes Chromium pada commit `4816258`. Status CI dan pilihan
+pengujian berikutnya ada di [ROADMAP](ROADMAP.md).

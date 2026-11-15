@@ -1,5 +1,10 @@
 # L06 - Eksperimen persiapan backup di worker
 
+> Riwayat sebelum integrasi worker pada commit 4816258. Angka dan status di bawah
+> berlaku pada tahap pengujian ini. Kondisi aplikasi sekarang ada di
+> [laporan integrasi L06](l06-integration.md).
+
+
 15 November 2026, HEAD 0647d07 dengan perubahan profiling/eksperimen di working
 tree. [Data mentah](l06-worker.json). Windows/Node 24.15.0/Chromium 159.0.8154.6.
 

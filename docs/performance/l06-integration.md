@@ -1,6 +1,8 @@
 # L06 - Integrasi worker backup internal
 
-15 November 2026, dasar `0082b89`, perubahan working tree.
+15 November 2026, implementasi pada commit `4816258` dengan dasar `0082b89`.
+Dokumen ini menjadi rujukan kondisi akhir L06. Laporan pengukuran/eksperimen
+sebelumnya merekam tahap sebelum integrasi dan tidak menyatakan status aplikasi sekarang.
 
 ## Perilaku
 

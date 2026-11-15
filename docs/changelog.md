@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Docs] Rapikan Penutupan F01-F29 dan L01-L06
+
+- Ringkas roadmap menjadi status selesai, bukti terbaru, batas verifikasi dan pilihan tindak lanjut; pindahkan catatan pelaksanaan bertahap ke arsip tanpa menghapus riwayat.
+- Jadikan laporan integrasi L06 rujukan kondisi worker saat ini, tandai laporan eksperimen sebagai historis, dan selaraskan README, indeks serta panduan tes dengan commit 4816258.
+- Perubahan hanya dokumentasi; periksa tautan lokal dan whitespace tanpa menjalankan ulang suite runtime atau mengklaim run CI baru.
+
 ### [Perf/Fix] L06 - Integrasi Worker Backup Internal
 
 - Pindahkan persiapan auto internal besar ke worker native, dengan algoritme bersama fallback main, timeout/cleanup dan antrean save per tab. Snapshot/flush, format v8, folder/Drive dan schema v34 tetap kompatibel.
