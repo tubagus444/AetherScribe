@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Docs] L01 - Verifikasi CI GitHub Windows dan Ubuntu
+
+- Verifikasi run 43696531716 pada commit 7527305: job Ubuntu/Windows dan seluruh step completed/success. Periksa log coverage/browser/maintenance/production serta metadata artefak.
+- Catat bukti run/job dan batas SHA; commit lokal b9a9437 hanya berbeda pada dokumentasi dan tidak diklaim diuji oleh run tersebut. Tidak melakukan push, dispatch/rerun atau perubahan workflow.
+- Tandai L01 selesai di ROADMAP; perbarui testing dan indeks dokumentasi. Tidak ada bug CI yang perlu diperbaiki; L02-L06 tetap belum dimulai.
+
 ### [Docs] Rapikan Roadmap Setelah Penutupan Audit
 
 - Ringkas tracker menjadi status terkini, enam prioritas lanjutan L01-L06, batas verifikasi, pekerjaan bersyarat dan ide diparkir. Pertahankan seluruh 29 status selesai serta anchor audit untuk tautan lama.

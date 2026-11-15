@@ -34,3 +34,7 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [F28.3: TypeScript strict bertahap (15 November 2026)](audits/2026-11-15-f28-strict.md). Perintah lokal/CI, 26 berkas cakupan awal, bukti probe dan pengecualian tersisa.
 
 - [F28.6: review akhir, pengaman CI dan perbandingan baseline](audits/2026-11-15-f28-review.md). Penutupan F28 beserta pengecualian dan gap lanjutan.
+
+## Verifikasi lanjutan
+
+- [L01: hasil CI Windows/Ubuntu untuk commit 7527305](audits/2026-11-15-l01-ci.md). Run, job, artefak dan batas verifikasi.

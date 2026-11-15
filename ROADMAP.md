@@ -7,10 +7,10 @@ Bukti historis disimpan di [arsip](docs/archive/) dan riwayat perubahan di
 ## Ringkasan status
 
 - **Audit F01-F29: 29 dari 29 item selesai**, termasuk seluruh tahap F28.1-F28.6.
-- **Pekerjaan lanjutan:** L01-L06 di bawah belum dimulai; tidak berarti temuan audit lama dibuka kembali.
+- **Pekerjaan lanjutan:** L01 selesai; L02-L06 belum dimulai; tidak berarti temuan audit lama dibuka kembali.
 - **Verifikasi terbaru:** pengujian lokal Windows/Node 24.15.0 pada F28.6, source
   dasar `c5af3ed`, dicatat dalam commit `7527305`.
-- **CI GitHub:** workflow Windows/Ubuntu tersedia, hasil runner belum diverifikasi.
+- **CI GitHub:** Ubuntu dan Windows lulus pada commit `7527305`; [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
 
 ## Prioritas lanjutan
 
@@ -19,14 +19,14 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 
 | Urutan | ID | Pekerjaan | Kriteria selesai | Status |
 |---|---|---|---|---|
-| 1 | L01 | Verifikasi workflow CI di GitHub | Catat run/commit dan hasil job Windows/Ubuntu; diagnosis dan perbaiki kegagalan yang ditemukan. | Belum dimulai |
+| 1 | L01 | Verifikasi workflow CI di GitHub | Catat run/commit dan hasil job Windows/Ubuntu; diagnosis dan perbaiki kegagalan yang ditemukan. | Selesai 15 Nov 2026 |
 | 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Belum dimulai |
 | 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Belum dimulai |
 | 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Belum dimulai |
 | 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Belum dimulai |
 | 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Belum dimulai |
 
-L01 dapat diverifikasi terpisah dari penambahan tes L02-L04. L05 dikerjakan dalam
+L01 telah diverifikasi; [bukti run, job dan batasnya](docs/audits/2026-11-15-l01-ci.md). L02 berikutnya menguji instalasi awal/migrasi. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
 Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
 awal tetap memakai mock, kredensial sintetis dan database terisolasi.
@@ -35,7 +35,7 @@ awal tetap memakai mock, kredensial sintetis dan database terisolasi.
 
 - Strict saat ini mencakup **19 root/28 source**, bukan seluruh aplikasi. Budget
   maintenance menjaga 38 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
-- Tes browser memakai Chromium lokal. Runner GitHub/Linux, Firefox/Safari,
+- Tes browser memakai Chromium, lokal dan pada runner GitHub yang diverifikasi. Firefox/Safari,
   screen reader manual dan workflow provider/Drive nyata belum dibuktikan.
 - Native Blob/backup/restore, worker, reload editor, metadata, draw/drag/filter/delete
   pin Atlas serta PWA/worker/ekspor Markdown offline sudah diuji pada fixture.
@@ -109,7 +109,8 @@ konteks pada [laporan audit](docs/audits/2026-11-09-application-audit.md).
 - F28 membandingkan inventaris awal/akhir, meninjau acceptance, mencatat pengecualian
   dan menambahkan pengaman CI. Lihat [review akhir](docs/audits/2026-11-15-f28-review.md).
 - Angka di atas adalah snapshot verifikasi F28.6, bukan pemeriksaan ulang setelah
-  setiap perubahan dokumentasi. Rujuk L01 untuk verifikasi runner GitHub.
+  setiap perubahan dokumentasi. L01 memverifikasi run Windows/Ubuntu pada commit
+  `7527305`; commit lokal dokumentasi `b9a9437` dan perubahan berikutnya tidak diklaim diuji run tersebut.
 
 ## Ide diparkir
 

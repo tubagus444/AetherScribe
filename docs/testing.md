@@ -106,8 +106,11 @@ Coverage, HTML report browser, screenshot dan trace kegagalan disimpan sebagai
 artefak CI selama tujuh hari. Di lokal, direktori tersebut diabaikan Git.
 Untuk diagnosis gunakan `npx playwright show-report` atau
 `npx playwright show-trace <path-trace.zip>`. Artefak berisi fixture sintetis.
-Workflow disiapkan dan perintahnya diverifikasi lokal di Windows; hasil runner
-GitHub/Linux baru dapat dinyatakan lulus setelah workflow benar-benar dijalankan.
+L01 memverifikasi workflow Windows/Ubuntu berhasil pada commit `7527305`:
+[run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
+Status setiap step, log kedua job dan metadata artefak diperiksa. Lihat
+[bukti dan batas verifikasi](audits/2026-11-15-l01-ci.md). Hasil ini berlaku untuk
+commit tersebut; catatan belum diverifikasi pada snapshot F24-F28 bersifat historis.
 
 Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 [setup-node](https://github.com/actions/setup-node),
@@ -184,3 +187,10 @@ Coverage V8 terbaru: 32.11% baris, 31.95% statement, 25.35% branch, 20.71% fungs
 angka F24 sebelumnya tetap snapshot historis. Ini tidak mencakup coverage native
 browser/worker/child process dan belum membuktikan runner GitHub/Linux berhasil.
 [Rincian penutupan dan batas guard](audits/2026-11-15-f28-review.md).
+
+
+L01 selesai 15 November 2026: run 43696531716 completed/success pada Ubuntu dan
+Windows, termasuk typecheck/strict/maintenance, coverage (89 berkas), 18 browser
+tests, data-path, clean production, offline dan upload artefak. Tidak ada perubahan
+kode/workflow atau rerun. HEAD lokal b9a9437 berbeda hanya pada dokumentasi dari
+SHA yang diuji 7527305; tidak mengklaim run tersebut memeriksa commit berikutnya.
