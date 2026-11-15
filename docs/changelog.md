@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Docs] Rapikan Roadmap Setelah Penutupan Audit
+
+- Ringkas tracker menjadi status terkini, enam prioritas lanjutan L01-L06, batas verifikasi, pekerjaan bersyarat dan ide diparkir. Pertahankan seluruh 29 status selesai serta anchor audit untuk tautan lama.
+- Pindahkan bukti pelaksanaan lama ke arsip dengan penanda historis; catatan "masih terbuka" dan jumlah tes lama tidak lagi menjadi status aktif. Selaraskan ringkasan dengan verifikasi F28.6 dan bedakan CI terkonfigurasi dari runner yang sudah diverifikasi.
+- Perbarui indeks dokumentasi dan tautan relatif; tidak mengubah kode, fitur atau hasil pengujian. Validasi struktur dan tautan lokal, tanpa menjalankan ulang suite aplikasi.
+
 ### [Chore] F28.6 - Pengaman CI dan Review Akhir
 
 - Tambahkan npm run lint:maintenance: budget any/assertion/non-null/directive per-file pada 38 berkas, minimum cakupan strict, 18 ekspor publik AI serta larangan import internal kembali ke facade. Detektor memakai AST/scanner/type checker dan diuji dengan probe negatif yang dipulihkan sesudahnya.

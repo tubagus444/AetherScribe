@@ -18,7 +18,8 @@
 
 - [Laporan analisis aplikasi: 21 bagian](audits/2026-11-09-application-audit.md).
 - [Register F01–F29: bukti, dampak, rekomendasi, dan kriteria penerimaan](audits/2026-11-09-findings.md).
-- [Checklist pengerjaan berdasarkan prioritas](../ROADMAP.md#audit-2026-11-09).
+- [Status audit selesai](../ROADMAP.md#audit-2026-11-09) dan [prioritas lanjutan L01-L06](../ROADMAP.md#prioritas-lanjutan).
+- [Arsip pelaksanaan F01-F29](archive/2026-11-15-roadmap-audit-completed.md): bukti per batch dan batas verifikasi historis.
 
 Laporan audit adalah snapshot temuan, bukan daftar perbaikan yang sudah diterapkan. Status pekerjaan hanya diperbarui di `ROADMAP.md`. Label historis **Selesai** dalam katalog/arsip tidak menggantikan verifikasi atas source saat ini. Batas pengujian dan perbedaan dengan dokumentasi lama dijelaskan dalam laporan audit.
 

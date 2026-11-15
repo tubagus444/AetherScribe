@@ -1,342 +1,128 @@
-# ROADMAP & BACKLOG AKTIF — AetherScribe
+# ROADMAP & BACKLOG AKTIF - AetherScribe
 
-> **Pusat Rencana & Backlog Proyek.** Dokumen ini adalah satu-satunya pelacak kerja aktif untuk AetherScribe. 
-> Semua fitur yang sudah selesai dan riwayat keputusan teknis telah diarsipkan dengan rapi di direktori [`docs/archive/`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/), katalog fitur di [`docs/features.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/features.md), dan log pembaruan di [`docs/changelog.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/changelog.md).
+Diperbarui 15 November 2026. Dokumen ini adalah satu-satunya pelacak kerja aktif.
+Bukti historis disimpan di [arsip](docs/archive/) dan riwayat perubahan di
+[changelog](docs/changelog.md).
 
----
+## Ringkasan status
+
+- **Audit F01-F29: 29 dari 29 item selesai**, termasuk seluruh tahap F28.1-F28.6.
+- **Pekerjaan lanjutan:** L01-L06 di bawah belum dimulai; tidak berarti temuan audit lama dibuka kembali.
+- **Verifikasi terbaru:** pengujian lokal Windows/Node 24.15.0 pada F28.6, source
+  dasar `c5af3ed`, dicatat dalam commit `7527305`.
+- **CI GitHub:** workflow Windows/Ubuntu tersedia, hasil runner belum diverifikasi.
+
+## Prioritas lanjutan
+
+Urutan ini mendahulukan bukti penggunaan dan reliabilitas sebelum optimasi baru.
+Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperbarui.
+
+| Urutan | ID | Pekerjaan | Kriteria selesai | Status |
+|---|---|---|---|---|
+| 1 | L01 | Verifikasi workflow CI di GitHub | Catat run/commit dan hasil job Windows/Ubuntu; diagnosis dan perbaiki kegagalan yang ditemukan. | Belum dimulai |
+| 2 | L02 | Pengujian instalasi awal dan migrasi | Tes browser dengan IndexedDB kosong dan upgrade versi lama; proyek pertama, editor dan data hasil migrasi dapat dipakai. Jangan hanya memakai fixture yang sudah diisi. | Belum dimulai |
+| 3 | L03 | Lengkapi tes alur data melalui UI | Impor/restore melalui pemilihan file dan dialog; delete bab/Codex/proyek; error, pembatalan dan rollback tidak merusak data. Gunakan fixture terisolasi. | Belum dimulai |
+| 4 | L04 | Lengkapi interaksi Atlas | Upload gambar, portal/deep-link, perpindahan proyek dan edit vertex area/rute diuji lewat UI browser, termasuk persistence dan cleanup. | Belum dimulai |
+| 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Belum dimulai |
+| 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Belum dimulai |
+
+L01 dapat diverifikasi terpisah dari penambahan tes L02-L04. L05 dikerjakan dalam
+batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
+Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
+awal tetap memakai mock, kredensial sintetis dan database terisolasi.
+
+## Batas verifikasi yang masih berlaku
+
+- Strict saat ini mencakup **19 root/28 source**, bukan seluruh aplikasi. Budget
+  maintenance menjaga 38 berkas dan 18 ekspor publik AI; escape lama tetap tercatat.
+- Tes browser memakai Chromium lokal. Runner GitHub/Linux, Firefox/Safari,
+  screen reader manual dan workflow provider/Drive nyata belum dibuktikan.
+- Native Blob/backup/restore, worker, reload editor, metadata, draw/drag/filter/delete
+  pin Atlas serta PWA/worker/ekspor Markdown offline sudah diuji pada fixture.
+  Ini tidak membuktikan semua format ekspor offline atau seluruh workflow UI.
+- Shutdown paksa tidak menjamin flush async selesai. Backup internal berbasis
+  referensi membutuhkan aset live yang cocok; bukan backup gambar mandiri.
+- Coverage mengukur Vitest; tidak menggabungkan browser/worker/child process native.
+  Angka coverage bukan jaminan semua alur aman.
+
+Daftar pengaman dan gap rinci ada di [panduan pengujian](docs/testing.md) dan
+[review akhir F28](docs/audits/2026-11-15-f28-review.md).
+
+## Pekerjaan bersyarat
+
+| Area | Kapan dikerjakan | Catatan |
+|---|---|---|
+| Migrasi database secara bertahap | Saat menambah migrasi yang memproses tabel besar | Pakai cursor/streaming bila hanya perlu mengubah sebagian field; pertahankan migrasi append-only dan tes upgrade/rollback. |
+| Font PDF non-Latin | Saat naskah membutuhkan aksara/glyph di luar cakupan font saat ini | Tambahkan font yang sesuai dan tes hasil ekspor; bukan kebutuhan wajib novel berbahasa Indonesia standar. |
+| Pemisahan Atlas lanjutan | Saat mengubah toolbar/modal atau orchestration yang masih besar | Tambahkan tes perilaku sebelum ekstraksi berikutnya; jangan memecah hanya untuk mengejar jumlah baris. |
 
 <a id="audit-2026-11-09"></a>
 
-## Audit Aplikasi — 9 November 2026
+## Audit 9 November 2026 - selesai
 
-**Status awal audit (9 November 2026):** seluruh 29 temuan terbuka pada baseline. Status implementasi terkini mengikuti checklist dan bukti penyelesaian di bawah. **Baseline:** `a47f895a47a633f02f95511192bddfa47397bef2`.
+Baseline audit: `a47f895a47a633f02f95511192bddfa47397bef2`. Seluruh temuan berikut
+sudah ditutup. Judul menggambarkan masalah saat ditemukan, bukan kondisi aplikasi
+sekarang. P1/P2/P3 dan estimasi lama adalah riwayat pelaksanaan, bukan urutan aktif.
 
-- [Laporan aplikasi (21 bagian)](docs/audits/2026-11-09-application-audit.md).
-- [Register bukti dan kriteria penerimaan F01–F29](docs/audits/2026-11-09-findings.md).
-- [Indeks dokumentasi](docs/README.md).
+| Temuan audit | Status |
+|---|---|
+| [F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas | Selesai |
+| [F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost | Selesai |
+| [F03](docs/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas | Selesai |
+| [F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai | Selesai |
+| [F05](docs/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal | Selesai |
+| [F06](docs/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu | Selesai |
+| [F07](docs/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada | Selesai |
+| [F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi | Selesai |
+| [F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key | Selesai |
+| [F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip | Selesai |
+| [F11](docs/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim | Selesai |
+| [F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong | Selesai |
+| [F13](docs/audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan | Selesai |
+| [F14](docs/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt | Selesai |
+| [F15](docs/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal | Selesai |
+| [F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver | Selesai |
+| [F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud | Selesai |
+| [F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try | Selesai |
+| [F19](docs/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten | Selesai |
+| [F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses | Selesai |
+| [F21](docs/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik | Selesai |
+| [F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat | Selesai |
+| [F23](docs/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah | Selesai |
+| [F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia | Selesai |
+| [F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus | Selesai |
+| [F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong | Selesai |
+| [F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia | Selesai |
+| [F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak | Selesai |
+| [F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir | Selesai |
 
-Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Dokumen audit menyimpan snapshot bukti. Item prioritas lama di bagian berikutnya tetap berlaku; kerjakan setelah risiko data/keamanan yang lebih mendesak. Optimasi serialisasi lama berkaitan dengan F19/F23, bukan pengganti perbaikan integritas backup.
+Bukti per batch, tanggal, commit, reproduksi dan hasil tes lama tetap tersedia di
+[arsip pelaksanaan F01-F29](docs/archive/2026-11-15-roadmap-audit-completed.md).
+Kriteria asli ada di [register temuan](docs/audits/2026-11-09-findings.md), dengan
+konteks pada [laporan audit](docs/audits/2026-11-09-application-audit.md).
 
-**Cara mengerjakan:** ambil satu item atau kelompok dengan dependensi jelas, buka bukti dan kriteria penerimaannya, buat reproduksi aman, implementasikan, lalu verifikasi. Centang hanya setelah acceptance terpenuhi dan dokumen modul/changelog diperbarui. Catat commit/PR, tanggal dan hasil tes di bawah item yang ditutup. Jika ditunda/ditolak, tulis alasan serta risiko yang diterima; jangan centang sebagai selesai.
+### Bukti penutupan terbaru
 
-**Urutan penting:** F05 mendahului F19; desain aset F03 diselaraskan dengan schema F04; F07 dan F10 menyelaraskan triage; F08/F09 menyelesaikan dua sisi search; F12 mendasari F14. F24 dimulai sebagai tes regresi setiap batch, kemudian dilengkapi harness/CI. P1 dapat dikerjakan beberapa jalur independen, bukan ketergantungan serial seluruh daftar.
+- Typecheck umum/strict/maintenance, **89 berkas/785 tes**, **18 tes Chromium**,
+  data-path correctness/benchmark, build/clean production serta startup/offline lulus lokal.
+- Coverage V8: 32.11% baris, 31.95% statement, 25.35% branch, 20.71% fungsi.
+- F28 membandingkan inventaris awal/akhir, meninjau acceptance, mencatat pengecualian
+  dan menambahkan pengaman CI. Lihat [review akhir](docs/audits/2026-11-15-f28-review.md).
+- Angka di atas adalah snapshot verifikasi F28.6, bukan pemeriksaan ulang setelah
+  setiap perubahan dokumentasi. Rujuk L01 untuk verifikasi runner GitHub.
 
-**Estimasi:** S ≤1 hari, M 2–4 hari, L 5–10 hari; indikatif, termasuk verifikasi terarah. Horizon 0–2 hari berarti mulai mitigasi prioritas pertama, bukan janji seluruh P1 selesai dalam dua hari. Rencana 3–14 hari, 2–6 minggu, dan 1–3 bulan dijelaskan pada bagian 19 laporan.
+## Ide diparkir
 
-### P1 — Kerjakan dahulu: data, keamanan, dan fungsi inti
+Belum menjadi komitmen implementasi atau pekerjaan aktif:
 
-- [x] **[F03](docs/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas** (High; M).
-  - Tanggal / commit atau PR: 10 November 2026; commit `fix(backup): lindungi aset Atlas dan validasi restore (F03/F04)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: backup v8 memakai imageMode full/references dan SHA-256; auto internal mempertahankan Blob live yang cocok atau menolak jika aset tak tersedia. Snapshot pre-restore menyimpan gambar lengkap untuk undo. Peta tanpa gambar ditandai eksplisit; format/kebijakan diselaraskan dengan F04.
-  - Reproduksi sebelum perbaikan: tes `restoring an internal backup does not discard an existing Atlas image` gagal pada source `270b5f2` (imageBlob undefined).
-  - Verifikasi sesudah perbaikan: tes internal/full/pre-restore, undo gambar setelah map diganti, legacy, hash mismatch, dan aset hilang/diganti lulus. Batch F03/F04: 49 tes baru; `npx vitest run` — 48 berkas/534 tes lulus; `npm run lint` dan `npm run build` lulus.
-  - Dokumentasi modul: `docs/backup-format.md`, `docs/features.md`, `docs/database.md`, `docs/decisions.md`, `docs/changelog.md`, indeks docs dan aturan backup/Atlas.
-  - Batas verifikasi / risiko tersisa: IndexedDB sintetis, belum browser/Drive nyata. Auto internal membutuhkan aset live dan bukan backup gambar mandiri. Legacy tanpa hash mempertahankan identitas/dimensi cocok, tidak membuktikan versi gambar historis. F19 tetap terbuka.
-- [x] **[F05](docs/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal** (High; S–M).
-  - Tanggal / commit atau PR: 10 November 2026; commit `fix(editor): hentikan replace dan reload saat save gagal (F05)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: flush reject pada error/update nol baris; status gagal tetap terlihat; draft dapat dicoba simpan ulang; replace/reload dibatalkan. Handler versionchange menahan auto-close Dexie sampai flush berhasil. Rejection pemanggil lifecycle/autosave ditangani.
-  - Reproduksi sebelum perbaikan: `npx vitest run src/features/editor/hooks/useEditorSave.test.tsx` — 5 gagal/3 lulus (flush rejection dan update 0 dianggap sukses, reload menimpa draft, timer menghapus status gagal, cleanup melewatkan konten kosong).
-  - Verifikasi sesudah perbaikan: tiga berkas tes F05 — 12/12 lulus; `npx vitest run` — 46 berkas/485 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Build masih memberi peringatan bundle besar, import statis/dinamis ActionsPanel, eval ONNX, dan data Browserslist lama. Tes Find & Replace memakai hook asli dan IndexedDB sintetis terisolasi, mencakup pembatalan serta retry berhasil.
-  - Dokumentasi modul: `docs/features.md`, `docs/database.md`, `docs/changelog.md`.
-  - Batas verifikasi / risiko tersisa: belum diuji browser native/upgrade lintas-tab nyata; penutupan paksa tidak menjamin flush async selesai dan dapat membuang draft di memori. Upgrade tab lain tertahan selama save gagal. F19 tetap terbuka.
-- [x] **[F01](docs/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas** (High; S).
-  - Tanggal / commit atau PR: 13 November 2026; commit `fix(atlas): cegah stored XSS pada label dan tooltip (F01)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: ikon dibangun sebagai DOM, judul marker/nama Codex melalui textContent; tooltip dinamis diberikan ke Leaflet sebagai HTMLElement. Allowlist hex #RGB/#RRGGBB diterapkan di resolver dan boundary render termasuk handle edit; nilai invalid memakai fallback. Tidak mengubah data sumber, skema DB, atau dependensi.
-  - Reproduksi sebelum perbaikan: `npx vitest run src/features/atlas/components/MapCanvas.test.tsx` pada source `c12bc43` — 27 gagal/1 lulus; payload JSON menjadi elemen/atribut handler pada badge/tooltip dan warna dapat menyisipkan HTML lewat style.
-  - Verifikasi sesudah perbaikan: dua berkas tes F01 — 49/49 lulus, memakai Leaflet asli di jsdom untuk badge pin/area/route/portal, tooltip, nama marker/Codex, warna, edit handle, serta klik/dobel-klik. `npx vitest run` — 50 berkas/583 tes lulus; `npm run lint`, `npm run build`, dan `git diff --check` lulus. Peringatan build tetap terkait bundle besar, import ActionsPanel, eval ONNX, dan Browserslist lama.
-  - Dokumentasi modul: `docs/features.md`, `docs/backup-format.md`, `docs/changelog.md`, `.claude/rules/atlas.md`.
-  - Batas verifikasi / risiko tersisa: fixture sintetis, tidak memakai data pengguna. Belum pemeriksaan visual atau eksekusi payload di browser native; jsdom memverifikasi bahwa markup tidak menjadi node/handler. Tidak mengklaim mitigasi XSS di modul lain. F24 harness/CI penuh tetap terbuka.
-- [x] **[F02](docs/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost** (High; S–M).
-  - Tanggal / commit atau PR: 13 November 2026; commit `fix(proxy): batasi akses localhost dan validasi request (F02/F18)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: loopback bind, Host/Origin guard, allowlist Ollama dan redirect:error; schema request sebelum handler, wrapper rejection async dan error middleware JSON.
-  - Bukti sebelum: source server.ts pada c152d2e bind 0.0.0.0, memakai URL request tanpa allowlist, model.includes/baseUrl.replace sebelum try.
-  - Verifikasi: 26 tes boundary/HTTP loopback terisolasi lulus; seluruh 52 berkas/609 tes lulus; npm run lint, npm run build dan git diff --check lulus. Peringatan build lama tetap ada (bundle/ActionsPanel/ONNX/Browserslist).
-  - Dokumentasi: docs/api.md dan docs/changelog.md.
-  - Batas: tanpa key/provider nyata; Host/Origin bukan autentikasi proses lokal. Ollama remote/port kustom sengaja ditolak; F21 tetap terbuka.
-- [x] **[F18](docs/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try** (Medium; S).
-  - Tanggal / commit atau PR: 13 November 2026; commit `fix(proxy): batasi akses localhost dan validasi request (F02/F18)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: loopback bind, Host/Origin guard, allowlist Ollama dan redirect:error; schema request sebelum handler, wrapper rejection async dan error middleware JSON.
-  - Bukti sebelum: source server.ts pada c152d2e bind 0.0.0.0, memakai URL request tanpa allowlist, model.includes/baseUrl.replace sebelum try.
-  - Verifikasi: 26 tes boundary/HTTP loopback terisolasi lulus; seluruh 52 berkas/609 tes lulus; npm run lint, npm run build dan git diff --check lulus. Peringatan build lama tetap ada (bundle/ActionsPanel/ONNX/Browserslist).
-  - Dokumentasi: docs/api.md dan docs/changelog.md.
-  - Batas: tanpa key/provider nyata; Host/Origin bukan autentikasi proses lokal. Ollama remote/port kustom sengaja ditolak; F21 tetap terbuka.
-- [x] **[F04](docs/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai** (High; M).
-  - Tanggal / commit atau PR: 10 November 2026; commit `fix(backup): lindungi aset Atlas dan validasi restore (F03/F04)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: schema/limit terpusat untuk UI/core/internal/Drive, scope restore-all vs import-project, versi 3–8, struktur record/metadata, ID/kunci unik/FK lintas-proyek, raster data URL tanpa jaringan, batas file/dekompresi/record. Legacy dinormalisasi sesudah checksum. Snapshot pengaman lengkap wajib berhasil sebelum mutasi; error ditampilkan ke pengguna.
-  - Reproduksi sebelum perbaikan: enam tes gagal pada source `270b5f2` — scope project, future version, malformed project, content salah tipe, FK tidak valid, dan kegagalan snapshot tetap diterima/dilanjutkan.
-  - Verifikasi sesudah perbaikan: penolakan tanpa clear/snapshot untuk input invalid, fixture legacy v3–v7, impor non-destruktif dengan gambar, rollback insert gagal, kegagalan snapshot, batas stream/gzip/gambar, dan jalur Drive fetch mock lulus. `npx vitest run` — 48 berkas/534 tes lulus; `npm run lint` dan `npm run build` lulus (peringatan bundle/ActionsPanel/ONNX/Browserslist tetap ada).
-  - Dokumentasi modul: sama dengan F03; detail kontrak dan batas ada di `docs/backup-format.md`.
-  - Batas verifikasi / risiko tersisa: belum browser native/Drive nyata atau file legacy pengguna. Record/referensi workspace yang sudah tidak valid dapat menghalangi snapshot pengaman; restore dibatalkan. F10/F11/F19 dan harness/CI penuh F24 tetap terbuka.
-- [x] **[F06](docs/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu** (Medium; S).
-  - Tanggal / commit: 13 November 2026; commit `fix(chapters): perbaiki duplikasi, urutan bab, dan triage (F06/F07)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: F06 membaca entitas lengkap setelah flush dan menormalkan order secara atomik; F07 memakai indeks projectId dengan upsert/clear transaksional tanpa migrasi.
-  - Bukti awal: ChapterList menduplikasi proyeksi content kosong dan menukar order lewat update terpisah; setter triage menunggu compound index yang tidak ada.
-  - Verifikasi: tujuh tes DB sintetis terisolasi mencakup duplikasi, urutan, rollback, gagal flush, concurrency, isolasi proyek dan reopen koneksi; hasil pemeriksaan akhir dicatat di changelog.
-  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum UI/browser native; cleanup referensi F11 dan ekspor triage F10 tetap terbuka.
-- [x] **[F07](docs/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada** (Medium; S).
-  - Tanggal / commit: 13 November 2026; commit `fix(chapters): perbaiki duplikasi, urutan bab, dan triage (F06/F07)` (commit yang menambahkan bukti ini).
-  - Perubahan inti: F06 membaca entitas lengkap setelah flush dan menormalkan order secara atomik; F07 memakai indeks projectId dengan upsert/clear transaksional tanpa migrasi.
-  - Bukti awal: ChapterList menduplikasi proyeksi content kosong dan menukar order lewat update terpisah; setter triage menunggu compound index yang tidak ada.
-  - Verifikasi: tujuh tes DB sintetis terisolasi mencakup duplikasi, urutan, rollback, gagal flush, concurrency, isolasi proyek dan reopen koneksi; hasil pemeriksaan akhir dicatat di changelog.
-  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum UI/browser native; cleanup referensi F11 dan ekspor triage F10 tetap terbuka.
+- **Simulator dunia:** status karakter/artefak lintas bab; perlu fondasi state per bab.
+- **Lensa suara dialog:** analisis perbedaan gaya bicara antartokoh.
+- **Moodboard Codex:** referensi visual per entri; perlu kajian kuota penyimpanan.
+- **Peringatan POV:** deteksi perpindahan sudut pandang; perlu menguji false-positive bahasa Indonesia.
 
-### P2 — Correctness dan reliabilitas berikutnya
+## Referensi
 
-- [x] **[F24](docs/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia** (Medium; L).
-  - Tanggal / commit: 14 November 2026; `test: tambahkan harness browser, coverage dan CI (F24)` (commit yang menambahkan bukti ini).
-  - Perubahan: konfigurasi Vitest/coverage V8, tujuh skenario browser Chromium dengan fixture/IndexedDB/Blob/worker native, cache dan HMR terisolasi; workflow CI Windows/Ubuntu untuk typecheck, coverage, browser dan build/smoke production. Report/trace kegagalan menjadi artefak, tanpa repository secrets.
-  - Bukti regresi: browser failed-save gagal pada source useEditorSave sebelum 270b5f2 (6237f1e), karena flush tidak reject; source diperbaiki dipulihkan dan tujuh tes browser lulus.
-  - Verifikasi: 70 berkas/700 tes, tujuh browser tests, typecheck, build/clean production smoke dan diff-check lulus di Windows/Node 24.15.0. Coverage baris Vitest 29.38%; tidak digabung dengan browser/child process.
-  - Dokumentasi: docs/testing.md memetakan alur yang diuji dan gap, README, architecture, changelog, panduan agen. Batas: workflow belum dijalankan di GitHub/Linux; Chromium saja; belum provider/Drive nyata, native XSS, bootstrap kosong, PWA/offline, aksesibilitas/performa. Tidak mengklaim coverage menyeluruh atau ambang persentase global.
-- [x] **[F10](docs/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip** (Medium; M).
-  - Tanggal / commit: 13 November 2026; commit `fix(import): pulihkan triage dan remap sesi workshop (F10)` (commit yang menambahkan bukti ini).
-  - Perubahan: impor triage dalam transaksi; remap findingId Codex/relasi/timeline dan workshopKey entry:<id>, pertahankan teks bebas. Format asing ditolak atomik; status target hilang dianggap basi.
-  - Bukti awal: snapshot ekspor sudah memuat triage sejak F19, tetapi importer tidak menulis tabelnya; workshopKey tidak mengikuti codexIdMap.
-  - Verifikasi: lima tes round-trip/rollback/legacy dan pemetaan finding; 56 berkas/639 tes, typecheck dan build lulus (peringatan build lama tetap ada). Tes round-trip gagal pada baseline e17b932 karena triage impor kosong, lalu lulus sesudah perbaikan.
-  - Dokumentasi: docs/features.md, docs/database.md, docs/backup-format.md, docs/changelog.md. Batas: belum browser/file pengguna nyata.
-- [x] **[F11](docs/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim** (Medium; M).
-  - Tanggal / commit: 13 November 2026; commit `fix(data): bersihkan referensi saat menghapus entitas (F11)` (commit yang menambahkan bukti ini).
-  - Perubahan: service transaksi domain untuk bab/peta/Codex/proyek; hapus data turunan, unlink referensi sambil mempertahankan teks; cleanup snapshot legacy tanpa parent dan cache bab setelah commit. Kebijakan reset triage/retensi dijelaskan di docs/database.md.
-  - Bukti awal: jalur delete bab hanya menghapus chapter; map tidak melepas portal masuk; project hanya mencari snapshot dari bab yang masih ada.
-  - Verifikasi: sembilan tes DB terisolasi untuk isolasi proyek, unlink, orphan snapshot, backup retention dan rollback; seluruh 54 berkas/625 tes lulus, typecheck dan build lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/database.md, docs/features.md, docs/changelog.md. Batas: belum browser native/lintas-tab nyata; F10/F19 tetap terbuka.
-- [x] **[F19](docs/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten** (Medium; M).
-  - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
-  - Perubahan: snapshot readonly setelah flush editor, serialisasi di luar transaksi; ekspor membaca data terbaru. Upload Drive diverifikasi sukses/ID sebelum prune; kegagalan retensi dilaporkan terpisah.
-  - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
-  - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
-  - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
-- [x] **[F08](docs/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi** (Medium; S–M).
-  - Tanggal / commit: 13 November 2026; commit `fix(search): gunakan worker dan sinkronkan generated key Codex (F08/F09)` (commit yang menambahkan bukti ini).
-  - Perubahan: facade pencarian berskor dengan projectId, antrean worker dan error propagation; generated key setelah onsuccess, indeks record final setelah commit, coalescing mutasi dan setup hook idempotent.
-  - Bukti awal: panel memakai singleton main-thread yang tidak diinisialisasi; creating hook menimpa ID dengan primKey sebelum auto-increment selesai.
-  - Verifikasi: sembilan tes facade/worker-handler/store dengan transport emulasi, DB terisolasi dan panel mock; 58 berkas/648 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md dan docs/changelog.md. Batas: belum Worker browser native/embedding nyata.
-- [x] **[F09](docs/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key** (Medium; S).
-  - Tanggal / commit: 13 November 2026; commit `fix(search): gunakan worker dan sinkronkan generated key Codex (F08/F09)` (commit yang menambahkan bukti ini).
-  - Perubahan: facade pencarian berskor dengan projectId, antrean worker dan error propagation; generated key setelah onsuccess, indeks record final setelah commit, coalescing mutasi dan setup hook idempotent.
-  - Bukti awal: panel memakai singleton main-thread yang tidak diinisialisasi; creating hook menimpa ID dengan primKey sebelum auto-increment selesai.
-  - Verifikasi: sembilan tes facade/worker-handler/store dengan transport emulasi, DB terisolasi dan panel mock; 58 berkas/648 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md dan docs/changelog.md. Batas: belum Worker browser native/embedding nyata.
-- [x] **[F12](docs/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong** (Medium; M).
-  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
-  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
-  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
-  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
-- [x] **[F14](docs/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt** (Medium; M).
-  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
-  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
-  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
-  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
-- [x] **[F15](docs/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal** (Medium; S).
-  - Tanggal / commit: 13 November 2026; commit `fix(ai): tangani error stream, isolasi retry, dan cleanup rewrite (F12/F14/F15)` (commit yang menambahkan bukti ini).
-  - Perubahan: parser SSE provider-aware dengan error/empty/termination guard; onRetry diteruskan, buffer direset dan hasil final sukses dipakai; timer rewrite dibersihkan, request dibatalkan dan callback run lama diabaikan.
-  - Bukti sebelum: empat tes regresi pada source 2a42ceb gagal (SSE error HTTP 200, buffer chat/rewrite retry, cleanup timer gagal).
-  - Verifikasi: 18 tes baru parser/proxy/hook memakai stream sintetis dan mock; 62 berkas/666 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; F17 dan sisa F13 tetap terbuka.
-- [x] **[F16](docs/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver** (Medium; S).
-  - Tanggal / commit: 14 November 2026; `fix(ai): selaraskan pembatalan context worker (F16)` (commit yang menambahkan bukti ini).
-  - Perubahan: union kontrak pesan, CANCEL payload.cancelId, state ID aktif/finally cleanup, checkpoint sebelum tugas/selepas await dan yield batch chunk. Hasil request batal diabaikan, request lain tetap berjalan.
-  - Bukti sebelum: tes timeout pada baseline 0a4e930 gagal karena cancelId dikirim di root, tidak sesuai receiver.
-  - Verifikasi: lima tes facade/handler dengan mock transport/model/tokenizer/DB; hasil akhir di changelog.
-  - Dokumentasi: docs/features.md, docs/architecture.md, docs/changelog.md. Batas: belum Worker native/model nyata; pembatalan kooperatif, bukan preemption operasi sinkron atau penghentian model bersama/indexing latar.
-- [x] **[F17](docs/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud** (Medium; S–M).
-  - Tanggal / commit: Implementasi 13 November 2026; commit 14 November 2026: `fix(ai): batasi fallback cloud dengan izin eksplisit (F17)` (commit yang menambahkan bukti ini).
-  - Perubahan: izin fallback per provider, default tanpa fallback lintas-provider, mode inferensi hanya lokal, pemeriksaan ulang saat dispatch dan guard direct proxy. Kontrol langsung tersimpan dan indikator tujuan efektif ditampilkan.
-  - Bukti sebelum: dua probe pada d093244 gagal (akses test-only callAI): cloud fallback Ollama tanpa izin dan cloud override mode lokal.
-  - Verifikasi: 13 tes baru kebijakan/facade/proxy/settings/indikator memakai mock; 65 berkas/679 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/api.md, docs/changelog.md. Batas: belum provider/browser nyata; izin baru berlaku untuk dispatch berikutnya, bukan menarik request terkirim.
-- [x] **[F29](docs/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir** (Medium; S).
-  - Tanggal / commit: 14 November 2026; commit `fix(ai): validasi versi ringkasan dan pertahankan parameter nol (F29/F13)` (commit yang menambahkan bukti ini).
-  - Perubahan: hash konten sumber dan conditional commit ringkasan, timestamp versi sumber; nullish temperature dan usage token nol. Tidak ada migrasi schema DB.
-  - Bukti sebelum: lima probe pada de55cd9 gagal (race konten ringkasan, temperature nol pada tiga keluarga provider, output-token nol); ekspor entry point test-only untuk probe summarizer.
-  - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
-- [x] **[F20](docs/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses** (Medium; S).
-  - Tanggal / commit: 13 November 2026; commit `fix(backup): konsistenkan snapshot dan amankan retensi Drive (F19/F20)` (commit yang menambahkan bukti ini).
-  - Perubahan: snapshot readonly setelah flush editor, serialisasi di luar transaksi; ekspor membaca data terbaru. Upload Drive diverifikasi sukses/ID sebelum prune; kegagalan retensi dilaporkan terpisah.
-  - Bukti awal: collectAllData membaca store terpisah; ExportManager memakai live-query sebelum flush; DELETE Drive mendahului upload.
-  - Verifikasi: sembilan tes regresi DB/Drive mock; 55 berkas/634 tes lulus, typecheck/build/diff-check lulus (peringatan build lama tetap ada). Dokumentasi: docs/features.md, docs/backup-format.md, docs/changelog.md.
-  - Batas: belum browser/Drive nyata; edit sesudah snapshot tidak masuk hasilnya. F10 tetap terbuka.
-- [x] **[F21](docs/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik** (Medium; M).
-  - Tanggal / commit: 14 November 2026; `fix(runtime): pastikan startup production deterministik (F21)` (commit yang menambahkan bukti ini).
-  - Perubahan: entry dev/production terpisah, tanpa import Vite pada runtime production; dotenv cwd dengan prioritas env proses, mode eksplisit, PORT tervalidasi dan allowlist proxy port aktif. Aset relatif bundle; build hilang/port invalid/terpakai gagal dengan exit 1. Engines Node sesuai dependency terkunci.
-  - Bukti sebelum: bundle server baseline 9b57e73 gagal exit 1 pada dependency production bersih karena Cannot find module 'vite'.
-  - Verifikasi: 70 berkas/700 tes, typecheck dan build lulus; smoke dev Windows dan npm run test:production lulus. Smoke production menginstal 514 dependency (tanpa Vite/tsx), menguji SPA/deep-link/aset, cwd berbeda, .env/key sintetis, mode, port, API mock, origin terlarang, error startup dan tidak adanya key sintetis di dist.
-  - Dokumentasi: README, .env.example, docs/architecture.md, docs/api.md, docs/changelog.md dan panduan agen. Batas: Node 24.15.0/Windows; belum diuji Linux atau key/provider nyata; binding tetap loopback dan APP_URL tidak digunakan.
-
-- [x] **[F25](docs/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus** (Medium; S–M).
-  - Tanggal / commit: 14 November 2026; `fix(ui): kelola fokus dialog dan pulihkan navigasi legacy (F25/F26)` (commit yang menambahkan bukti ini).
-  - Perubahan: ConfirmDialog memakai dialog/showModal native dengan alertdialog, label/deskripsi, fokus awal Batal, Tab/Shift+Tab berputar, inert/top-layer dan pemulihan fokus. Busy memblokir Escape/backdrop/aksi; dialog bertingkat diuji.
-  - Bukti sebelum: dua tes browser pada source df1f875 gagal (arc tetap tersimpan/tampilan kosong; dialog tidak memiliki role/nama/deskripsi aksesibel). Source dipulihkan lalu suite lulus.
-  - Verifikasi batch F25/F26: 12 tes baru komponen/normalisasi/context dan enam browser tests; total 76 berkas/722 tes, 14 browser tests, typecheck, build dan diff-check lulus. Data proyek/bab tetap utuh; tanpa dependency/schema baru.
-  - Dokumentasi: docs/features.md, docs/architecture.md, docs/testing.md, docs/changelog.md, README. Batas: Chromium/Windows; belum screen reader manual atau Firefox/Safari. Dialog membutuhkan showModal native; pemetaan legacy membuka panel induk, tanpa merekonstruksi target karakter/tab lama.
-- [x] **[F22](docs/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat** (Medium; M).
-  - Tanggal / commit: 14 November 2026; `perf: kurangi beban startup dan pertahankan fitur offline (F22)` (commit yang menambahkan bukti ini).
-  - Perubahan: lazy ExportManager/PDF/DOCX, pisahkan registry ikon dari ActionsPanel, lazy transformers di worker ES module. Precache aset lazy dipertahankan untuk offline; schema/dependency tidak berubah.
-  - Bukti: entry JS 2.026.553 ke 1.251.421 byte (-38,2%); worker entry 6.560.002 ke 5.737.026. Lima sample fixture 3.000 kata: median editor terlihat 474 ke 408 ms, ScriptDuration 220 ke 174 ms. Raw JSON/prosedur/batas di docs/performance/f22.md; bukan klaim universal atau pengurangan seluruh precache.
-  - Verifikasi: guard import runtime gagal pada source worker baseline 786cc5d lalu lulus; 76 berkas/723 tes, 14 browser tests, typecheck/build/diff-check lulus. test:startup production memverifikasi reload terkontrol, worker token native dan unduhan ekspor lazy saat offline. Peringatan ActionsPanel hilang; bundle/ONNX/Browserslist masih ada.
-  - Dokumentasi: docs/performance/f22.md, docs/features.md, docs/architecture.md, docs/testing.md, README, changelog, aturan AI. Batas: Windows/Chromium localhost; precache tetap sekitar 10,8 MiB, tokenizer statis masih besar; model embedding/seluruh format offline/perangkat lambat belum diuji. Workflow GitHub belum dieksekusi.
-- [x] **[F23](docs/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah** (Medium; M–L).
-  - Tanggal / commit: 14 November 2026; `perf(data): indeks metadata bab dan batasi ranking adegan (F23)` (commit yang menambahkan bukti ini).
-  - Perubahan: schema v34 append-only dengan covering metadata/modified/scene-keyset indexes; cursor migration dan hooks atomik menjaga count. ChapterList/WritingStats/Dashboard membaca key tanpa HTML, auto-index membaca satu timestamp key, query comparison tanpa JSON serialization. Exact scene ranking memakai batch 256 dan stable top-k.
-  - Bukti: fixture native kecil/sedang/besar mempertahankan hasil; 500 bab x 5.000 kata, median daftar 193,3 ke 7 ms dan modified 79,5 ke 0,4 ms; working-set baris penuh 12.591.564 byte ke metadata 32.164 byte (+5.397 backing). Ranking tidak selalu lebih cepat (10.000 scene: 416 ke 427 ms), memori dibatasi. Raw/metodologi/tradeoff di docs/performance/f23.md.
-  - Verifikasi: guard serialisasi gagal pada hook baseline 1c693f8 lalu lulus. 82 berkas/738 tes, 16 browser tests, typecheck/build/diff-check dan production startup/offline smoke lulus. Tes mencakup migration v33 native/sintetis, edit/metadata/rollback/import/restore/delete, generated ID, live invalidation, score/tie/isolation/cancel.
-  - Dokumentasi: docs/database.md, docs/features.md, docs/architecture.md, docs/testing.md, docs/performance/f23.md, README, changelog, panduan/aturan. Batas: Windows/Chromium; bukan total heap/latency UI/inferensi model, belum multi-tab/quota migration atau browser lain. Indeks menambah biaya disk/tulis; tidak semua full scan fitur lain dihapus. Tidak ada tabel/FK/dependency baru; backup tetap v8.
-
-### P3 — Perbaikan terencana
-
-- [x] **[F13](docs/audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan** (Low; S).
-  - Tanggal / commit: 14 November 2026; commit `fix(ai): validasi versi ringkasan dan pertahankan parameter nol (F29/F13)` (commit yang menambahkan bukti ini).
-  - Perubahan: hash konten sumber dan conditional commit ringkasan, timestamp versi sumber; nullish temperature dan usage token nol. Tidak ada migrasi schema DB.
-  - Bukti sebelum: lima probe pada de55cd9 gagal (race konten ringkasan, temperature nol pada tiga keluarga provider, output-token nol); ekspor entry point test-only untuk probe summarizer.
-  - Verifikasi: 12 tes baru DB/proxy mock untuk race, versi, delete, manual-summary, concurrency, legacy, angka nol, payload dan usage; 67 berkas/691 tes, typecheck/build/diff-check lulus (peringatan build lama tetap ada).
-  - Dokumentasi: docs/features.md, docs/database.md, docs/changelog.md. Batas: belum browser/provider nyata; ringkasan masih memakai maksimal 15.000 karakter input.
-- [x] **[F26](docs/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong** (Low; S).
-  - Tanggal / commit: 14 November 2026; `fix(ui): kelola fokus dialog dan pulihkan navigasi legacy (F25/F26)` (commit yang menambahkan bukti ini).
-  - Perubahan: Normalisasi tujuan dari definisi studio: arc ke continuity, orphans ke completeness, unknown ke write, workshop tanpa target ke codex. Storage awal, setter, riwayat studio dan fallback render memakai tujuan valid; deep link Codex/Atlas dan workshop bertarget tetap bekerja.
-  - Bukti sebelum: dua tes browser pada source df1f875 gagal (arc tetap tersimpan/tampilan kosong; dialog tidak memiliki role/nama/deskripsi aksesibel). Source dipulihkan lalu suite lulus.
-  - Verifikasi batch F25/F26: 12 tes baru komponen/normalisasi/context dan enam browser tests; total 76 berkas/722 tes, 14 browser tests, typecheck, build dan diff-check lulus. Data proyek/bab tetap utuh; tanpa dependency/schema baru.
-  - Dokumentasi: docs/features.md, docs/architecture.md, docs/testing.md, docs/changelog.md, README. Batas: Chromium/Windows; belum screen reader manual atau Firefox/Safari. Dialog membutuhkan showModal native; pemetaan legacy membuka panel induk, tanpa merekonstruksi target karakter/tab lama.
-- [x] **[F27](docs/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia** (Medium; S).
-  - Tanggal / commit: 14 November 2026; `fix(privacy): batasi penyimpanan key dan minimalkan log (F27)` (commit yang menambahkan bukti ini).
-  - Perubahan: credentialStore dipakai hook dan facade; default baru sesi, legacy permanen dipertahankan sampai pengguna menyimpan pilihan. Save sesi memindahkan key tanpa salinan permanen; hapus membersihkan dua storage/isian tab ini. UI menjelaskan Base64 bukan enkripsi, tab restore, env server, tab lain dan request/retry berjalan.
-  - Log: hilangkan promptPreview/rawMessage dan raw error console jalur AI/proxy. ErrorService menggunakan allowlist diagnostik sebelum DB/console; panel/getRecent menyaring log lama saat baca tanpa menghapus record lama otomatis. Pesan/stack/metadata bebas tidak dicatat.
-  - Bukti sebelum: tiga probe pada source 2d50625 gagal (preferensi/key legacy, payload log facade, DB/console berisi key/naskah). Sepuluh tes baru lulus setelah fix.
-  - Verifikasi: 73 berkas/710 tes, delapan browser tests, typecheck, build dan diff-check lulus. Browser menguji sesi/reload/persistent/clear lewat UI; model listing dimock, tanpa key/provider nyata. Peringatan build lama tetap ada.
-  - Dokumentasi: docs/features.md, docs/architecture.md, docs/api.md, docs/testing.md, README, changelog dan aturan AI/settings. Batas: bukan perlindungan dari XSS/akses profil; sesi dapat dipulihkan browser; clear tidak mencabut key di provider/env, tab lain atau request/retry berjalan; log lama di DB perlu clear manual/retensi.
-- [x] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).
-
-### Urutan kerja F28 (bertahap)
-
-Rencana 14 November 2026, selesai bertahap 15 November 2026. F28.1-F28.6 dan
-F28 induk ditutup berdasarkan review acceptance akhir. Sasaran utamanya
-adalah memperjelas kontrak dan tanggung jawab kode dengan perilaku aplikasi tetap.
-Fondasi yang sudah ada (service domain F11, protocol F16, metadata F23) diperkuat,
-bukan dibuat ulang.
-
-| Urutan | Subitem | Lingkup konkret | Syarat selesai |
-|---|---|---|---|
-| 1 | F28.1 - Inventaris dan pengaman (selesai 15 Nov 2026) | Petakan any/cast/ignore, dependensi, ekspor publik dan tes pada jalur DB, worker, AI, Atlas. Tentukan daftar modul awal dan gap tes perilaku penting sebelum kode dipindah. | Baseline typecheck/tes/build dan daftar risiko/kontrak tercatat; tidak ada perubahan fitur. |
-| 2 | F28.2 - Kontrak data pada batas modul (selesai 15 Nov 2026) | Bedakan metadata daftar, entitas lengkap, input operasi dan hasil query. Lengkapi payload/response tiap pesan context/Orama worker. Gunakan unknown + pemeriksaan bentuk pada respons provider/error. | Kontrak bersama sender/receiver, matriks input/output dan pengaman tipe negatif lulus; proyeksi tanpa content ditolak sebagai entitas penuh. |
-| 3 | F28.3 - Pemeriksaan strict bertahap (selesai 15 Nov 2026) | tsconfig.strict.json memeriksa kontrak/helper dan import transitif; npm run lint:strict dijalankan CI. Pengaman tipe mendeteksi pelemahan null/callback; error SSE tidak memakai cast any. | 17 root/26 berkas sumber lulus strict tanpa any/non-null/ignore baru; probe implicit any/null/undefined/catch ditolak dan batas cakupan tercatat. |
-| 4 | F28.4 - Pisahkan layanan AI (selesai 15 Nov 2026) | Pisahkan settings/provider configuration, pembentukan konteks, dispatch/retry/cancel, dan parsing hasil dari facade. Pertahankan entry point publik dan service kebijakan/kredensial yang sudah ada. | Regresi streaming/retry/abort/consent/log/parameter nol dan ringkasan tetap lulus; konsumen fitur tidak perlu mengganti alur. |
-| 5 | F28.5 - Pisahkan Atlas (selesai 15 Nov 2026) | Tambahkan tes interaksi yang masih kurang sebelum ekstraksi. Pisahkan state/filter/seleksi ke hook, operasi map/marker ke service domain, dan bagian UI ke komponen kecil. Tetap gunakan cleanup domain F11. | Pin/area/rute, edit geometri, deep link, tooltip aman, delete/unlink dan restore tetap bekerja; tidak ada perubahan visual/data tanpa tes yang sesuai. |
-| 6 | F28.6 - Pengaman pemeliharaan dan penutupan (selesai 15 Nov 2026) | Audit ulang ekspor/dependensi setelah pemisahan; hapus hanya yang terbukti tidak digunakan. Jalankan strict check di CI dan tetapkan aturan any/ignore pada modul yang sudah dirapikan. Perbarui dokumentasi serta bandingkan dengan baseline. | Typecheck/build/unit/browser/check strict lulus, tanggung jawab modul jelas, pengecualian tersisa dijelaskan dan semua acceptance F28 ditinjau. |
-
-**Bukti F28.1 (15 November 2026):** inventaris AST dan peta kontrak/dependensi,
-ekspor publik, pengaman serta gap sebelum refactor ada di
-[laporan F28.1](docs/audits/2026-11-15-f28-inventory.md) dan snapshot JSON terkait.
-Baseline source dec2940: 272 file non-test, 247 explicit any, 266 assertion,
-220 non-null; tidak ada ts-ignore/nocheck/expect-error dalam lingkup scan.
-82 berkas/738 tes, 16 Chromium tests, typecheck/build dan diff-check lulus lokal.
-Tahap inventaris tidak mengubah runtime/strict/schema.
-F28 induk tetap terbuka. Perubahan rencana F28 dari sesi sebelumnya dipertahankan.
-
-**Bukti F28.2 (15 November 2026):** kontrak payload/hasil 12 task context dan
-pesan Orama, validasi input/hasil/progress, respons AI unknown dengan parser
-teks/usage/error, serta pemisahan metadata/input create/identitas bab tersimpan.
-Pengaman tipe negatif, typecheck, 87 berkas/782 tes, build, 16 tes browser dan
-startup/offline lulus. Dua probe pada source dec2940 gagal sebelum guard dan lulus
-sesudah perbaikan. Lihat [kontrak dan batas validasi F28.2](docs/audits/2026-11-15-f28-contracts.md).
-Skema/dependensi tetap; strict bertahap dan pemisahan modul belum dimulai.
-
-**Bukti F28.3 (15 November 2026):** konfigurasi strict terpisah, step CI dan
-pengaman tipe strict aktif pada 26 berkas termasuk import transitif. Probe yang
-lolos pada konfigurasi umum ditolak strict (TS7006/TS2322/TS18046); override
-strict=false juga menggagalkan assertion tipe. Typecheck umum/strict, 87 berkas/
-782 tes dan build lulus lokal. Enam explicit any dan 26 non-null assertion lama
-pada dependensi tercatat; tidak ada tambahan untuk menutupi error. Lihat
-[cakupan dan batas F28.3](docs/audits/2026-11-15-f28-strict.md). Strict global
-belum diaktifkan; F28 induk tetap terbuka.
-
-**Bukti F28.4:** settings.ts, context.ts, dispatch.ts, execution.ts dan resultParsing.ts
-memisahkan konfigurasi, konteks, ketahanan dispatch, lifecycle abort serta parsing.
-Facade publik tetap melalui index.ts; state bersama dan kebijakan tetap dipertahankan.
-Lihat docs/architecture.md bagian pemisahan layanan AI. F28 induk tetap terbuka.
-
-**Bukti F28.5:** useAtlasSelection/useAtlasFilters, AtlasControls dan atlasOperations
-memisahkan state/filter, UI bersama dan persistence; useAtlas mempertahankan live-query.
-Delete peta tetap memakai cleanup F11. Tes native panel membuat/memuat ulang/menghapus
-pin; fixture Leaflet menguji draw pin/area/rute, drag pin, filter, label inert dan URL
-Blob cleanup. Skenario panel juga lulus pada source baseline 827c36b. Typecheck
-umum/strict, 89 berkas/785 tes, build dan 18 browser tests lulus. Batas pengujian
-portal/deep-link/proyek melalui UI lengkap dicatat di docs/testing.md. F28 tetap terbuka.
-
-**Bukti F28.6:** maintenance guard memeriksa budget AST pada 38 berkas, minimum
-28 source strict, 18 ekspor publik AI dan arah import internal. Empat import tidak
-terpakai dihapus; dependency tidak dihapus tanpa bukti. Snapshot akhir dibandingkan
-baseline F28.1: any non-test 247 menjadi 218; non-null tetap 220. Semua probe guard ditolak.
-Typecheck umum/strict/maintenance, 89 berkas/785 tes dengan coverage, 18 browser tests,
-data-path benchmark/correctness, build/clean production dan startup/offline lulus
-lokal. CI Windows/Ubuntu dikonfigurasi, belum diklaim lulus di runner GitHub.
-[Review akhir dan batas penutupan F28](docs/audits/2026-11-15-f28-review.md)
-meninjau keempat acceptance temuan asli; F28.1-F28.6 dan F28 induk selesai.
-
-**Tahap F28 selesai.** Strict global dan gap pengujian yang tercatat menjadi
-pekerjaan lanjutan tersendiri jika lingkup terkait diubah.
-Strict global menjadi target lanjutan setelah ketergantungan siap, bukan diaktifkan
-sekaligus di awal. Daftar jumlah any hanya indikator: menghapusnya lewat cast
-atau memindahkan baris tanpa memperjelas tanggung jawab tidak dianggap selesai.
-
-### Format bukti penyelesaian
-
-Tambahkan di bawah item terkait setelah dikerjakan:
-
-```text
-Tanggal / commit atau PR:
-Perubahan inti:
-Reproduksi sebelum perbaikan:
-Verifikasi sesudah perbaikan (perintah + hasil):
-Dokumentasi modul yang diperbarui:
-Batas verifikasi / risiko tersisa:
-```
-
-Tidak ada kebutuhan otomatis menambah autentikasi/RBAC. Hardening mengikuti konteks single-user lokal. Pengujian provider, Drive, jaringan, atau data nyata perlu ruang lingkup yang sesuai; gunakan mock dan database terisolasi untuk regresi awal.
-
----
-
-## 1. Prioritas Terbuka (Actionable)
-
-Item-item yang memiliki desain jelas dan siap dikerjakan jika diperlukan peningkatan pada area terkait:
-
-### 1.1 Penyimpanan & Performa: Diet Jalur Backup Serialisasi
-- **Status:** Jalur internal sudah dioptimasi (`assembleBackupJson` 1x stringify).
-- **Tujuan:** Untuk proyek dengan naskah sangat masif:
-  - Pertimbangkan memindahkan proses serialisasi JSON / kompresi gzip ke Web Worker agar main thread sama sekali tidak mengalami jank pada naskah ratusan ribu kata.
-
-### 1.2 Database: Konvensi Migrasi Streaming
-- **Status:** Catatan teknis untuk migrasi skema masa depan.
-- **Tujuan:** Migrasi Dexie di masa depan sebaiknya menghindari `toArray()` seluruh tabel besar di dalam transaksi jika hanya butuh memodifikasi field parsial. Buat pola cursor/streaming untuk update bertahap.
-
-### 1.3 Ekspor Manuskrip: Cakupan Unicode Font PDF
-- **Status:** Aman untuk bahasa Indonesia standar (huruf latin, tanda petik lengkung, em-dash).
-- **Tujuan:** Jika di masa depan novel menggunakan karakter/glyph khusus (alfabet fiksi / aksara non-latin), integrasikan font kustom ber-subset UTF-8 ke generator jsPDF.
-
----
-
-## 2. Ide Diparkir (❄️ Riset & Backburner)
-
-Ide-ide konseptual yang diparkir karena membutuhkan fondasi baru, rawan false-positive, atau di luar urgensi saat ini:
-
-- **Simulator Dunia (State Entitas Berubah Lintas-Bab):**
-  - Melacak status hidup/mati karakter, kepemilikan artefak, atau pangkat yang berubah sepanjang bab, serta validasi jarak/waktu tempuh. *(Dibutuhkan fondasi "state-per-bab" terlebih dahulu).*
-- **Lensa Suara Dialog (Analisis Gaya Bicara):**
-  - Metrik panjang ujaran, variasi kosakata, dan gaya bicara deterministik per-tokoh untuk mendeteksi apakah semua karakter terdengar serupa.
-- **Moodboard / Referensi Visual Codex:**
-  - Galeri visual (wajah/kostum) per entri Codex. *(Perlu mitigasi kuota penyimpanan IndexedDB).*
-- **Peringatan POV Aktif:**
-  - Deteksi loncatan sudut pandang narasi (*anti head-hopping*). *(Tantangan: rawan false-positive tinggi pada deteksi teks bahasa Indonesia).*
-
----
-
-## 3. Indeks Arsip Historis
-
-Dokumen masa lalu yang telah diselesaikan dan dirangkum untuk referensi arsitektur:
-- [`docs/archive/RENCANA-AUDIT-KODE.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/RENCANA-AUDIT-KODE.md) — Keputusan audit 12 area kualitas kode inti.
-- [`docs/archive/RENCANA-OPTIMASI-AI.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/RENCANA-OPTIMASI-AI.md) — Rekam 14 optimasi token, prompt caching, dan routing model AI.
-- [`docs/archive/RENCANA-ATLAS-DUNIA.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/RENCANA-ATLAS-DUNIA.md) — Spesifikasi awal dan arsitektur panel peta interaktif Atlas.
-- [`docs/archive/ARSIP-AUDIT-FABLE.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/ARSIP-AUDIT-FABLE.md) — Riwayat lengkap perbaikan audit menyeluruh Fable Batch 1–3.
-- [`docs/archive/ARSIP-FITUR-WORLDBUILDING.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/docs/archive/ARSIP-FITUR-WORLDBUILDING.md) — Riwayat implementasi 17 modul worldbuilding (Kalender, Glosarium, Faksi, Graf Lore, dll).
+- [Indeks dokumentasi](docs/README.md)
+- [Katalog fitur](docs/features.md)
+- [Keputusan arsitektur](docs/decisions.md)
+- [Arsip audit dan rencana lama](docs/archive/)
