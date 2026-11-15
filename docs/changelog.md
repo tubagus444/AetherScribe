@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Refactor] F28.3 - Pemeriksaan TypeScript Strict Bertahap
+
+- Tambahkan tsconfig.strict.json dan npm run lint:strict; aktifkan strict pada 17 root/26 berkas termasuk dependensi transitif kontrak/helper. Typecheck umum tetap terpisah; belum mengaktifkan strict seluruh aplikasi.
+- Tambahkan assertion tipe strict untuk null/undefined dan callback opsional; assertion gagal jika strict dimatikan. Hapus dua cast any pada error SSE dan perkuat tes kode error tanpa mengubah perilaku retry/streaming.
+- Jalankan check strict sebagai step CI Windows/Ubuntu. Dokumentasikan cakupan, skipLibCheck, any/non-null lama dan opsi ketat yang belum diaktifkan. Tanpa perubahan skema/dependensi.
+- Typecheck umum/strict, 87 berkas/782 tes dan build lulus lokal. Probe implicit any/null/undefined/catch ditolak strict, serta probe strict=false menggagalkan pengaman. Browser/production/offline tidak diulang pada tahap ini; runner GitHub belum diverifikasi. F28.3 selesai, F28 induk tetap terbuka.
+
 ### [Refactor] F28.2 - Kontrak Data Worker, AI dan Bab
 
 - Definisikan payload/result setiap task context serta pesan/result/error Orama; sender dan receiver memakai kontrak bersama. Periksa input sebelum komputasi dan hasil/progress sebelum diterima, pertahankan cancellation, cleanup timer, antrean, retry serta Map/Set native.

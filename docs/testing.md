@@ -11,6 +11,7 @@ Gunakan Node sesuai `engines` dan dependency dari lockfile:
 ```powershell
 npm ci
 npm run lint
+npm run lint:strict
 npm run test:run
 npm run test:coverage
 npx playwright install chromium --no-shell
@@ -97,7 +98,7 @@ dapat dijalankan pada seluruh checkout lama karena kontrak antar-modul berubah.
 
 `.github/workflows/critical-tests.yml` berjalan pada push, pull request dan manual,
 di Windows serta Ubuntu dengan Node 24.15.0. Setiap job menjalankan `npm ci`,
-typecheck, unit/integrasi dengan coverage, browser kritis, dan build/smoke
+typecheck umum dan strict bertahap, unit/integrasi dengan coverage, browser kritis, dan build/smoke
 production. Tidak membutuhkan repository secrets atau izin tulis repository.
 
 Coverage, HTML report browser, screenshot dan trace kegagalan disimpan sebagai
@@ -144,3 +145,13 @@ source dec2940 membuktikan completion objek dan COUNT_TOKENS dengan input angka
 belum ditolak sebelum perubahan. Snapshot coverage F24 di atas tidak diukur ulang.
 Lihat [rincian F28.2](audits/2026-11-15-f28-contracts.md); provider nyata dan workflow
 Atlas menyeluruh tetap belum tercakup.
+
+F28.3 menambahkan `npm run lint:strict` sebagai step CI terpisah. Konfigurasi
+`tsconfig.strict.json` mengaktifkan strict pada kontrak/helper dan import transitif
+(17 root/26 berkas); `lint` tetap memeriksa proyek secara umum. Assertion khusus
+di `src/contracts/strict/strictSafety.typecheck.ts` hanya diperiksa konfigurasi
+strict dan gagal bila strict dimatikan. Probe sementara membuktikan implicit any,
+null/undefined dan catch tanpa narrowing ditolak. Typecheck umum/strict,
+87 berkas/782 tes dan build lulus lokal; tidak mengukur ulang coverage atau
+menjalankan ulang browser/production/offline. Cakupan, pengecualian lama dan cara
+memperluas check ada di [laporan F28.3](audits/2026-11-15-f28-strict.md).

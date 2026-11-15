@@ -32,3 +32,5 @@ Setiap selesai mengubah fitur, database, atau API, kamu WAJIB:
 Jangan menganggap tugas selesai sebelum dokumentasi diperbarui.
 
 Pengujian: `npm run test:run` (single-run), `npm run test:coverage`, `npm run test:e2e`, dan `npm run test:production`. Persiapan browser, isolasi fixture dan batas coverage: `docs/testing.md`.
+
+Typecheck: jalankan `npm run lint` dan `npm run lint:strict`. Cakupan strict bertahap ada di `tsconfig.strict.json`, termasuk import transitif; jangan menutup diagnostik dengan any/non-null/ignore baru. Batas dan perluasan: `docs/audits/2026-11-15-f28-strict.md`.

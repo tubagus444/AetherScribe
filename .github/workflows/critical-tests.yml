@@ -29,6 +29,8 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npm run lint
+      - name: Incremental strict TypeScript contracts and helpers
+        run: npm run lint:strict
       - name: Unit and integration tests with coverage
         run: npm run test:coverage
       - name: Install Chromium

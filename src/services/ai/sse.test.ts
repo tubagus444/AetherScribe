@@ -9,7 +9,16 @@ it('parses CRLF, fragmented/multiline frames and final buffer without delimiter'
   const result = await parse('openai', ['data: {"choices":\r', '\ndata: [{"delta":{"content":"Hello"}}]}\r\n\r\ndata: [DO', 'NE]'], chunks);
   expect(result.text).toBe('Hello'); expect(chunks).toHaveBeenCalledWith('Hello');
 });
-it.each(['', 'data: [DONE]\n\n', 'data: {"choices":[{"delta":{"content":"partial"}}]}\n\n', 'data: {bad}\n\n'])('rejects empty/truncated/malformed stream %s', async input => { await expect(parse('openai', [input])).rejects.toThrow(); });
+it.each([
+  ['', 'EMPTY_RESPONSE'],
+  ['data: [DONE]\n\n', 'EMPTY_RESPONSE'],
+  ['data: {"choices":[{"delta":{"content":"partial"}}]}\n\n', 'API_ERROR'],
+  ['data: {bad}\n\n', undefined],
+])('rejects empty/truncated/malformed stream %s with its error code', async (input, code) => {
+  const result = parse('openai', [input]);
+  if (code) await expect(result).rejects.toMatchObject({ code });
+  else await expect(result).rejects.toThrow();
+});
 it('collects Google parts and requires finishReason', async () => {
   expect((await parse('google', ['data: {"candidates":[{"content":{"parts":[{"text":"A"},{"text":"B"}]},"finishReason":"STOP"}]}\n\n'])).text).toBe('AB');
 });

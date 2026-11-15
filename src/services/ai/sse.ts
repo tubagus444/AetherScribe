@@ -14,7 +14,7 @@ export async function readAIStream(provider: string, reader: ReadableStreamDefau
     try { parsed = JSON.parse(payload); data = object(parsed); } catch { throw new Error('Malformed SSE data frame.'); }
     if (data.error || data.type === 'error' || event === 'error') {
       const error = Object.assign(new Error(extractProviderError(data) || 'AI stream error'), { code: 'API_ERROR', provider });
-      error.code = 'API_ERROR'; error.provider = provider; throw error;
+      throw error;
     }
     usage = { ...usage, ...parseUsage(data.usage), ...parseUsage(data.usageMetadata), ...parseUsage(object(data.message).usage), ...parseUsage(data.amazon_bedrock_invocation_metrics) };
     let chunk = '';
@@ -47,8 +47,8 @@ export async function readAIStream(provider: string, reader: ReadableStreamDefau
       onData?.(); buffer += decoder.decode(value, { stream: true }); drain();
     }
     buffer += decoder.decode(); drain(true);
-    if (!text.trim()) { const error = new Error('AI stream returned no text.') as any; error.code = 'EMPTY_RESPONSE'; throw error; }
-    if (!ended) { const error = new Error('AI stream ended before completion.') as any; error.code = 'API_ERROR'; throw error; }
+    if (!text.trim()) throw Object.assign(new Error('AI stream returned no text.'), { code: 'EMPTY_RESPONSE' });
+    if (!ended) throw Object.assign(new Error('AI stream ended before completion.'), { code: 'API_ERROR' });
     return { text, usage };
   } finally {
     await reader.cancel().catch(() => {});

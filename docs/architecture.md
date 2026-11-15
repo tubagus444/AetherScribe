@@ -62,6 +62,10 @@ di [F28.2](audits/2026-11-15-f28-contracts.md). Payload dan hasil tiap task work
 memakai tipe bersama dan pemeriksaan runtime; JSON provider diperlakukan sebagai
 unknown sebelum teks/usage/error dinormalisasi.
 
+Pemeriksaan strict dilakukan bertahap melalui `tsconfig.strict.json` dan
+`npm run lint:strict`, terpisah dari typecheck umum. Semua import transitif tetap
+ikut diperiksa. Cakupan awal dan pengecualiannya ada di [F28.3](audits/2026-11-15-f28-strict.md).
+
 Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI freezing*), tugas-tugas berat dieksekusi di background Web Worker:
 
 1. **`src/services/contextWorker.ts`** (dikendalikan `contextEngine.ts`):

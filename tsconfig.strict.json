@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true
+  },
+  "include": [
+    "src/contracts/**/*.typecheck.ts",
+    "src/lib/dataContracts.ts",
+    "src/lib/codexContracts.ts",
+    "src/lib/chapterContracts.ts",
+    "src/lib/chapterMetadata.ts",
+    "src/services/contextProtocol.ts",
+    "src/services/rag/oramaProtocol.ts",
+    "src/services/ai/types.ts",
+    "src/services/ai/providerTypes.ts",
+    "src/services/ai/responseContracts.ts",
+    "src/services/ai/sse.ts",
+    "src/services/ai/resilience.ts",
+    "src/services/ai/errors.ts",
+    "src/services/ai/circuitBreaker.ts",
+    "src/services/ai/providerPolicy.ts",
+    "src/services/ai/credentialStore.ts"
+  ],
+  "exclude": []
+}
