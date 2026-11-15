@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-15
 
+### [Chore] F28.6 - Pengaman CI dan Review Akhir
+
+- Tambahkan npm run lint:maintenance: budget any/assertion/non-null/directive per-file pada 38 berkas, minimum cakupan strict, 18 ekspor publik AI serta larangan import internal kembali ke facade. Detektor memakai AST/scanner/type checker dan diuji dengan probe negatif yang dipulihkan sesudahnya.
+- Perluas strict ke settings/resultParsing (19 root/28 source), hapus empat import yang dibuktikan tidak digunakan dan tambahkan step CI Windows/Ubuntu. Tidak menghapus paket tanpa bukti; schema/dependency/lockfile tetap.
+- Tambahkan snapshot AST akhir dan review acceptance dibanding baseline: any non-test 247 menjadi 218; non-null tetap 220. Dokumentasikan budget/pengecualian, batas guard dan gap tes lanjutan; F28.1-F28.6 serta F28 induk ditutup untuk lingkup bertahap yang ditinjau.
+- Verifikasi lokal: typecheck umum/strict/maintenance, 89 berkas/785 tes dengan coverage, 18 Chromium tests, data-path correctness/benchmark, build/clean production smoke dan startup/offline lulus. Coverage 32.11% baris; belum memverifikasi runner GitHub atau integrasi provider/Drive nyata.
+
 ### [Refactor] F28.5 - Rapikan Tanggung Jawab Atlas
 
 - Pisahkan state seleksi/mode edit, filter/lookup Codex, serta thumbnail/kontrol filter ke hook dan komponen tersendiri. useAtlas fokus live-query; operasi map/marker dipindahkan ke atlasOperations dengan penghapusan tetap melalui cleanup domain F11.

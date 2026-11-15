@@ -31,3 +31,5 @@ Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan kepu
 - [F28.1: kontrak, dependensi, ekspor publik dan gap tes (15 November 2026)](audits/2026-11-15-f28-inventory.md). Snapshot dasar untuk pekerjaan bertahap; status aktif tetap di ROADMAP.
 - [F28.2: kontrak data worker, AI dan bab (15 November 2026)](audits/2026-11-15-f28-contracts.md). Sumber tipe bersama, penolakan data invalid, pengaman dan batas validasi.
 - [F28.3: TypeScript strict bertahap (15 November 2026)](audits/2026-11-15-f28-strict.md). Perintah lokal/CI, 26 berkas cakupan awal, bukti probe dan pengecualian tersisa.
+
+- [F28.6: review akhir, pengaman CI dan perbandingan baseline](audits/2026-11-15-f28-review.md). Penutupan F28 beserta pengecualian dan gap lanjutan.

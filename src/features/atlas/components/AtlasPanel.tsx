@@ -26,8 +26,8 @@ import { stripHtml } from '@/src/lib/editorUtils';
 import { usePresenceIndex } from '@/src/hooks/usePresenceIndex';
 import { resolveMarkerColor } from '@/src/lib/atlasColors';
 import { cn } from '@/src/lib/utils';
-import { AtlasMap, CodexEntry, MapMarker, MapPoint } from '@/src/types';
-import { analyzeRegions, findOrphanMarkers, getMarkerFirstAppearanceChapter, RegionAnalytic } from '@/src/lib/atlasAnalytics';
+import { AtlasMap, MapMarker, MapPoint } from '@/src/types';
+import { analyzeRegions, findOrphanMarkers, getMarkerFirstAppearanceChapter } from '@/src/lib/atlasAnalytics';
 import { findBreadcrumbChain, findParentMap } from '@/src/lib/atlasHierarchy';
 import { MapMiniThumbnail, FilterGroup, FilterChip } from './AtlasControls';
 import { useAtlasFilters } from '../hooks/useAtlasFilters';
@@ -38,7 +38,6 @@ import { calculateRelativeDistance } from '@/src/lib/mapGeometry';
 import { TravelSpeedSettingsModal } from './TravelSpeedSettingsModal';
 import { ScaleCalibrationModal } from './ScaleCalibrationModal';
 import { MapHierarchyModal } from './MapHierarchyModal';
-import type { DrawMode } from './MapCanvas';
 import type { PresenceChapter } from './MarkerSidebar';
 
 const MapCanvas = lazy(() => import('./MapCanvas'));

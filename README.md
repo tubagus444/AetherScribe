@@ -105,6 +105,7 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm run test:startup` | Ukur build dan periksa PWA/worker/ekspor offline (sesudah build). |
 | `npm run test:production` | Build dan smoke test instalasi production terisolasi. |
 | `npm run lint` | Type-check via `tsc --noEmit`. |
+| `npm run lint:maintenance` | Jaga budget tipe, cakupan strict dan ekspor publik AI. |
 | `npm run lint:strict` | Typecheck strict bertahap untuk kontrak/helper dan dependensi transitif. |
 
 Panduan lengkap, instalasi browser, bukti regresi dan batas coverage ada di [docs/testing.md](docs/testing.md). Workflow CI menguji Windows/Ubuntu tanpa repository secrets.

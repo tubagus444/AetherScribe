@@ -1,0 +1,6718 @@
+{
+  "baseCommit": "c5af3edc28a1c1962a9e8fbe527c48dfe3584bbf",
+  "typescript": "5.8.3",
+  "scope": "Tracked src/**/*.ts(x) and root server*.ts; AST counts, no type-safety or unused-code verdict. Imports are syntactic, including type references and literal dynamic imports; new URL worker edges require manual review.",
+  "compiler": {
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "allowJs": true,
+    "skipLibCheck": true
+  },
+  "runtime": {
+    "files": 289,
+    "any": 218,
+    "assertions": 265,
+    "nonNull": 220,
+    "directives": 0
+  },
+  "tests": {
+    "files": 89,
+    "any": 48,
+    "assertions": 60,
+    "nonNull": 143,
+    "directives": 0
+  },
+  "largest": [
+    {
+      "file": "src/features/atlas/components/AtlasPanel.tsx",
+      "lines": 1222,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 1
+    },
+    {
+      "file": "src/features/lore/components/BiblePanel.tsx",
+      "lines": 1124,
+      "any": 3,
+      "assertions": 7,
+      "nonNull": 0
+    },
+    {
+      "file": "src/features/timeline/components/WorldCalendarPanel.tsx",
+      "lines": 1027,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 32
+    },
+    {
+      "file": "src/components/panels/guide/guideContent.tsx",
+      "lines": 866,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0
+    },
+    {
+      "file": "src/features/chapters/components/OutlinePanel.tsx",
+      "lines": 824,
+      "any": 5,
+      "assertions": 4,
+      "nonNull": 11
+    },
+    {
+      "file": "src/features/consistency/components/ConsistencyPanel.tsx",
+      "lines": 808,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 5
+    },
+    {
+      "file": "src/services/contextWorker.ts",
+      "lines": 745,
+      "any": 10,
+      "assertions": 2,
+      "nonNull": 1
+    },
+    {
+      "file": "src/features/atlas/components/TerritoryListSidebar.tsx",
+      "lines": 735,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 5
+    },
+    {
+      "file": "src/features/atlas/components/MapCanvas.tsx",
+      "lines": 705,
+      "any": 1,
+      "assertions": 22,
+      "nonNull": 3
+    },
+    {
+      "file": "src/features/codex/components/CodexForm.tsx",
+      "lines": 652,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 5
+    },
+    {
+      "file": "src/features/consistency/components/PlotPromisePanel.tsx",
+      "lines": 636,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 4
+    },
+    {
+      "file": "src/features/lore/components/RelationshipMapper.tsx",
+      "lines": 632,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 3
+    }
+  ],
+  "browserSpecs": [
+    "e2e/critical.spec.ts"
+  ],
+  "rows": [
+    {
+      "file": "server.ts",
+      "test": false,
+      "lines": 345,
+      "any": 10,
+      "assertions": 6,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "serverDev.ts",
+      "test": false,
+      "lines": 11,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "serverProduction.ts",
+      "test": false,
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/App.tsx",
+      "test": false,
+      "lines": 165,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/AIProviderIndicator.test.tsx",
+      "test": true,
+      "lines": 13,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/AIProviderIndicator.tsx",
+      "test": false,
+      "lines": 10,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/ConfirmDialog.test.tsx",
+      "test": true,
+      "lines": 42,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/ConfirmDialog.tsx",
+      "test": false,
+      "lines": 137,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/ContextMeter.tsx",
+      "test": false,
+      "lines": 158,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/ErrorBoundary.tsx",
+      "test": false,
+      "lines": 95,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/GlobalSearch.tsx",
+      "test": false,
+      "lines": 197,
+      "any": 6,
+      "assertions": 6,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/IndexingIndicator.tsx",
+      "test": false,
+      "lines": 83,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/MentionDropdown.tsx",
+      "test": false,
+      "lines": 84,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/ModelSelect.tsx",
+      "test": false,
+      "lines": 200,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/OllamaModelSelect.tsx",
+      "test": false,
+      "lines": 185,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/PanelErrorBoundary.tsx",
+      "test": false,
+      "lines": 83,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/SessionModeSelector.tsx",
+      "test": false,
+      "lines": 64,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/Toast.tsx",
+      "test": false,
+      "lines": 78,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/common/WritingStats.tsx",
+      "test": false,
+      "lines": 230,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/layout/Header.tsx",
+      "test": false,
+      "lines": 136,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/layout/MainView.tsx",
+      "test": false,
+      "lines": 311,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/layout/Sidebar.tsx",
+      "test": false,
+      "lines": 263,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/layout/StudioTabBar.tsx",
+      "test": false,
+      "lines": 100,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/modals/CrossChapterReplace.test.tsx",
+      "test": true,
+      "lines": 73,
+      "any": 1,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/modals/CrossChapterReplace.tsx",
+      "test": false,
+      "lines": 325,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/components/modals/ExportManager.tsx",
+      "test": false,
+      "lines": 480,
+      "any": 1,
+      "assertions": 6,
+      "nonNull": 8,
+      "directives": []
+    },
+    {
+      "file": "src/components/modals/ProjectManagerModal.tsx",
+      "test": false,
+      "lines": 198,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/DashboardPanel.tsx",
+      "test": false,
+      "lines": 477,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/ErrorLogPanel.tsx",
+      "test": false,
+      "lines": 247,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/GuidePanel.tsx",
+      "test": false,
+      "lines": 373,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/SettingsPanel.tsx",
+      "test": false,
+      "lines": 77,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/guide/guideContent.tsx",
+      "test": false,
+      "lines": 866,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/AISettingsTab.tsx",
+      "test": false,
+      "lines": 61,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/BackupTab.tsx",
+      "test": false,
+      "lines": 14,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/ConnectionTestButton.tsx",
+      "test": false,
+      "lines": 40,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/ConnectionTestError.tsx",
+      "test": false,
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/credentialPrivacy.test.tsx",
+      "test": true,
+      "lines": 84,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/providerPrivacy.test.tsx",
+      "test": true,
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/AIPreferences.tsx",
+      "test": false,
+      "lines": 89,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/AdvancedAIOptimization.tsx",
+      "test": false,
+      "lines": 161,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/ApiCredentials.tsx",
+      "test": false,
+      "lines": 117,
+      "any": 0,
+      "assertions": 8,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/AutoBackupSection.tsx",
+      "test": false,
+      "lines": 369,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/ManualBackupSection.tsx",
+      "test": false,
+      "lines": 359,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/OllamaConfig.tsx",
+      "test": false,
+      "lines": 85,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/sections/SemanticCacheSection.tsx",
+      "test": false,
+      "lines": 41,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/useAISettings.ts",
+      "test": false,
+      "lines": 189,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/components/panels/settings/useConnectionTest.ts",
+      "test": false,
+      "lines": 38,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contexts/EditorPanelContext.tsx",
+      "test": false,
+      "lines": 34,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contexts/NavigationContext.test.tsx",
+      "test": true,
+      "lines": 40,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contexts/NavigationContext.tsx",
+      "test": false,
+      "lines": 183,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/contexts/ProjectContext.tsx",
+      "test": false,
+      "lines": 143,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contexts/UIContext.tsx",
+      "test": false,
+      "lines": 78,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contracts/f28Contracts.typecheck.ts",
+      "test": false,
+      "lines": 22,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/contracts/strict/strictSafety.typecheck.ts",
+      "test": false,
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/db.test.ts",
+      "test": true,
+      "lines": 36,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/db.ts",
+      "test": false,
+      "lines": 360,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "AetherScribeDB",
+          "line": 11,
+          "kind": "ClassDeclaration"
+        },
+        {
+          "name": "db",
+          "line": 251,
+          "kind": "FirstStatement"
+        },
+        {
+          "name": "DbIssue",
+          "line": 259,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "drainPendingDbIssues",
+          "line": 270,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "setDbIssueListenerAttached",
+          "line": 275,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "ensureDefaultProject",
+          "line": 320,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "cleanupAILogs",
+          "line": 350,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/lib/chapterMetadata",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/lib/chapterMetadata.ts"
+        },
+        {
+          "specifier": "dexie",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 7,
+          "target": "node_modules/dexie/import-wrapper.d.mts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 8,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/features/editor/editorBridge",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/features/editor/editorBridge.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/App.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/common/ContextMeter.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/common/GlobalSearch.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/common/WritingStats.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/layout/Header.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/layout/Sidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/modals/CrossChapterReplace.test.tsx",
+          "test": true
+        },
+        {
+          "file": "src/components/modals/CrossChapterReplace.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/modals/ExportManager.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/modals/ProjectManagerModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/DashboardPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/ErrorLogPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/settings/sections/ManualBackupSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/contexts/NavigationContext.tsx",
+          "test": false
+        },
+        {
+          "file": "src/contexts/ProjectContext.tsx",
+          "test": false
+        },
+        {
+          "file": "src/db.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/features/assistant/components/AIAssistantPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantHeader.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantInputArea.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantSidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/hooks/useAssistantChunkEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/hooks/useAssistantSession.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/hooks/useScribbleAssistantPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/AtlasPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/ScaleCalibrationModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/TravelSpeedSettingsModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/hooks/useAtlas.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/chapters/hooks/useChapterDragAndDrop.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/chapters/hooks/useChapterManagement.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex-workshop/hooks/useCodexWorkshop.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/AppearancesList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CategoryManagerModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexDetailModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexHighlighter.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/LoreGraphPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/NameForgeModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/OrphanScanPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/WorldCompletenessPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexCategories.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/CharacterArcPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ConsistencyPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ContinuityDashboard.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/GlossaryPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/PacingHeatmapPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/PlotPromisePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ProseReportPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/QuickPromiseModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/ActionsPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/NovelEditor.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/NovelPanels.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/SnapshotPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorGlossary.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorSave.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/hooks/useBiblePanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/hooks/useFactions.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/hooks/useRelationshipMapper.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/search/components/SemanticSearchPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/CalendarEditorModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/CalendarEventModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/TimelinePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/WorldCalendarPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/autoSummarizer.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/hooks/useAutoSummarizer.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useContextMeter.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useContinuityTriage.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useDailyProgress.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useDbIssueListener.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/usePlainChapters.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useProjectData.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/proxy.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/atlasOperations.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/atlasOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/backupConsistency.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/backupService.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/backupService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/backupSnapshot.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterQueries.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/chapterQueries.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterTriage.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/contextEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextSearch.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/contextWorker.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/continuityTriageService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/driveBackupService.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/driveBackupService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/entityDeletion.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/entityDeletion.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/errorService.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/errorService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/projectRoundTrip.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/rag/oramaSearch.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/rag/oramaStore.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/rag/oramaSync.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/sceneQueries.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/sceneQueries.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/snapshotService.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/features/assistant/components/AIAssistantPanel.tsx",
+      "test": false,
+      "lines": 195,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/components/AssistantHeader.tsx",
+      "test": false,
+      "lines": 269,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/components/AssistantInputArea.tsx",
+      "test": false,
+      "lines": 470,
+      "any": 4,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/components/AssistantMessageList.tsx",
+      "test": false,
+      "lines": 217,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/components/AssistantSidebar.tsx",
+      "test": false,
+      "lines": 203,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 6,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/components/ScribbleAssistantPanel.tsx",
+      "test": false,
+      "lines": 330,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/hooks/useAssistantChunkEngine.ts",
+      "test": false,
+      "lines": 138,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/hooks/useAssistantSession.ts",
+      "test": false,
+      "lines": 197,
+      "any": 4,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/assistant/hooks/useScribbleAssistantPanel.ts",
+      "test": false,
+      "lines": 337,
+      "any": 3,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/AtlasControls.tsx",
+      "test": false,
+      "lines": 56,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/AtlasPanel.tsx",
+      "test": false,
+      "lines": 1222,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 1,
+      "directives": [],
+      "exports": [
+        {
+          "name": "AtlasPanel",
+          "line": 57,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "react",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 15,
+          "target": "node_modules/@types/react/index.d.ts"
+        },
+        {
+          "specifier": "react-dom",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 16,
+          "target": "node_modules/@types/react-dom/index.d.ts"
+        },
+        {
+          "specifier": "dexie-react-hooks",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 17,
+          "target": "node_modules/dexie-react-hooks/dist/dexie-react-hooks.d.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 18,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "lucide-react",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 19,
+          "target": "node_modules/lucide-react/dist/lucide-react.d.ts"
+        },
+        {
+          "specifier": "@/src/contexts/NavigationContext",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 20,
+          "target": "src/contexts/NavigationContext.tsx"
+        },
+        {
+          "specifier": "@/src/contexts/ProjectContext",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 21,
+          "target": "src/contexts/ProjectContext.tsx"
+        },
+        {
+          "specifier": "@/src/hooks/useProjectData",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 22,
+          "target": "src/hooks/useProjectData.ts"
+        },
+        {
+          "specifier": "@/src/features/codex/hooks/useCodexCategories",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 23,
+          "target": "src/features/codex/hooks/useCodexCategories.ts"
+        },
+        {
+          "specifier": "@/src/lib/codexCategories",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 24,
+          "target": "src/lib/codexCategories.ts"
+        },
+        {
+          "specifier": "@/src/lib/editorUtils",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 25,
+          "target": "src/lib/editorUtils.ts"
+        },
+        {
+          "specifier": "@/src/hooks/usePresenceIndex",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 26,
+          "target": "src/hooks/usePresenceIndex.ts"
+        },
+        {
+          "specifier": "@/src/lib/atlasColors",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 27,
+          "target": "src/lib/atlasColors.ts"
+        },
+        {
+          "specifier": "@/src/lib/utils",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 28,
+          "target": "src/lib/utils.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 29,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/atlasAnalytics",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 30,
+          "target": "src/lib/atlasAnalytics.ts"
+        },
+        {
+          "specifier": "@/src/lib/atlasHierarchy",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 31,
+          "target": "src/lib/atlasHierarchy.ts"
+        },
+        {
+          "specifier": "./AtlasControls",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 32,
+          "target": "src/features/atlas/components/AtlasControls.tsx"
+        },
+        {
+          "specifier": "../hooks/useAtlasFilters",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 33,
+          "target": "src/features/atlas/hooks/useAtlasFilters.ts"
+        },
+        {
+          "specifier": "../hooks/useAtlasSelection",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 34,
+          "target": "src/features/atlas/hooks/useAtlasSelection.ts"
+        },
+        {
+          "specifier": "../hooks/useAtlas",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 35,
+          "target": "src/features/atlas/hooks/useAtlas.ts"
+        },
+        {
+          "specifier": "../hooks/useMapImageUpload",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 36,
+          "target": "src/features/atlas/hooks/useMapImageUpload.ts"
+        },
+        {
+          "specifier": "@/src/lib/mapGeometry",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 37,
+          "target": "src/lib/mapGeometry.ts"
+        },
+        {
+          "specifier": "./TravelSpeedSettingsModal",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 38,
+          "target": "src/features/atlas/components/TravelSpeedSettingsModal.tsx"
+        },
+        {
+          "specifier": "./ScaleCalibrationModal",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 39,
+          "target": "src/features/atlas/components/ScaleCalibrationModal.tsx"
+        },
+        {
+          "specifier": "./MapHierarchyModal",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 40,
+          "target": "src/features/atlas/components/MapHierarchyModal.tsx"
+        },
+        {
+          "specifier": "./MarkerSidebar",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 41,
+          "target": "src/features/atlas/components/MarkerSidebar.tsx"
+        },
+        {
+          "specifier": "./MapCanvas",
+          "kind": "dynamic",
+          "typeOnly": false,
+          "line": 43,
+          "target": "src/features/atlas/components/MapCanvas.tsx"
+        },
+        {
+          "specifier": "./MarkerSidebar",
+          "kind": "dynamic",
+          "typeOnly": false,
+          "line": 44,
+          "target": "src/features/atlas/components/MarkerSidebar.tsx"
+        },
+        {
+          "specifier": "./TerritoryListSidebar",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 45,
+          "target": "src/features/atlas/components/TerritoryListSidebar.tsx"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/layout/MainView.tsx",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/features/atlas/components/MapCanvas.test.tsx",
+      "test": true,
+      "lines": 109,
+      "any": 3,
+      "assertions": 9,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/MapCanvas.tsx",
+      "test": false,
+      "lines": 705,
+      "any": 1,
+      "assertions": 22,
+      "nonNull": 3,
+      "directives": [],
+      "exports": [
+        {
+          "name": "DrawMode",
+          "line": 31,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "default",
+          "line": 66,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "react",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 15,
+          "target": "node_modules/@types/react/index.d.ts"
+        },
+        {
+          "specifier": "leaflet",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 16,
+          "target": "node_modules/@types/leaflet/index.d.ts"
+        },
+        {
+          "specifier": "leaflet/dist/leaflet.css",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 17
+        },
+        {
+          "specifier": "lucide-react",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 18,
+          "target": "node_modules/lucide-react/dist/lucide-react.d.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 19,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/mapGeometry",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 20,
+          "target": "src/lib/mapGeometry.ts"
+        },
+        {
+          "specifier": "@/src/lib/atlasAnalytics",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 26,
+          "target": "src/lib/atlasAnalytics.ts"
+        },
+        {
+          "specifier": "@/src/lib/continuity",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 27,
+          "target": "src/lib/continuity.ts"
+        },
+        {
+          "specifier": "@/src/lib/atlasColors",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 28,
+          "target": "src/lib/atlasColors.ts"
+        },
+        {
+          "specifier": "./atlasMarkerIcons",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 29,
+          "target": "src/features/atlas/components/atlasMarkerIcons.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/features/atlas/components/AtlasPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/MapCanvas.test.tsx",
+          "test": true
+        },
+        {
+          "file": "src/features/atlas/hooks/useAtlasSelection.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/features/atlas/components/MapHierarchyModal.tsx",
+      "test": false,
+      "lines": 365,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/MarkerSidebar.tsx",
+      "test": false,
+      "lines": 356,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/ScaleCalibrationModal.tsx",
+      "test": false,
+      "lines": 111,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/SubMapPreviewCard.tsx",
+      "test": false,
+      "lines": 204,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/TerritoryListSidebar.tsx",
+      "test": false,
+      "lines": 735,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/TravelSpeedSettingsModal.tsx",
+      "test": false,
+      "lines": 122,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/components/atlasMarkerIcons.ts",
+      "test": false,
+      "lines": 121,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/hooks/useAtlas.ts",
+      "test": false,
+      "lines": 40,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "useAtlas",
+          "line": 16,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "react",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "node_modules/@types/react/index.d.ts"
+        },
+        {
+          "specifier": "@/src/services/atlasOperations",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 10,
+          "target": "src/services/atlasOperations.ts"
+        },
+        {
+          "specifier": "dexie-react-hooks",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 11,
+          "target": "node_modules/dexie-react-hooks/dist/dexie-react-hooks.d.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 12,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "@/src/contexts/ProjectContext",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 13,
+          "target": "src/contexts/ProjectContext.tsx"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 14,
+          "target": "src/types.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/features/atlas/components/AtlasPanel.tsx",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/features/atlas/hooks/useAtlasFilters.ts",
+      "test": false,
+      "lines": 42,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/hooks/useAtlasSelection.ts",
+      "test": false,
+      "lines": 18,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/hooks/useAtlasState.test.tsx",
+      "test": true,
+      "lines": 33,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/atlas/hooks/useMapImageUpload.ts",
+      "test": false,
+      "lines": 116,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/chapters/components/ChapterList.tsx",
+      "test": false,
+      "lines": 218,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/chapters/components/OutlinePanel.tsx",
+      "test": false,
+      "lines": 824,
+      "any": 5,
+      "assertions": 4,
+      "nonNull": 11,
+      "directives": []
+    },
+    {
+      "file": "src/features/chapters/hooks/useChapterDragAndDrop.ts",
+      "test": false,
+      "lines": 74,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/chapters/hooks/useChapterManagement.ts",
+      "test": false,
+      "lines": 38,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex-workshop/components/CodexWorkshopPanel.tsx",
+      "test": false,
+      "lines": 277,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex-workshop/components/EntitySuggestionChips.tsx",
+      "test": false,
+      "lines": 36,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex-workshop/components/WorkshopDraftPane.tsx",
+      "test": false,
+      "lines": 189,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex-workshop/hooks/useCodexWorkshop.ts",
+      "test": false,
+      "lines": 491,
+      "any": 4,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/AppearancesList.tsx",
+      "test": false,
+      "lines": 72,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CategoryIcon.tsx",
+      "test": false,
+      "lines": 17,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CategoryManagerModal.tsx",
+      "test": false,
+      "lines": 353,
+      "any": 4,
+      "assertions": 3,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexCard.tsx",
+      "test": false,
+      "lines": 149,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexDetailModal.tsx",
+      "test": false,
+      "lines": 448,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 7,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexForm.tsx",
+      "test": false,
+      "lines": 652,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexHealthDashboard.tsx",
+      "test": false,
+      "lines": 55,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexHighlighter.tsx",
+      "test": false,
+      "lines": 52,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/CodexPanel.tsx",
+      "test": false,
+      "lines": 409,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/LinkifiedDescription.tsx",
+      "test": false,
+      "lines": 39,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/LoreGraphPanel.tsx",
+      "test": false,
+      "lines": 547,
+      "any": 3,
+      "assertions": 16,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/LoreIntegrityBanner.tsx",
+      "test": false,
+      "lines": 99,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/NameForgeModal.tsx",
+      "test": false,
+      "lines": 325,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/OrphanScanPanel.tsx",
+      "test": false,
+      "lines": 374,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/WorldCompletenessPanel.tsx",
+      "test": false,
+      "lines": 227,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/components/WorldStatusBadge.tsx",
+      "test": false,
+      "lines": 58,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/hooks/useCodexCategories.ts",
+      "test": false,
+      "lines": 21,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/hooks/useCodexPanel.ts",
+      "test": false,
+      "lines": 285,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/hooks/useLoreGraphWorker.ts",
+      "test": false,
+      "lines": 132,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/codex/relationshipTypes.ts",
+      "test": false,
+      "lines": 37,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/CharacterArcPanel.tsx",
+      "test": false,
+      "lines": 203,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/ConsistencyPanel.tsx",
+      "test": false,
+      "lines": 808,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/ContinuityDashboard.tsx",
+      "test": false,
+      "lines": 383,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/GlossaryPanel.tsx",
+      "test": false,
+      "lines": 231,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/PacingHeatmapPanel.tsx",
+      "test": false,
+      "lines": 330,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/PlotPromisePanel.tsx",
+      "test": false,
+      "lines": 636,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/ProseReportPanel.tsx",
+      "test": false,
+      "lines": 386,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/consistency/components/QuickPromiseModal.tsx",
+      "test": false,
+      "lines": 149,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/ActionsPanel.tsx",
+      "test": false,
+      "lines": 255,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/AiProcessingOverlay.tsx",
+      "test": false,
+      "lines": 43,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/ChapterOutline.tsx",
+      "test": false,
+      "lines": 144,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/EditorActivityRail.tsx",
+      "test": false,
+      "lines": 58,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/EditorHeader.tsx",
+      "test": false,
+      "lines": 27,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/EditorLayout.tsx",
+      "test": false,
+      "lines": 66,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/EditorToolbar.tsx",
+      "test": false,
+      "lines": 246,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/MentionList.tsx",
+      "test": false,
+      "lines": 163,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/NovelEditor.tsx",
+      "test": false,
+      "lines": 390,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/NovelFooter.tsx",
+      "test": false,
+      "lines": 134,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/NovelPanels.tsx",
+      "test": false,
+      "lines": 99,
+      "any": 3,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/ProseInsights.tsx",
+      "test": false,
+      "lines": 190,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/RevisionNotesPanel.tsx",
+      "test": false,
+      "lines": 309,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/SearchReplaceBar.tsx",
+      "test": false,
+      "lines": 227,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/SelectionFloatingMenu.tsx",
+      "test": false,
+      "lines": 608,
+      "any": 0,
+      "assertions": 4,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/SnapshotDiffModal.tsx",
+      "test": false,
+      "lines": 136,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/SnapshotPanel.tsx",
+      "test": false,
+      "lines": 169,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/ViewControlsMenu.tsx",
+      "test": false,
+      "lines": 180,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/components/actionIcons.ts",
+      "test": false,
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/editorBridge.ts",
+      "test": false,
+      "lines": 47,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/extensions/ConsistencyUnderline.ts",
+      "test": false,
+      "lines": 336,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/extensions/PassiveCodexHighlight.ts",
+      "test": false,
+      "lines": 164,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/extensions/RevisionComment.ts",
+      "test": false,
+      "lines": 91,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/extensions/SearchAndReplace.ts",
+      "test": false,
+      "lines": 213,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/extensions/SemanticHighlight.ts",
+      "test": false,
+      "lines": 157,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorAI.test.tsx",
+      "test": true,
+      "lines": 40,
+      "any": 3,
+      "assertions": 1,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorAI.ts",
+      "test": false,
+      "lines": 187,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorAIConsistency.ts",
+      "test": false,
+      "lines": 317,
+      "any": 1,
+      "assertions": 2,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorCodex.ts",
+      "test": false,
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorConsistency.ts",
+      "test": false,
+      "lines": 37,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorGlossary.ts",
+      "test": false,
+      "lines": 88,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorSave.test.tsx",
+      "test": true,
+      "lines": 86,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorSave.ts",
+      "test": false,
+      "lines": 167,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorSearch.ts",
+      "test": false,
+      "lines": 148,
+      "any": 9,
+      "assertions": 9,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorSetup.ts",
+      "test": false,
+      "lines": 209,
+      "any": 6,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useEditorSpelling.ts",
+      "test": false,
+      "lines": 87,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useNovelEditor.ts",
+      "test": false,
+      "lines": 141,
+      "any": 5,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/editor/hooks/useTypewriterMode.ts",
+      "test": false,
+      "lines": 76,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/BiblePanel.tsx",
+      "test": false,
+      "lines": 1124,
+      "any": 3,
+      "assertions": 7,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/FactionsPanel.tsx",
+      "test": false,
+      "lines": 326,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/RelationshipMapper.tsx",
+      "test": false,
+      "lines": 632,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/faction-board/FactionBoardCanvas.tsx",
+      "test": false,
+      "lines": 432,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/faction-board/FactionCardNode.tsx",
+      "test": false,
+      "lines": 160,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/faction-board/FactionInspector.tsx",
+      "test": false,
+      "lines": 189,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/components/faction-board/FloatingEdge.tsx",
+      "test": false,
+      "lines": 119,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/hooks/useBibleAssist.ts",
+      "test": false,
+      "lines": 58,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/hooks/useBiblePanel.ts",
+      "test": false,
+      "lines": 162,
+      "any": 1,
+      "assertions": 3,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/hooks/useFactions.ts",
+      "test": false,
+      "lines": 156,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/hooks/useRelationshipMapper.ts",
+      "test": false,
+      "lines": 174,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/features/lore/relationshipStyles.tsx",
+      "test": false,
+      "lines": 34,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/search/components/SemanticSearchPanel.test.tsx",
+      "test": true,
+      "lines": 27,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/search/components/SemanticSearchPanel.tsx",
+      "test": false,
+      "lines": 387,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/CalendarCalculatorModal.tsx",
+      "test": false,
+      "lines": 493,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/CalendarEditorModal.tsx",
+      "test": false,
+      "lines": 324,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/CalendarEventModal.tsx",
+      "test": false,
+      "lines": 264,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/ChronologyAuditModal.tsx",
+      "test": false,
+      "lines": 224,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/TimelinePanel.tsx",
+      "test": false,
+      "lines": 536,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/features/timeline/components/WorldCalendarPanel.tsx",
+      "test": false,
+      "lines": 1027,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 32,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/autoSummarizer.test.ts",
+      "test": true,
+      "lines": 50,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 6,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useAutoBackup.tsx",
+      "test": false,
+      "lines": 306,
+      "any": 3,
+      "assertions": 5,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useAutoSemanticIndex.ts",
+      "test": false,
+      "lines": 77,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useAutoSummarizer.tsx",
+      "test": false,
+      "lines": 137,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useAvailableProviders.ts",
+      "test": false,
+      "lines": 49,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useChatSession.test.tsx",
+      "test": true,
+      "lines": 21,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useChatSession.ts",
+      "test": false,
+      "lines": 271,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useContextMeter.ts",
+      "test": false,
+      "lines": 41,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useContinuityTriage.ts",
+      "test": false,
+      "lines": 35,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useDailyProgress.ts",
+      "test": false,
+      "lines": 77,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useDbIssueListener.ts",
+      "test": false,
+      "lines": 46,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useDriveSync.ts",
+      "test": false,
+      "lines": 169,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useGlobalEvents.ts",
+      "test": false,
+      "lines": 81,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useHighlightedSegments.ts",
+      "test": false,
+      "lines": 51,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useMentionAutocomplete.ts",
+      "test": false,
+      "lines": 139,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useOptimizedLiveQuery.test.tsx",
+      "test": true,
+      "lines": 19,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useOptimizedLiveQuery.ts",
+      "test": false,
+      "lines": 24,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/usePacingReport.ts",
+      "test": false,
+      "lines": 36,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/usePlainChapters.ts",
+      "test": false,
+      "lines": 47,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/usePresenceIndex.ts",
+      "test": false,
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useProjectData.ts",
+      "test": false,
+      "lines": 29,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useProseReport.ts",
+      "test": false,
+      "lines": 48,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useStorageQuota.ts",
+      "test": false,
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useToast.tsx",
+      "test": false,
+      "lines": 81,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/hooks/useTokenCounter.ts",
+      "test": false,
+      "lines": 88,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/ahoCorasick.test.ts",
+      "test": true,
+      "lines": 82,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/ahoCorasick.ts",
+      "test": false,
+      "lines": 122,
+      "any": 4,
+      "assertions": 0,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/lib/aiPrompts.ts",
+      "test": false,
+      "lines": 258,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/aiTuning.ts",
+      "test": false,
+      "lines": 75,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasAnalytics.test.ts",
+      "test": true,
+      "lines": 130,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasAnalytics.ts",
+      "test": false,
+      "lines": 198,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasColors.test.ts",
+      "test": true,
+      "lines": 27,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasColors.ts",
+      "test": false,
+      "lines": 80,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasHierarchy.test.ts",
+      "test": true,
+      "lines": 182,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/atlasHierarchy.ts",
+      "test": false,
+      "lines": 229,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupEnvelope.test.ts",
+      "test": true,
+      "lines": 42,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupEnvelope.ts",
+      "test": false,
+      "lines": 23,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupIO.ts",
+      "test": false,
+      "lines": 58,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupLimits.ts",
+      "test": false,
+      "lines": 10,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupRetention.test.ts",
+      "test": true,
+      "lines": 95,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupRetention.ts",
+      "test": false,
+      "lines": 100,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/backupValidation.ts",
+      "test": false,
+      "lines": 181,
+      "any": 4,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/blobCodec.ts",
+      "test": false,
+      "lines": 41,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chapterContracts.test.ts",
+      "test": true,
+      "lines": 10,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chapterContracts.ts",
+      "test": false,
+      "lines": 12,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chapterMetadata.ts",
+      "test": false,
+      "lines": 15,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "ChapterListKey",
+          "line": 5,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ChapterListMetadata",
+          "line": 6,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "CHAPTER_LIST_INDEX",
+          "line": 7,
+          "kind": "FirstStatement"
+        },
+        {
+          "name": "chapterListKey",
+          "line": 9,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "chapterListRow",
+          "line": 13,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 1,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "./utils",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/lib/utils.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/contracts/f28Contracts.typecheck.ts",
+          "test": false
+        },
+        {
+          "file": "src/db.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/chapters/components/ChapterList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/lib/chapterContracts.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/chapterQueries.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/lib/characterArc.test.ts",
+      "test": true,
+      "lines": 55,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 6,
+      "directives": []
+    },
+    {
+      "file": "src/lib/characterArc.ts",
+      "test": false,
+      "lines": 140,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chatEntityScan.test.ts",
+      "test": true,
+      "lines": 35,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chatEntityScan.ts",
+      "test": false,
+      "lines": 43,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chronologyAudit.test.ts",
+      "test": true,
+      "lines": 206,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chronologyAudit.ts",
+      "test": false,
+      "lines": 201,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 18,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chunkEngine.test.ts",
+      "test": true,
+      "lines": 95,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/chunkEngine.ts",
+      "test": false,
+      "lines": 117,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/cleanRewriteOutput.test.ts",
+      "test": true,
+      "lines": 54,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/cleanRewriteOutput.ts",
+      "test": false,
+      "lines": 60,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexCategories.ts",
+      "test": false,
+      "lines": 172,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexContracts.ts",
+      "test": false,
+      "lines": 8,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexDraft.test.ts",
+      "test": true,
+      "lines": 67,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexDraft.ts",
+      "test": false,
+      "lines": 100,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexExport.test.ts",
+      "test": true,
+      "lines": 100,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexExport.ts",
+      "test": false,
+      "lines": 82,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexFields.test.ts",
+      "test": true,
+      "lines": 103,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexFields.ts",
+      "test": false,
+      "lines": 79,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexImport.test.ts",
+      "test": true,
+      "lines": 126,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexImport.ts",
+      "test": false,
+      "lines": 241,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexKeywords.test.ts",
+      "test": true,
+      "lines": 63,
+      "any": 1,
+      "assertions": 3,
+      "nonNull": 7,
+      "directives": []
+    },
+    {
+      "file": "src/lib/codexKeywords.ts",
+      "test": false,
+      "lines": 66,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/constants.ts",
+      "test": false,
+      "lines": 43,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/continuity.test.ts",
+      "test": true,
+      "lines": 114,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 11,
+      "directives": []
+    },
+    {
+      "file": "src/lib/continuity.ts",
+      "test": false,
+      "lines": 257,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/lib/dailyProgress.test.ts",
+      "test": true,
+      "lines": 81,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/dailyProgress.ts",
+      "test": false,
+      "lines": 94,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/dataContracts.ts",
+      "test": false,
+      "lines": 3,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/editorUtils.ts",
+      "test": false,
+      "lines": 105,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/epub.test.ts",
+      "test": true,
+      "lines": 80,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/epub.ts",
+      "test": false,
+      "lines": 139,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/errorPrivacy.ts",
+      "test": false,
+      "lines": 28,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/lib/factions.test.ts",
+      "test": true,
+      "lines": 218,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 13,
+      "directives": []
+    },
+    {
+      "file": "src/lib/factions.ts",
+      "test": false,
+      "lines": 284,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/findReplace.test.ts",
+      "test": true,
+      "lines": 91,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 9,
+      "directives": []
+    },
+    {
+      "file": "src/lib/findReplace.ts",
+      "test": false,
+      "lines": 143,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/folderHandleStore.ts",
+      "test": false,
+      "lines": 98,
+      "any": 1,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/glossary.test.ts",
+      "test": true,
+      "lines": 103,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/glossary.ts",
+      "test": false,
+      "lines": 149,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/importRemap.test.ts",
+      "test": true,
+      "lines": 230,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/importRemap.ts",
+      "test": false,
+      "lines": 299,
+      "any": 7,
+      "assertions": 5,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "ProjectBackupData",
+          "line": 35,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "RemapMaps",
+          "line": 54,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "remapTriage",
+          "line": 68,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "RemappedDependents",
+          "line": 94,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "remapProjectDependents",
+          "line": 131,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "importedProjectName",
+          "line": 266,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "ProjectBackupCounts",
+          "line": 271,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "summarizeProjectBackup",
+          "line": 281,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "validateProjectBackup",
+          "line": 297,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./backupValidation",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/lib/backupValidation.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 7,
+          "target": "src/types.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/panels/settings/sections/ManualBackupSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/lib/importRemap.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/backupService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/projectRoundTrip.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/lib/inlineConsistency.test.ts",
+      "test": true,
+      "lines": 56,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/lib/inlineConsistency.ts",
+      "test": false,
+      "lines": 117,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreFormat.test.ts",
+      "test": true,
+      "lines": 105,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreFormat.ts",
+      "test": false,
+      "lines": 102,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreGraph.test.ts",
+      "test": true,
+      "lines": 232,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreGraph.ts",
+      "test": false,
+      "lines": 350,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreUtils.test.ts",
+      "test": true,
+      "lines": 75,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/loreUtils.ts",
+      "test": false,
+      "lines": 150,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/lruList.test.ts",
+      "test": true,
+      "lines": 29,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/lruList.ts",
+      "test": false,
+      "lines": 22,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/manuscriptChunker.test.ts",
+      "test": true,
+      "lines": 58,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/manuscriptChunker.ts",
+      "test": false,
+      "lines": 147,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/mapGeometry.test.ts",
+      "test": true,
+      "lines": 158,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/mapGeometry.ts",
+      "test": false,
+      "lines": 136,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/nameForge.test.ts",
+      "test": true,
+      "lines": 123,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/nameForge.ts",
+      "test": false,
+      "lines": 216,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/nameSpelling.test.ts",
+      "test": true,
+      "lines": 87,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/nameSpelling.ts",
+      "test": false,
+      "lines": 179,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/orphanEntities.test.ts",
+      "test": true,
+      "lines": 59,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 4,
+      "directives": []
+    },
+    {
+      "file": "src/lib/orphanEntities.ts",
+      "test": false,
+      "lines": 223,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/pacingHeatmap.test.ts",
+      "test": true,
+      "lines": 154,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/pacingHeatmap.ts",
+      "test": false,
+      "lines": 206,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/plotPromises.test.ts",
+      "test": true,
+      "lines": 185,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/plotPromises.ts",
+      "test": false,
+      "lines": 288,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/proseAnalysis.test.ts",
+      "test": true,
+      "lines": 185,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/lib/proseAnalysis.ts",
+      "test": false,
+      "lines": 447,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/lib/queryEquality.test.ts",
+      "test": true,
+      "lines": 17,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/queryEquality.ts",
+      "test": false,
+      "lines": 21,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/stableTopK.test.ts",
+      "test": true,
+      "lines": 11,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/stableTopK.ts",
+      "test": false,
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/storyBible.ts",
+      "test": false,
+      "lines": 151,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/studioNavigation.test.ts",
+      "test": true,
+      "lines": 19,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/studioNavigation.ts",
+      "test": false,
+      "lines": 193,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/textDiff.test.ts",
+      "test": true,
+      "lines": 52,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/textDiff.ts",
+      "test": false,
+      "lines": 102,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/timelineSummary.test.ts",
+      "test": true,
+      "lines": 52,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/timelineSummary.ts",
+      "test": false,
+      "lines": 44,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/utils.test.ts",
+      "test": true,
+      "lines": 40,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/utils.ts",
+      "test": false,
+      "lines": 50,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/worldCalendar.test.ts",
+      "test": true,
+      "lines": 286,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 10,
+      "directives": []
+    },
+    {
+      "file": "src/lib/worldCalendar.ts",
+      "test": false,
+      "lines": 471,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/worldCompleteness.test.ts",
+      "test": true,
+      "lines": 134,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/worldCompleteness.ts",
+      "test": false,
+      "lines": 164,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/zip.test.ts",
+      "test": true,
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/lib/zip.ts",
+      "test": false,
+      "lines": 118,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/main.tsx",
+      "test": false,
+      "lines": 56,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/server/proxyBoundary.test.ts",
+      "test": true,
+      "lines": 17,
+      "any": 4,
+      "assertions": 4,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/server/proxyBoundary.ts",
+      "test": false,
+      "lines": 46,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/server/proxyHttp.test.ts",
+      "test": true,
+      "lines": 24,
+      "any": 1,
+      "assertions": 3,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/server/runtimeConfig.test.ts",
+      "test": true,
+      "lines": 50,
+      "any": 4,
+      "assertions": 5,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/server/runtimeConfig.ts",
+      "test": false,
+      "lines": 15,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/circuitBreaker.test.ts",
+      "test": true,
+      "lines": 87,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/circuitBreaker.ts",
+      "test": false,
+      "lines": 66,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/context.ts",
+      "test": false,
+      "lines": 151,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/credentialStore.ts",
+      "test": false,
+      "lines": 46,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/dispatch.ts",
+      "test": false,
+      "lines": 149,
+      "any": 3,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/errors.ts",
+      "test": false,
+      "lines": 38,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/execution.ts",
+      "test": false,
+      "lines": 84,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/index.ts",
+      "test": false,
+      "lines": 400,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": [],
+      "exports": [
+        {
+          "name": "CodexAuditFinding",
+          "line": 4,
+          "kind": "specifier"
+        },
+        {
+          "name": "AIError",
+          "line": 14,
+          "kind": "specifier"
+        },
+        {
+          "name": "callAI",
+          "line": 14,
+          "kind": "specifier"
+        },
+        {
+          "name": "cancelAI",
+          "line": 16,
+          "kind": "specifier"
+        },
+        {
+          "name": "isCacheSupported",
+          "line": 18,
+          "kind": "specifier"
+        },
+        {
+          "name": "getContextWindow",
+          "line": 18,
+          "kind": "specifier"
+        },
+        {
+          "name": "processRewrite",
+          "line": 23,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "processChat",
+          "line": 87,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "checkConsistency",
+          "line": 147,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "CodexAuditParams",
+          "line": 184,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "auditCodexEntry",
+          "line": 205,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "EnrichedEntity",
+          "line": 239,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "enrichEntities",
+          "line": 252,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "expandCodexEntry",
+          "line": 296,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "BibleAssistField",
+          "line": 322,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "BibleContextInput",
+          "line": 324,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "suggestBibleField",
+          "line": 347,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "testConnection",
+          "line": 383,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./settings",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/ai/settings.ts"
+        },
+        {
+          "specifier": "@/src/lib/storyBible",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/lib/storyBible.ts"
+        },
+        {
+          "specifier": "./resultParsing",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/services/ai/resultParsing.ts"
+        },
+        {
+          "specifier": "./resultParsing",
+          "kind": "re-export",
+          "typeOnly": true,
+          "line": 4,
+          "target": "src/services/ai/resultParsing.ts"
+        },
+        {
+          "specifier": "@/src/lib/dataContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 5,
+          "target": "src/lib/dataContracts.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 6,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/services/ai/proxy",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 7,
+          "target": "src/services/ai/proxy.ts"
+        },
+        {
+          "specifier": "@/src/services/ai/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 8,
+          "target": "src/services/ai/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/aiPrompts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/lib/aiPrompts.ts"
+        },
+        {
+          "specifier": "@/src/lib/cleanRewriteOutput",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 10,
+          "target": "src/lib/cleanRewriteOutput.ts"
+        },
+        {
+          "specifier": "@/src/lib/aiTuning",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 11,
+          "target": "src/lib/aiTuning.ts"
+        },
+        {
+          "specifier": "@/src/services/ai/resilience",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 12,
+          "target": "src/services/ai/resilience.ts"
+        },
+        {
+          "specifier": "./dispatch",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 13,
+          "target": "src/services/ai/dispatch.ts"
+        },
+        {
+          "specifier": "./dispatch",
+          "kind": "re-export",
+          "typeOnly": false,
+          "line": 14,
+          "target": "src/services/ai/dispatch.ts"
+        },
+        {
+          "specifier": "./execution",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 15,
+          "target": "src/services/ai/execution.ts"
+        },
+        {
+          "specifier": "./execution",
+          "kind": "re-export",
+          "typeOnly": false,
+          "line": 16,
+          "target": "src/services/ai/execution.ts"
+        },
+        {
+          "specifier": "./context",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 17,
+          "target": "src/services/ai/context.ts"
+        },
+        {
+          "specifier": "./context",
+          "kind": "re-export",
+          "typeOnly": false,
+          "line": 18,
+          "target": "src/services/ai/context.ts"
+        },
+        {
+          "specifier": "@/src/lib/chunkEngine",
+          "kind": "dynamic",
+          "typeOnly": false,
+          "line": 45,
+          "target": "src/lib/chunkEngine.ts"
+        },
+        {
+          "specifier": "@/src/lib/chunkEngine",
+          "kind": "dynamic",
+          "typeOnly": false,
+          "line": 98,
+          "target": "src/lib/chunkEngine.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/panels/settings/useConnectionTest.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantInputArea.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex-workshop/hooks/useCodexWorkshop.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexForm.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/OrphanScanPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ConsistencyPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorAI.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorAIConsistency.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/components/BiblePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/hooks/useBibleAssist.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useChatSession.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/logPrivacy.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/ai/providerPolicy.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/ai/logPrivacy.test.ts",
+      "test": true,
+      "lines": 21,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/modelService.ts",
+      "test": false,
+      "lines": 173,
+      "any": 12,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/providerPolicy.test.ts",
+      "test": true,
+      "lines": 69,
+      "any": 2,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/providerPolicy.ts",
+      "test": false,
+      "lines": 20,
+      "any": 0,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/providerTypes.ts",
+      "test": false,
+      "lines": 5,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/proxy.ts",
+      "test": false,
+      "lines": 383,
+      "any": 14,
+      "assertions": 5,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "callProxy",
+          "line": 18,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "getDefaultLightModelForProvider",
+          "line": 350,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "getLightModelForProvider",
+          "line": 360,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./providerTypes",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/ai/providerTypes.ts"
+        },
+        {
+          "specifier": "./responseContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/services/ai/responseContracts.ts"
+        },
+        {
+          "specifier": "./providerPolicy",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/services/ai/providerPolicy.ts"
+        },
+        {
+          "specifier": "./sse",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 4,
+          "target": "src/services/ai/sse.ts"
+        },
+        {
+          "specifier": "@/src/services/ai/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 5,
+          "target": "src/services/ai/types.ts"
+        },
+        {
+          "specifier": "@/src/services/errorService",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 6,
+          "target": "src/services/errorService.ts"
+        },
+        {
+          "specifier": "@/src/services/ai/errors",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 7,
+          "target": "src/services/ai/errors.ts"
+        },
+        {
+          "specifier": "@/src/lib/aiTuning",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 8,
+          "target": "src/lib/aiTuning.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/db.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/panels/settings/sections/AdvancedAIOptimization.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useAutoSummarizer.tsx",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/dispatch.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/index.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/proxyStream.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/ai/proxyUsage.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/ai/responseContracts.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/ai/proxyStream.test.ts",
+      "test": true,
+      "lines": 23,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/proxyUsage.test.ts",
+      "test": true,
+      "lines": 32,
+      "any": 2,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/resilience.test.ts",
+      "test": true,
+      "lines": 88,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/resilience.ts",
+      "test": false,
+      "lines": 69,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/responseContracts.test.ts",
+      "test": true,
+      "lines": 34,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/responseContracts.ts",
+      "test": false,
+      "lines": 47,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/resultParsing.ts",
+      "test": false,
+      "lines": 67,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/settings.ts",
+      "test": false,
+      "lines": 27,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/sse.test.ts",
+      "test": true,
+      "lines": 33,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/ai/sse.ts",
+      "test": false,
+      "lines": 57,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "readAIStream",
+          "line": 3,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./responseContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/ai/responseContracts.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/services/ai/proxy.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/responseContracts.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/ai/sse.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/ai/types.ts",
+      "test": false,
+      "lines": 98,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "AIProviderConfig",
+          "line": 3,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "AIRenderParams",
+          "line": 9,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "GenerateParams",
+          "line": 42,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ConsistencyParams",
+          "line": 58,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ChatParams",
+          "line": 79,
+          "kind": "InterfaceDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/types.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/contracts/f28Contracts.typecheck.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/dispatch.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/execution.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/index.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/proxy.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/services/atlasOperations.test.ts",
+      "test": true,
+      "lines": 24,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/atlasOperations.ts",
+      "test": false,
+      "lines": 51,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/backupConsistency.test.ts",
+      "test": true,
+      "lines": 74,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/backupService.test.ts",
+      "test": true,
+      "lines": 261,
+      "any": 4,
+      "assertions": 5,
+      "nonNull": 26,
+      "directives": []
+    },
+    {
+      "file": "src/services/backupService.ts",
+      "test": false,
+      "lines": 583,
+      "any": 24,
+      "assertions": 17,
+      "nonNull": 3,
+      "directives": [],
+      "exports": [
+        {
+          "name": "BackupData",
+          "line": 23,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "backupService",
+          "line": 80,
+          "kind": "FirstStatement"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./backupSnapshot",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/backupSnapshot.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 7,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 8,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/backupRetention",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/lib/backupRetention.ts"
+        },
+        {
+          "specifier": "@/src/lib/backupEnvelope",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 10,
+          "target": "src/lib/backupEnvelope.ts"
+        },
+        {
+          "specifier": "@/src/lib/blobCodec",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 11,
+          "target": "src/lib/blobCodec.ts"
+        },
+        {
+          "specifier": "@/src/lib/backupValidation",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 12,
+          "target": "src/lib/backupValidation.ts"
+        },
+        {
+          "specifier": "@/src/lib/backupIO",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 13,
+          "target": "src/lib/backupIO.ts"
+        },
+        {
+          "specifier": "@/src/lib/importRemap",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 14,
+          "target": "src/lib/importRemap.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/panels/settings/sections/AutoBackupSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/settings/sections/ManualBackupSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useAutoBackup.tsx",
+          "test": false
+        },
+        {
+          "file": "src/services/backupConsistency.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/backupService.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/chapterQueries.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/driveBackupService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/projectRoundTrip.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/backupSnapshot.ts",
+      "test": false,
+      "lines": 22,
+      "any": 3,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/chapterOperations.ts",
+      "test": false,
+      "lines": 37,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 6,
+      "directives": []
+    },
+    {
+      "file": "src/services/chapterQueries.test.ts",
+      "test": true,
+      "lines": 95,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/chapterQueries.ts",
+      "test": false,
+      "lines": 17,
+      "any": 1,
+      "assertions": 2,
+      "nonNull": 2,
+      "directives": [],
+      "exports": [
+        {
+          "name": "readChapterList",
+          "line": 5,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "readLatestChapterModified",
+          "line": 12,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "dexie",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "node_modules/dexie/import-wrapper.d.mts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "@/src/lib/chapterMetadata",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/lib/chapterMetadata.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/common/WritingStats.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/DashboardPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/chapters/components/ChapterList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useAutoSemanticIndex.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterQueries.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/chapterTriage.test.ts",
+      "test": true,
+      "lines": 65,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/contextCancellation.test.ts",
+      "test": true,
+      "lines": 69,
+      "any": 3,
+      "assertions": 1,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/services/contextEngine.ts",
+      "test": false,
+      "lines": 281,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "SceneSearchHit",
+          "line": 3,
+          "kind": "specifier"
+        },
+        {
+          "name": "getRelevantContext",
+          "line": 132,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "getCodexMatches",
+          "line": 161,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "invalidateContextCache",
+          "line": 166,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "clearEmbeddingCache",
+          "line": 174,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "getEntryAppearances",
+          "line": 182,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "getRelevantBibleRules",
+          "line": 190,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "indexManuscript",
+          "line": 212,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "searchManuscript",
+          "line": 223,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "clearManuscriptIndex",
+          "line": 229,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "countIndexedScenes",
+          "line": 234,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "countTokens",
+          "line": 238,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "buildPresenceIndexAsync",
+          "line": 249,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "buildProseReportAsync",
+          "line": 259,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "buildPacingReportAsync",
+          "line": 267,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "estimateContextTokens",
+          "line": 271,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "previewContextTokens",
+          "line": 275,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/lib/chapterContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/lib/chapterContracts.ts"
+        },
+        {
+          "specifier": "./contextProtocol",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/services/contextProtocol.ts"
+        },
+        {
+          "specifier": "./contextProtocol",
+          "kind": "re-export",
+          "typeOnly": true,
+          "line": 3,
+          "target": "src/services/contextProtocol.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 10,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/services/contextWorker?worker",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 11
+        },
+        {
+          "specifier": "@/src/services/rag/oramaSync",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 12,
+          "target": "src/services/rag/oramaSync.ts"
+        },
+        {
+          "specifier": "@/src/lib/aiTuning",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 13,
+          "target": "src/lib/aiTuning.ts"
+        },
+        {
+          "specifier": "@/src/lib/continuity",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 14,
+          "target": "src/lib/continuity.ts"
+        },
+        {
+          "specifier": "@/src/lib/proseAnalysis",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 15,
+          "target": "src/lib/proseAnalysis.ts"
+        },
+        {
+          "specifier": "@/src/lib/pacingHeatmap",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 16,
+          "target": "src/lib/pacingHeatmap.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/components/panels/settings/sections/ManualBackupSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/settings/sections/SemanticCacheSection.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantInputArea.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex-workshop/hooks/useCodexWorkshop.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/AppearancesList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CategoryManagerModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/OrphanScanPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/CharacterArcPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ContinuityDashboard.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/extensions/ConsistencyUnderline.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/extensions/PassiveCodexHighlight.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorAI.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/search/components/SemanticSearchPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useAutoSemanticIndex.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useChatSession.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useContextMeter.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/usePacingReport.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/usePresenceIndex.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useProseReport.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/context.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextTimeout.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/contextProtocol.test.ts",
+      "test": true,
+      "lines": 52,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/contextProtocol.ts",
+      "test": false,
+      "lines": 113,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "record",
+          "line": 3,
+          "kind": "specifier"
+        },
+        {
+          "name": "finite",
+          "line": 3,
+          "kind": "specifier"
+        },
+        {
+          "name": "requestId",
+          "line": 3,
+          "kind": "specifier"
+        },
+        {
+          "name": "SceneSearchHit",
+          "line": 9,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "CodexMatch",
+          "line": 10,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "TokenEstimate",
+          "line": 11,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ContextPayloads",
+          "line": 12,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ContextResults",
+          "line": 26,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ContextTaskType",
+          "line": 40,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ContextRequest",
+          "line": 41,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ContextWorkerMessage",
+          "line": 42,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ContextProgress",
+          "line": 43,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ContextReply",
+          "line": 50,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "cancelContextRequest",
+          "line": 51,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "isContextRequest",
+          "line": 61,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "validContextResult",
+          "line": 87,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "isContextProgress",
+          "line": 102,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/lib/codexContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/lib/codexContracts.ts"
+        },
+        {
+          "specifier": "@/src/lib/dataContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/lib/dataContracts.ts"
+        },
+        {
+          "specifier": "@/src/lib/dataContracts",
+          "kind": "re-export",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/lib/dataContracts.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 4,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/continuity",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 5,
+          "target": "src/lib/continuity.ts"
+        },
+        {
+          "specifier": "@/src/lib/proseAnalysis",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 6,
+          "target": "src/lib/proseAnalysis.ts"
+        },
+        {
+          "specifier": "@/src/lib/pacingHeatmap",
+          "kind": "import",
+          "typeOnly": true,
+          "line": 7,
+          "target": "src/lib/pacingHeatmap.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/contracts/f28Contracts.typecheck.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextCancellation.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/contextEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextProtocol.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/contextWorker.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/services/contextSearch.test.ts",
+      "test": true,
+      "lines": 25,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/contextTimeout.test.ts",
+      "test": true,
+      "lines": 40,
+      "any": 6,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/contextWorker.ts",
+      "test": false,
+      "lines": 745,
+      "any": 10,
+      "assertions": 2,
+      "nonNull": 1,
+      "directives": [],
+      "exports": [],
+      "imports": [
+        {
+          "specifier": "./sceneQueries",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/sceneQueries.ts"
+        },
+        {
+          "specifier": "@/src/lib/stableTopK",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/lib/stableTopK.ts"
+        },
+        {
+          "specifier": "./contextProtocol",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/services/contextProtocol.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 9,
+          "target": "src/db.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 10,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/lib/utils",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 11,
+          "target": "src/lib/utils.ts"
+        },
+        {
+          "specifier": "@/src/lib/ahoCorasick",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 12,
+          "target": "src/lib/ahoCorasick.ts"
+        },
+        {
+          "specifier": "@/src/lib/codexKeywords",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 13,
+          "target": "src/lib/codexKeywords.ts"
+        },
+        {
+          "specifier": "@/src/lib/storyBible",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 14,
+          "target": "src/lib/storyBible.ts"
+        },
+        {
+          "specifier": "@/src/lib/loreFormat",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 15,
+          "target": "src/lib/loreFormat.ts"
+        },
+        {
+          "specifier": "@/src/lib/continuity",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 16,
+          "target": "src/lib/continuity.ts"
+        },
+        {
+          "specifier": "@/src/lib/proseAnalysis",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 17,
+          "target": "src/lib/proseAnalysis.ts"
+        },
+        {
+          "specifier": "@/src/lib/pacingHeatmap",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 18,
+          "target": "src/lib/pacingHeatmap.ts"
+        },
+        {
+          "specifier": "@/src/lib/manuscriptChunker",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 19,
+          "target": "src/lib/manuscriptChunker.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 20,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "js-tiktoken",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 21,
+          "target": "node_modules/js-tiktoken/dist/index.d.ts"
+        },
+        {
+          "specifier": "@xenova/transformers",
+          "kind": "dynamic",
+          "typeOnly": false,
+          "line": 100,
+          "target": "node_modules/@xenova/transformers/types/transformers.d.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/services/contextCancellation.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/contextSearch.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/continuityTriageService.ts",
+      "test": false,
+      "lines": 17,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 3,
+      "directives": []
+    },
+    {
+      "file": "src/services/driveBackupService.test.ts",
+      "test": true,
+      "lines": 34,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/services/driveBackupService.ts",
+      "test": false,
+      "lines": 218,
+      "any": 2,
+      "assertions": 3,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/entityDeletion.test.ts",
+      "test": true,
+      "lines": 79,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 12,
+      "directives": []
+    },
+    {
+      "file": "src/services/entityDeletion.ts",
+      "test": false,
+      "lines": 74,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "domainTables",
+          "line": 3,
+          "kind": "FirstStatement"
+        },
+        {
+          "name": "removeChapterRelations",
+          "line": 6,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "notifyDeletedChapters",
+          "line": 19,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "deleteAtlasMap",
+          "line": 27,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "deleteCodexEntry",
+          "line": 37,
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "deleteProjectData",
+          "line": 55,
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/db.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/contexts/ProjectContext.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/atlasOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/entityDeletion.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/errorService.test.ts",
+      "test": true,
+      "lines": 36,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/errorService.ts",
+      "test": false,
+      "lines": 45,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/googleAuth.ts",
+      "test": false,
+      "lines": 166,
+      "any": 7,
+      "assertions": 4,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/projectRoundTrip.test.ts",
+      "test": true,
+      "lines": 64,
+      "any": 1,
+      "assertions": 1,
+      "nonNull": 5,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaProtocol.test.ts",
+      "test": true,
+      "lines": 18,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaProtocol.ts",
+      "test": false,
+      "lines": 40,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaSearch.test.ts",
+      "test": true,
+      "lines": 75,
+      "any": 6,
+      "assertions": 2,
+      "nonNull": 2,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaStore.ts",
+      "test": false,
+      "lines": 144,
+      "any": 1,
+      "assertions": 3,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaSync.ts",
+      "test": false,
+      "lines": 158,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 1,
+      "directives": [],
+      "exports": [
+        {
+          "name": "oramaSync",
+          "line": 101,
+          "kind": "FirstStatement"
+        }
+      ],
+      "imports": [
+        {
+          "specifier": "./oramaProtocol",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/rag/oramaProtocol.ts"
+        },
+        {
+          "specifier": "@/src/types",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/types.ts"
+        },
+        {
+          "specifier": "@/src/db",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/db.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/contexts/ProjectContext.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/search/components/SemanticSearchPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/main.tsx",
+          "test": false
+        },
+        {
+          "file": "src/services/contextEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/rag/oramaSearch.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/rag/oramaTransport.test.ts",
+      "test": true,
+      "lines": 17,
+      "any": 0,
+      "assertions": 2,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/rag/oramaWorker.ts",
+      "test": false,
+      "lines": 57,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [],
+      "imports": [
+        {
+          "specifier": "./oramaProtocol",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 1,
+          "target": "src/services/rag/oramaProtocol.ts"
+        },
+        {
+          "specifier": "@/src/lib/dataContracts",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 2,
+          "target": "src/lib/dataContracts.ts"
+        },
+        {
+          "specifier": "./oramaStore",
+          "kind": "import",
+          "typeOnly": false,
+          "line": 3,
+          "target": "src/services/rag/oramaStore.ts"
+        }
+      ],
+      "consumers": [
+        {
+          "file": "src/services/rag/oramaSearch.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/services/rag/oramaTransport.test.ts",
+          "test": true
+        }
+      ]
+    },
+    {
+      "file": "src/services/sceneQueries.test.ts",
+      "test": true,
+      "lines": 26,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/sceneQueries.ts",
+      "test": false,
+      "lines": 21,
+      "any": 1,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/services/snapshotService.ts",
+      "test": false,
+      "lines": 54,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 1,
+      "directives": []
+    },
+    {
+      "file": "src/types.ts",
+      "test": false,
+      "lines": 592,
+      "any": 2,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": [],
+      "exports": [
+        {
+          "name": "AIAction",
+          "line": 6,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "Snapshot",
+          "line": 14,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "TimelineEventType",
+          "line": 24,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "TimelineEvent",
+          "line": 31,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "WorldCalendarHoliday",
+          "line": 59,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "WorldCalendar",
+          "line": 68,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "WorldDate",
+          "line": 89,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ProseMetrics",
+          "line": 96,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "Relationship",
+          "line": 106,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ChapterStatus",
+          "line": 115,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ChapterAct",
+          "line": 117,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ViewMode",
+          "line": 119,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "WorkshopTarget",
+          "line": 126,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ConsistencyFinding",
+          "line": 139,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "SessionMode",
+          "line": 154,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ChatMessage",
+          "line": 156,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ChatSession",
+          "line": 166,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "TensionLevel",
+          "line": 190,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "Chapter",
+          "line": 192,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "Project",
+          "line": 222,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "TravelSpeedProfile",
+          "line": 242,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "BuiltinCodexCategory",
+          "line": 252,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "CodexCategory",
+          "line": 253,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "Morpheme",
+          "line": 256,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "NamePalette",
+          "line": 262,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "WorldStatus",
+          "line": 276,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "CodexEntry",
+          "line": 278,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "CodexFieldType",
+          "line": 345,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "CategoryFieldDef",
+          "line": 347,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "CustomFieldValue",
+          "line": 357,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "CustomCategory",
+          "line": 366,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "StoryBibleRule",
+          "line": 378,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "ContextDepth",
+          "line": 386,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "AISettings",
+          "line": 388,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "AIUsageLog",
+          "line": 394,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "AppError",
+          "line": 407,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "BackupRecord",
+          "line": 417,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "VectorEmbedding",
+          "line": 431,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "SceneEmbedding",
+          "line": 446,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "PlotPromiseStatus",
+          "line": 458,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "PlotPromiseImportance",
+          "line": 459,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "PlotPromise",
+          "line": 471,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "GlossaryEntry",
+          "line": 508,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "AtlasMap",
+          "line": 535,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "MapPoint",
+          "line": 553,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "MapMarker",
+          "line": 561,
+          "kind": "InterfaceDeclaration"
+        },
+        {
+          "name": "TriageStatus",
+          "line": 584,
+          "kind": "TypeAliasDeclaration"
+        },
+        {
+          "name": "ContinuityTriage",
+          "line": 586,
+          "kind": "InterfaceDeclaration"
+        }
+      ],
+      "imports": [],
+      "consumers": [
+        {
+          "file": "src/components/common/SessionModeSelector.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/layout/Sidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/modals/ExportManager.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/guide/guideContent.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/settings/sections/AIPreferences.tsx",
+          "test": false
+        },
+        {
+          "file": "src/components/panels/settings/useAISettings.ts",
+          "test": false
+        },
+        {
+          "file": "src/contexts/NavigationContext.tsx",
+          "test": false
+        },
+        {
+          "file": "src/contracts/f28Contracts.typecheck.ts",
+          "test": false
+        },
+        {
+          "file": "src/db.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantHeader.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantInputArea.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantMessageList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/AssistantSidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/components/ScribbleAssistantPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/hooks/useAssistantSession.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/assistant/hooks/useScribbleAssistantPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/AtlasPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/MapCanvas.test.tsx",
+          "test": true
+        },
+        {
+          "file": "src/features/atlas/components/MapCanvas.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/MapHierarchyModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/MarkerSidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/SubMapPreviewCard.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/TerritoryListSidebar.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/components/TravelSpeedSettingsModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/hooks/useAtlas.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/hooks/useAtlasFilters.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/atlas/hooks/useAtlasState.test.tsx",
+          "test": true
+        },
+        {
+          "file": "src/features/chapters/components/OutlinePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex-workshop/components/WorkshopDraftPane.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex-workshop/hooks/useCodexWorkshop.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/AppearancesList.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CategoryIcon.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CategoryManagerModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexCard.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexDetailModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexForm.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/CodexHighlighter.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/LinkifiedDescription.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/LoreIntegrityBanner.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/NameForgeModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/OrphanScanPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/components/WorldStatusBadge.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexCategories.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useCodexPanel.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/codex/hooks/useLoreGraphWorker.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ConsistencyPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/ContinuityDashboard.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/GlossaryPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/PacingHeatmapPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/PlotPromisePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/consistency/components/QuickPromiseModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/ProseInsights.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/SelectionFloatingMenu.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/components/SnapshotPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorAI.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorAIConsistency.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorCodex.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorConsistency.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorSetup.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useEditorSpelling.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/editor/hooks/useNovelEditor.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/components/faction-board/FactionBoardCanvas.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/components/faction-board/FactionInspector.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/lore/hooks/useFactions.ts",
+          "test": false
+        },
+        {
+          "file": "src/features/search/components/SemanticSearchPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/CalendarCalculatorModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/CalendarEditorModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/CalendarEventModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/ChronologyAuditModal.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/TimelinePanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/features/timeline/components/WorldCalendarPanel.tsx",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useChatSession.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useContinuityTriage.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useDailyProgress.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useHighlightedSegments.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useMentionAutocomplete.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/usePlainChapters.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/usePresenceIndex.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useProjectData.ts",
+          "test": false
+        },
+        {
+          "file": "src/hooks/useProseReport.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/atlasAnalytics.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/atlasAnalytics.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/atlasColors.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/atlasColors.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/atlasHierarchy.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/atlasHierarchy.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/chapterContracts.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/chapterMetadata.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/characterArc.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/characterArc.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/chatEntityScan.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/chronologyAudit.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/chronologyAudit.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/chunkEngine.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/chunkEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexCategories.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexContracts.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexDraft.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexExport.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/codexExport.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexFields.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/codexFields.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/codexKeywords.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/codexKeywords.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/constants.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/continuity.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/continuity.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/errorPrivacy.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/factions.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/factions.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/glossary.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/glossary.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/importRemap.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/inlineConsistency.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/inlineConsistency.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/loreFormat.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/loreFormat.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/loreGraph.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/loreGraph.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/loreUtils.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/loreUtils.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/mapGeometry.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/nameForge.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/nameForge.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/pacingHeatmap.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/plotPromises.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/plotPromises.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/proseAnalysis.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/studioNavigation.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/timelineSummary.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/timelineSummary.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/worldCalendar.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/worldCalendar.ts",
+          "test": false
+        },
+        {
+          "file": "src/lib/worldCompleteness.test.ts",
+          "test": true
+        },
+        {
+          "file": "src/lib/worldCompleteness.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/context.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/index.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/resultParsing.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/settings.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/ai/types.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/atlasOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/backupService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/chapterOperations.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextEngine.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextProtocol.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/contextWorker.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/continuityTriageService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/errorService.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/rag/oramaProtocol.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/rag/oramaStore.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/rag/oramaSync.ts",
+          "test": false
+        },
+        {
+          "file": "src/services/sceneQueries.ts",
+          "test": false
+        },
+        {
+          "file": "src/workers/loreGraphWorker.ts",
+          "test": false
+        }
+      ]
+    },
+    {
+      "file": "src/vite-env.d.ts",
+      "test": false,
+      "lines": 1,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/workers/loreGraphWorker.ts",
+      "test": false,
+      "lines": 46,
+      "any": 0,
+      "assertions": 0,
+      "nonNull": 0,
+      "directives": []
+    },
+    {
+      "file": "src/workers/tokenWorker.ts",
+      "test": false,
+      "lines": 26,
+      "any": 0,
+      "assertions": 1,
+      "nonNull": 0,
+      "directives": []
+    }
+  ]
+}

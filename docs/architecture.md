@@ -270,3 +270,14 @@ memuat ulang peta dan menghapus pin lewat MarkerSidebar. Karakterisasi yang sama
 lulus pada source AtlasPanel/useAtlas baseline 827c36b dan setelah ekstraksi;
 source dipulihkan setelah probe. Verifikasi F28.5: typecheck umum/strict,
 89 berkas/785 tes, build dan 18 browser tests lulus lokal. Coverage tidak diukur ulang.
+
+## Pengaman pemeliharaan F28.6
+
+Typecheck umum, strict bertahap dan maintenance guard adalah tiga pemeriksaan
+terpisah yang wajib dijalankan. Cakupan strict kini 19 root/28 source (termasuk
+settings/resultParsing), sementara budget AST menjangkau 38 berkas. Guard menjaga
+nama ekspor publik AI dan arah static import modul internal; ia tidak menggantikan
+tes perilaku atau pemeriksaan tipe. Policy diperbarui melalui review dengan alasan,
+bukan regenerasi otomatis untuk meloloskan CI. Lihat
+[review akhir F28](audits/2026-11-15-f28-review.md) untuk inventaris, pengecualian,
+perbandingan baseline dan batas penutupan.

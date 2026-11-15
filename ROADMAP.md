@@ -207,12 +207,12 @@ Checklist berikut adalah **satu-satunya status kerja aktif** untuk audit ini. Do
   - Bukti sebelum: tiga probe pada source 2d50625 gagal (preferensi/key legacy, payload log facade, DB/console berisi key/naskah). Sepuluh tes baru lulus setelah fix.
   - Verifikasi: 73 berkas/710 tes, delapan browser tests, typecheck, build dan diff-check lulus. Browser menguji sesi/reload/persistent/clear lewat UI; model listing dimock, tanpa key/provider nyata. Peringatan build lama tetap ada.
   - Dokumentasi: docs/features.md, docs/architecture.md, docs/api.md, docs/testing.md, README, changelog dan aturan AI/settings. Batas: bukan perlindungan dari XSS/akses profil; sesi dapat dipulihkan browser; clear tidak mencabut key di provider/env, tab lain atau request/retry berjalan; log lama di DB perlu clear manual/retensi.
-- [ ] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).
+- [x] **[F28](docs/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak** (Low; L).
 
 ### Urutan kerja F28 (bertahap)
 
-Rencana 14 November 2026. F28.1-F28.5 selesai sesuai bukti di bawah; F28.6
-belum diimplementasikan. Rencana ini tidak menutup F28 induk. Sasaran utamanya
+Rencana 14 November 2026, selesai bertahap 15 November 2026. F28.1-F28.6 dan
+F28 induk ditutup berdasarkan review acceptance akhir. Sasaran utamanya
 adalah memperjelas kontrak dan tanggung jawab kode dengan perilaku aplikasi tetap.
 Fondasi yang sudah ada (service domain F11, protocol F16, metadata F23) diperkuat,
 bukan dibuat ulang.
@@ -224,7 +224,7 @@ bukan dibuat ulang.
 | 3 | F28.3 - Pemeriksaan strict bertahap (selesai 15 Nov 2026) | tsconfig.strict.json memeriksa kontrak/helper dan import transitif; npm run lint:strict dijalankan CI. Pengaman tipe mendeteksi pelemahan null/callback; error SSE tidak memakai cast any. | 17 root/26 berkas sumber lulus strict tanpa any/non-null/ignore baru; probe implicit any/null/undefined/catch ditolak dan batas cakupan tercatat. |
 | 4 | F28.4 - Pisahkan layanan AI (selesai 15 Nov 2026) | Pisahkan settings/provider configuration, pembentukan konteks, dispatch/retry/cancel, dan parsing hasil dari facade. Pertahankan entry point publik dan service kebijakan/kredensial yang sudah ada. | Regresi streaming/retry/abort/consent/log/parameter nol dan ringkasan tetap lulus; konsumen fitur tidak perlu mengganti alur. |
 | 5 | F28.5 - Pisahkan Atlas (selesai 15 Nov 2026) | Tambahkan tes interaksi yang masih kurang sebelum ekstraksi. Pisahkan state/filter/seleksi ke hook, operasi map/marker ke service domain, dan bagian UI ke komponen kecil. Tetap gunakan cleanup domain F11. | Pin/area/rute, edit geometri, deep link, tooltip aman, delete/unlink dan restore tetap bekerja; tidak ada perubahan visual/data tanpa tes yang sesuai. |
-| 6 | F28.6 - Pengaman pemeliharaan dan penutupan | Audit ulang ekspor/dependensi setelah pemisahan; hapus hanya yang terbukti tidak digunakan. Jalankan strict check di CI dan tetapkan aturan any/ignore pada modul yang sudah dirapikan. Perbarui dokumentasi serta bandingkan dengan baseline. | Typecheck/build/unit/browser/check strict lulus, tanggung jawab modul jelas, pengecualian tersisa dijelaskan dan semua acceptance F28 ditinjau. |
+| 6 | F28.6 - Pengaman pemeliharaan dan penutupan (selesai 15 Nov 2026) | Audit ulang ekspor/dependensi setelah pemisahan; hapus hanya yang terbukti tidak digunakan. Jalankan strict check di CI dan tetapkan aturan any/ignore pada modul yang sudah dirapikan. Perbarui dokumentasi serta bandingkan dengan baseline. | Typecheck/build/unit/browser/check strict lulus, tanggung jawab modul jelas, pengecualian tersisa dijelaskan dan semua acceptance F28 ditinjau. |
 
 **Bukti F28.1 (15 November 2026):** inventaris AST dan peta kontrak/dependensi,
 ekspor publik, pengaman serta gap sebelum refactor ada di
@@ -265,8 +265,18 @@ Blob cleanup. Skenario panel juga lulus pada source baseline 827c36b. Typecheck
 umum/strict, 89 berkas/785 tes, build dan 18 browser tests lulus. Batas pengujian
 portal/deep-link/proyek melalui UI lengkap dicatat di docs/testing.md. F28 tetap terbuka.
 
-**Batch yang disarankan:** F28.1-F28.5 selesai;
-F28.6 berikutnya mengaudit ulang ekspor/dependensi, memperkuat guard dan meninjau acceptance akhir.
+**Bukti F28.6:** maintenance guard memeriksa budget AST pada 38 berkas, minimum
+28 source strict, 18 ekspor publik AI dan arah import internal. Empat import tidak
+terpakai dihapus; dependency tidak dihapus tanpa bukti. Snapshot akhir dibandingkan
+baseline F28.1: any non-test 247 menjadi 218; non-null tetap 220. Semua probe guard ditolak.
+Typecheck umum/strict/maintenance, 89 berkas/785 tes dengan coverage, 18 browser tests,
+data-path benchmark/correctness, build/clean production dan startup/offline lulus
+lokal. CI Windows/Ubuntu dikonfigurasi, belum diklaim lulus di runner GitHub.
+[Review akhir dan batas penutupan F28](docs/audits/2026-11-15-f28-review.md)
+meninjau keempat acceptance temuan asli; F28.1-F28.6 dan F28 induk selesai.
+
+**Tahap F28 selesai.** Strict global dan gap pengujian yang tercatat menjadi
+pekerjaan lanjutan tersendiri jika lingkup terkait diubah.
 Strict global menjadi target lanjutan setelah ketergantungan siap, bukan diaktifkan
 sekaligus di awal. Daftar jumlah any hanya indikator: menghapusnya lewat cast
 atau memindahkan baris tanpa memperjelas tanggung jawab tidak dianggap selesai.

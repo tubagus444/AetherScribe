@@ -34,3 +34,5 @@ Jangan menganggap tugas selesai sebelum dokumentasi diperbarui.
 Pengujian: `npm run test:run` (single-run), `npm run test:coverage`, `npm run test:e2e`, dan `npm run test:production`. Persiapan browser, isolasi fixture dan batas coverage: `docs/testing.md`.
 
 Typecheck: jalankan `npm run lint` dan `npm run lint:strict`. Cakupan strict bertahap ada di `tsconfig.strict.json`, termasuk import transitif; jangan menutup diagnostik dengan any/non-null/ignore baru. Batas dan perluasan: `docs/audits/2026-11-15-f28-strict.md`.
+
+Jalankan juga `npm run lint:maintenance`: budget AST per-file, cakupan strict dan ekspor publik AI dijaga oleh scripts/maintenance-policy.json. Jangan menaikkan budget hanya untuk meloloskan check; perluasan/pengecualian harus dijelaskan dalam review dan dokumentasi. Modul internal AI tidak boleh mengimpor facade index.ts.

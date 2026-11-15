@@ -1,0 +1,290 @@
+{
+  "baseline": "c5af3ed",
+  "files": {
+    "src/contracts/f28Contracts.typecheck.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/contracts/strict/strictSafety.typecheck.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/features/atlas/components/AtlasControls.tsx": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/features/atlas/components/AtlasPanel.tsx": {
+      "any": 0,
+      "nonNull": 1,
+      "assertions": 4,
+      "directives": 0
+    },
+    "src/features/atlas/hooks/useAtlas.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 2,
+      "directives": 0
+    },
+    "src/features/atlas/hooks/useAtlasFilters.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/features/atlas/hooks/useAtlasSelection.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/ahoCorasick.ts": {
+      "any": 4,
+      "nonNull": 4,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/chapterContracts.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/chapterMetadata.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/chronologyAudit.ts": {
+      "any": 0,
+      "nonNull": 18,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/codexContracts.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/codexKeywords.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/continuity.ts": {
+      "any": 0,
+      "nonNull": 3,
+      "assertions": 2,
+      "directives": 0
+    },
+    "src/lib/dataContracts.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/pacingHeatmap.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/proseAnalysis.ts": {
+      "any": 0,
+      "nonNull": 1,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/utils.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/lib/worldCalendar.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 1,
+      "directives": 0
+    },
+    "src/services/ai/circuitBreaker.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/context.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/credentialStore.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 2,
+      "directives": 0
+    },
+    "src/services/ai/dispatch.ts": {
+      "any": 3,
+      "nonNull": 0,
+      "assertions": 3,
+      "directives": 0
+    },
+    "src/services/ai/errors.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/execution.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/index.ts": {
+      "any": 1,
+      "nonNull": 1,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/providerPolicy.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 3,
+      "directives": 0
+    },
+    "src/services/ai/providerTypes.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 1,
+      "directives": 0
+    },
+    "src/services/ai/resilience.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/responseContracts.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 1,
+      "directives": 0
+    },
+    "src/services/ai/resultParsing.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/settings.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 1,
+      "directives": 0
+    },
+    "src/services/ai/sse.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/ai/types.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/atlasOperations.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 2,
+      "directives": 0
+    },
+    "src/services/contextProtocol.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/services/rag/oramaProtocol.ts": {
+      "any": 0,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    },
+    "src/types.ts": {
+      "any": 2,
+      "nonNull": 0,
+      "assertions": 0,
+      "directives": 0
+    }
+  },
+  "strictFiles": [
+    "src/contracts/f28Contracts.typecheck.ts",
+    "src/contracts/strict/strictSafety.typecheck.ts",
+    "src/lib/ahoCorasick.ts",
+    "src/lib/chapterContracts.ts",
+    "src/lib/chapterMetadata.ts",
+    "src/lib/chronologyAudit.ts",
+    "src/lib/codexContracts.ts",
+    "src/lib/codexKeywords.ts",
+    "src/lib/continuity.ts",
+    "src/lib/dataContracts.ts",
+    "src/lib/pacingHeatmap.ts",
+    "src/lib/proseAnalysis.ts",
+    "src/lib/utils.ts",
+    "src/lib/worldCalendar.ts",
+    "src/services/ai/circuitBreaker.ts",
+    "src/services/ai/credentialStore.ts",
+    "src/services/ai/errors.ts",
+    "src/services/ai/providerPolicy.ts",
+    "src/services/ai/providerTypes.ts",
+    "src/services/ai/resilience.ts",
+    "src/services/ai/responseContracts.ts",
+    "src/services/ai/resultParsing.ts",
+    "src/services/ai/settings.ts",
+    "src/services/ai/sse.ts",
+    "src/services/ai/types.ts",
+    "src/services/contextProtocol.ts",
+    "src/services/rag/oramaProtocol.ts",
+    "src/types.ts"
+  ],
+  "aiInternals": [
+    "src/services/ai/settings.ts",
+    "src/services/ai/context.ts",
+    "src/services/ai/dispatch.ts",
+    "src/services/ai/execution.ts",
+    "src/services/ai/resultParsing.ts"
+  ],
+  "aiExports": [
+    "AIError",
+    "BibleAssistField",
+    "BibleContextInput",
+    "CodexAuditFinding",
+    "CodexAuditParams",
+    "EnrichedEntity",
+    "auditCodexEntry",
+    "callAI",
+    "cancelAI",
+    "checkConsistency",
+    "enrichEntities",
+    "expandCodexEntry",
+    "getContextWindow",
+    "isCacheSupported",
+    "processChat",
+    "processRewrite",
+    "suggestBibleField",
+    "testConnection"
+  ]
+}

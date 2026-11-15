@@ -3,7 +3,7 @@ import { formatBibleBlock } from '@/src/lib/storyBible';
 import { sanitizeFinding, sanitizeAuditFinding, stripWrappers, type CodexAuditFinding } from './resultParsing';
 export type { CodexAuditFinding } from './resultParsing';
 import { record } from '@/src/lib/dataContracts';
-import { StoryBibleRule, CodexEntry, ContextDepth, Relationship, ConsistencyFinding } from '@/src/types';
+import { StoryBibleRule, CodexEntry, Relationship, ConsistencyFinding } from '@/src/types';
 import { callProxy } from '@/src/services/ai/proxy';
 import { GenerateParams, ChatParams, ConsistencyParams, AIRenderParams } from '@/src/services/ai/types';
 import { AI_PROMPTS, BIBLE_ASSIST_FIELD_GUIDE } from '@/src/lib/aiPrompts';

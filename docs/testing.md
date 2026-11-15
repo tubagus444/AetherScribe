@@ -12,6 +12,7 @@ Gunakan Node sesuai `engines` dan dependency dari lockfile:
 npm ci
 npm run lint
 npm run lint:strict
+npm run lint:maintenance
 npm run test:run
 npm run test:coverage
 npx playwright install chromium --no-shell
@@ -170,3 +171,16 @@ memuat ulang peta dan menghapus pin lewat MarkerSidebar. Karakterisasi yang sama
 lulus pada source AtlasPanel/useAtlas baseline 827c36b dan setelah ekstraksi;
 source dipulihkan setelah probe. Verifikasi F28.5: typecheck umum/strict,
 89 berkas/785 tes, build dan 18 browser tests lulus lokal. Coverage tidak diukur ulang.
+
+
+F28.6: jalankan juga `npm run lint:maintenance`; CI memeriksa budget AST 38 berkas,
+minimum 28 source strict (19 root), 18 ekspor publik AI dan arah static import
+modul internal. Budget dan pengecualian disimpan dalam scripts/maintenance-policy.json;
+perubahan policy perlu review, tidak dihasilkan ulang otomatis oleh CI.
+Probe any/assertion/non-null/directive, penyusutan strict, hilangnya ekspor dan
+import balik ke facade ditolak. Typecheck umum/strict/maintenance, 89 berkas/785 tes,
+18 Chromium tests, data-path, clean production serta startup/offline lulus lokal.
+Coverage V8 terbaru: 32.11% baris, 31.95% statement, 25.35% branch, 20.71% fungsi;
+angka F24 sebelumnya tetap snapshot historis. Ini tidak mencakup coverage native
+browser/worker/child process dan belum membuktikan runner GitHub/Linux berhasil.
+[Rincian penutupan dan batas guard](audits/2026-11-15-f28-review.md).

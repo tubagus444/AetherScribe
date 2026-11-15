@@ -19,7 +19,9 @@
     "src/services/ai/errors.ts",
     "src/services/ai/circuitBreaker.ts",
     "src/services/ai/providerPolicy.ts",
-    "src/services/ai/credentialStore.ts"
+    "src/services/ai/credentialStore.ts",
+    "src/services/ai/settings.ts",
+    "src/services/ai/resultParsing.ts"
   ],
   "exclude": []
 }

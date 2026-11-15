@@ -31,6 +31,8 @@ jobs:
         run: npm run lint
       - name: Incremental strict TypeScript contracts and helpers
         run: npm run lint:strict
+      - name: Type safety budgets, strict scope and public AI API
+        run: npm run lint:maintenance
       - name: Unit and integration tests with coverage
         run: npm run test:coverage
       - name: Install Chromium

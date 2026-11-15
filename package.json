@@ -11,6 +11,7 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "lint:strict": "tsc --project tsconfig.strict.json",
+    "lint:maintenance": "node scripts/check-maintenance.mjs",
     "test:production": "node scripts/verify-production.mjs",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
