@@ -5,6 +5,7 @@ import { readBackupSnapshot } from './backupSnapshot';
  */
 
 import { db } from '@/src/db';
+import { PROJECT_IMPORT_TABLES, RESTORE_RECORD_TABLES, RESTORE_TABLES } from '@/src/lib/tableCatalog';
 import { BackupRecord } from '@/src/types';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
 import { backupChecksum, compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
@@ -179,9 +180,8 @@ export const backupService = {
 
   /**
    * Saves backup data to the internal IndexedDB 'backups' table.
-   * Keeps only the latest 5 backups. Dikompresi gzip bila didukung (BK3) — 5×
-   * JSON penuh bisa membengkak; gzip memangkasnya signifikan. Bila kompresi tak
-   * didukung/gagal, simpan JSON string mentah (tetap dapat dipulihkan).
+   * Retensi berjenjang berlaku untuk cadangan otomatis. Gunakan gzip bila
+   * tersedia, dengan JSON mentah sebagai fallback.
    */
   async saveToInternalDB(data: BackupData, kind: 'auto' | 'pre-restore' = 'auto'): Promise<void> {
     return serializeInternalBackup(async () => {
@@ -353,56 +353,28 @@ export const backupService = {
       throw new Error('Pemulihan dibatalkan: gagal membuat cadangan pengaman pra-pemulihan. Data workspace belum diganti.', { cause: err });
     }
 
-    await db.transaction('rw',
-      [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.embeddings, db.sceneEmbeddings, db.codexCategories, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage],
-      async () => {
-        // Clear existing data
-        await db.projects.clear();
-        await db.chapters.clear();
-        await db.codex.clear();
-        await db.bible.clear();
-        await db.aiActions.clear();
-        await db.snapshots.clear();
-        await db.timeline.clear();
-        await db.relationships.clear();
-        await db.chatSessions.clear();
-        await db.codexCategories.clear();
-        await db.plotPromises.clear();
-        await db.glossary.clear();
-        await db.maps.clear();
-        await db.mapMarkers.clear();
-        await db.continuityTriage.clear();
-        await db.embeddings.clear(); // di-regenerasi dari codex; jangan dipulihkan dari backup
-        await db.sceneEmbeddings.clear(); // indeks Pencarian Semantik; di-regenerasi on-demand
+    await db.transaction('rw', RESTORE_TABLES.map(name => db[name]), async () => {
+      // Cache turunan ikut dibersihkan untuk regenerasi.
+      for (const name of RESTORE_TABLES) await db[name].clear();
 
-        // Restore from backup
-        if (data.projects?.length) await db.projects.bulkAdd(data.projects);
-        if (data.chapters?.length) await db.chapters.bulkAdd(data.chapters);
-        if (data.codex?.length) await db.codex.bulkAdd(data.codex);
-
-        // Deduplicate bible entries before bulk adding (respect unique index [projectId+key])
-        if (data.bible?.length) {
+      for (const name of RESTORE_RECORD_TABLES) {
+        const rows = name === 'maps' ? mapRows : data[name];
+        if (!rows?.length) continue;
+        if (name === 'bible') {
+          // Jaga indeks unik [projectId+key] pada jalur pemulihan.
           const seen = new Set<string>();
-          const uniqueBible = data.bible.filter((entry: any) => {
-            const compositeKey = `${entry.projectId}|${entry.key}`;
-            if (seen.has(compositeKey)) return false;
-            seen.add(compositeKey);
+          const uniqueBible = rows.filter(entry => {
+            const key = `${entry.projectId}|${entry.key}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
             return true;
           });
           await db.bible.bulkAdd(uniqueBible);
+        } else {
+          const table: ReturnType<typeof db.table> = db[name];
+          await table.bulkAdd(rows);
         }
-
-        if (data.aiActions?.length) await db.aiActions.bulkAdd(data.aiActions);
-        if (data.snapshots?.length) await db.snapshots.bulkAdd(data.snapshots);
-        if (data.timeline?.length) await db.timeline.bulkAdd(data.timeline);
-        if (data.relationships?.length) await db.relationships.bulkAdd(data.relationships);
-        if (data.chatSessions?.length) await db.chatSessions.bulkAdd(data.chatSessions);
-        if (data.codexCategories?.length) await db.codexCategories.bulkAdd(data.codexCategories);
-        if (data.plotPromises?.length) await db.plotPromises.bulkAdd(data.plotPromises);
-        if (data.glossary?.length) await db.glossary.bulkAdd(data.glossary);
-        if (mapRows.length) await db.maps.bulkAdd(mapRows);
-        if (data.mapMarkers?.length) await db.mapMarkers.bulkAdd(data.mapMarkers);
-        if (data.continuityTriage?.length) await db.continuityTriage.bulkAdd(data.continuityTriage);
+      }
     });
   },
 
@@ -450,60 +422,58 @@ export const backupService = {
     };
 
     let newProjectId = 0;
-    await db.transaction('rw',
-      [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.codexCategories, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage],
-      async () => {
-        // 1) Proyek baru (lepas id; lastOpened=now agar langsung teratas; nama diberi
-        //    suffix "(impor)" agar terbedakan dari aslinya bila keduanya berdampingan).
-        const projectRow = { ...data.projects[0] } as any;
-        delete projectRow.id;
-        projectRow.name = importedProjectName(projectRow.name);
-        projectRow.lastOpened = Date.now();
-        newProjectId = await db.projects.add(projectRow) as number;
+    await db.transaction('rw', PROJECT_IMPORT_TABLES.map(name => db[name]), async () => {
+      // 1) Proyek baru (lepas id; lastOpened=now agar langsung teratas; nama diberi
+      //    suffix "(impor)" agar terbedakan dari aslinya bila keduanya berdampingan).
+      const projectRow = { ...data.projects[0] } as any;
+      delete projectRow.id;
+      projectRow.name = importedProjectName(projectRow.name);
+      projectRow.lastOpened = Date.now();
+      newProjectId = await db.projects.add(projectRow) as number;
 
-        // 2) Bab & codex di-insert dulu untuk MEMBANGUN peta id lama→baru.
-        const chapterIdMap = new Map<number, number>();
-        if (data.chapters?.length) {
-          const rows = data.chapters.map((c) => prep(c, newProjectId));
-          const keys = await db.chapters.bulkAdd(rows, { allKeys: true });
-          data.chapters.forEach((c, i) => { if (c.id != null) chapterIdMap.set(c.id, keys[i] as number); });
-        }
+      // 2) Bab & codex di-insert dulu untuk MEMBANGUN peta id lama→baru.
+      const chapterIdMap = new Map<number, number>();
+      if (data.chapters?.length) {
+        const rows = data.chapters.map((c) => prep(c, newProjectId));
+        const keys = await db.chapters.bulkAdd(rows, { allKeys: true });
+        data.chapters.forEach((c, i) => { if (c.id != null) chapterIdMap.set(c.id, keys[i] as number); });
+      }
 
-        const codexIdMap = new Map<number, number>();
-        if (data.codex?.length) {
-          const rows = data.codex.map((c) => prep(c, newProjectId));
-          const keys = await db.codex.bulkAdd(rows, { allKeys: true });
-          data.codex.forEach((c, i) => { if (c.id != null) codexIdMap.set(c.id, keys[i] as number); });
-        }
+      const codexIdMap = new Map<number, number>();
+      if (data.codex?.length) {
+        const rows = data.codex.map((c) => prep(c, newProjectId));
+        const keys = await db.codex.bulkAdd(rows, { allKeys: true });
+        data.codex.forEach((c, i) => { if (c.id != null) codexIdMap.set(c.id, keys[i] as number); });
+      }
 
-        // 2b) Peta Atlas di-insert dulu (seperti bab/codex) untuk membangun mapIdMap
-        //     yang dipakai remap mapMarkers. Gambar sudah didekode jadi Blob.
-        const mapIdMap = new Map<number, number>();
-        if (decodedMaps.length) {
-          const rows = decodedMaps.map((m) => prep(m, newProjectId));
-          const keys = await db.maps.bulkAdd(rows, { allKeys: true });
-          decodedMaps.forEach((m, i) => { if (m.id != null) mapIdMap.set(m.id, keys[i] as number); });
-        }
+      // 2b) Peta Atlas di-insert dulu (seperti bab/codex) untuk membangun mapIdMap
+      //     yang dipakai remap mapMarkers. Gambar sudah didekode jadi Blob.
+      const mapIdMap = new Map<number, number>();
+      if (decodedMaps.length) {
+        const rows = decodedMaps.map((m) => prep(m, newProjectId));
+        const keys = await db.maps.bulkAdd(rows, { allKeys: true });
+        decodedMaps.forEach((m, i) => { if (m.id != null) mapIdMap.set(m.id, keys[i] as number); });
+      }
 
-        // 3) Remap FK tabel dependen (murni) lalu insert.
-        const dep = remapProjectDependents(data, { projectId: newProjectId, chapterIdMap, codexIdMap, mapIdMap });
-        if (dep.bible.length) await db.bible.bulkAdd(dep.bible);
-        if (dep.aiActions.length) await db.aiActions.bulkAdd(dep.aiActions);
-        if (dep.codexCategories.length) await db.codexCategories.bulkAdd(dep.codexCategories);
-        if (dep.snapshots.length) await db.snapshots.bulkAdd(dep.snapshots);
-        const timelineKeys = dep.timeline.length ? await db.timeline.bulkAdd(dep.timeline, { allKeys: true }) : [];
-        const relationshipKeys = dep.relationships.length ? await db.relationships.bulkAdd(dep.relationships, { allKeys: true }) : [];
-        const timelineIdMap = new Map<number, number>();
-        const relationshipIdMap = new Map<number, number>();
-        data.timeline.forEach((row, i) => timelineIdMap.set(row.id!, timelineKeys[i] as number));
-        data.relationships.forEach((row, i) => relationshipIdMap.set(row.id!, relationshipKeys[i] as number));
-        const triage = remapTriage(data, { projectId: newProjectId, chapterIdMap, codexIdMap, mapIdMap, timelineIdMap, relationshipIdMap });
-        if (triage.length) await db.continuityTriage.bulkAdd(triage);
-        if (dep.chatSessions.length) await db.chatSessions.bulkAdd(dep.chatSessions);
-        if (dep.plotPromises.length) await db.plotPromises.bulkAdd(dep.plotPromises);
-        if (dep.glossary.length) await db.glossary.bulkAdd(dep.glossary);
-        if (dep.mapMarkers.length) await db.mapMarkers.bulkAdd(dep.mapMarkers);
-      });
+      // 3) Remap FK tabel dependen (murni) lalu insert.
+      const dep = remapProjectDependents(data, { projectId: newProjectId, chapterIdMap, codexIdMap, mapIdMap });
+      if (dep.bible.length) await db.bible.bulkAdd(dep.bible);
+      if (dep.aiActions.length) await db.aiActions.bulkAdd(dep.aiActions);
+      if (dep.codexCategories.length) await db.codexCategories.bulkAdd(dep.codexCategories);
+      if (dep.snapshots.length) await db.snapshots.bulkAdd(dep.snapshots);
+      const timelineKeys = dep.timeline.length ? await db.timeline.bulkAdd(dep.timeline, { allKeys: true }) : [];
+      const relationshipKeys = dep.relationships.length ? await db.relationships.bulkAdd(dep.relationships, { allKeys: true }) : [];
+      const timelineIdMap = new Map<number, number>();
+      const relationshipIdMap = new Map<number, number>();
+      data.timeline.forEach((row, i) => timelineIdMap.set(row.id!, timelineKeys[i] as number));
+      data.relationships.forEach((row, i) => relationshipIdMap.set(row.id!, relationshipKeys[i] as number));
+      const triage = remapTriage(data, { projectId: newProjectId, chapterIdMap, codexIdMap, mapIdMap, timelineIdMap, relationshipIdMap });
+      if (triage.length) await db.continuityTriage.bulkAdd(triage);
+      if (dep.chatSessions.length) await db.chatSessions.bulkAdd(dep.chatSessions);
+      if (dep.plotPromises.length) await db.plotPromises.bulkAdd(dep.plotPromises);
+      if (dep.glossary.length) await db.glossary.bulkAdd(dep.glossary);
+      if (dep.mapMarkers.length) await db.mapMarkers.bulkAdd(dep.mapMarkers);
+    });
 
     return { projectId: newProjectId, counts };
   },

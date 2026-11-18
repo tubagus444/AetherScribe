@@ -5,6 +5,7 @@ import { backupService, type BackupData } from './backupService';
 import { BACKUP_LIMITS } from '@/src/lib/backupLimits';
 import { readBackupFile, readBackupResponse, readBoundedStream } from '@/src/lib/backupIO';
 import { dataUrlToBlob } from '@/src/lib/blobCodec';
+import { BACKUP_TABLES, TABLE_CATALOG, type BackupTableName } from '@/src/lib/tableCatalog';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
@@ -46,6 +47,66 @@ afterEach(async () => {
   for (const table of db.tables) await table.clear();
 });
 afterAll(async () => { await db.delete(); vi.unstubAllGlobals(); });
+
+it('DB04 requires exactly one catalog policy for every Dexie table', () => {
+  expect(Object.keys(TABLE_CATALOG).sort()).toEqual(db.tables.map(table => table.name).sort());
+  for (const [name, policy] of Object.entries(TABLE_CATALOG)) {
+    if (policy.scope === 'project') expect(db.table(name).schema.idxByName).toHaveProperty('projectId');
+    if (policy.scope === 'chapter') expect(db.table(name).schema.idxByName).toHaveProperty('chapterId');
+  }
+});
+
+it('DB04 preserves the v8 export order and imports all exported table records', async () => {
+  await db.codex.add({ id: 1, projectId: 1, name: 'Tokoh', category: 'character', aliases: [], tags: [], description: '' });
+  await db.bible.add({ projectId: 1, key: 'Nada', instruction: 'Tenang' });
+  await db.aiActions.add({ projectId: 1, label: 'Periksa', prompt: 'Periksa bab.' });
+  await db.snapshots.add({ chapterId: 1, content: 'Versi lama', label: 'Draf', timestamp: 1 });
+  await db.timeline.add({ projectId: 1, title: 'Peristiwa', description: '', type: 'plot', order: 0, chapterId: 1 });
+  await db.relationships.add({ projectId: 1, sourceId: 1, targetId: 1, type: 'self' });
+  await db.chatSessions.add({ projectId: 1, title: 'Diskusi', messages: [], lastMessageAt: 1, activeChapterId: 1 });
+  await db.codexCategories.add({ projectId: 1, slug: 'faksi', label: 'Faksi', icon: 'users', color: 'indigo', order: 1 });
+  await db.plotPromises.add({ projectId: 1, title: 'Janji', status: 'open', createdAt: 1, updatedAt: 1, codexId: 1 });
+  await db.glossary.add({ projectId: 1, term: 'Istilah', createdAt: 1, updatedAt: 1 });
+  await db.mapMarkers.add({ projectId: 1, mapId: 1, codexId: 1, kind: 'pin', geometry: { x: .5, y: .5 }, createdAt: 1 });
+  await db.continuityTriage.add({ projectId: 1, findingId: 'gap-1', status: 'acknowledged', timestamp: 1 });
+
+  // JSON order is part of the checksum produced by existing clients.
+  const exportOrder = [
+    'projects', 'chapters', 'codex', 'bible', 'aiActions', 'snapshots', 'timeline', 'relationships',
+    'chatSessions', 'codexCategories', 'plotPromises', 'glossary', 'maps', 'mapMarkers', 'continuityTriage',
+  ] as const satisfies readonly BackupTableName[];
+  const source = await backupService.collectProjectData(1);
+  expect(Object.keys(source.data)).toEqual(exportOrder);
+  const { projectId } = await backupService.importProjectData(source);
+  const imported = await backupService.collectProjectData(projectId);
+  for (const name of BACKUP_TABLES) {
+    expect(source.data[name], name).toHaveLength(1);
+    expect(imported.data[name], name).toHaveLength(1);
+  }
+  expect(imported.data.maps?.[0].imageDataUrl).toBe(image);
+  expect(imported.data.snapshots[0].chapterId).toBe(imported.data.chapters[0].id);
+  expect(imported.data.mapMarkers?.[0].mapId).toBe(imported.data.maps?.[0].id);
+});
+
+it('DB04 clears derived indexes on restore and preserves workspace logs and backup history', async () => {
+  await db.codex.add({ id: 1, projectId: 1, name: 'Tokoh', category: 'character', aliases: [], tags: [], description: '' });
+  const cached = { id: 'old', projectId: 1, contentHash: 'old', embedding: new Float32Array([1]), lastUpdated: 1 };
+  await db.embeddings.add({ ...cached, codexId: 1 });
+  await db.sceneEmbeddings.add({ ...cached, chapterId: 1, chunkIndex: 0, snippet: '' });
+  await db.errors.add({ id: 1, message: 'Existing log', timestamp: 1, type: 'info' });
+  await db.aiUsageLogs.add({ id: 1, timestamp: 1, promptTokens: 1, completionTokens: 1, totalTokens: 2, provider: 'fixture', model: 'fixture', actionType: 'other' });
+  const existingBackup = await db.backups.add({ timestamp: 1, data: '{}', size: 2, kind: 'pre-restore' });
+  const exported = await backupService.collectAllData();
+  for (const name of ['embeddings', 'sceneEmbeddings', 'errors', 'aiUsageLogs', 'backups']) {
+    expect(exported.data).not.toHaveProperty(name);
+  }
+  await backupService.restoreData(legacy());
+  expect(await db.embeddings.count()).toBe(0);
+  expect(await db.sceneEmbeddings.count()).toBe(0);
+  expect(await db.errors.get(1)).toMatchObject({ message: 'Existing log' });
+  expect(await db.aiUsageLogs.get(1)).toMatchObject({ totalTokens: 2 });
+  expect(await db.backups.get(existingBackup)).toBeDefined();
+});
 
 describe('F03 Atlas recovery', () => {
   it('restoring an internal backup does not discard an existing Atlas image', async () => {

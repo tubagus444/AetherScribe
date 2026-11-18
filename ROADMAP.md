@@ -1,6 +1,6 @@
 # ROADMAP & BACKLOG AKTIF - AetherScribe
 
-Diperbarui 18 November 2026 setelah verifikasi lokal DB03.
+Diperbarui 18 November 2026 setelah verifikasi lokal DB04.
 Status pekerjaan ada di dokumen ini; rincian pelaksanaan ada di laporan dan arsip.
 
 ## Ringkasan status
@@ -46,7 +46,7 @@ Status pelaksanaan dicatat di tabel ini.
 | 1 | DB01 | Perlindungan dan pemulihan naskah | Selesai, diverifikasi lokal |
 | 2 | DB02 | Pusatkan operasi perubahan data | Selesai, diverifikasi lokal |
 | 3 | DB03 | Validasi penulisan dan integritas relasi | Selesai, diverifikasi lokal |
-| 4 | DB04 | Katalog tabel dan kebijakan data | Direncanakan |
+| 4 | DB04 | Katalog tabel dan kebijakan data | Selesai, diverifikasi lokal |
 | 5 | DB05 | Kontrak akses data dan adapter Dexie | Direncanakan |
 | 6 | DB06 | Kontrak data dan evolusi skema | Direncanakan |
 | 7 | DB07 | Format ekspor portabel | Direncanakan |
@@ -114,6 +114,20 @@ Status pelaksanaan dicatat di tabel ini.
   produksi lulus. Rangkaian awal Chromium mencatat 40 dari 41 tes lulus.
   F26 yang gagal lulus saat diulang, dan ketiga skenario DB03 lulus dalam
   pengulangan terfokus.
+
+### Hasil DB04
+
+- [Katalog tabel](src/lib/tableCatalog.ts) merinci cakupan, relasi, retensi,
+  ekspor, impor, pemulihan, dan penghapusan untuk 20 tabel Dexie. Tes memeriksa
+  kesesuaian dengan skema aktual dan indeks yang dipakai untuk menyaring
+  record proyek atau bab.
+- Koleksi dan validasi cadangan serta cakupan transaksi impor, pemulihan,
+  dan penghapusan diturunkan dari katalog. Remap ID, aset, deduplikasi Bible,
+  serta pelepasan relasi tetap eksplisit. [Kebijakan data](docs/database.md#katalog-tabel-dan-kebijakan-data-db04)
+- Tes memastikan urutan tabel format v8, impor seluruh tabel yang diekspor,
+  regenerasi cache, serta perlindungan log dan riwayat cadangan saat pemulihan.
+  Verifikasi lokal mencakup 802 tes unit/integrasi, 28 tes Chromium, typecheck
+  umum dan strict, maintenance, serta build produksi.
 
 ## Pilihan tindak lanjut
 

@@ -10,10 +10,8 @@ import { db } from '@/src/db';
 import type { Snapshot } from '@/src/types';
 import { format } from 'date-fns';
 import { validateWriteFields } from '@/src/lib/backupValidation';
+import { AUTO_SNAPSHOT_LIMIT } from '@/src/lib/tableCatalog';
 import { requireRow } from './writeIntegrity';
-
-/** Maksimal snapshot otomatis yang disimpan per-bab; sisanya (terlama) dipangkas. */
-const MAX_AUTO_PER_CHAPTER = 12;
 
 export async function addSnapshot(snapshot: Omit<Snapshot, 'id'>) {
   validateWriteFields('snapshots', snapshot, 'create');
@@ -49,8 +47,8 @@ export async function saveAutoSnapshot(chapterId: number, content: string, reaso
     .equals(chapterId)
     .filter((s) => s.auto === true)
     .sortBy('timestamp');
-  if (autos.length > MAX_AUTO_PER_CHAPTER) {
-    const stale = autos.slice(0, autos.length - MAX_AUTO_PER_CHAPTER).map((s) => s.id!);
+  if (autos.length > AUTO_SNAPSHOT_LIMIT) {
+    const stale = autos.slice(0, autos.length - AUTO_SNAPSHOT_LIMIT).map((s) => s.id!);
     await db.snapshots.bulkDelete(stale);
   }
 

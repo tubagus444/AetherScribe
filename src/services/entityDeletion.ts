@@ -1,7 +1,8 @@
 import { db } from '@/src/db';
 import { assertWriteId } from './writeIntegrity';
+import { PROJECT_DELETE_TABLES, TABLE_CATALOG } from '@/src/lib/tableCatalog';
 
-export const domainTables = () => [db.projects, db.chapters, db.codex, db.bible, db.aiActions, db.snapshots, db.timeline, db.relationships, db.chatSessions, db.codexCategories, db.embeddings, db.sceneEmbeddings, db.plotPromises, db.glossary, db.maps, db.mapMarkers, db.continuityTriage];
+export const domainTables = () => PROJECT_DELETE_TABLES.map(name => db[name]);
 
 async function removeChapterReferences(chapterIds: number[]) {
   if (!chapterIds.length) return;
@@ -92,9 +93,10 @@ export async function deleteProjectData(id: number) {
     await removeChapterReferences(chapters);
     await removeMapReferences(maps);
     await removeCodexReferences(codex);
-    for (const table of domainTables()) {
-      if (['projects', 'snapshots'].includes(table.name)) continue;
-      await table.where('projectId').equals(id).delete();
+    for (const name of PROJECT_DELETE_TABLES) {
+      if (TABLE_CATALOG[name].scope === 'project') {
+        await db[name].where('projectId').equals(id).delete();
+      }
     }
     await db.projects.delete(id);
     return chapters;

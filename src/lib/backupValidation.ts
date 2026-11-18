@@ -1,6 +1,7 @@
 import { BACKUP_LIMITS } from './backupLimits';
 import { validateImageDataUrl } from './blobCodec';
 import { record } from './dataContracts';
+import { BACKUP_TABLES, type BackupTableName } from './tableCatalog';
 
 type Row = Record<string, any>;
 type Check = (value: any, path: string) => void;
@@ -43,7 +44,7 @@ const markerGeometry: Check = (v, p) => {
     if (v.geometry.length < (v.kind === 'area' ? 3 : 2)) fail(p);
   }
 };
-const schemas: Record<string, ReturnType<typeof object>> = {
+const backupSchemas = {
   projects: object({ id, name: text, description: text, createdAt: nonnegative, lastOpened: nonnegative }, {
     wordGoal: nonnegative, dailyGoal: nonnegative, lastWordCount: nonnegative, lastWordCountDate: text,
     dailyLog: (v, p) => { object({})(v, p); Object.entries(v).forEach(([k, n]) => nonnegative(n, `${p}.${k}`)); },
@@ -89,8 +90,8 @@ const schemas: Record<string, ReturnType<typeof object>> = {
     markerGeometry(v, `${p}.geometry`);
   }, markerFields),
   continuityTriage: object({ id, projectId: id, findingId: text, status: choice('dismissed', 'acknowledged'), timestamp: nonnegative }),
-};
-export const BACKUP_TABLES = Object.keys(schemas);
+} satisfies Record<BackupTableName, ReturnType<typeof object>>;
+const schemas: Record<string, ReturnType<typeof object>> = backupSchemas;
 
 /** Validasi hanya field yang dikirim oleh patch agar field lama tetap utuh. */
 export function validateWriteFields(table: string, row: unknown, mode: 'create' | 'patch', allowed?: readonly string[]) {
@@ -169,10 +170,10 @@ export function validateBackup(backup: unknown, scope: 'all' | 'project'): asser
   if (scope === 'project' && Array.isArray(d.projects) && d.projects.length !== 1) throw new Error('File ini bukan ekspor satu novel.');
   for (const key of Object.keys(d)) if (!Object.prototype.hasOwnProperty.call(schemas, key)) fail(`tabel tidak dikenal ${key}`);
   let count = 0;
-  for (const [table, check] of Object.entries(schemas)) {
+  for (const table of BACKUP_TABLES) {
     const rows = d[table];
     if (rows === undefined && (b.version < 8 || scope === 'project') && !['projects', 'chapters', 'codex'].includes(table)) continue;
-    array(check)(rows, table);
+    array(backupSchemas[table])(rows, table);
     count += rows.length;
     if (count > BACKUP_LIMITS.recordsTotal) fail('jumlah record total');
     const keys = new Set<number>();

@@ -456,3 +456,27 @@ untuk referensi invalid, hilang, atau lintas proyek, termasuk pada cache turunan
 Data lama tetap dapat dibaca. Patch yang tidak menyentuh tautan lama tetap
 diterima, dan snapshot yatim yang tidak dapat diatribusikan ke proyek yang
 dihapus dipertahankan. Pemeriksaan ini tidak memodifikasi data atau skema.
+
+## Katalog tabel dan kebijakan data (DB04)
+
+[Katalog tabel Dexie](../src/lib/tableCatalog.ts) mencatat 20 tabel beserta
+jenis, cakupan, relasi, retensi, ekspor, impor proyek, pemulihan, dan penghapusan
+proyek. Tes mencocokkan katalog dengan tabel Dexie dan memeriksa indeks
+`projectId` untuk tabel yang disaring melalui indeks tersebut.
+
+| Data | Ekspor dan impor proyek | Pemulihan workspace dan penghapusan proyek |
+| --- | --- | --- |
+| 14 tabel data utama | Masuk ekspor. Impor menetapkan ID baru dan memetakan ulang relasi. | Diganti saat pemulihan. Record proyek dihapus sesuai aturan relasi. |
+| `maps` | File dan Drive memuat gambar lengkap. Cadangan otomatis internal menyimpan referensi hash. | Blob disiapkan sebelum transaksi pemulihan. Penghapusan peta menangani penanda dan portal. |
+| `embeddings`, `sceneEmbeddings` | Dikecualikan dan dibangun ulang sesuai kebutuhan. | Dibersihkan saat pemulihan atau bersama proyek pemilik. |
+| `backups`, `errors`, `aiUsageLogs` | Dikecualikan dari ekspor dan impor. | Riwayat lokal dipertahankan saat pemulihan dan penghapusan proyek. |
+
+Urutan tabel pada cadangan v8 tetap sama untuk menjaga serialisasi dan
+checksum. Remap ID, pengolahan aset, deduplikasi Bible, dan penanganan relasi
+saat penghapusan tetap berada di layanan yang menangani operasi tersebut.
+Simpan kebijakan tabel baru di katalog bersama perubahan skemanya dan lengkapi
+jalur remap jika tabel ikut impor proyek.
+
+`AetherScribeHandles.kv` adalah object store IndexedDB terpisah yang menyimpan
+handle folder backup lokal. Handle bertahan sampai dihapus atau diganti,
+serta dikecualikan dari ekspor, impor, pemulihan workspace, dan penghapusan proyek.
