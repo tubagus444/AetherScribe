@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { db } from '@/src/db';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
+import { useToast } from '@/src/hooks/useToast';
 import { registerActiveEditor, unregisterActiveEditor, ActiveEditorBridge } from '@/src/features/editor/editorBridge';
 
 interface UseEditorSaveProps {
@@ -12,6 +13,7 @@ interface UseEditorSaveProps {
 
 export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps) {
   const { setSaveStatus } = useEditorPanel();
+  const { toast } = useToast();
   const [title, setTitle] = useState('');
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -19,6 +21,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   const isMountedRef = useRef(true);
   const htmlRef = useRef(editor?.getHTML() || "");
   const saveFailedRef = useRef(false);
+  const saveRevisionRef = useRef(0);
   const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearStatusTimeout = useCallback(() => {
@@ -27,14 +30,16 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   }, []);
 
   const performSave = useCallback(async (id: number, content: string): Promise<void> => {
+    const revision = ++saveRevisionRef.current;
+    const isLatest = () => revision === saveRevisionRef.current;
     clearStatusTimeout();
     if (isMountedRef.current) setSaveStatus('Menyimpan...');
     try {
       if (!Number.isInteger(id) || id <= 0) throw new Error('Bab tidak valid.');
       const affected = await db.chapters.update(id, { content, lastModified: Date.now() });
       if (affected !== 1) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
-      saveFailedRef.current = false;
-      if (isMountedRef.current) {
+      if (isLatest()) saveFailedRef.current = false;
+      if (isMountedRef.current && isLatest()) {
         setSaveStatus('Tersimpan');
         statusTimeoutRef.current = setTimeout(() => {
           statusTimeoutRef.current = null;
@@ -42,10 +47,12 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
         }, 2000);
       }
     } catch (err) {
-      saveFailedRef.current = true;
-      clearStatusTimeout();
+      if (isLatest()) {
+        saveFailedRef.current = true;
+        clearStatusTimeout();
+        if (isMountedRef.current) setSaveStatus('Gagal menyimpan');
+      }
       console.error('Failed to save chapter:', err);
-      if (isMountedRef.current) setSaveStatus('Gagal menyimpan');
       // Caller yang mengubah DB/reload harus berhenti; draft editor tetap utuh.
       throw err;
     }
@@ -141,6 +148,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
     // bab / unmount selalu menyimpan teks terbaru, bukan snapshot lama. Mencegah
     // kehilangan edit terakhir bila user pindah bab/keluar < 1.5s setelah mengetik.
     htmlRef.current = currentEditor.getHTML();
+    saveRevisionRef.current++;
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     clearStatusTimeout();
@@ -154,10 +162,16 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
     }, 1500);
   }, [setSaveStatus, saveInBackground, clearStatusTimeout]);
 
-  const handleTitleChange = useCallback((newTitle: string) => {
+  const handleTitleChange = useCallback(async (newTitle: string) => {
     setTitle(newTitle);
-    db.chapters.update(chapterIdRef.current, { title: newTitle });
-  }, []);
+    try {
+      const affected = await db.chapters.update(chapterIdRef.current, { title: newTitle });
+      if (affected !== 1) throw new Error('Bab tidak ditemukan.');
+    } catch (error) {
+      console.error('Failed to save chapter title:', error);
+      toast.error('Gagal menyimpan judul bab. Ubah judul untuk mencoba lagi.');
+    }
+  }, [toast]);
 
   return {
     title,

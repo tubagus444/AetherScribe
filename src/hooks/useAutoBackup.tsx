@@ -6,7 +6,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { backupService } from '@/src/services/backupService';
 import { syncProjectToDrive } from '@/src/services/driveBackupService';
-import { getAccessToken } from '@/src/services/googleAuth';
+import { clearGoogleSession, getAccessToken } from '@/src/services/googleAuth';
 import { useToast } from '@/src/hooks/useToast';
 import { saveFolderHandle, loadFolderHandle, ensureDirPermission } from '@/src/lib/folderHandleStore';
 
@@ -27,17 +27,19 @@ const cancelIdle = (id: number) => {
 
 // Hasil terakhir per-lapisan backup. `null` = lapisan tak dikonfigurasi/tak berlaku.
 // 'skipped' = terkonfigurasi tapi dilewati siklus ini (mis. izin folder belum diberi).
-export type LayerResult = { status: 'ok' | 'error' | 'skipped'; time: number } | null;
+type BackupOutcome = 'ok' | 'error' | 'skipped' | 'reauth';
+export type LayerResult = { status: BackupOutcome; time: number; lastSuccess?: number } | null;
 export interface LayerStatuses {
   internal: LayerResult;
   folder: LayerResult;
   drive: LayerResult;
+  file: LayerResult;
 }
 
-const EMPTY_LAYER_STATUS: LayerStatuses = { internal: null, folder: null, drive: null };
+const EMPTY_LAYER_STATUS: LayerStatuses = { internal: null, folder: null, drive: null, file: null };
 
 interface BackupContextType {
-  lastBackupTime: number | null;
+  recordBackupResult: (layer: keyof LayerStatuses, status: BackupOutcome) => void;
   isBackingUp: boolean;
   selectFolder: () => Promise<void>;
   triggerManualBackup: () => Promise<void>;
@@ -50,20 +52,36 @@ const BackupContext = createContext<BackupContextType | undefined>(undefined);
 
 export function BackupProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
-  const [lastBackupTime, setLastBackupTime] = useState<number | null>(() => {
-    const stored = localStorage.getItem('last_backup_time');
-    return stored ? parseInt(stored) : null;
-  });
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [folderName, setFolderName] = useState<string | null>(null);
   const [layerStatus, setLayerStatus] = useState<LayerStatuses>(() => {
     try {
       const raw = localStorage.getItem('backup_layer_status');
-      return raw ? JSON.parse(raw) : EMPTY_LAYER_STATUS;
+      const stored: LayerStatuses = { ...EMPTY_LAYER_STATUS, ...JSON.parse(raw ?? '{}') };
+      const driveSuccess = Date.parse(localStorage.getItem('last_drive_sync_time') ?? '');
+      if (Number.isFinite(driveSuccess)) {
+        const drive = stored.drive;
+        if (!drive || driveSuccess > drive.time) {
+          stored.drive = { status: 'ok', time: driveSuccess, lastSuccess: driveSuccess };
+        } else if (!drive.lastSuccess) {
+          stored.drive = { ...drive, lastSuccess: drive.status === 'ok' ? drive.time : driveSuccess };
+        }
+      }
+      return stored;
     } catch {
       return EMPTY_LAYER_STATUS;
     }
   });
+  const layerStatusRef = useRef(layerStatus);
+  const recordBackupResult = useCallback((layer: keyof LayerStatuses, status: BackupOutcome) => {
+    const previous = layerStatusRef.current[layer];
+    const time = Date.now();
+    const lastSuccess = status === 'ok' ? time : previous?.lastSuccess ?? (previous?.status === 'ok' ? previous.time : undefined);
+    const next = { ...layerStatusRef.current, [layer]: { status, time, lastSuccess } };
+    layerStatusRef.current = next;
+    setLayerStatus(next);
+    try { localStorage.setItem('backup_layer_status', JSON.stringify(next)); } catch { /* kuota */ }
+  }, []);
   
   const directoryHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -83,22 +101,17 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
     if (isBackingUpRef.current) return;
     isBackingUpRef.current = true;
     setIsBackingUp(true);
-    let hasError = false;
-    // Hasil per-lapisan siklus ini (null = tak dikonfigurasi/tak berlaku).
-    const results: LayerStatuses = { internal: null, folder: null, drive: null };
-    const stamp = () => Date.now();
     try {
       const data = await backupService.collectAllData();
 
       // Layer 1: Internal DB
       try {
         await backupService.saveToInternalDB(data);
-        results.internal = { status: 'ok', time: stamp() };
+        recordBackupResult('internal', 'ok');
       } catch (err) {
         console.error("Internal DB backup failed:", err);
         toast.error("Gagal mencadangkan ke penyimpanan lokal.");
-        results.internal = { status: 'error', time: stamp() };
-        hasError = true;
+        recordBackupResult('internal', 'error');
       }
 
       // Layer 2: External Folder (if selected)
@@ -110,19 +123,17 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
         if (allowed) {
           try {
             await backupService.saveToDirectory(data, handle);
-            results.folder = { status: 'ok', time: stamp() };
+            recordBackupResult('folder', 'ok');
           } catch (err) {
             console.error("External backup failed:", err);
             toast.error("Gagal mencadangkan ke folder terpilih. Periksa izin folder.");
-            results.folder = { status: 'error', time: stamp() };
-            hasError = true;
+            recordBackupResult('folder', 'error');
           }
         } else {
           // Terkonfigurasi tapi izin belum diberi → dilewati (senyap saat auto).
-          results.folder = { status: 'skipped', time: stamp() };
+          recordBackupResult('folder', 'skipped');
           if (!isAuto) {
             toast.error("Izin folder cadangan dibutuhkan. Pilih ulang folder untuk mengaktifkan kembali.");
-            hasError = true;
           }
         }
       }
@@ -136,12 +147,13 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
             throw new Error("DRIVE_SYNC_FAILED");
           }
           driveNoticeShownRef.current = false; // sync sukses → izinkan notifikasi lagi
-          results.drive = { status: 'ok', time: stamp() };
+          recordBackupResult('drive', 'ok');
         }
       } catch (err) {
         console.error("Google Drive sync failed:", err);
         const isConflict = err instanceof Error && err.message === 'CONFLICT_DETECTED';
         const isExpired = err instanceof Error && err.message === 'TOKEN_EXPIRED';
+        if (isExpired) clearGoogleSession();
         // Untuk konflik/sesi-berakhir saat auto: tampilkan sekali saja (BK10).
         const suppress = isAuto && (isConflict || isExpired) && driveNoticeShownRef.current;
         if (!suppress) {
@@ -154,26 +166,18 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
           }
           if (isConflict || isExpired) driveNoticeShownRef.current = true;
         }
-        results.drive = { status: 'error', time: stamp() };
-        hasError = true;
-      }
-
-      setLayerStatus(results);
-      try { localStorage.setItem('backup_layer_status', JSON.stringify(results)); } catch { /* kuota; abaikan */ }
-
-      if (!hasError) {
-        const now = Date.now();
-        setLastBackupTime(now);
-        localStorage.setItem('last_backup_time', now.toString());
+        recordBackupResult('drive', isExpired ? 'reauth' : 'error');
       }
     } catch (error) {
       console.error("Auto-backup failed:", error);
-      toast.error("Pencadangan gagal tak terduga.");
+      recordBackupResult('internal', 'error');
+      if (directoryHandleRef.current) recordBackupResult('folder', 'skipped');
+      toast.error("Gagal menyiapkan data cadangan. Periksa status simpan naskah lalu coba lagi.");
     } finally {
       isBackingUpRef.current = false;
       setIsBackingUp(false);
     }
-  }, [toast]);
+  }, [toast, recordBackupResult]);
 
   // Ref selalu menunjuk `runBackup` terbaru → efek timer bisa berdeps `[]` (interval
   // dibangun SEKALI) tanpa memakai closure basi.
@@ -284,7 +288,7 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <BackupContext.Provider value={{
-      lastBackupTime,
+      recordBackupResult,
       isBackingUp,
       selectFolder,
       triggerManualBackup,

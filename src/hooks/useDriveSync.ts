@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { initAuth, googleSignIn, logout, getAccessToken, GoogleUser } from '../services/googleAuth';
+import { clearGoogleSession, initAuth, googleSignIn, logout, getAccessToken, GoogleUser } from '../services/googleAuth';
 import { syncProjectToDrive, listDriveBackups, restoreFromDrive, DriveBackupFile } from '../services/driveBackupService';
 import { useToast } from './useToast';
+import { useAutoBackup } from './useAutoBackup';
 
 export function useDriveSync() {
   const { toast } = useToast();
+  const { layerStatus, recordBackupResult } = useAutoBackup();
+  const reauthAt = layerStatus.drive?.status === 'reauth' ? layerStatus.drive.time : null;
   const [needsAuth, setNeedsAuth] = useState(true);
   const [user, setUser] = useState<GoogleUser | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -54,11 +57,16 @@ export function useDriveSync() {
     setDriveBackups(null);
   };
 
-  const handleExpiredSession = () => {
+  const handleExpiredSession = useCallback(() => {
+    clearGoogleSession();
     setNeedsAuth(true);
     setUser(null);
     setDriveBackups(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (reauthAt !== null) void initAuth(undefined, handleExpiredSession);
+  }, [reauthAt, handleExpiredSession]);
 
   // Muat daftar cadangan Drive. Dipanggil otomatis saat terautentikasi (efek di
   // bawah) dan lewat tombol "Segarkan".
@@ -78,7 +86,7 @@ export function useDriveSync() {
     } finally {
       setIsLoadingDriveBackups(false);
     }
-  }, [toast]);
+  }, [toast, handleExpiredSession]);
 
   // Auto-muat daftar begitu sesi aktif agar Titik Pulih Drive langsung tampil.
   useEffect(() => {
@@ -112,7 +120,8 @@ export function useDriveSync() {
     try {
       const token = await getAccessToken();
       if (!token) {
-        setNeedsAuth(true);
+        recordBackupResult('drive', 'reauth');
+        handleExpiredSession();
         return;
       }
 
@@ -121,30 +130,37 @@ export function useDriveSync() {
       if (!driveSuccess) {
          throw new Error("DRIVE_SYNC_FAILED");
       }
+      recordBackupResult('drive', 'ok');
       toast.success('Berhasil disinkronisasi ke Google Drive!');
       loadDriveBackups();
     } catch (err) {
       console.error('Drive sync failed', err);
       if (err instanceof Error && err.message === 'CONFLICT_DETECTED') {
+         recordBackupResult('drive', 'error');
          const force = window.confirm("Konflik: Ditemukan cadangan yang lebih baru di Google Drive (mungkin diedit di perangkat lain). Menimpa sekarang dapat menghilangkan data yang ada di Drive.\n\nApakah Anda ingin MENIMPA cadangan di Google Drive dengan versi lokal ini?");
          if (force) {
             try {
                const forceSuccess = await syncProjectToDrive(true, message => toast.warning(message));
                if (!forceSuccess) throw new Error("DRIVE_SYNC_FAILED");
+               recordBackupResult('drive', 'ok');
                toast.success('Berhasil menimpa cadangan di Google Drive!');
                loadDriveBackups();
             } catch (forceErr) {
                console.error('Forced drive sync failed', forceErr);
-               toast.error('Gagal menyinkronkan (timpa) ke Google Drive.');
+               const expired = forceErr instanceof Error && forceErr.message === 'TOKEN_EXPIRED';
+               recordBackupResult('drive', expired ? 'reauth' : 'error');
+               if (expired) handleExpiredSession();
+               toast.error(expired ? 'Sesi Google berakhir. Silakan login ulang.' : 'Gagal menyinkronkan (timpa) ke Google Drive.');
             }
          } else {
             toast.info('Sinkronisasi dibatalkan. Untuk menarik versi Drive, gunakan "Titik Pulih Google Drive" di bawah.');
          }
       } else if (err instanceof Error && err.message === 'TOKEN_EXPIRED') {
          toast.error('Sesi Google Anda telah berakhir. Harap login ulang untuk melanjutkan sinkronisasi.');
-         setNeedsAuth(true);
-         setUser(null);
+         recordBackupResult('drive', 'reauth');
+         handleExpiredSession();
       } else {
+         recordBackupResult('drive', 'error');
          toast.error('Gagal menyinkronkan ke Google Drive.');
       }
     } finally {

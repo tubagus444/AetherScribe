@@ -90,18 +90,14 @@ export function NovelFooter({
         <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block"></div>
 
         {/* Status simpan */}
-        <span className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold transition-all duration-300 border border-transparent",
+        <span role="status" className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-transparent",
           saveStatus === 'Menyimpan...' ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-900/20' :
-          saveStatus === 'Tersimpan' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-900/20 opacity-100' : 'opacity-0'
+          !saveStatus || saveStatus === 'Tersimpan' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-900/20' :
+          'text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
         )}>
-          <div className={cn("w-1.5 h-1.5 rounded-full", saveStatus === 'Menyimpan...' ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
-          {saveStatus || 'Tersimpan'}
+          {!saveStatus || saveStatus === 'Tersimpan' ? 'Isi bab tersimpan' : saveStatus}
         </span>
 
-        {/* Indikator sinkronisasi */}
-        <div className="flex items-center justify-center" title="SINKRONISASI AKTIF">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse outline outline-emerald-500/10"></div>
-        </div>
       </div>
 
       {/* Kanan: Aksi & tampilan */}

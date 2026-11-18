@@ -144,11 +144,15 @@ export const getAccessToken = async (): Promise<string | null> => {
     }
   }
 
+  clearGoogleSession();
+  throw new Error("TOKEN_EXPIRED");
+};
+
+export function clearGoogleSession() {
   cachedAccessToken = null;
   cachedUser = null;
   tokenExpiresAt = null;
-  throw new Error("TOKEN_EXPIRED");
-};
+}
 
 export const logout = async () => {
   if (cachedAccessToken) {
@@ -160,7 +164,5 @@ export const logout = async () => {
       }
     } catch (e) {}
   }
-  cachedAccessToken = null;
-  cachedUser = null;
-  tokenExpiresAt = null;
+  clearGoogleSession();
 };

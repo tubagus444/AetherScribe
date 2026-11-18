@@ -17,7 +17,11 @@ test.beforeEach(async ({ context, page, baseURL }) => {
     await db.snapshots.add({ id: 1, chapterId: 1, content: 'Keep snapshot', label: '', timestamp: 1 });
     await db.timeline.add({ id: 1, projectId: 1, chapterId: 1, title: 'Keep event', description: 'Keep narrative', order: 0, type: 'plot', characterIds: [1] });
     await db.relationships.add({ id: 1, projectId: 1, sourceId: 1, targetId: 1, type: 'self' });
-    await db.maps.add({ id: 1, projectId: 1, name: 'Keep map', width: 10, height: 10, createdAt: 1 });
+    const canvas = document.createElement('canvas');
+    const imageBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Missing fixture image')), 'image/png');
+    });
+    await db.maps.add({ id: 1, projectId: 1, name: 'Keep map', width: canvas.width, height: canvas.height, createdAt: 1, imageBlob });
     await db.mapMarkers.add({ id: 1, projectId: 1, mapId: 1, codexId: 1, kind: 'pin', geometry: { x: .5, y: .5 }, createdAt: 1 });
   });
   await page.goto('/');
@@ -32,6 +36,10 @@ async function state(page: Page) {
       chapters: (await db.chapters.toArray()).map(c => ({ id: c.id, projectId: c.projectId, content: c.content })),
       codex: await db.codex.toArray(), snapshots: await db.snapshots.toArray(),
       timeline: await db.timeline.toArray(), relationships: await db.relationships.toArray(), markers: await db.mapMarkers.toArray(),
+      images: await Promise.all((await db.maps.toArray()).map(async map => ({
+        id: map.id, type: map.imageBlob?.type,
+        bytes: map.imageBlob && Array.from(new Uint8Array(await map.imageBlob.arrayBuffer())),
+      }))),
     };
   });
 }
@@ -53,6 +61,87 @@ async function choose(page: Page, project: boolean, file: { name: string; mimeTy
   await page.getByRole('button', { name: project ? 'Impor Novel (sebagai proyek baru)' : 'Kembalikan dari JSON', exact: true }).click();
   await (await waiting).setFiles(file);
 }
+
+test('DB01 restores a full downloaded file into a fresh browser context', async ({ page, browser, baseURL }) => {
+  await settings(page);
+  const file = await exported(page, false);
+  await expect(page.getByText(/Unduhan terakhir dimulai/)).toBeVisible();
+  const source = await state(page);
+  expect(source.images[0].bytes?.length).toBeGreaterThan(0);
+
+  const fresh = await browser.newContext({ baseURL, serviceWorkers: 'block' });
+  try {
+    await fresh.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+    await fresh.addInitScript(() => localStorage.setItem('ai_local_only', 'true'));
+    const target = await fresh.newPage();
+    await target.route('**/__empty_workspace', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+    await target.goto('/__empty_workspace');
+    expect((await state(target)).projects).toEqual([]);
+    expect((await state(target)).images).toEqual([]);
+    await target.goto('/');
+    await settings(target);
+    await choose(target, false, file);
+    const dialog = target.getByRole('alertdialog', { name: 'Timpa semua data?' });
+    await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
+    await expect.poll(() => state(target)).toEqual(source);
+  } finally {
+    await fresh.close();
+  }
+});
+
+for (const supported of [true, false]) {
+  test(`DB01 persistence ${supported ? 'denied' : 'unavailable'} allows file backup`, async ({ page }) => {
+    await page.evaluate(supported => {
+      Object.defineProperty(navigator, 'storage', {
+        value: supported ? { persisted: async () => false, persist: async () => false } : undefined,
+      });
+    }, supported);
+    await settings(page);
+    if (supported) await page.getByRole('button', { name: 'Minta Perlindungan Penyimpanan' }).click();
+    await expect(page.getByText(supported ? /Peramban menolak permintaan/ : /Perlindungan penyimpanan tidak tersedia/)).toBeVisible();
+    const file = await exported(page, false);
+    expect(file.buffer.length).toBeGreaterThan(0);
+  });
+}
+
+test('DB01 Drive failure preserves the last successful backup and asks for login again', async ({ page }) => {
+  let uploadStatus = 200;
+  await page.route('https://www.googleapis.com/**', async route => {
+    const url = new URL(route.request().url());
+    if (url.pathname.includes('/upload/')) {
+      await route.fulfill({ status: uploadStatus, json: { id: 'db01-upload' } });
+    } else if (url.pathname.endsWith('/userinfo')) {
+      await route.fulfill({ json: { name: 'DB01', email: 'db01@example.test' } });
+    } else {
+      const isFolderQuery = url.searchParams.get('q')?.startsWith('name');
+      await route.fulfill({ json: { files: isFolderQuery ? [{ id: 'db01-folder' }] : [] } });
+    }
+  });
+  await page.evaluate(() => {
+    localStorage.setItem('google_client_id', 'db01-client');
+    Reflect.set(window, 'google', { accounts: { oauth2: {
+      initTokenClient: () => ({
+        callback: (_response: { access_token: string }) => {},
+        requestAccessToken() { this.callback({ access_token: 'db01-token' }); },
+      }),
+    } } });
+  });
+  await settings(page);
+  await page.getByRole('button', { name: 'Login Google', exact: true }).click();
+  const send = page.getByRole('button', { name: 'Kirim Cadangan' });
+  await send.click();
+  const lastSuccess = page.getByText(/Cadangan berhasil terakhir/);
+  await expect(lastSuccess).toBeVisible();
+  const successText = await lastSuccess.textContent();
+  uploadStatus = 401;
+  await send.click();
+  await expect(page.getByText(/Gagal · Sesi Google berakhir/)).toBeVisible();
+  await expect(lastSuccess).toHaveText(successText!);
+  await page.getByRole('button', { name: 'Login Ulang Google', exact: true }).click();
+  uploadStatus = 200;
+  await send.click();
+  await expect(page.getByText(/Gagal · Sesi Google berakhir/)).toHaveCount(0);
+});
 
 test('L03 project export/import file chooser permits cancellation then remaps a new project', async ({ page }) => {
   await settings(page);

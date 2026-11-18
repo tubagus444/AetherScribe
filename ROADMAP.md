@@ -1,13 +1,13 @@
 # ROADMAP & BACKLOG AKTIF - AetherScribe
 
-Diperbarui 15 November 2026 setelah integrasi worker pada commit `4816258`.
+Diperbarui 18 November 2026 setelah verifikasi lokal DB01.
 Status pekerjaan ada di dokumen ini; rincian pelaksanaan ada di laporan dan arsip.
 
 ## Ringkasan status
 
 - **Audit F01-F29 selesai**, termasuk F28.1-F28.6.
 - **L01-L06 selesai**, termasuk pengukuran dan integrasi worker backup internal.
-- **Verifikasi lokal terbaru:** 91 berkas/792 tes unit/integrasi beserta coverage,
+- **Verifikasi lokal L01–L06:** 91 berkas/792 tes unit/integrasi beserta coverage,
   55 tes Chromium, typecheck umum/strict/maintenance, build, clean production dan
   startup/offline lulus sebelum commit `4816258`.
 - **CI GitHub terakhir yang diverifikasi:** commit `7527305`, Windows dan Ubuntu
@@ -39,11 +39,11 @@ Seluruh item selesai 15 November 2026.
 
 Tetap menggunakan IndexedDB + Dexie. Rincian tugas, dependensi, aturan fitur baru,
 dan kriteria penerimaan ada di [rencana peningkatan database](docs/database-improvement-plan.md).
-Pencatatan rencana belum merupakan implementasi; status pelaksanaan hanya di tabel ini.
+Status pelaksanaan dicatat di tabel ini.
 
 | Urutan | ID | Pekerjaan | Status |
 |---|---|---|---|
-| 1 | DB01 | Perlindungan dan pemulihan naskah | Direncanakan |
+| 1 | DB01 | Perlindungan dan pemulihan naskah | Selesai, diverifikasi lokal |
 | 2 | DB02 | Pusatkan operasi perubahan data | Direncanakan |
 | 3 | DB03 | Validasi penulisan dan integritas relasi | Direncanakan |
 | 4 | DB04 | Katalog tabel dan kebijakan data | Direncanakan |
@@ -54,9 +54,31 @@ Pencatatan rencana belum merupakan implementasi; status pelaksanaan hanya di tab
 | 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
 | 10 | DB10 | Pembuktian migrasi terisolasi | Bersyarat: target migrasi dipilih |
 
-Mulai dengan memeriksa kemampuan yang sudah tersedia pada DB01, lalu kerjakan
-DB02/DB03 per domain mulai bab/editor. Hasil audit lama tetap selesai; daftar ini
-merupakan rencana pengembangan berikutnya.
+### Hasil DB01
+
+- Isi bab disimpan setelah jeda 1,5 detik. Pembacaan untuk cadangan menunggu
+  penyimpanan editor aktif. Footer menampilkan gagal simpan dan hasil tulis lama
+  tidak menandai edit yang lebih baru sebagai tersimpan. Kegagalan simpan judul
+  dilaporkan lewat notifikasi.
+- Pemeriksaan kuota saat aplikasi dibuka tetap memberi peringatan di atas 80%.
+  Permintaan persistensi tersedia di **Pengaturan → Data & Cadangan** saat API
+  peramban mendukungnya. Penolakan dan API yang tidak tersedia tetap memungkinkan
+  pengguna menulis dan mencadangkan.
+- Titik pulih otomatis internal memakai referensi gambar peta dari ruang kerja.
+  File lengkap, folder, Drive, dan titik sebelum pemulihan menyertakan gambar.
+  UI memperlihatkan hasil terbaru per tujuan dan mempertahankan waktu cadangan
+  berhasil sebelumnya ketika upaya baru gagal. Untuk ekspor manual, status
+  mencatat permulaan unduhan. Sesi Drive yang berakhir meminta login ulang.
+- [Uji Chromium](e2e/dataUi.spec.ts) memulihkan file yang diunduh melalui UI ke
+  konteks kosong dan membandingkan naskah, relasi, serta byte gambar peta.
+  Tes juga mencakup fallback persistensi dan kedaluwarsa Drive dengan respons
+  tiruan. Pengujian memakai data sintetis dan profil terisolasi.
+- Verifikasi lokal mencakup 794 tes unit/integrasi, typecheck umum dan strict,
+  maintenance, serta build produksi. Rangkaian Chromium mencatat 41 dari 42 tes
+  lulus. F27 gagal pada percobaan tersebut lalu lulus saat diulang bersama enam
+  tes yang mencakup editor dan DB01.
+
+Pekerjaan berikutnya adalah DB02/DB03 per domain, mulai dari bab/editor.
 
 ## Pilihan tindak lanjut
 

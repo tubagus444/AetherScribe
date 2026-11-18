@@ -9,6 +9,8 @@ import { EditorPanelContext } from '@/src/contexts/EditorPanelContext';
 
 const { update, get } = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }));
 vi.mock('@/src/db', () => ({ db: { chapters: { update, get } } }));
+const { titleError } = vi.hoisted(() => ({ titleError: vi.fn() }));
+vi.mock('@/src/hooks/useToast', () => ({ useToast: () => ({ toast: { error: titleError } }) }));
 
 describe('F05 editor persistence', () => {
   const status = vi.fn();
@@ -51,6 +53,28 @@ describe('F05 editor persistence', () => {
     await expect(reloadActiveEditor()).rejects.toThrow();
     expect(get).not.toHaveBeenCalled();
     expect(editor.commands.setContent).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed title write without discarding the typed title', async () => {
+    const { result } = mount();
+    update.mockResolvedValueOnce(0);
+    await act(() => result.current.handleTitleChange('Judul baru'));
+    expect(result.current.title).toBe('Judul baru');
+    expect(titleError).toHaveBeenCalledWith(expect.stringContaining('Gagal menyimpan judul'));
+  });
+
+  it('keeps a newer edit pending when an earlier save finishes', async () => {
+    const { result } = mount();
+    let finish!: (affected: number) => void;
+    update.mockReturnValueOnce(new Promise<number>(resolve => { finish = resolve; }));
+    const firstSave = flushActiveEditor();
+    html = '<p>edit lebih baru</p>';
+    act(() => result.current.onEditorUpdate({ editor }));
+    finish(1);
+    await firstSave;
+    expect(status).toHaveBeenLastCalledWith('Menyimpan...');
+    await act(() => vi.advanceTimersByTimeAsync(1500));
+    expect(status).toHaveBeenLastCalledWith('Tersimpan');
   });
 
   it.each(['', '<p></p>', '<p>isi baru</p>'])('flushes current content %j and cancels debounce', async content => {

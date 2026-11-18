@@ -9,9 +9,12 @@ import { useProject } from '@/src/contexts/ProjectContext';
 import { useToast } from '@/src/hooks/useToast';
 import { ConfirmDialog } from '@/src/components/common/ConfirmDialog';
 import { readBackupFile } from '@/src/lib/backupIO';
+import { useAutoBackup } from '@/src/hooks/useAutoBackup';
+import { BackupStatus } from './AutoBackupSection';
 
 export function ManualBackupSection() {
   const { toast } = useToast();
+  const { layerStatus, recordBackupResult } = useAutoBackup();
   const { projectId: activeProjectId, switchProject } = useProject();
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -51,10 +54,12 @@ export function ManualBackupSection() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success('Cadangan berhasil diekspor.');
+      recordBackupResult('file', 'ok');
+      toast.success('Unduhan cadangan dimulai. Periksa hasilnya di daftar unduhan peramban.');
     } catch (error) {
       console.error('Failed to create backup:', error);
-      toast.error('Gagal membuat cadangan. Lihat konsol untuk detailnya.');
+      recordBackupResult('file', 'error');
+      toast.error(error instanceof Error ? error.message : 'Gagal membuat cadangan.');
     } finally {
       setIsBackingUp(false);
     }
@@ -230,8 +235,9 @@ export function ManualBackupSection() {
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Ekspor seluruh ruang kerja Anda atau pulihkan dari cadangan JSON yang ada. Memulihkan akan menimpa data yang ada.
+          Ekspor seluruh ruang kerja dan gambar peta sebagai cadangan mandiri. Pemulihan dari file cadangan menimpa data yang ada.
         </p>
+        <BackupStatus result={layerStatus.file} successLabel="Unduhan terakhir dimulai" okLabel="Unduhan dimulai" />
 
         <div className="flex flex-col sm:flex-row gap-4">
           <button

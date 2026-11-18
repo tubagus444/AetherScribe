@@ -46,6 +46,7 @@ test('F05 failed save rejects flush, keeps draft, and permits retry', async ({ p
     try { await flushActiveEditor(); return false; } catch { return true; }
   });
   expect(failed).toBe(true);
+  await expect(page.getByRole('status').filter({ hasText: 'Gagal menyimpan' })).toBeVisible();
   await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Draft survives failure');
   await page.evaluate(async () => {
     const dbPath = '/src/db.ts'; const bridgePath = '/src/features/editor/editorBridge.ts';
@@ -54,6 +55,7 @@ test('F05 failed save rejects flush, keeps draft, and permits retry', async ({ p
     const { flushActiveEditor } = await import(bridgePath);
     await flushActiveEditor();
   });
+  await expect(page.getByRole('status').filter({ hasText: 'Isi bab tersimpan' })).toBeVisible();
   await page.reload();
   await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Draft survives failure');
 });
