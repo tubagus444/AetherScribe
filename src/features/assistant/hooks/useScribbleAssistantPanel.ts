@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { addChatSession, updateChatSession } from '@/src/services/chatSessionOperations';
 import { db } from '@/src/db';
 import { getActiveWindowText } from '@/src/lib/editorUtils';
 import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
@@ -64,7 +65,7 @@ export function useScribbleAssistantPanel({
     onMessageAdded: async (newMessages) => {
       const activeId = sessionIdRef.current;
       if (activeId) {
-        await db.chatSessions.update(activeId, {
+        await updateChatSession(activeId, {
           messages: newMessages,
           lastMessageAt: Date.now()
         });
@@ -99,7 +100,7 @@ export function useScribbleAssistantPanel({
               timestamp: Date.now()
             };
 
-            const newId = await db.chatSessions.add({
+            const newId = await addChatSession({
               projectId,
               chapterId,
               title: chapterId ? `Chapter ${chapterId} Scribble` : 'Global Scribble',
@@ -215,7 +216,7 @@ export function useScribbleAssistantPanel({
     setMessages([welcomeMsg]);
     const activeId = sessionIdRef.current;
     if (activeId) {
-      await db.chatSessions.update(activeId, {
+      await updateChatSession(activeId, {
         messages: [welcomeMsg],
         lastMessageAt: Date.now()
       });
@@ -242,7 +243,7 @@ export function useScribbleAssistantPanel({
       if (last && last.role === 'model') {
         const updated = [...prev];
         updated[updated.length - 1] = { ...last, isActionable: true, id: Date.now().toString() };
-        db.chatSessions.update(activeId, {
+        updateChatSession(activeId, {
           messages: updated,
           lastMessageAt: Date.now()
         }).catch(err => console.error('Failed to update actionable state in DB:', err));
@@ -277,7 +278,7 @@ export function useScribbleAssistantPanel({
 
       const activeId = sessionIdRef.current;
       if (activeId) {
-        db.chatSessions.update(activeId, {
+        updateChatSession(activeId, {
           messages: updated,
           lastMessageAt: Date.now()
         }).catch(e => console.error('Failed to update error log in DB:', e));

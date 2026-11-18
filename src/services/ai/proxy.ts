@@ -6,7 +6,7 @@ import { AIRenderParams } from '@/src/services/ai/types';
 import { ErrorService } from '@/src/services/errorService';
 import { classifyError, getErrorMessage } from '@/src/services/ai/errors';
 import { getClaudeCacheTtl } from '@/src/lib/aiTuning';
-import { db } from '@/src/db';
+import { recordAiUsage } from '@/src/services/aiUsageOperations';
 
 const MAX_PROXY_HISTORY = 8;
 const PROXY_TIMEOUT_MS = 60000; // batas waktu menunggu respons (untuk stream: idle-timeout antar-chunk)
@@ -323,7 +323,7 @@ function logUsageToDB(params: AIRenderParams, provider: string, usage: AIUsage |
     else if (usage.candidatesTokenCount != null) completionTokens = usage.candidatesTokenCount; // Google style
   }
 
-  db.aiUsageLogs.add({
+  recordAiUsage({
     timestamp: Date.now(),
     promptTokens,
     completionTokens,

@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterAll, afterEach, expect, it, vi } from 'vitest';
-import { db, ensureDefaultProject } from '@/src/db';
+import { db } from '@/src/db';
+import { ensureDefaultProject } from './projectOperations';
 
 afterEach(async () => { vi.restoreAllMocks(); for (const table of db.tables) await table.clear(); });
 afterAll(async () => { await db.delete(); });

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Plus, Trash2, Check, Lock, AlertTriangle, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { db } from '@/src/db';
+import { addCategoryField, removeCategoryField, addCodexCategory, deleteCodexCategory } from '@/src/services/codexOperations';
 import { useToast } from '@/src/hooks/useToast';
 import { invalidateContextCache } from '@/src/services/contextEngine';
 import {
   BUILTIN_CATEGORIES, ICON_KEYS, COLOR_KEYS,
   resolveIcon, resolveColor, slugify, isBuiltinSlug,
 } from '@/src/lib/codexCategories';
-import { slugifyFieldKey } from '@/src/lib/codexFields';
 import type { CustomCategory, CategoryFieldDef, CodexFieldType } from '@/src/types';
 
 const FIELD_TYPE_LABELS: Record<CodexFieldType, string> = {
@@ -46,16 +45,14 @@ export function CategoryManagerModal({ projectId, custom, onClose }: CategoryMan
   const addField = async (cat: CustomCategory) => {
     const label = fLabel.trim();
     if (!label) return;
-    const existing = cat.fields ?? [];
-    const key = slugifyFieldKey(label, existing.map(f => f.key));
-    const def: CategoryFieldDef = { key, label, type: fType };
+    const def: Omit<CategoryFieldDef, 'key'> = { label, type: fType };
     if (fType === 'select') {
       const opts = fOptions.split(',').map(s => s.trim()).filter(Boolean);
       if (!opts.length) { toast.error('Isi minimal satu opsi (pisahkan dengan koma).'); return; }
       def.options = opts;
     }
     try {
-      await db.codexCategories.update(cat.id!, { fields: [...existing, def] });
+      await addCategoryField(cat.id!, def);
       setFLabel(''); setFOptions(''); setFType('text');
     } catch (e: any) {
       toast.error('Gagal menambah field: ' + (e?.message || String(e)));
@@ -64,7 +61,7 @@ export function CategoryManagerModal({ projectId, custom, onClose }: CategoryMan
 
   const removeField = async (cat: CustomCategory, key: string) => {
     try {
-      await db.codexCategories.update(cat.id!, { fields: (cat.fields ?? []).filter(f => f.key !== key) });
+      await removeCategoryField(cat.id!, key);
     } catch (e: any) {
       toast.error('Gagal menghapus field: ' + (e?.message || String(e)));
     }
@@ -84,10 +81,7 @@ export function CategoryManagerModal({ projectId, custom, onClose }: CategoryMan
     }
     setSaving(true);
     try {
-      const maxOrder = custom.reduce((m, c) => Math.max(m, c.order ?? 0), 0);
-      await db.codexCategories.add({
-        projectId, slug, label: trimmed, icon, color, order: maxOrder + 1,
-      } as CustomCategory);
+      await addCodexCategory({ projectId, slug, label: trimmed, icon, color });
       setLabel('');
       toast.success(`Kategori "${trimmed}" ditambahkan.`);
     } catch (e: any) {
@@ -101,11 +95,7 @@ export function CategoryManagerModal({ projectId, custom, onClose }: CategoryMan
     if (!pendingDelete) return;
     const cat = pendingDelete;
     try {
-      // Entri yang masih memakai kategori ini dialihkan ke "Lore Lainnya" agar tidak yatim.
-      await db.transaction('rw', db.codex, db.codexCategories, async () => {
-        await db.codex.where({ projectId, category: cat.slug }).modify({ category: 'other' });
-        await db.codexCategories.delete(cat.id!);
-      });
+      await deleteCodexCategory(projectId, cat.id!, cat.slug);
       await invalidateContextCache();
       toast.success(`Kategori "${cat.label}" dihapus. Entri terkait dipindah ke Lore Lainnya.`);
     } catch (e: any) {

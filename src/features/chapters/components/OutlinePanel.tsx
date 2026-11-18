@@ -64,7 +64,7 @@ interface OutlinePanelProps {
 
 export function OutlinePanel({ projectId }: OutlinePanelProps) {
   const { chapters, deleteConfirmId, updateField, deleteChapter, addChapter } = useChapterManagement(projectId);
-  const { draggedId, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useChapterDragAndDrop(chapters);
+  const { draggedId, handleDragStart, handleDragEnd, handleDragOver, handleDrop } = useChapterDragAndDrop(projectId);
   const { setActiveChapterId, setViewMode } = useNavigation();
 
   // UX Control States
@@ -121,11 +121,11 @@ export function OutlinePanel({ projectId }: OutlinePanelProps) {
     if (draggedChapter) {
       if (kanbanDimension === 'status') {
         if (draggedChapter.status !== laneId) {
-          updateField(draggedId, 'status', laneId);
+          await updateField(draggedId, 'status', laneId);
         }
       } else {
         if ((draggedChapter.act || 'unassigned') !== laneId) {
-          updateField(draggedId, 'act', laneId);
+          await updateField(draggedId, 'act', laneId);
         }
       }
     }

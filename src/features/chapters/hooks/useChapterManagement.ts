@@ -1,4 +1,4 @@
-import { changeChapters } from '@/src/services/chapterOperations';
+import { changeChapters, updateChapter } from '@/src/services/chapterOperations';
 import { useState } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -10,8 +10,8 @@ export function useChapterManagement(projectId: number) {
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  const updateField = (id: number, field: string, value: any) => {
-    db.chapters.update(id, { [field]: value });
+  const updateField = (id: number, field: 'status' | 'act', value: string) => {
+    return updateChapter(id, { [field]: value });
   };
 
   const deleteChapter = async (id: number) => {

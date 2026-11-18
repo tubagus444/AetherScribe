@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { updateCodexEntry, addCodexEntry } from '@/src/services/codexOperations';
+import { addChatSession, updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
 import { db } from '@/src/db';
 import { CodexEntry, ChatMessage } from '@/src/types';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
@@ -63,7 +65,7 @@ function fmtField(v: unknown): string {
  *   saat pindah panel, dan sesi dibuang setelah entri tersimpan,
  * - "Tarik dari diskusi": panen percakapan → field via enrichEntities,
  * - audit konsistensi lapis 1 (auditCodexEntry),
- * - "Simpan": db.codex.add/update + invalidasi cache konteks AI.
+ * - "Simpan": simpan entri dan invalidasi cache konteks AI.
  *
  * AI tidak pernah menulis ke DB sendiri; penulisan selalu lewat tombol Simpan.
  */
@@ -174,7 +176,7 @@ export function useCodexWorkshop(projectId: number) {
     onMessageAdded: (msgs, targetSessionId) => {
       // Gunakan ID presisi dari parameter
       if (targetSessionId) {
-        db.chatSessions.update(targetSessionId, { messages: msgs, lastMessageAt: Date.now() }).catch(() => {});
+        updateChatSession(targetSessionId, { messages: msgs, lastMessageAt: Date.now() }).catch(() => {});
       }
     },
   });
@@ -211,7 +213,7 @@ export function useCodexWorkshop(projectId: number) {
           .and((s) => s.kind === 'workshop' && s.workshopKey === workshopKey)
           .first();
         if (existing?.id) return { id: existing.id, messages: existing.messages };
-        const id = await db.chatSessions.add({
+        const id = await addChatSession({
           projectId,
           title: `Lokakarya: ${workshopTarget?.seedName || (mode === 'edit' ? 'Entri' : 'Entri baru')}`,
           messages: [welcomeMessage],
@@ -347,15 +349,15 @@ export function useCodexWorkshop(projectId: number) {
         tags: draft.tags || [],
       };
       if (mode === 'edit' && entryId) {
-        await db.codex.update(entryId, payload);
+        await updateCodexEntry(entryId, payload);
       } else {
-        await db.codex.add({ projectId, ...payload } as CodexEntry);
+        await addCodexEntry({ projectId, ...payload } as CodexEntry);
       }
       // Lore berubah → cache konteks AI harus disegarkan (selaras dengan jalur simpan Codex).
       await invalidateContextCache();
       // Sesi Lokakarya sudah tuntas → buang sesi + lock agar tak menyisakan diskusi basi.
       const sid = sessionIdRef.current;
-      if (sid) await db.chatSessions.delete(sid).catch(() => {});
+      if (sid) await deleteChatSession(sid).catch(() => {});
       workshopLocks.delete(`${projectId}::${workshopKeyRef.current}`);
       toast.success(
         mode === 'edit' ? `Perubahan "${name}" disimpan.` : `"${name}" ditambahkan ke Kamus Data.`
@@ -377,7 +379,7 @@ export function useCodexWorkshop(projectId: number) {
     chat.setMessages((prev) => {
       const updated: ChatMessage[] = [...prev, { id: `audit-${Date.now()}`, role: 'model', content, timestamp: Date.now() }];
       const id = sessionIdRef.current;
-      if (id) db.chatSessions.update(id, { messages: updated, lastMessageAt: Date.now() }).catch(() => {});
+      if (id) updateChatSession(id, { messages: updated, lastMessageAt: Date.now() }).catch(() => {});
       return updated;
     });
   }, [chat]);

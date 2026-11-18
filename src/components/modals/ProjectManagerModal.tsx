@@ -9,9 +9,11 @@ import { Plus, Trash2, CheckCircle2, Book, ChevronRight, X } from 'lucide-react'
 import { db } from '@/src/db';
 import { useProject } from '@/src/contexts/ProjectContext';
 import { useUI } from '@/src/contexts/UIContext';
+import { useToast } from '@/src/hooks/useToast';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function ProjectManagerModal() {
+  const { toast } = useToast();
   const { 
     projectId: currentProjectId,
     switchProject,
@@ -24,16 +26,24 @@ export function ProjectManagerModal() {
   const projects = useLiveQuery(() => db.projects.orderBy('lastOpened').reverse().toArray());
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   if (!isProjectManagerOpen) return null;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) return;
-    await createProject(newProjectName.trim());
-    setNewProjectName('');
-    setIsCreating(false);
+    if (!newProjectName.trim() || isSaving) return;
+    setIsSaving(true);
+    try {
+      await createProject(newProjectName.trim());
+      setNewProjectName('');
+      setIsCreating(false);
+    } catch {
+      toast.error('Gagal membuat naskah. Silakan coba lagi.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -176,7 +186,7 @@ export function ProjectManagerModal() {
               <div className="flex items-center gap-2">
                 <button 
                   type="submit"
-                  disabled={!newProjectName.trim()}
+                  disabled={!newProjectName.trim() || isSaving}
                   className="flex-1 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-all"
                 >
                   Buat Naskah

@@ -10,17 +10,19 @@ import { History, RotateCcw, Trash2, Camera, Sparkles, GitCompare } from 'lucide
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { useStorageQuota } from '@/src/hooks/useStorageQuota';
-import { createAutoSnapshot } from '@/src/services/snapshotService';
+import { useToast } from '@/src/hooks/useToast';
+import { addSnapshot, deleteSnapshot } from '@/src/services/snapshotService';
 import { SnapshotDiffModal } from '@/src/features/editor/components/SnapshotDiffModal';
 import type { Snapshot } from '@/src/types';
 
 interface SnapshotPanelProps {
   chapterId: number;
   currentContent: string;
-  onRestore: (content: string) => void;
+  onRestore: (content: string) => Promise<void>;
 }
 
 export function SnapshotPanel({ chapterId, currentContent, onRestore }: SnapshotPanelProps) {
+  const { toast } = useToast();
   const { checkStorageQuota } = useStorageQuota();
   const snapshots = useLiveQuery(() => 
     db.snapshots.where('chapterId').equals(chapterId).reverse().sortBy('timestamp')
@@ -31,7 +33,7 @@ export function SnapshotPanel({ chapterId, currentContent, onRestore }: Snapshot
 
   const takeSnapshot = async () => {
     if (!currentContent.trim()) return;
-    await db.snapshots.add({
+    await addSnapshot({
       chapterId,
       content: currentContent,
       label: label || `Snapshot ${format(new Date(), 'd MMM, HH:mm')}`,
@@ -41,18 +43,14 @@ export function SnapshotPanel({ chapterId, currentContent, onRestore }: Snapshot
     checkStorageQuota();
   };
 
-  const deleteSnapshot = async (id: number) => {
-    await db.snapshots.delete(id);
-  };
-
-  // Inti pemulihan: simpan snapshot otomatis dari naskah sekarang sebagai jaring
-  // pengaman sebelum konten ditimpa, lalu pulihkan.
   const doRestore = async (snap: { content: string }) => {
-    if (currentContent.trim()) {
-      await createAutoSnapshot(chapterId, currentContent, 'Sebelum pemulihan');
-      checkStorageQuota();
+    try {
+      await onRestore(snap.content);
+      void checkStorageQuota();
+    } catch (error) {
+      console.error('Snapshot restore failed:', error);
+      toast.error('Gagal memulihkan versi bab.');
     }
-    onRestore(snap.content);
   };
 
   // Pemulihan langsung dari kartu → konfirmasi dulu (belum melihat perbandingan).

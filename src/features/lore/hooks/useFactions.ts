@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { addRelationship, deleteRelationship } from '@/src/services/loreOperations';
+import { setCodexTag, updateCodexEntry } from '@/src/services/codexOperations';
 import { db } from '@/src/db';
 import type { CodexEntry } from '@/src/types';
 import { useCodexCategories } from '@/src/features/codex/hooks/useCodexCategories';
@@ -88,27 +90,17 @@ export function useFactions(projectId: number) {
 
   const nameOf = (id: number) => entryById.get(id)?.name ?? '(entri dihapus)';
 
-  // --- Mutasi (tulis DB langsung; live-query menyegarkan) ---
-  // Keanggotaan lewat tag: tags/factionTag tak masuk KB → tak perlu invalidateContextCache.
   const addMember = async (entryId: number) => {
-    if (!selected) return;
-    const e = entryById.get(entryId);
-    if (!e) return;
-    const tags = e.tags ?? [];
-    if (tags.some(t => t.trim() === selected.tag)) return;
-    await db.codex.update(entryId, { tags: [...tags, selected.tag] });
+    if (selected) await setCodexTag(entryId, selected.tag, true);
   };
   const removeMember = async (entryId: number) => {
-    if (!selected) return;
-    const e = entryById.get(entryId);
-    if (!e) return;
-    await db.codex.update(entryId, { tags: (e.tags ?? []).filter(t => t.trim() !== selected.tag) });
+    if (selected) await setCodexTag(entryId, selected.tag, false);
   };
 
   // Relasi DIDEKLARASIKAN antar dua entri faksi mana pun = tabel relationships biasa.
   const addRelationBetween = async (sourceFactionId: number, targetFactionId: number, type: string, description?: string) => {
     if (sourceFactionId === targetFactionId) return;
-    await db.relationships.add({
+    await addRelationship({
       projectId,
       sourceId: sourceFactionId,
       targetId: targetFactionId,
@@ -122,12 +114,12 @@ export function useFactions(projectId: number) {
     await addRelationBetween(selected.id, otherFactionId, type, description);
   };
   const deleteRelation = async (id: number) => {
-    await db.relationships.delete(id);
+    await deleteRelationship(id);
   };
 
   // Papan Faksi: simpan posisi kartu (drag selesai) di entri faksi. Inert → tak sentuh KB.
   const setFactionBoard = async (factionId: number, pos: { x: number; y: number }) => {
-    await db.codex.update(factionId, { factionBoard: { x: Math.round(pos.x), y: Math.round(pos.y) } });
+    await updateCodexEntry(factionId, { factionBoard: { x: Math.round(pos.x), y: Math.round(pos.y) } });
   };
 
   return {

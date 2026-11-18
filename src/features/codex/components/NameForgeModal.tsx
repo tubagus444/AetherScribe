@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Dices, Sparkles, Copy, Check, Save, ScanSearch, Plus, ChevronRight } from 'lucide-react';
-import { db } from '@/src/db';
+import { addCodexAlias, updateCodexEntry } from '@/src/services/codexOperations';
 import { useToast } from '@/src/hooks/useToast';
 import { CodexEntry, NamePalette } from '@/src/types';
 import {
@@ -91,13 +91,10 @@ export function NameForgeModal({ entry, onClose }: { entry: CodexEntry; onClose:
     if (entry.id == null) return;
     const key = name.toLowerCase();
     try {
-      const fresh = await db.codex.get(entry.id);
-      const cur = fresh?.aliases ?? [];
-      if (cur.some((a) => a.toLowerCase() === key)) {
-        toast.info(`"${name}" sudah menjadi alias ${entry.name}.`);
-      } else {
-        await db.codex.update(entry.id, { aliases: [...cur, name] });
+      if (await addCodexAlias(entry.id, name)) {
         toast.success(`"${name}" ditambahkan sebagai alias ${entry.name}.`);
+      } else {
+        toast.info(`"${name}" sudah menjadi alias ${entry.name}.`);
       }
       setAliasAdded((prev) => new Set(prev).add(key));
     } catch {
@@ -114,7 +111,7 @@ export function NameForgeModal({ entry, onClose }: { entry: CodexEntry; onClose:
     if (entry.id == null || saving) return;
     setSaving(true);
     try {
-      await db.codex.update(entry.id, { namePalette: effective });
+      await updateCodexEntry(entry.id, { namePalette: effective });
       toast.success('Palet nama disimpan pada entri.');
       onClose();
     } catch {

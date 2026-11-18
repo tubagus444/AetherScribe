@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigation } from '@/src/contexts/NavigationContext';
+import { saveGeneratedSummary } from '@/src/services/chapterOperations';
 import { db } from '@/src/db';
 import { callProxy, getLightModelForProvider } from '@/src/services/ai/proxy';
 
@@ -117,16 +118,7 @@ export async function summarizeChapterBackground(chapterId: number) {
     const summaryRes = await callProxy(provider, params, apiKey);
     
     if (summaryRes && summaryRes.trim().length > 0) {
-      await db.transaction('rw', db.chapters, async () => {
-        const fresh = await db.chapters.get(chapterId);
-        if (!fresh || fresh.projectId !== chapter.projectId || fresh.content !== chapter.content || fresh.lastModified !== chapter.lastModified || fresh.summary !== chapter.summary || fresh.summaryUpdatedAt !== chapter.summaryUpdatedAt) return;
-        await db.chapters.update(chapterId, {
-          summary: summaryRes.trim(),
-          summaryUpdatedAt: chapter.lastModified,
-          summarySourceHash: sourceHash,
-        });
-      });
-
+      await saveGeneratedSummary(chapter, summaryRes.trim(), sourceHash);
     }
 
   } catch (error) {

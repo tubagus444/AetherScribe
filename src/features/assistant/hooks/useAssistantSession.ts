@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { addChatSession, updateChatSession } from '@/src/services/chatSessionOperations';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { useChatSession } from '@/src/hooks/useChatSession';
@@ -63,7 +64,7 @@ export function useAssistantSession({
       // Gunakan targetSessionId yang presisi dari useChatSession, 
       // jangan mengandalkan ref yang bisa berubah saat user ganti sesi.
       if (targetSessionId) {
-        await db.chatSessions.update(targetSessionId, {
+        await updateChatSession(targetSessionId, {
           messages: newMessages,
           lastMessageAt: Date.now()
         });
@@ -90,7 +91,7 @@ export function useAssistantSession({
 
   const executeCreateSession = async (mode: SessionMode, smartAuto: boolean) => {
     if (!projectId) return;
-    const newId = await db.chatSessions.add({
+    const newId = await addChatSession({
       projectId,
       title: 'Percakapan Baru',
       lastMessageAt: Date.now(),
@@ -112,7 +113,7 @@ export function useAssistantSession({
       
       try {
         const newTitle = textToSend.substring(0, 40) + (textToSend.length > 40 ? '...' : '');
-        await db.chatSessions.update(newId, { title: newTitle });
+        await updateChatSession(newId, { title: newTitle });
         await sendMessage(textToSend, chapterContext);
       } catch (err: any) {
         console.error('Assistant operation failed; sensitive details omitted.');
@@ -137,7 +138,7 @@ export function useAssistantSession({
     try {
       if (messages.length === 0) {
         const newTitle = textToSend.substring(0, 40) + (textToSend.length > 40 ? '...' : '');
-        await db.chatSessions.update(activeSessionId, { title: newTitle });
+        await updateChatSession(activeSessionId, { title: newTitle });
       }
 
       await sendMessage(textToSend, chapterContext);
@@ -164,7 +165,7 @@ export function useAssistantSession({
         const updated = [...prev, errorBubble];
         const activeId = activeSessionIdRef.current;
         if (activeId) {
-          db.chatSessions.update(activeId, { messages: updated, lastMessageAt: Date.now() })
+          updateChatSession(activeId, { messages: updated, lastMessageAt: Date.now() })
             .catch(e => console.error('Failed to persist error message:', e));
         }
         return updated;

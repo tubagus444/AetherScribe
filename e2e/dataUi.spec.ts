@@ -258,6 +258,34 @@ test('L03 Codex delete cancellation preserves data then confirmation unlinks ref
   expect(after.chapters).toEqual(before.chapters);
 });
 
+test('DB02 new project rolls back if its first chapter cannot be created', async ({ page }) => {
+  const before = await state(page);
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    const fail = () => { throw new Error('DB02 synthetic chapter failure'); };
+    db.chapters.hook('creating', fail);
+    Reflect.set(window, 'allowChapterCreation', () => db.chapters.hook('creating').unsubscribe(fail));
+  });
+  await page.getByTitle('Ganti Proyek/Naskah', { exact: true }).click();
+  await page.getByRole('button', { name: 'Buat Naskah Baru', exact: true }).click();
+  const title = page.getByPlaceholder('Judul Naskah...');
+  const submit = page.getByRole('button', { name: 'Buat Naskah', exact: true });
+  await title.fill('DB02 Novel');
+  await submit.click();
+  await expect(page.getByText('Gagal membuat naskah. Silakan coba lagi.', { exact: true })).toBeVisible();
+  await expect(title).toHaveValue('DB02 Novel');
+  expect(await state(page)).toEqual(before);
+
+  await page.evaluate(() => Reflect.get(window, 'allowChapterCreation')());
+  await submit.click();
+  await expect(page.getByRole('heading', { name: 'DB02 Novel', exact: true })).toBeVisible();
+  const after = await state(page);
+  const newProject = after.projects.find(project => project.name === 'DB02 Novel');
+  expect(newProject).toBeDefined();
+  expect(after.chapters.filter(chapter => chapter.projectId === newProject?.id)).toHaveLength(1);
+});
+
 test('L03 project deletion can be cancelled and preserves the remaining project', async ({ page }) => {
   const before = await state(page);
   await page.getByTitle('Ganti Proyek/Naskah', { exact: true }).click();

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { addRelationship, deleteRelationship, updateRelationship } from '@/src/services/loreOperations';
 import { db } from '@/src/db';
 import { RELATIONSHIP_TYPES } from '@/src/features/codex/relationshipTypes';
 
@@ -105,7 +106,7 @@ export function useRelationshipMapper(projectId: number) {
       const existing = relationships?.find(r => r.id === editingId);
       if (existing) {
         const isSource = existing.sourceId === selectedCharacterId;
-        await db.relationships.update(editingId, {
+        await updateRelationship(editingId, {
           sourceId: isSource ? selectedCharacterId : targetId,
           targetId: isSource ? targetId : selectedCharacterId,
           type,
@@ -113,7 +114,7 @@ export function useRelationshipMapper(projectId: number) {
         });
       }
     } else {
-      await db.relationships.add({
+      await addRelationship({
         projectId,
         sourceId: selectedCharacterId,
         targetId,
@@ -136,7 +137,7 @@ export function useRelationshipMapper(projectId: number) {
   };
 
   const deleteRelationship = async (id: number) => {
-    await db.relationships.delete(id);
+    await deleteRelationship(id);
   };
 
   const getCharacterName = (id: number) => allEntries?.find(c => c.id === id)?.name || characters?.find(c => c.id === id)?.name || '(entri dihapus)';

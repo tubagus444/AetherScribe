@@ -1,7 +1,11 @@
 import { db } from '@/src/db';
 import { deleteAtlasMap } from './entityDeletion';
-import type { MapMarker } from '@/src/types';
+import type { AtlasMap, MapMarker } from '@/src/types';
 import type { ProcessedMapImage } from '@/src/features/atlas/hooks/useMapImageUpload';
+
+export function calibrateMapScale(id: number, scale: NonNullable<AtlasMap['scale']>) {
+  return db.maps.update(id, { scale });
+}
 
 export function createAtlasOperations(projectId?: number) {
   const createMap = async (name: string, img: ProcessedMapImage): Promise<number | undefined> => {

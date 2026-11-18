@@ -1,6 +1,6 @@
 # ROADMAP & BACKLOG AKTIF - AetherScribe
 
-Diperbarui 18 November 2026 setelah verifikasi lokal DB01.
+Diperbarui 18 November 2026 setelah verifikasi lokal DB02.
 Status pekerjaan ada di dokumen ini; rincian pelaksanaan ada di laporan dan arsip.
 
 ## Ringkasan status
@@ -44,7 +44,7 @@ Status pelaksanaan dicatat di tabel ini.
 | Urutan | ID | Pekerjaan | Status |
 |---|---|---|---|
 | 1 | DB01 | Perlindungan dan pemulihan naskah | Selesai, diverifikasi lokal |
-| 2 | DB02 | Pusatkan operasi perubahan data | Direncanakan |
+| 2 | DB02 | Pusatkan operasi perubahan data | Selesai, diverifikasi lokal |
 | 3 | DB03 | Validasi penulisan dan integritas relasi | Direncanakan |
 | 4 | DB04 | Katalog tabel dan kebijakan data | Direncanakan |
 | 5 | DB05 | Kontrak akses data dan adapter Dexie | Direncanakan |
@@ -78,7 +78,27 @@ Status pelaksanaan dicatat di tabel ini.
   lulus. F27 gagal pada percobaan tersebut lalu lulus saat diulang bersama enam
   tes yang mencakup editor dan DB01.
 
-Pekerjaan berikutnya adalah DB02/DB03 per domain, mulai dari bab/editor.
+### Hasil DB02
+
+- Inventaris mutasi dari UI dan hook mencakup bab dan snapshot, proyek dan
+  progres harian, Codex dan kategori, relasi dan Bible, timeline dan kalender,
+  Atlas, sesi dan aksi AI, glosarium, janji plot, serta log. Penulisan kini
+  melewati layanan domain. Live query tetap memasok tampilan dari IndexedDB.
+- Pembuatan proyek dan bab awal, penggantian lintas bab beserta snapshot,
+  pemulihan versi bab, serta pengurutan bab dan timeline memakai transaksi
+  di layanan. Penggantian dan pemulihan membatalkan perubahan jika penulisan
+  snapshot wajib gagal. Flush editor, invalidasi konteks, dan pemberitahuan
+  penghapusan tetap mengikuti urutan operasi yang berlaku.
+- Skema dan format cadangan kompatibel dengan data sebelumnya.
+  [Uji penggantian lintas bab](src/components/modals/CrossChapterReplace.test.tsx)
+  memeriksa rollback pada bab kedua. [Uji Chromium](e2e/dataUi.spec.ts) memeriksa
+  rollback pembuatan proyek dan keberhasilan percobaan ulang.
+- Verifikasi lokal mencakup 795 tes unit/integrasi, typecheck umum dan strict,
+  maintenance, serta build produksi. Putaran awal Chromium mencatat 56 dari
+  60 tes lulus. Keempat tes yang gagal lulus pada pengulangan terfokus
+  bersama 12 tes lainnya.
+
+Pekerjaan berikutnya adalah DB03 per domain, mulai dari bab/editor.
 
 ## Pilihan tindak lanjut
 

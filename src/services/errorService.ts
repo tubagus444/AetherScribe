@@ -39,6 +39,10 @@ export const ErrorService = {
     await db.errors.clear();
   },
 
+  async clearBefore(timestamp: number) {
+    await db.errors.where('timestamp').below(timestamp).delete();
+  },
+
   async getRecent(limit = 100) {
     return (await db.errors.orderBy('timestamp').reverse().limit(limit).toArray()).map(privateErrorRecord);
   }

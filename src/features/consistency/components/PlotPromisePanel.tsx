@@ -8,6 +8,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { addPlotPromise, updatePlotPromise, deletePlotPromise, setPlotPromiseStatus } from '@/src/services/continuityOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -72,10 +73,10 @@ export function PlotPromisePanel({ projectId }: PlotPromisePanelProps) {
   };
 
   const setStatus = (p: PlotPromise, status: PlotPromiseStatus) => {
-    if (p.id != null) db.plotPromises.update(p.id, { status, updatedAt: Date.now() });
+    if (p.id != null) setPlotPromiseStatus(p.id, status);
   };
   const remove = (p: PlotPromise) => {
-    if (p.id != null && confirm(`Hapus janji "${p.title}"?`)) db.plotPromises.delete(p.id);
+    if (p.id != null && confirm(`Hapus janji "${p.title}"?`)) deletePlotPromise(p.id);
   };
 
   const analyses = report?.analyses ?? [];
@@ -481,14 +482,14 @@ function PromiseForm({
     try {
       if (initial?.id != null) {
         // Bersihkan field yang mungkin beralih mode (codexId ↔ keywords) / dilepas.
-        await db.plotPromises.update(initial.id, {
+        await updatePlotPromise(initial.id, {
           ...base,
           codexId: base.codexId ?? undefined,
           keywords: base.keywords ?? undefined,
           payoffCodexId: base.payoffCodexId ?? undefined,
         });
       } else {
-        await db.plotPromises.add({
+        await addPlotPromise({
           projectId,
           status: 'open',
           createdAt: now,

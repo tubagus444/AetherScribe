@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Edit2, Check, X, MoreVertical, Trash2, Cpu, ChevronDown, Settings } from 'lucide-react';
-import { db } from '@/src/db';
+import { updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
 import { ChatSession } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { getSessionModeLabel } from '@/src/lib/constants';
@@ -57,7 +57,7 @@ export function AssistantHeader({
       return;
     }
     try {
-      await db.chatSessions.update(activeSessionId, { title: editTitleValue.trim() });
+      await updateChatSession(activeSessionId, { title: editTitleValue.trim() });
       setIsHeaderEditing(false);
     } catch (error) {
       console.error('Failed to rename session:', error);
@@ -66,7 +66,7 @@ export function AssistantHeader({
 
   const deleteSession = async () => {
     try {
-      await db.chatSessions.delete(activeSessionId);
+      await deleteChatSession(activeSessionId);
       onSessionDeleted();
       setShowMoreMenu(false);
     } catch (error) {
@@ -76,7 +76,7 @@ export function AssistantHeader({
 
   const toggleSmartAuto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (activeSessionId) {
-      await db.chatSessions.update(activeSessionId, { smartAutoEnabled: e.target.checked });
+      await updateChatSession(activeSessionId, { smartAutoEnabled: e.target.checked });
     }
   };
 

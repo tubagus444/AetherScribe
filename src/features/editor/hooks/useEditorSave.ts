@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
+import { saveChapterContent, updateChapter } from '@/src/services/chapterOperations';
 import { db } from '@/src/db';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { useToast } from '@/src/hooks/useToast';
@@ -35,9 +36,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
     clearStatusTimeout();
     if (isMountedRef.current) setSaveStatus('Menyimpan...');
     try {
-      if (!Number.isInteger(id) || id <= 0) throw new Error('Bab tidak valid.');
-      const affected = await db.chapters.update(id, { content, lastModified: Date.now() });
-      if (affected !== 1) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
+      await saveChapterContent(id, content);
       if (isLatest()) saveFailedRef.current = false;
       if (isMountedRef.current && isLatest()) {
         setSaveStatus('Tersimpan');
@@ -165,7 +164,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   const handleTitleChange = useCallback(async (newTitle: string) => {
     setTitle(newTitle);
     try {
-      const affected = await db.chapters.update(chapterIdRef.current, { title: newTitle });
+      const affected = await updateChapter(chapterIdRef.current, { title: newTitle });
       if (affected !== 1) throw new Error('Bab tidak ditemukan.');
     } catch (error) {
       console.error('Failed to save chapter title:', error);

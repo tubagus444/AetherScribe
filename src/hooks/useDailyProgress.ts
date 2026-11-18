@@ -8,9 +8,9 @@
  */
 
 import { useEffect } from 'react';
-import { db } from '@/src/db';
+import { saveDailyProgress } from '@/src/services/projectOperations';
 import { Project } from '@/src/types';
-import { dayKey, recordWordCount, wordsOnDay, computeStreak } from '@/src/lib/dailyProgress';
+import { dayKey, wordsOnDay, computeStreak } from '@/src/lib/dailyProgress';
 
 const PERSIST_DEBOUNCE_MS = 3000;
 const DEFAULT_DAILY_GOAL = 1500;
@@ -27,32 +27,13 @@ export function useDailyProgress(
   totalWords: number | undefined,
   project: Project | undefined,
 ): DailyProgressView {
-  // Persist (debounced). Membaca via `project` langsung; tulisan kita memperbarui
-  // live query → efek jalan lagi lalu menemukan "unchanged" dan berhenti (tanpa loop).
+  // Live query memperbarui proyek setelah progres tersimpan.
   useEffect(() => {
     if (totalWords === undefined || !project) return;
     const handle = setTimeout(() => {
-      const today = dayKey();
-      const next = recordWordCount(
-        {
-          dailyLog: project.dailyLog,
-          lastWordCount: project.lastWordCount,
-          lastWordCountDate: project.lastWordCountDate,
-        },
-        totalWords,
-        today,
-      );
-      const unchanged =
-        next.lastWordCount === project.lastWordCount &&
-        next.lastWordCountDate === project.lastWordCountDate &&
-        next.dailyLog[today] === project.dailyLog?.[today];
-      if (!unchanged) {
-        db.projects.update(projectId, {
-          dailyLog: next.dailyLog,
-          lastWordCount: next.lastWordCount,
-          lastWordCountDate: next.lastWordCountDate,
-        });
-      }
+      void saveDailyProgress(projectId, totalWords, dayKey()).catch(error => {
+        console.error('Failed to save daily progress:', error);
+      });
     }, PERSIST_DEBOUNCE_MS);
     return () => clearTimeout(handle);
   }, [projectId, totalWords, project]);

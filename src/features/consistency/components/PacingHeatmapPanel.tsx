@@ -8,7 +8,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { db } from '@/src/db';
+import { updateChapter } from '@/src/services/chapterOperations';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Activity, ArrowUpRight, Flame, TrendingDown, Sparkles, Info } from 'lucide-react';
 import { useNavigation } from '@/src/contexts/NavigationContext';
@@ -49,7 +49,7 @@ export function PacingHeatmapPanel({ projectId }: PacingHeatmapPanelProps) {
   };
 
   const setTension = (id: number, tension: TensionLevel | undefined) => {
-    db.chapters.update(id, { tension });
+    updateChapter(id, { tension });
   };
 
   const total = report?.chapterCount ?? 0;

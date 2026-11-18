@@ -7,21 +7,19 @@ import { db } from '@/src/db';
 import { CrossChapterReplace } from './CrossChapterReplace';
 import { useEditorSave } from '@/src/features/editor/hooks/useEditorSave';
 
-const { toast, snapshot, chapter } = vi.hoisted(() => ({
+const { toast, chapter } = vi.hoisted(() => ({
   toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
-  snapshot: vi.fn(),
   chapter: { id: 1, projectId: 1, title: 'Bab 1', content: '<p>lama</p>', order: 0, lastModified: 1 },
 }));
 vi.mock('@/src/db', async () => {
   await import('fake-indexeddb/auto');
   const { default: Dexie } = await import('dexie');
   const db = new Dexie('F05-replace-test');
-  db.version(1).stores({ chapters: '++id,projectId' });
+  db.version(1).stores({ chapters: '++id,projectId', snapshots: '++id,chapterId' });
   return { db };
 });
 vi.mock('dexie-react-hooks', () => ({ useLiveQuery: () => [chapter] }));
 vi.mock('@/src/hooks/useToast', () => ({ useToast: () => ({ toast }) }));
-vi.mock('@/src/services/snapshotService', () => ({ createAutoSnapshot: snapshot }));
 vi.mock('motion/react', () => ({ motion: { div: ({ children, initial, animate, ...props }: any) => <div {...props}>{children}</div> } }));
 
 describe('F05 replace with the real save hook and isolated IndexedDB', () => {
@@ -46,6 +44,7 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
     cleanup();
     vi.restoreAllMocks();
     await db.chapters.clear();
+    await db.snapshots.clear();
     vi.useRealTimers();
   });
 
@@ -58,7 +57,7 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(update).toHaveBeenCalledTimes(1);
     expect(transaction).not.toHaveBeenCalled();
-    expect(snapshot).not.toHaveBeenCalled();
+    expect(await db.snapshots.count()).toBe(0);
     expect(editor.commands.setContent).not.toHaveBeenCalled();
     expect((await db.chapters.get(1))?.content).toBe(chapter.content);
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Draft belum tersimpan'));
@@ -67,7 +66,28 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect((await db.chapters.get(1))?.content).toBe('<p> draft terbaru</p>');
     expect(editor.commands.setContent).toHaveBeenCalledWith('<p> draft terbaru</p>', { emitUpdate: false });
-    expect(snapshot).toHaveBeenCalledWith(1, '<p>lama draft terbaru</p>', expect.any(String));
+    expect(await db.snapshots.toArray()).toEqual([
+      expect.objectContaining({ chapterId: 1, content: '<p>lama draft terbaru</p>', auto: true }),
+    ]);
     expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('rolls back replacements and snapshots when a later chapter cannot be updated', async () => {
+    await db.chapters.add({ ...chapter, id: 2, title: 'Bab 2', order: 1 });
+    const failSecondChapter = (_changes: object, id: number) => {
+      if (id === 2) throw new Error('Synthetic write failure');
+    };
+    db.chapters.hook('updating', failSecondChapter);
+    try {
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Ganti Semua' })); });
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Gagal melakukan penggantian.'));
+      expect((await db.chapters.get(1))?.content).toBe('<p>lama draft terbaru</p>');
+      expect((await db.chapters.get(2))?.content).toBe(chapter.content);
+      expect(await db.snapshots.count()).toBe(0);
+      expect(editor.commands.setContent).not.toHaveBeenCalled();
+      expect(toast.success).not.toHaveBeenCalled();
+    } finally {
+      db.chapters.hook('updating').unsubscribe(failSecondChapter);
+    }
   });
 });

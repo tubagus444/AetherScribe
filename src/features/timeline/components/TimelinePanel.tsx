@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { addTimelineEvent, updateTimelineEvent, deleteTimelineEvent, moveTimelineEvent } from '@/src/services/timelineOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CalendarClock, CalendarDays, Plus, Trash2, Pencil, GripVertical, X, BookText, Clock, Users } from 'lucide-react';
@@ -126,28 +127,22 @@ export function TimelinePanel({ projectId }: TimelinePanelProps) {
     };
 
     if (editingId === 'new') {
-      const maxOrder = ordered.reduce((m, e) => Math.max(m, e.order), -1);
-      await db.timeline.add({ ...payload, order: maxOrder + 1 });
+      await addTimelineEvent(payload);
     } else if (typeof editingId === 'number') {
-      await db.timeline.update(editingId, payload);
+      await updateTimelineEvent(editingId, payload);
     }
     closeForm();
   };
 
   const remove = async (id: number) => {
-    await db.timeline.delete(id);
+    await deleteTimelineEvent(id);
     if (editingId === id) closeForm();
   };
 
   // Reorder dengan menormalkan ulang seluruh field order (anti tabrakan nilai).
   const reorder = async (from: number, to: number) => {
     if (from === to || from < 0 || to < 0 || from >= ordered.length || to >= ordered.length) return;
-    const arr = [...ordered];
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-    await db.transaction('rw', db.timeline, async () => {
-      await Promise.all(arr.map((e, i) => db.timeline.update(e.id!, { order: i })));
-    });
+    await moveTimelineEvent(projectId, ordered[from].id!, ordered[to].id!);
   };
 
   const handleDrop = (targetIndex: number) => {

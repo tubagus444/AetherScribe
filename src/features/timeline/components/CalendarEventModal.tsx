@@ -12,7 +12,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { CalendarPlus, X, Check, Loader2 } from 'lucide-react';
-import { db } from '@/src/db';
+import { addTimelineEvent, updateTimelineEvent } from '@/src/services/timelineOperations';
 import { useToast } from '@/src/hooks/useToast';
 import { TimelineEvent, TimelineEventType, WorldCalendar, WorldDate, CodexEntry } from '@/src/types';
 import { compareDate, daysInMonth, formatDate, calculateCharacterAge } from '@/src/lib/worldCalendar';
@@ -110,11 +110,9 @@ export function CalendarEventModal({
       };
       if (isEdit) {
         // Pertahankan eventDate teks lama & order; hapus endDate bila rentang dimatikan.
-        await db.timeline.update(ev!.id!, { ...payload, endDate: isRange ? endDate : undefined });
+        await updateTimelineEvent(ev!.id!, payload);
       } else {
-        const existing = await db.timeline.where('projectId').equals(projectId).toArray();
-        const maxOrder = existing.reduce((m, e) => Math.max(m, e.order), -1);
-        await db.timeline.add({ ...payload, order: maxOrder + 1 } as TimelineEvent);
+        await addTimelineEvent(payload);
       }
       toast.success(isEdit ? 'Peristiwa diperbarui.' : 'Peristiwa ditambahkan ke kalender.');
       onClose();

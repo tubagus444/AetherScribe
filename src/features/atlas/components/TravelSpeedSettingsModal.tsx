@@ -4,13 +4,13 @@
  *
  * Editor Profil Kecepatan Perjalanan (Atlas Dunia).
  * Menyusun definisi `Project.travelSpeeds`: preset kecepatan (nama, kecepatan, unit).
- * Menulis ke `db.projects.update`. Digunakan oleh MarkerSidebar untuk menghitung waktu tempuh rute.
+ * Profil digunakan oleh MarkerSidebar untuk menghitung waktu tempuh rute.
  */
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Gauge, X, Check, Plus, Trash2, Loader2 } from 'lucide-react';
-import { db } from '@/src/db';
+import { updateProject } from '@/src/services/projectOperations';
 import { useToast } from '@/src/hooks/useToast';
 import { TravelSpeedProfile } from '@/src/types';
 import { cn } from '@/src/lib/utils';
@@ -58,7 +58,7 @@ export function TravelSpeedSettingsModal({
       unit: p.unit.trim() || 'hari'
     }));
     try {
-      await db.projects.update(projectId, { travelSpeeds: cleaned });
+      await updateProject(projectId, { travelSpeeds: cleaned });
       toast.success('Profil kecepatan disimpan.');
       onClose();
     } catch {

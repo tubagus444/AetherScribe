@@ -11,6 +11,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { CalendarCog, X, Check, Plus, Trash2, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { updateProject } from '@/src/services/projectOperations';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { WorldCalendar } from '@/src/types';
@@ -71,7 +72,7 @@ export function CalendarEditorModal({
       })),
     };
     try {
-      await db.projects.update(projectId, { calendar: cleaned });
+      await updateProject(projectId, { calendar: cleaned });
       toast.success('Kalender dunia disimpan.');
       onClose();
     } catch {

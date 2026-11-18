@@ -15,6 +15,7 @@ import {
   CalendarDays, CalendarCog, CalendarPlus, ChevronLeft, ChevronRight, ChevronDown, Plus, BookText, Users, Search, X, Filter,
   Compass, AlertTriangle, History, LayoutGrid, Calendar, Sparkles, PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
+import { updateProject } from '@/src/services/projectOperations';
 import { db } from '@/src/db';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useProjectData } from '@/src/hooks/useProjectData';
@@ -64,7 +65,7 @@ export function WorldCalendarPanel({ projectId }: Props) {
 function EmptyState({ projectId }: { projectId: number }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const quick = async (p: CalendarPreset) => {
-    await db.projects.update(projectId, { calendar: calendarPreset(p) });
+    await updateProject(projectId, { calendar: calendarPreset(p) });
   };
   return (
     <div className="p-6 md:p-10 max-w-3xl mx-auto w-full">

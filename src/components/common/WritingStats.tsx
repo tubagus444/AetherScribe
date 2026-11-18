@@ -6,6 +6,7 @@ import { readChapterList } from '@/src/services/chapterQueries';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
+import { updateProject } from '@/src/services/projectOperations';
 import { db } from '@/src/db';
 import { Target, TrendingUp, Edit2, Clock, BarChart2, ChevronDown, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -65,14 +66,14 @@ export function WritingStats({ projectId }: WritingStatsProps) {
   const updateGoal = (newGoal: string) => {
     const val = parseInt(newGoal.replace(/,/g, ''));
     if (!isNaN(val) && val > 0) {
-      db.projects.update(projectId, { wordGoal: val });
+      updateProject(projectId, { wordGoal: val });
     }
   };
 
   const updateDailyGoal = (newGoal: string) => {
     const val = parseInt(newGoal.replace(/,/g, ''));
     if (!isNaN(val) && val > 0) {
-      db.projects.update(projectId, { dailyGoal: val });
+      updateProject(projectId, { dailyGoal: val });
     }
   };
 

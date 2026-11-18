@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback, useRef } from 'react';
+import { addCodexEntry } from '@/src/services/codexOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { UserSearch, ScanSearch, Plus, EyeOff, Loader2, Sparkles, CheckCircle2, Wand2, AlertTriangle } from 'lucide-react';
@@ -142,7 +143,7 @@ export function OrphanScanPanel({ projectId }: OrphanScanPanelProps) {
   const addToCodex = async (cand: OrphanCandidate) => {
     const enr = enriched[cand.name];
     const category = categories[cand.name] || enr?.category || 'character';
-    await db.codex.add({
+    await addCodexEntry({
       projectId,
       name: cand.name,
       aliases: enr?.aliases || [],

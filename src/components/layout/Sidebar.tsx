@@ -14,7 +14,7 @@ import {
 import { useProject } from '@/src/contexts/ProjectContext';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useUI } from '@/src/contexts/UIContext';
-import { db } from '@/src/db';
+import { updateProject } from '@/src/services/projectOperations';
 import { cn } from '@/src/lib/utils';
 import { ChapterList } from '@/src/features/chapters/components/ChapterList';
 import { 
@@ -94,7 +94,7 @@ export function Sidebar() {
             <input
               className="font-bold text-sm tracking-tight bg-transparent focus:outline-none w-full border-none p-0 h-auto text-slate-900 dark:text-slate-100 truncate"
               value={project?.name || ''}
-              onChange={(e) => projectId && db.projects.update(projectId, { name: e.target.value })}
+              onChange={(e) => projectId && updateProject(projectId, { name: e.target.value })}
               placeholder="Novel Tanpa Judul"
             />
             <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-[0.18em]">

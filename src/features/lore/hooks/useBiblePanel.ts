@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { saveBibleInstruction } from '@/src/services/loreOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { DB_KEY_MAP } from '@/src/lib/constants';
@@ -70,12 +71,7 @@ export function useBiblePanel(projectId: number) {
 
   const saveField = async (key: string, value: string) => {
     try {
-      const existing = await db.bible.where({ projectId, key }).first();
-      if (existing) {
-        await db.bible.update(existing.id!, { instruction: value });
-      } else {
-        await db.bible.add({ projectId, key, instruction: value });
-      }
+      await saveBibleInstruction(projectId, key, value);
       setSavedField(key);
       setTimeout(() => setSavedField(null), 2000);
     } catch (e) {

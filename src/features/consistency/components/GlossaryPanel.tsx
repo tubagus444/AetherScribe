@@ -8,6 +8,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import { addGlossaryEntry, updateGlossaryEntry, deleteGlossaryEntry } from '@/src/services/continuityOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { BookMarked, Plus, Loader2, Trash2, Pencil, X, Check } from 'lucide-react';
@@ -31,7 +32,7 @@ export function GlossaryPanel({ projectId }: { projectId: number }) {
   const loading = entries === undefined;
 
   const remove = (e: GlossaryEntry) => {
-    if (e.id != null && confirm(`Hapus istilah "${e.term}"?`)) db.glossary.delete(e.id);
+    if (e.id != null && confirm(`Hapus istilah "${e.term}"?`)) deleteGlossaryEntry(e.id);
   };
 
   return (
@@ -158,9 +159,9 @@ function GlossaryForm({ projectId, initial, onClose }: { projectId: number; init
     };
     try {
       if (initial?.id != null) {
-        await db.glossary.update(initial.id, base);
+        await updateGlossaryEntry(initial.id, base);
       } else {
-        await db.glossary.add({ projectId, createdAt: now, ...base } as GlossaryEntry);
+        await addGlossaryEntry({ projectId, createdAt: now, ...base } as GlossaryEntry);
       }
       onClose();
     } finally {

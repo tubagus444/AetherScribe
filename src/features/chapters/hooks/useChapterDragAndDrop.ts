@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { db } from '@/src/db';
+import { moveChapter } from '@/src/services/chapterOperations';
 
-export function useChapterDragAndDrop(chapters: any[] | undefined) {
+export function useChapterDragAndDrop(projectId: number) {
   const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: number) => {
@@ -31,37 +31,8 @@ export function useChapterDragAndDrop(chapters: any[] | undefined) {
   const handleDrop = async (e: React.DragEvent, targetId: number, options?: { adoptStatus?: boolean }) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!draggedId || draggedId === targetId || !chapters) return;
-    // Default: ikut status target (perilaku papan Kanban). Tampilan Grid mengirim
-    // `false` agar drag murni mengurutkan — status tidak berubah diam-diam.
-    const adoptStatus = options?.adoptStatus ?? true;
-
-    const oldIndex = chapters.findIndex(c => c.id === draggedId);
-    const newIndex = chapters.findIndex(c => c.id === targetId);
-
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newChapters = [...chapters];
-    const [moved] = newChapters.splice(oldIndex, 1);
-
-    // Jatuh ke kartu di lane berbeda → ikut status lane tersebut (hanya bila adoptStatus).
-    const targetChapter = chapters[newIndex];
-    if (adoptStatus && moved.status !== targetChapter.status) {
-      moved.status = targetChapter.status;
-    }
-
-    newChapters.splice(newIndex, 0, moved);
-
-    // Update orders in DB atomically (and status if changed)
-    await db.transaction('rw', db.chapters, async () => {
-      const updates = newChapters.map((ch, index) => 
-        db.chapters.update(ch.id!, { 
-          order: index,
-          status: ch.status
-        })
-      );
-      await Promise.all(updates);
-    });
+    if (draggedId === null) return;
+    await moveChapter(projectId, draggedId, targetId, options?.adoptStatus ?? true);
   };
 
   return {

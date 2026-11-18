@@ -34,7 +34,7 @@ export function ErrorLogPanel() {
         else if (type === '1d') thresholdTime = subDays(now, 1);
         else thresholdTime = subDays(now, 7);
 
-        await db.errors.where('timestamp').below(thresholdTime.getTime()).delete();
+        await ErrorService.clearBefore(thresholdTime.getTime());
       }
       setShowClearMenu(false);
     } catch (error) {

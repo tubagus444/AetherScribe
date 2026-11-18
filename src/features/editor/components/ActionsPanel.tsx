@@ -5,6 +5,7 @@ import { ACTION_ICONS, ICON_OPTIONS, DEFAULT_ICON, getActionIcon } from './actio
  */
 
 import React, { useState } from 'react';
+import { addAiAction, updateAiAction, deleteAiAction } from '@/src/services/aiActionOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -42,9 +43,9 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
     if (!label || !prompt) return;
 
     if (editingId != null) {
-      await db.aiActions.update(editingId, { label, prompt, icon: newIcon });
+      await updateAiAction(editingId, { label, prompt, icon: newIcon });
     } else {
-      await db.aiActions.add({ projectId, label, prompt, icon: newIcon });
+      await addAiAction({ projectId, label, prompt, icon: newIcon });
     }
     resetForm();
   };
@@ -57,7 +58,7 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
   };
 
   const deleteAction = async (id: number) => {
-    await db.aiActions.delete(id);
+    await deleteAiAction(id);
     if (editingId === id) resetForm();
   };
 

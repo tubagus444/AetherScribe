@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Crosshair, X, Check, Loader2 } from 'lucide-react';
+import { addPlotPromise } from '@/src/services/continuityOperations';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { PlotPromise, PlotPromiseImportance } from '@/src/types';
@@ -56,7 +57,7 @@ export function QuickPromiseModal({ seed, onClose }: { seed: QuickPromiseSeed; o
     const kw = keywords.split(',').map(s => s.trim()).filter(Boolean);
     const now = Date.now();
     try {
-      await db.plotPromises.add({
+      await addPlotPromise({
         projectId: seed.projectId,
         title: title.trim(),
         description: description.trim() || undefined,

@@ -1,5 +1,8 @@
 import { deleteCodexEntry } from '@/src/services/entityDeletion';
 import { useState, useMemo, useEffect } from 'react';
+import { updateCodexEntry, addCodexEntries, addCodexEntry } from '@/src/services/codexOperations';
+import { addRelationship, deleteRelationship } from '@/src/services/loreOperations';
+import { updatePlotPromise } from '@/src/services/continuityOperations';
 import { db } from '@/src/db';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
 import { CodexEntry, CodexCategory } from '@/src/types';
@@ -139,7 +142,7 @@ export function useCodexPanel(projectId: number) {
     // tersimpan — tanpa ini toggle "Rahasia penulis" & textarea "Kebenaran tersembunyi"
     // di CodexForm senyap tak berefek.
     if (editingId) {
-      await db.codex.update(editingId, {
+      await updateCodexEntry(editingId, {
         name: data.name,
         category: data.category || 'character',
         description: data.description || '',
@@ -157,7 +160,7 @@ export function useCodexPanel(projectId: number) {
         customFields: data.customFields || []
       });
     } else {
-      await db.codex.add({
+      await addCodexEntry({
         projectId,
         name: data.name,
         category: data.category || 'character',
@@ -193,7 +196,7 @@ export function useCodexPanel(projectId: number) {
         tags: d.tags || [],
       })) as CodexEntry[];
     if (!rows.length) return 0;
-    await db.codex.bulkAdd(rows);
+    await addCodexEntries(rows);
     await invalidateContextCache();
     setIsAdding(false);
     setEditingId(null);
@@ -224,20 +227,20 @@ export function useCodexPanel(projectId: number) {
 
   const addBond = async (sourceId: number, targetId: number, type: string) => {
     if (!sourceId || !targetId || sourceId === targetId) return;
-    await db.relationships.add({ projectId, sourceId, targetId, type });
+    await addRelationship({ projectId, sourceId, targetId, type });
   };
 
   const deleteRelationship = async (id: number) => {
-    await db.relationships.delete(id);
+    await deleteRelationship(id);
   };
 
   // Bersihkan satu tautan menggantung (#9): relasi yatim dihapus, FK janji dilepas.
   const resolveDangling = async (ref: DanglingRef) => {
     if (ref.kind === 'relationship' && ref.relationshipId != null) {
-      await db.relationships.delete(ref.relationshipId);
+      await deleteRelationship(ref.relationshipId);
     } else if (ref.promiseId != null) {
       const field = ref.kind === 'promise-codex' ? 'codexId' : 'payoffCodexId';
-      await db.plotPromises.update(ref.promiseId, { [field]: undefined });
+      await updatePlotPromise(ref.promiseId, { [field]: undefined });
     }
   };
 

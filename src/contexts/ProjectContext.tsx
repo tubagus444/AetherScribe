@@ -5,7 +5,8 @@ import { deleteProjectData } from '@/src/services/entityDeletion';
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { db, ensureDefaultProject } from '@/src/db';
+import { createProjectWithChapter, ensureDefaultProject, updateProject } from '@/src/services/projectOperations';
+import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ErrorService } from '@/src/services/errorService';
 import { oramaSync } from '@/src/services/rag/oramaSync';
@@ -41,7 +42,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const switchProject = useCallback(async (id: number) => {
     try {
-      await db.projects.update(id, { lastOpened: Date.now() });
+      await updateProject(id, { lastOpened: Date.now() });
       setProjectId(id);
       oramaSync.init(id);
     } catch (error) {
@@ -57,22 +58,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const createProject = useCallback(async (name: string) => {
     try {
-      const newId = await db.projects.add({
-        name,
-        description: 'New Manuscript',
-        createdAt: Date.now(),
-        lastOpened: Date.now(),
-      });
-
-      await db.chapters.add({
-        projectId: newId,
-        title: 'Chapter 1',
-        content: '',
-        order: 0,
-        lastModified: Date.now(),
-      });
-
-      await switchProject(newId);
+      const newId = await createProjectWithChapter(name);
+      setProjectId(newId);
+      oramaSync.init(newId);
     } catch (error) {
       ErrorService.log({
         message: 'Failed to create project',
@@ -82,7 +70,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [switchProject]);
+  }, []);
 
   const deleteProject = useCallback(async (id: number) => {
     try {

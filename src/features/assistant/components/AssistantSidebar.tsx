@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BrainCircuit, Plus, Search, MessageSquare, Check, Trash2, History, Edit2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { db } from '@/src/db';
+import { updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
 import { ChatSession } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 
@@ -33,7 +33,7 @@ export function AssistantSidebar({
       return;
     }
     try {
-      await db.chatSessions.update(sessionIdToRename, { title: editTitleValue.trim() });
+      await updateChatSession(sessionIdToRename, { title: editTitleValue.trim() });
       setEditingSidebarId(null);
     } catch (error) {
       console.error('Failed to rename session:', error);
@@ -46,7 +46,7 @@ export function AssistantSidebar({
       e.preventDefault();
     }
     try {
-      await db.chatSessions.delete(id);
+      await deleteChatSession(id);
       if (activeSessionId === id) {
         onSelectSession(null);
       }

@@ -4,49 +4,53 @@
  *
  * Snapshot otomatis sebelum aksi destruktif (rewrite AI "Ganti Teks", Find &
  * Replace "Ganti Semua", pemulihan versi). Memberi titik balik tanpa pengguna
- * perlu menekan tombol kamera manual. Best-effort: kegagalan tak boleh memblok
- * atau menggagalkan aksi utama.
+ * perlu menekan tombol kamera manual.
  */
 import { db } from '@/src/db';
+import type { Snapshot } from '@/src/types';
 import { format } from 'date-fns';
 
 /** Maksimal snapshot otomatis yang disimpan per-bab; sisanya (terlama) dipangkas. */
 const MAX_AUTO_PER_CHAPTER = 12;
 
-/**
- * Simpan snapshot otomatis berisi konten LAMA bab sebelum ditimpa. `reason` jadi
- * awalan label (mis. "Sebelum tenun AI"). Mengembalikan id snapshot, atau null
- * bila dilewati (konten kosong) / gagal.
- */
-export async function createAutoSnapshot(
-  chapterId: number,
-  content: string,
-  reason: string,
-): Promise<number | null> {
-  if (!chapterId || chapterId <= 0) return null;
-  if (!content || !content.trim()) return null;
+export function addSnapshot(snapshot: Omit<Snapshot, 'id'>) {
+  return db.snapshots.add(snapshot);
+}
+
+export function deleteSnapshot(id: number) {
+  return db.snapshots.delete(id);
+}
+
+/** Dipanggil dalam transaksi yang mencakup tabel snapshots. */
+export async function saveAutoSnapshot(chapterId: number, content: string, reason: string): Promise<number | null> {
+  if (!chapterId || chapterId <= 0 || !content?.trim()) return null;
+  const id = await addSnapshot({
+    chapterId,
+    content,
+    label: `${reason} — ${format(new Date(), 'd MMM, HH:mm')}`,
+    timestamp: Date.now(),
+    auto: true,
+  });
+
+  // Pangkas snapshot otomatis terlama agar tidak membengkak (snapshot manual
+  // sengaja tidak ikut dipangkas).
+  const autos = await db.snapshots
+    .where('chapterId')
+    .equals(chapterId)
+    .filter((s) => s.auto === true)
+    .sortBy('timestamp');
+  if (autos.length > MAX_AUTO_PER_CHAPTER) {
+    const stale = autos.slice(0, autos.length - MAX_AUTO_PER_CHAPTER).map((s) => s.id!);
+    await db.snapshots.bulkDelete(stale);
+  }
+
+  return id as number;
+}
+
+/** Snapshot pendukung untuk operasi editor yang tetap berjalan saat snapshot gagal. */
+export async function createAutoSnapshot(chapterId: number, content: string, reason: string): Promise<number | null> {
   try {
-    const id = await db.snapshots.add({
-      chapterId,
-      content,
-      label: `${reason} — ${format(new Date(), 'd MMM, HH:mm')}`,
-      timestamp: Date.now(),
-      auto: true,
-    });
-
-    // Pangkas snapshot otomatis terlama agar tidak membengkak (snapshot manual
-    // sengaja tidak ikut dipangkas).
-    const autos = await db.snapshots
-      .where('chapterId')
-      .equals(chapterId)
-      .filter((s) => s.auto === true)
-      .sortBy('timestamp');
-    if (autos.length > MAX_AUTO_PER_CHAPTER) {
-      const stale = autos.slice(0, autos.length - MAX_AUTO_PER_CHAPTER).map((s) => s.id!);
-      await db.snapshots.bulkDelete(stale);
-    }
-
-    return id as number;
+    return await db.transaction('rw', db.snapshots, () => saveAutoSnapshot(chapterId, content, reason));
   } catch (err) {
     console.error('Auto-snapshot gagal:', err);
     return null;

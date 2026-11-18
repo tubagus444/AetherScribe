@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, X, ChevronDown, BookOpen, Check, Activity, Square } from 'lucide-react';
-import { db } from '@/src/db';
+import { updateChatSession } from '@/src/services/chatSessionOperations';
 import { Chapter, CodexEntry, StoryBibleRule, ChatMessage } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { MentionDropdown } from '@/src/components/common/MentionDropdown';
@@ -279,7 +279,7 @@ export function AssistantInputArea({
                       <div className="max-h-56 overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-0.5">
                         <button
                           onClick={() => {
-                            if (activeSessionId) db.chatSessions.update(activeSessionId, { activeChapterId: undefined });
+                            if (activeSessionId) updateChatSession(activeSessionId, { activeChapterId: undefined });
                             setShowChapterMenu(false);
                           }}
                           className={cn(
@@ -300,7 +300,7 @@ export function AssistantInputArea({
                           <button
                             key={c.id}
                             onClick={() => {
-                              if (activeSessionId) db.chatSessions.update(activeSessionId, { activeChapterId: c.id });
+                              if (activeSessionId) updateChatSession(activeSessionId, { activeChapterId: c.id });
                               setShowChapterMenu(false);
                             }}
                             className={cn(
@@ -334,7 +334,7 @@ export function AssistantInputArea({
                                 setInput(prev => prev.replace('@chapter-summary', '').trim());
                               }
                             } else if (activeSessionId) {
-                              db.chatSessions.update(activeSessionId, { smartAutoEnabled: false });
+                              updateChatSession(activeSessionId, { smartAutoEnabled: false });
                             }
                           }} 
                           className="hover:text-red-600 dark:hover:text-red-400 ml-1 transition-colors"

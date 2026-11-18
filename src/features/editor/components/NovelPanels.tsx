@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { PANEL_WIDTH } from '@/src/lib/constants';
-import { db } from '@/src/db';
+import { restoreChapterSnapshot } from '@/src/services/chapterOperations';
 
 // Lazy load side panels
 const ScribbleAssistantPanel = React.lazy(() => import('@/src/features/assistant/components/ScribbleAssistantPanel').then(m => ({ default: m.ScribbleAssistantPanel })));
@@ -79,9 +79,8 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleR
                 <SnapshotPanel 
                   chapterId={chapterId} 
                   currentContent={editor?.getHTML() || ''} 
-                  onRestore={(text) => {
-                    editor?.commands.setContent(text);
-                    db.chapters.update(chapterId, { content: text, lastModified: Date.now() });
+                  onRestore={async (text) => {
+                    await restoreChapterSnapshot(chapterId, text);
                     setActivePanel('none');
                   }} 
                 />

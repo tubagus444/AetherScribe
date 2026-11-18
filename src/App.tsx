@@ -25,7 +25,8 @@ import { CrossChapterReplace } from '@/src/components/modals/CrossChapterReplace
 import { IndexingIndicator } from '@/src/components/common/IndexingIndicator';
 import { Suspense, useEffect } from 'react';
 
-import { db, cleanupAILogs } from '@/src/db';
+import { db } from '@/src/db';
+import { cleanupAILogs } from '@/src/services/aiUsageOperations';
 import { useLiveQuery } from 'dexie-react-hooks';
 
 const ExportManager = React.lazy(() => import('@/src/components/modals/ExportManager').then(module => ({ default: module.ExportManager })));
