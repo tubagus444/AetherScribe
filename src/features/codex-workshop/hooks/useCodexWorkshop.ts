@@ -1,3 +1,4 @@
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { updateCodexEntry, addCodexEntry } from '@/src/services/codexOperations';
 import { addChatSession, updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
@@ -89,10 +90,7 @@ export function useCodexWorkshop(projectId: number) {
     [projectId]
   );
   // Bab (untuk audit mendalam / lapis 2). Live query murah; teks di-strip HTML saat dipakai.
-  const chapters = useOptimizedLiveQuery(
-    () => db.chapters.where('projectId').equals(projectId).toArray(),
-    [projectId]
-  );
+  const chapters = useProjectChapters(projectId);
   const { categories } = useCodexCategories(projectId);
 
   const { availableProviders, selectedProvider, setSelectedProvider } = useAvailableProviders();

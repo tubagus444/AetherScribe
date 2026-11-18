@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { useMemo } from 'react';
-import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { stripHtml } from '@/src/lib/editorUtils';
 import { TensionLevel } from '@/src/types';
@@ -27,9 +27,7 @@ export interface PlainChapter {
  * parsing regex berulang.
  */
 export function usePlainChapters(projectId: number): PlainChapter[] | undefined {
-  const chapters = useLiveQuery(() =>
-    db.chapters.where('projectId').equals(projectId).sortBy('order')
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   return useMemo(() => {
     if (!chapters) return undefined;

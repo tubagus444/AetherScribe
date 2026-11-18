@@ -12,6 +12,7 @@
  * (pola LoreGraphPanel).
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -59,10 +60,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const { codexEntries } = useProjectData(projectId);
   const { categories } = useCodexCategories(projectId);
 
-  const chapters = useLiveQuery(
-    () => db.chapters.where('projectId').equals(projectId).sortBy('order'),
-    [projectId],
-  );
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const { selectedMapId, setSelectedMapId, drawMode, setDrawMode, selectedMarkerId, setSelectedMarkerId, editingGeometry, setEditingGeometry, draftCount, setDraftCount, sidebarView, setSidebarView } = useAtlasSelection();
   const { maps, markers, mapsLoading, createMap, renameMap, setMapImage, deleteMap, addMarker, updateMarker, deleteMarker } = useAtlas(selectedMapId);

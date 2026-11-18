@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { db } from '@/src/db';
+import { readProjectChapters } from '@/src/services/chapterQueries';
 import { splitIntoScenes, getRelevantScenes, getLastScene, buildExcerptContext, Scene } from '@/src/lib/chunkEngine';
 
 interface UseAssistantChunkEngineProps {
@@ -77,14 +77,10 @@ export function useAssistantChunkEngine({
         let pastSummariesText = '';
         if (sessionChapter.projectId) {
           try {
-            const pastChapters = await db.chapters
-              .where('projectId')
-              .equals(sessionChapter.projectId)
-              .filter(ch => ch.order < sessionChapter.order)
-              .sortBy('order');
+            const chapters = await readProjectChapters(sessionChapter.projectId, 'manuscript');
             
-            const summariesList = pastChapters
-              .filter(ch => ch.summary && ch.summary.trim() !== '')
+            const summariesList = chapters
+              .filter(ch => ch.order < sessionChapter.order && ch.summary?.trim())
               .map(ch => `${ch.title}: ${ch.summary}`);
               
             if (summariesList.length > 0) {

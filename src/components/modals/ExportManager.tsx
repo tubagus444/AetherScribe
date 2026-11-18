@@ -1,3 +1,4 @@
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { useToast } from '@/src/hooks/useToast';
 import { readBackupSnapshot } from '@/src/services/backupSnapshot';
 /**
@@ -11,8 +12,6 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } fro
 import { saveAs } from 'file-saver';
 import { FileDown, FileText, Globe, Loader2, CheckCircle2, X, FileEdit, BookOpen, CheckSquare, Square } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/src/db';
 import { Project, Chapter } from '@/src/types';
 import { htmlToMarkdown, stripRevisionComments } from '@/src/lib/editorUtils';
 import { countWords } from '@/src/lib/utils';
@@ -79,10 +78,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [initialized, setInitialized] = useState(false);
 
-  const chapters = useLiveQuery(
-    () => db.chapters.where('projectId').equals(projectId).sortBy('order'),
-    [projectId],
-  );
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   // Default: pilih semua bab saat daftar pertama kali termuat.
   useEffect(() => {

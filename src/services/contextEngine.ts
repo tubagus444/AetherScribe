@@ -1,3 +1,4 @@
+import { readProjectChapters } from '@/src/services/chapterQueries';
 import { chapterIdentity } from '@/src/lib/chapterContracts';
 import { cancelContextRequest, record, isContextProgress, validContextResult, type SceneSearchHit, type ContextPayloads, type ContextResults, type ContextTaskType, type ContextWorkerMessage } from './contextProtocol';
 export type { SceneSearchHit } from './contextProtocol';
@@ -180,7 +181,7 @@ export async function clearEmbeddingCache() {
  * Scans all chapters to find where a specific codex entry is mentioned.
  */
 export async function getEntryAppearances(entry: CodexEntry, projectId: number): Promise<number[]> {
-  const chapters = await db.chapters.where('projectId').equals(projectId).toArray();
+  const chapters = await readProjectChapters(projectId);
   return sendToWorker('SCAN_APPEARANCES', { entry, chapters: chapters.map(chapter => ({ id: chapterIdentity(chapter), content: chapter.content })) });
 }
 
@@ -210,7 +211,7 @@ export async function getRelevantBibleRules(
  * window event 'semantic-indexing-progress' bertipe 'manuscript_index_*'.
  */
 export async function indexManuscript(projectId: number): Promise<void> {
-  const chapters = await db.chapters.where('projectId').equals(projectId).toArray();
+  const chapters = await readProjectChapters(projectId);
   const payload = {
     projectId,
     chapters: chapters.map(c => ({ id: chapterIdentity(c), content: c.content || '' })),

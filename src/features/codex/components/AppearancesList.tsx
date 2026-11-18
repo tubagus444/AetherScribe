@@ -1,5 +1,5 @@
+import { readChaptersById } from '@/src/services/chapterQueries';
 import React, { useState } from 'react';
-import { db } from '@/src/db';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { CodexEntry, Chapter } from '@/src/types';
 import { getEntryAppearances } from '@/src/services/contextEngine';
@@ -14,7 +14,7 @@ export function AppearancesList({ entry, projectId }: { entry: CodexEntry; proje
     setLoading(true);
     try {
       const chapterIds = await getEntryAppearances(entry, projectId);
-      const chapters = await db.chapters.bulkGet(chapterIds);
+      const chapters = await readChaptersById(chapterIds);
       setAppearances(chapters.filter(Boolean) as Chapter[]);
     } catch (err) {
       console.error('Failed to fetch appearances:', err);

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useMemo } from 'react';
 import { addTimelineEvent, updateTimelineEvent, deleteTimelineEvent, moveTimelineEvent } from '@/src/services/timelineOperations';
 import { db } from '@/src/db';
@@ -51,9 +52,7 @@ export function TimelinePanel({ projectId }: TimelinePanelProps) {
     db.timeline.where('projectId').equals(projectId).toArray()
   , [projectId]);
 
-  const chapters = useLiveQuery(() =>
-    db.chapters.where('projectId').equals(projectId).sortBy('order')
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   // Kalender dunia (opsional) — untuk menampilkan tanggal terstruktur peristiwa
   // yang dibuat lewat panel Kalender Dunia di daftar Timeline ini juga.

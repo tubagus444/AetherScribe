@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useChapterSnapshots } from '@/src/hooks/useChapterQueries';
 import React, { useState } from 'react';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { History, RotateCcw, Trash2, Camera, Sparkles, GitCompare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -24,9 +23,7 @@ interface SnapshotPanelProps {
 export function SnapshotPanel({ chapterId, currentContent, onRestore }: SnapshotPanelProps) {
   const { toast } = useToast();
   const { checkStorageQuota } = useStorageQuota();
-  const snapshots = useLiveQuery(() => 
-    db.snapshots.where('chapterId').equals(chapterId).reverse().sortBy('timestamp')
-  , [chapterId]);
+  const snapshots = useChapterSnapshots(chapterId);
 
   const [label, setLabel] = useState('');
   const [diffSnap, setDiffSnap] = useState<Snapshot | null>(null);

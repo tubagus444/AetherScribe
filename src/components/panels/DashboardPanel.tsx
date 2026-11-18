@@ -1,9 +1,9 @@
-import { readChapterList } from '@/src/services/chapterQueries';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useChapterList } from '@/src/hooks/useChapterQueries';
 import React, { useMemo, useState, useEffect } from 'react';
 import { db } from '@/src/db';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
@@ -38,7 +38,7 @@ export function DashboardPanel({ projectId }: DashboardPanelProps) {
   const { setActiveChapterId, setViewMode } = useNavigation();
 
   const project = useOptimizedLiveQuery(() => db.projects.get(projectId), [projectId]);
-  const chapters = useOptimizedLiveQuery(() => readChapterList(projectId), [projectId]);
+  const chapters = useChapterList(projectId);
   const { codexEntries, aiActions, bibleRules, relationships } = useProjectData(projectId);
   const timelineCount = useOptimizedLiveQuery(() => db.timeline.where('projectId').equals(projectId).count(), [projectId]);
   

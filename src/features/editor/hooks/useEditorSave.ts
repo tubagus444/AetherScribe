@@ -1,7 +1,7 @@
+import { readChapter } from '@/src/services/chapterQueries';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
 import { saveChapterContent, updateChapter } from '@/src/services/chapterOperations';
-import { db } from '@/src/db';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { useToast } from '@/src/hooks/useToast';
 import { registerActiveEditor, unregisterActiveEditor, ActiveEditorBridge } from '@/src/features/editor/editorBridge';
@@ -117,7 +117,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
           throw new Error('Draft belum tersimpan. Coba simpan ulang sebelum memuat ulang editor.');
         }
         if (!editor || editor.isDestroyed) return;
-        const fresh = await db.chapters.get(chapterIdRef.current);
+        const fresh = await readChapter(chapterIdRef.current);
         if (!editor || editor.isDestroyed) return;
         const content = fresh?.content ?? '';
         // emitUpdate:false → tidak memicu autosave (mencegah penimpaan balik hasil replace).

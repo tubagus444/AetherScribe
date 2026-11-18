@@ -1,4 +1,3 @@
-import { readLatestChapterModified } from '@/src/services/chapterQueries';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -11,7 +10,7 @@ import { readLatestChapterModified } from '@/src/services/chapterQueries';
  * model embedding (~30MB) yang harus dipilih pengguna secara sadar.
  *
  * Cara kerja:
- * 1. Pantau `MAX(lastModified)` dari bab proyek aktif via Dexie live query (ringan).
+ * 1. Pantau `MAX(lastModified)` dari bab proyek aktif lewat langganan data bab.
  * 2. Saat nilai berubah DAN indeks sudah ada → set timer debounce 8 detik.
  * 3. Saat timer menyala → panggil `indexManuscript` (fire-and-forget). Worker
  *    mengabaikan bila indexing sedang berjalan (`manuscriptIndexing` guard), dan
@@ -20,6 +19,7 @@ import { readLatestChapterModified } from '@/src/services/chapterQueries';
  * Dipasang di App.tsx (level daemon, selalu mount) — pola useAutoSummarizer.
  */
 
+import { useLatestChapterModified } from '@/src/hooks/useChapterQueries';
 import { useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useProject } from '@/src/contexts/ProjectContext';
@@ -33,14 +33,7 @@ export function useAutoSemanticIndex(): void {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Timestamp simpan terakhir dari bab mana pun di proyek aktif (ringan: satu index key).
-  const latestModified = useLiveQuery(
-    () =>
-      projectId
-        ? readLatestChapterModified(projectId)
-        : 0,
-    [projectId],
-    0,
-  );
+  const latestModified = useLatestChapterModified(projectId);
 
   // Apakah indeks sudah pernah dibangun (count > 0)?
   const hasIndex = useLiveQuery(

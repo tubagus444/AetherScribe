@@ -1,12 +1,9 @@
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { changeChapters, updateChapter } from '@/src/services/chapterOperations';
 import { useState } from 'react';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 
 export function useChapterManagement(projectId: number) {
-  const chapters = useLiveQuery(() => 
-    db.chapters.where('projectId').equals(projectId).sortBy('order')
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 

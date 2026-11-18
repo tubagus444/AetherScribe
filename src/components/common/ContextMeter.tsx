@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useChapter } from '@/src/hooks/useChapterQueries';
 import React, { useState, useRef, useEffect } from 'react';
 import { Cpu, Loader2 } from 'lucide-react';
 import { useProject } from '@/src/contexts/ProjectContext';
@@ -10,15 +11,11 @@ import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useContextMeter } from '@/src/hooks/useContextMeter';
 import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
 import { motion, AnimatePresence } from 'motion/react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/src/db';
 
 export function ContextMeter() {
   const { projectId } = useProject();
   const { activeChapterId } = useNavigation();
-  const activeChapter = useLiveQuery(() => 
-    activeChapterId ? db.chapters.get(activeChapterId) : undefined
-  , [activeChapterId]);
+  const activeChapter = useChapter(activeChapterId);
 
   const chapterText = activeChapter?.content || '';
   const { selectedProvider } = useAvailableProviders();

@@ -6,9 +6,8 @@
  * Logika di src/lib/characterArc.ts; panel ini menyajikan & menautkan hasil.
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useRef, useCallback } from 'react';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { X, Activity, Loader2, Sparkles, Eye, Users, MapPin, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigation } from '@/src/contexts/NavigationContext';
@@ -30,9 +29,7 @@ export function CharacterArcSidePanel({ projectId, characterId, onClose, presenc
   const { setActiveChapterId, setViewMode } = useNavigation();
   const { codexEntries } = useProjectData(projectId);
 
-  const chapters = useLiveQuery(() =>
-    db.chapters.where('projectId').equals(projectId).sortBy('order')
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const characters = codexEntries.filter(e => e.category === 'character');
 

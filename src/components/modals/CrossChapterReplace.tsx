@@ -6,9 +6,8 @@
  * lewat editorBridge: flush sebelum mengganti, reload sesudahnya (lihat editorBridge.ts).
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useMemo, useEffect } from 'react';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Search, X, Replace, ReplaceAll, CaseSensitive, Regex, FileText,
   ChevronDown, ChevronRight, Loader2, AlertTriangle,
@@ -57,10 +56,7 @@ export function CrossChapterReplace({ projectId, onSelectChapter, onClose }: Cro
     return () => window.removeEventListener('keydown', handleDown);
   }, [onClose]);
 
-  const chapters = useLiveQuery(
-    () => db.chapters.where('projectId').equals(projectId).sortBy('order'),
-    [projectId],
-  );
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const regexInvalid = useMemo(
     () => debouncedQuery.length > 0 && buildSearchRegex(debouncedQuery, { caseSensitive, regex: isRegex }) === null,

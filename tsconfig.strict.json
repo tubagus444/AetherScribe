@@ -8,6 +8,7 @@
     "src/lib/dataContracts.ts",
     "src/lib/codexContracts.ts",
     "src/lib/chapterContracts.ts",
+    "src/lib/chapterStorage.ts",
     "src/lib/chapterMetadata.ts",
     "src/services/contextProtocol.ts",
     "src/services/rag/oramaProtocol.ts",

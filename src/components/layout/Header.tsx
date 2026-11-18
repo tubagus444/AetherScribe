@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useChapter } from '@/src/hooks/useChapterQueries';
 import React from 'react';
 import { ChevronRight, Search, Moon, Sun, Zap, Download, ReplaceAll } from 'lucide-react';
 import { useProject } from '@/src/contexts/ProjectContext';
@@ -11,8 +12,6 @@ import { useUI } from '@/src/contexts/UIContext';
 import { WritingStats } from '@/src/components/common/WritingStats';
 import { ContextMeter } from '@/src/components/common/ContextMeter';
 import { cn } from '@/src/lib/utils';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/src/db';
 
 // Label breadcrumb per-viewMode (Indonesia), selaras dengan Sidebar. Fallback ke
 // nilai mentah agar mode baru tak pernah kehilangan label.
@@ -31,9 +30,7 @@ const VIEW_LABELS: Record<string, string> = {
 export function Header() {
   const { projectId, project } = useProject();
   const { viewMode, activeChapterId } = useNavigation();
-  const activeChapter = useLiveQuery(() => 
-    activeChapterId ? db.chapters.get(activeChapterId) : undefined
-  , [activeChapterId]);
+  const activeChapter = useChapter(activeChapterId);
 
   const { 
     sidebarOpen, 

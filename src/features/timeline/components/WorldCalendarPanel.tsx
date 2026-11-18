@@ -9,6 +9,7 @@
  * grid. Cek kelayakan tanggal = fase 2 (belum dibangun).
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -39,7 +40,7 @@ export function WorldCalendarPanel({ projectId }: Props) {
   const { codexEntries } = useProjectData(projectId);
   const project = useLiveQuery(() => db.projects.get(projectId), [projectId]);
   const events = useLiveQuery(() => db.timeline.where('projectId').equals(projectId).toArray(), [projectId]);
-  const chapters = useLiveQuery(() => db.chapters.where('projectId').equals(projectId).sortBy('order'), [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const cal = project?.calendar;
 

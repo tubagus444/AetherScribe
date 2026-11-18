@@ -1,3 +1,4 @@
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState } from 'react';
 import { Plus, BrainCircuit } from 'lucide-react';
 import { db } from '@/src/db';
@@ -38,9 +39,7 @@ export function AIAssistantPanel() {
     projectId ? db.relationships.where('projectId').equals(projectId).toArray() : []
   , [projectId]);
 
-  const chapters = useOptimizedLiveQuery(() => 
-    projectId ? db.chapters.where('projectId').equals(projectId).sortBy('order') : []
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const {
     isOpen: isMentionOpen,

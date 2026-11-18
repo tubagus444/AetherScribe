@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useMemo, useEffect } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -28,9 +29,7 @@ export function GlobalSearch({ projectId, onSelectChapter, onSelectCodex, onClos
     return () => clearTimeout(timer);
   }, [query]);
   
-  const chapters = useLiveQuery(() => 
-    db.chapters.where('projectId').equals(projectId).toArray()
-  , [projectId]);
+  const chapters = useProjectChapters(projectId);
 
   const codex = useLiveQuery(() => 
     db.codex.where('projectId').equals(projectId).toArray()

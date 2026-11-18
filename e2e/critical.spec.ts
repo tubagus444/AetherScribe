@@ -32,6 +32,58 @@ test('F05 editor persists a draft across reload', async ({ page }) => {
   await expect(editor).toHaveText('Draft browser F24');
 });
 
+test('DB05 chapter list and snapshot history refresh after writes in another tab', async ({ page, context }) => {
+  await page.getByRole('button', { name: 'Riwayat Versi' }).click();
+  await expect(page.getByText('Belum ada snapshot tersimpan.')).toBeVisible();
+
+  const writer = await context.newPage();
+  await writer.route('**/__db05_writer', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+  await writer.goto('/__db05_writer');
+  await writer.evaluate(async () => {
+    const chapterPath = '/src/services/chapterOperations.ts';
+    const snapshotPath = '/src/services/snapshotService.ts';
+    const { updateChapter } = await import(chapterPath);
+    const { addSnapshot } = await import(snapshotPath);
+    await updateChapter(1, { title: 'Judul dari tab lain' });
+    await addSnapshot({ chapterId: 1, content: '<p>Versi lama</p>', label: 'Versi dari tab lain', timestamp: Date.now() });
+  });
+
+  await expect(page.getByText('Judul dari tab lain', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Versi dari tab lain', { exact: true })).toBeVisible();
+});
+
+test('DB05 failed restore rolls back the safety snapshot and preserves the manuscript', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const dbPath = '/src/db.ts';
+    const chapterPath = '/src/services/chapterOperations.ts';
+    const snapshotPath = '/src/services/snapshotService.ts';
+    const { db } = await import(dbPath);
+    const { restoreChapterSnapshot } = await import(chapterPath);
+    const { addSnapshot } = await import(snapshotPath);
+    const snapshotId = await addSnapshot({ chapterId: 1, content: '<p>Versi lama</p>', label: 'Manual', timestamp: 1 });
+    const update = db.chapters.update;
+    db.chapters.update = async () => { throw new DOMException('Injected write failure', 'QuotaExceededError'); };
+    let failure: { name: string; kind: string } | undefined;
+    try {
+      await restoreChapterSnapshot(1, snapshotId);
+    } catch (error) {
+      failure = { name: error.name, kind: error.kind };
+    } finally {
+      db.chapters.update = update;
+    }
+    return {
+      failure,
+      chapter: await db.chapters.get(1),
+      snapshotIds: await db.snapshots.toCollection().primaryKeys(),
+      snapshotId,
+    };
+  });
+  expect(result.failure).toEqual({ name: 'ChapterStorageError', kind: 'quota' });
+  expect(result.chapter.content).toBe('<p>F24 starting manuscript</p>');
+  expect(result.snapshotIds).toEqual([result.snapshotId]);
+  await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('F24 starting manuscript');
+});
+
 test('F05 failed save rejects flush, keeps draft, and permits retry', async ({ page }) => {
   await page.evaluate(async () => {
     const modulePath = '/src/db.ts';

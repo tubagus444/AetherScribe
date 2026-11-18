@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { readChapter } from '@/src/services/chapterQueries';
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import {
   ShieldCheck, ScanSearch, Loader2, AlertTriangle, CheckCircle2, X, ChevronRight,
   ArrowUpRight, Layers, Sparkles, ChevronDown, ChevronUp, CheckSquare, Square,
@@ -60,9 +61,7 @@ export function ConsistencyPanel({ projectId }: ConsistencyPanelProps) {
   const { activeChapterId, jumpToText } = useNavigation();
   const { codexEntries, bibleRules, relationships } = useProjectData(projectId);
 
-  const chapters = useLiveQuery(() =>
-    db.chapters.where('projectId').equals(projectId).sortBy('order')
-  , [projectId]);
+  const chapters = useProjectChapters(projectId, 'manuscript');
 
   const [mode, setMode] = useState<'single' | 'batch'>('single');
 
@@ -142,7 +141,7 @@ export function ConsistencyPanel({ projectId }: ConsistencyPanelProps) {
   // Run single chapter check
   const runCheck = async () => {
     if (selectedChapterId == null) return;
-    const chapter = await db.chapters.get(selectedChapterId);
+    const chapter = await readChapter(selectedChapterId);
     if (!chapter) {
       setError('Bab tidak ditemukan.');
       return;

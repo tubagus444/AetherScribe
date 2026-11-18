@@ -1,3 +1,4 @@
+import { useChapterList } from '@/src/hooks/useChapterQueries';
 import { changeChapters } from '@/src/services/chapterOperations';
 import { useToast } from '@/src/hooks/useToast';
 import type { ChapterListMetadata } from '@/src/lib/chapterMetadata';
@@ -24,7 +25,7 @@ export function ChapterList({ projectId, activeChapterId, onSelect }: ChapterLis
   const { toast } = useToast();
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const chapters = useOptimizedLiveQuery(() => readChapterList(projectId), [projectId]);
+  const chapters = useChapterList(projectId);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 

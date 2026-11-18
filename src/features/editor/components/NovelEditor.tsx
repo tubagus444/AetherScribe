@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { readChapter } from '@/src/services/chapterQueries';
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -84,7 +86,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   useEffect(() => {
     let isMounted = true;
     setChapter(undefined); // Start loading
-    db.chapters.get(chapterId).then(data => {
+    readChapter(chapterId).then(data => {
       if (isMounted) {
         setChapter(data || null); // null if not found
       }
@@ -96,7 +98,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   const { categories } = useCodexCategories(projectId);
 
   // Data untuk konsistensi inline (Fase 1, deterministik): urutan bab + timeline.
-  const allChapters = useLiveQuery(() => db.chapters.where('projectId').equals(projectId).toArray(), [projectId]);
+  const allChapters = useProjectChapters(projectId);
   const timelineEvents = useLiveQuery(() => db.timeline.where('projectId').equals(projectId).toArray(), [projectId]);
   const chapterRefs = useMemo(
     () => (allChapters || []).filter(c => c.id != null).map(c => ({ id: c.id!, order: c.order, title: c.title })),

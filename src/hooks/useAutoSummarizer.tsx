@@ -1,7 +1,7 @@
+import { readChapter } from '@/src/services/chapterQueries';
 import { useEffect, useRef } from 'react';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { saveGeneratedSummary } from '@/src/services/chapterOperations';
-import { db } from '@/src/db';
 import { callProxy, getLightModelForProvider } from '@/src/services/ai/proxy';
 
 // We should have a debouncer or background tracking.
@@ -64,7 +64,7 @@ export async function summarizeChapterBackground(chapterId: number) {
   if (inFlight.has(chapterId)) return; // sudah diproses; cegah panggilan kembar
   inFlight.add(chapterId);
   try {
-    const chapter = await db.chapters.get(chapterId);
+    const chapter = await readChapter(chapterId);
     if (!chapter || !chapter.content || chapter.content.trim().length < 50) {
       return; // Too short to summarize
     }

@@ -1,3 +1,4 @@
+import { readFirstChapter, readChapter } from '@/src/services/chapterQueries';
 import { normalizeViewMode } from '@/src/lib/studioNavigation';
 /**
  * @license
@@ -5,8 +6,6 @@ import { normalizeViewMode } from '@/src/lib/studioNavigation';
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { ViewMode, WorkshopTarget } from '@/src/types';
 import { useProject } from '@/src/contexts/ProjectContext';
 
@@ -114,7 +113,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   // Load first chapter when project changes
   useEffect(() => {
     if (projectId) {
-      db.chapters.where('projectId').equals(projectId).first().then(ch => {
+      readFirstChapter(projectId).then(ch => {
         if (ch) setActiveChapterId(ch.id!);
       });
       // Hanya reset ke editor saat benar-benar BERPINDAH proyek, bukan saat
@@ -133,10 +132,10 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     const syncActiveChapter = async () => {
       if (!activeChapterId || !projectId) return;
 
-      const current = await db.chapters.get(activeChapterId);
+      const current = await readChapter(activeChapterId);
       
       if (!current && isMounted) {
-        const nextCh = await db.chapters.where('projectId').equals(projectId).first();
+        const nextCh = await readFirstChapter(projectId);
         if (isMounted) {
           setActiveChapterId(nextCh?.id || null);
         }

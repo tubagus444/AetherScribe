@@ -1,11 +1,8 @@
 import type { Table, UpdateSpec } from 'dexie';
 import { db } from '@/src/db';
 import { validateWriteFields } from '@/src/lib/backupValidation';
-import { requestId } from '@/src/lib/dataContracts';
-
-export function assertWriteId(value: unknown, label: string): asserts value is number {
-  if (!requestId(value)) throw new Error(`${label} tidak valid.`);
-}
+import { assertWriteId } from '@/src/lib/dataContracts';
+export { assertWriteId };
 
 export async function requireRow<Row, Key>(table: Table<Row, Key>, id: Key): Promise<Row> {
   assertWriteId(id, `ID ${table.name}`);

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Telescope, Search, Loader2, RefreshCw, Sparkles, AlertTriangle, BookOpen, DatabaseZap, FolderHeart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -37,10 +37,7 @@ function highlightTermFrom(snippet: string): string {
 export function SemanticSearchPanel({ projectId }: SemanticSearchPanelProps) {
   const { jumpToText } = useNavigation();
 
-  const chapters = useLiveQuery(
-    () => db.chapters.where('projectId').equals(projectId).toArray(),
-    [projectId]
-  );
+  const chapters = useProjectChapters(projectId);
   const indexedCount = useLiveQuery(() => countIndexedScenes(projectId), [projectId]) ?? 0;
 
   const chapterTitles = useMemo(() => {

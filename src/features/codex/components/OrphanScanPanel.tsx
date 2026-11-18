@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import React, { useState, useCallback, useRef } from 'react';
 import { addCodexEntry } from '@/src/services/codexOperations';
-import { db } from '@/src/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { UserSearch, ScanSearch, Plus, EyeOff, Loader2, Sparkles, CheckCircle2, Wand2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProjectData } from '@/src/hooks/useProjectData';
@@ -57,9 +56,7 @@ function saveIgnored(projectId: number, set: Set<string>) {
 export function OrphanScanPanel({ projectId }: OrphanScanPanelProps) {
   const { codexEntries, bibleRules } = useProjectData(projectId);
 
-  const chapters = useLiveQuery(() =>
-    db.chapters.where('projectId').equals(projectId).toArray()
-  , [projectId]);
+  const chapters = useProjectChapters(projectId);
 
   const [minCount, setMinCount] = useState(3);
   const [scanning, setScanning] = useState(false);

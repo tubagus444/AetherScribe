@@ -47,7 +47,7 @@ Status pelaksanaan dicatat di tabel ini.
 | 2 | DB02 | Pusatkan operasi perubahan data | Selesai, diverifikasi lokal |
 | 3 | DB03 | Validasi penulisan dan integritas relasi | Selesai, diverifikasi lokal |
 | 4 | DB04 | Katalog tabel dan kebijakan data | Selesai, diverifikasi lokal |
-| 5 | DB05 | Kontrak akses data dan adapter Dexie | Direncanakan |
+| 5 | DB05 | Kontrak akses data dan adapter Dexie | Selesai, diverifikasi lokal |
 | 6 | DB06 | Kontrak data dan evolusi skema | Direncanakan |
 | 7 | DB07 | Format ekspor portabel | Direncanakan |
 | 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Direncanakan |
@@ -129,6 +129,23 @@ Status pelaksanaan dicatat di tabel ini.
   Verifikasi lokal mencakup 802 tes unit/integrasi, 28 tes Chromium, typecheck
   umum dan strict, maintenance, serta build produksi.
 
+### Hasil DB05
+
+- Kueri, penulisan, dan langganan perubahan bab serta snapshot memakai kontrak
+  di `src/lib/chapterStorage.ts` dan adapter Dexie di
+  `src/adapters/dexieChapterStorage.ts`. Hook di `src/hooks/useChapterQueries.ts`
+  menangani langganan UI. [Kontrak penyimpanan bab](docs/database.md#kontrak-akses-bab-dan-riwayat-versi-db05)
+- Ganti teks lintas bab dan pemulihan versi tetap atomik bersama snapshot
+  pengaman. Chromium memeriksa pembaruan judul dan riwayat versi antartab, serta
+  rollback naskah dan snapshot saat penulisan gagal.
+- Verifikasi lokal mencakup 802 tes unit/integrasi, typecheck umum dan strict,
+  maintenance, serta build produksi. Sebanyak 64 dari 65 tes Chromium lulus
+  pada putaran penuh. Uji simpan draf terputus oleh hot reload Vite saat berkas
+  sumber disunting dan lulus saat seluruh 20 tes di `e2e/critical.spec.ts` diulang.
+- Cakupan awal adalah bab dan riwayat versi. Bootstrap proyek, cadangan, dan
+  layanan domain lain mengikuti jalur Dexie masing-masing. Skema v34 dan format
+  cadangan v8 tetap berlaku. Evolusi skema dilanjutkan pada DB06.
+
 ## Pilihan tindak lanjut
 
 Belum menjadi pekerjaan aktif. Tidak perlu menambah tes hanya untuk menaikkan
@@ -142,11 +159,13 @@ jumlah tes; pilih skenario yang sesuai dengan pemakaian aplikasi.
 
 ## Batas verifikasi
 
-- Strict mencakup **31 root/44 source**; maintenance menjaga **54 berkas** dan
+- Strict mencakup **32 root/46 source**; maintenance menjaga **54 berkas** dan
   18 ekspor publik AI. Strict belum mencakup seluruh aplikasi.
 - Hasil lokal terbaru memakai Windows/Node 24.15.0 dan Chromium, fixture sintetis,
-  DB/context terisolasi serta provider/Drive mock. Browser lain, screen reader
-  manual, akun/provider nyata dan koordinasi lintas tab belum diverifikasi.
+  DB/context terisolasi serta provider/Drive mock. Verifikasi antartab DB05
+  mencakup pembaruan judul bab dan riwayat versi. Browser lain, screen reader
+  manual, akun/provider nyata dan koordinasi operasi lain antartab masih di luar
+  cakupan verifikasi ini.
 - Worker aktif untuk persiapan auto internal besar; antrean berlaku per tab.
   Collect/flush, serialisasi Blob dan checksum penuh masih pada jalur sebelumnya.
   Pengukuran latensi/memori eksperimen bukan benchmark ulang integrasi atau peak RSS.

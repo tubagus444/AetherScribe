@@ -480,3 +480,26 @@ jalur remap jika tabel ikut impor proyek.
 `AetherScribeHandles.kv` adalah object store IndexedDB terpisah yang menyimpan
 handle folder backup lokal. Handle bertahan sampai dihapus atau diganti,
 serta dikecualikan dari ekspor, impor, pemulihan workspace, dan penghapusan proyek.
+
+## Kontrak akses bab dan riwayat versi (DB05)
+
+Layanan bab dan snapshot menggunakan [kontrak penyimpanan bab](../src/lib/chapterStorage.ts).
+[Adapter Dexie](../src/adapters/dexieChapterStorage.ts) menangani indeks,
+transaksi, dan kegagalan penyimpanan. Daftar bab dan statistik kata tetap
+membaca metadata dari indeks v34 tanpa memuat HTML. Kegagalan dari IndexedDB atau
+Dexie dipetakan ke `ChapterStorageError` dengan jenis `quota` atau `failed`.
+
+- `transact(scope, work)` memberikan repository sesuai operasi. Scope `history`
+  mencakup bab dan snapshot untuk penggantian teks serta pemulihan versi. Scope
+  `create` mencakup pemeriksaan proyek induk. Scope `remove` mencakup pembersihan
+  referensi bab dan pengurutan ulang dalam transaksi yang sama. Reload editor dan
+  notifikasi penghapusan berjalan setelah transaksi berhasil.
+- `observe(query)` mengirim hasil awal dan menghitung ulang kueri yang terpengaruh
+  oleh perubahan tersimpan. Adapter memakai Dexie live query, termasuk perubahan
+  dari tab lain pada origin yang sama. [Hook React](../src/hooks/useChapterQueries.ts)
+  melepas langganan saat ID berubah atau komponen ditutup. Editor aktif memuat
+  isi awal saat membuka bab dan memuat ulang setelah pemulihan atau penggantian
+  teks melalui editor bridge.
+- Kontrak ini mencakup bab dan riwayat versi. Bootstrap proyek, impor/pemulihan
+  cadangan, dan validasi referensi dari domain lain tetap memakai transaksi Dexie
+  masing-masing. Skema v34 dan format cadangan v8 tetap berlaku.

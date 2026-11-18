@@ -1,8 +1,8 @@
 import 'fake-indexeddb/auto';
-import Dexie, { liveQuery } from 'dexie';
+import Dexie from 'dexie';
 import { afterAll, afterEach, expect, it, vi } from 'vitest';
 import { db } from '@/src/db';
-import { readChapterList, readLatestChapterModified } from './chapterQueries';
+import { observeChapterQuery, readChapterList, readLatestChapterModified } from './chapterQueries';
 import { backupService } from './backupService';
 import * as utils from '@/src/lib/utils';
 
@@ -67,8 +67,9 @@ it('import/restore rebuild derived keys instead of trusting metadata from the fi
 it('live queries observe metadata edits and index-key timestamp changes', async () => {
   const id = await db.chapters.add(chapter());
   const values: number[] = [], modified: number[] = [];
-  const subscription = liveQuery(() => readChapterList(1)).subscribe(rows => values.push(rows[0]?._computedWordCount ?? 0));
-  const latest = liveQuery(() => readLatestChapterModified(1)).subscribe(value => modified.push(value));
+  const onError = vi.fn();
+  const stopList = observeChapterQuery(read => read.readChapterList(1))(rows => values.push(rows[0]?._computedWordCount ?? 0), onError);
+  const stopModified = observeChapterQuery(read => read.readLatestChapterModified(1))(value => modified.push(value), onError);
   try {
     await vi.waitFor(() => expect(values.at(-1)).toBe(2));
     await vi.waitFor(() => expect(modified.at(-1)).toBe(1));
@@ -78,7 +79,8 @@ it('live queries observe metadata edits and index-key timestamp changes', async 
     await db.chapters.delete(id);
     await vi.waitFor(() => expect(values.at(-1)).toBe(0));
     await vi.waitFor(() => expect(modified.at(-1)).toBe(0));
-  } finally { subscription.unsubscribe(); latest.unsubscribe(); }
+    expect(onError).not.toHaveBeenCalled();
+  } finally { stopList(); stopModified(); }
 });
 
 it('upgrades a real v33 database with a cursor migration and preserves source text', async () => {

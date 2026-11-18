@@ -18,7 +18,6 @@ vi.mock('@/src/db', async () => {
   db.version(1).stores({ chapters: '++id,projectId', snapshots: '++id,chapterId' });
   return { db };
 });
-vi.mock('dexie-react-hooks', () => ({ useLiveQuery: () => [chapter] }));
 vi.mock('@/src/hooks/useToast', () => ({ useToast: () => ({ toast }) }));
 vi.mock('motion/react', () => ({ motion: { div: ({ children, initial, animate, ...props }: any) => <div {...props}>{children}</div> } }));
 
