@@ -11,6 +11,7 @@ import { CalendarClock, CalendarDays, Plus, Trash2, Pencil, GripVertical, X, Boo
 import { motion, AnimatePresence } from 'motion/react';
 import { useProjectData } from '@/src/hooks/useProjectData';
 import { useNavigation } from '@/src/contexts/NavigationContext';
+import { useToast } from '@/src/hooks/useToast';
 import { TimelineEvent, TimelineEventType, CodexEntry, WorldCalendar } from '@/src/types';
 import { formatDateRange } from '@/src/lib/worldCalendar';
 import { cn } from '@/src/lib/utils';
@@ -43,6 +44,7 @@ const EMPTY_FORM: FormState = { title: '', eventDate: '', description: '', type:
 
 export function TimelinePanel({ projectId }: TimelinePanelProps) {
   const { setViewMode } = useNavigation();
+  const { toast } = useToast();
   const { codexEntries } = useProjectData(projectId);
 
   const events = useLiveQuery(() =>
@@ -117,7 +119,6 @@ export function TimelinePanel({ projectId }: TimelinePanelProps) {
     const title = form.title.trim();
     if (!title) return;
     const payload = {
-      projectId,
       title,
       eventDate: form.eventDate.trim() || undefined,
       description: form.description.trim(),
@@ -126,12 +127,16 @@ export function TimelinePanel({ projectId }: TimelinePanelProps) {
       characterIds: form.characterIds.length ? form.characterIds : undefined
     };
 
-    if (editingId === 'new') {
-      await addTimelineEvent(payload);
-    } else if (typeof editingId === 'number') {
-      await updateTimelineEvent(editingId, payload);
+    try {
+      if (editingId === 'new') {
+        await addTimelineEvent({ ...payload, projectId });
+      } else if (typeof editingId === 'number') {
+        await updateTimelineEvent(editingId, payload);
+      }
+      closeForm();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan peristiwa.');
     }
-    closeForm();
   };
 
   const remove = async (id: number) => {
@@ -142,7 +147,11 @@ export function TimelinePanel({ projectId }: TimelinePanelProps) {
   // Reorder dengan menormalkan ulang seluruh field order (anti tabrakan nilai).
   const reorder = async (from: number, to: number) => {
     if (from === to || from < 0 || to < 0 || from >= ordered.length || to >= ordered.length) return;
-    await moveTimelineEvent(projectId, ordered[from].id!, ordered[to].id!);
+    try {
+      await moveTimelineEvent(projectId, ordered[from].id!, ordered[to].id!);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal mengurutkan peristiwa.');
+    }
   };
 
   const handleDrop = (targetIndex: number) => {

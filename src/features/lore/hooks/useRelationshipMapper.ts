@@ -136,10 +136,6 @@ export function useRelationshipMapper(projectId: number) {
     setIsAdding(true);
   };
 
-  const deleteRelationship = async (id: number) => {
-    await deleteRelationship(id);
-  };
-
   const getCharacterName = (id: number) => allEntries?.find(c => c.id === id)?.name || characters?.find(c => c.id === id)?.name || '(entri dihapus)';
 
   return {

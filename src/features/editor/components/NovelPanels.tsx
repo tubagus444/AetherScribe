@@ -79,8 +79,8 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleR
                 <SnapshotPanel 
                   chapterId={chapterId} 
                   currentContent={editor?.getHTML() || ''} 
-                  onRestore={async (text) => {
-                    await restoreChapterSnapshot(chapterId, text);
+                  onRestore={async (snapshotId) => {
+                    await restoreChapterSnapshot(chapterId, snapshotId);
                     setActivePanel('none');
                   }} 
                 />

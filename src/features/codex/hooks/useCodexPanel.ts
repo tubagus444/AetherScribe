@@ -1,7 +1,7 @@
 import { deleteCodexEntry } from '@/src/services/entityDeletion';
 import { useState, useMemo, useEffect } from 'react';
 import { updateCodexEntry, addCodexEntries, addCodexEntry } from '@/src/services/codexOperations';
-import { addRelationship, deleteRelationship } from '@/src/services/loreOperations';
+import { addRelationship, deleteRelationship as removeRelationship } from '@/src/services/loreOperations';
 import { updatePlotPromise } from '@/src/services/continuityOperations';
 import { db } from '@/src/db';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
@@ -230,14 +230,10 @@ export function useCodexPanel(projectId: number) {
     await addRelationship({ projectId, sourceId, targetId, type });
   };
 
-  const deleteRelationship = async (id: number) => {
-    await deleteRelationship(id);
-  };
-
   // Bersihkan satu tautan menggantung (#9): relasi yatim dihapus, FK janji dilepas.
   const resolveDangling = async (ref: DanglingRef) => {
     if (ref.kind === 'relationship' && ref.relationshipId != null) {
-      await deleteRelationship(ref.relationshipId);
+      await removeRelationship(ref.relationshipId);
     } else if (ref.promiseId != null) {
       const field = ref.kind === 'promise-codex' ? 'codexId' : 'payoffCodexId';
       await updatePlotPromise(ref.promiseId, { [field]: undefined });
@@ -282,7 +278,7 @@ export function useCodexPanel(projectId: number) {
     confirmDelete,
     cancelEdit,
     addBond,
-    deleteRelationship,
+    deleteRelationship: removeRelationship,
     resolveDangling
   };
 }

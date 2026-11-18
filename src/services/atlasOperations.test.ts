@@ -6,6 +6,7 @@ import { createAtlasOperations } from './atlasOperations';
 afterEach(async () => { for (const table of db.tables) await table.clear(); });
 afterAll(async () => { await db.delete(); });
 it('creates and updates map/marker records and delegates map deletion to domain cleanup', async () => {
+  await db.projects.add({ id: 1, name: 'Atlas', description: '', createdAt: 1, lastOpened: 1 });
   const ops = createAtlasOperations(1);
   const id = await ops.createMap(' Main ', { blob: new Blob(), width: 20, height: 10, resized: false });
   const otherId = await ops.createMap('Other', { blob: new Blob(), width: 20, height: 10, resized: false });

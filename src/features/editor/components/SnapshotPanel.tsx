@@ -18,7 +18,7 @@ import type { Snapshot } from '@/src/types';
 interface SnapshotPanelProps {
   chapterId: number;
   currentContent: string;
-  onRestore: (content: string) => Promise<void>;
+  onRestore: (snapshotId: number) => Promise<void>;
 }
 
 export function SnapshotPanel({ chapterId, currentContent, onRestore }: SnapshotPanelProps) {
@@ -33,19 +33,31 @@ export function SnapshotPanel({ chapterId, currentContent, onRestore }: Snapshot
 
   const takeSnapshot = async () => {
     if (!currentContent.trim()) return;
-    await addSnapshot({
-      chapterId,
-      content: currentContent,
-      label: label || `Snapshot ${format(new Date(), 'd MMM, HH:mm')}`,
-      timestamp: Date.now()
-    });
-    setLabel('');
-    checkStorageQuota();
+    try {
+      await addSnapshot({
+        chapterId,
+        content: currentContent,
+        label: label || `Snapshot ${format(new Date(), 'd MMM, HH:mm')}`,
+        timestamp: Date.now(),
+      });
+      setLabel('');
+      void checkStorageQuota();
+    } catch {
+      toast.error('Gagal membuat snapshot bab.');
+    }
   };
 
-  const doRestore = async (snap: { content: string }) => {
+  const removeSnapshot = async (id: number) => {
     try {
-      await onRestore(snap.content);
+      await deleteSnapshot(chapterId, id);
+    } catch {
+      toast.error('Gagal menghapus snapshot bab.');
+    }
+  };
+
+  const doRestore = async (snap: Snapshot) => {
+    try {
+      await onRestore(snap.id!);
       void checkStorageQuota();
     } catch (error) {
       console.error('Snapshot restore failed:', error);
@@ -54,7 +66,7 @@ export function SnapshotPanel({ chapterId, currentContent, onRestore }: Snapshot
   };
 
   // Pemulihan langsung dari kartu → konfirmasi dulu (belum melihat perbandingan).
-  const restoreSnapshot = async (snap: { label: string; content: string }) => {
+  const restoreSnapshot = async (snap: Snapshot) => {
     const ok = window.confirm(
       `Pulihkan ke versi "${snap.label}"?\n\nNaskah saat ini akan ditimpa. Sebuah snapshot otomatis dari naskah sekarang akan dibuat lebih dulu agar perubahan ini bisa dikembalikan.`
     );
@@ -114,7 +126,7 @@ export function SnapshotPanel({ chapterId, currentContent, onRestore }: Snapshot
                   <p className="text-[10px] text-slate-400 dark:text-slate-500">{format(snap.timestamp, 'MMM d, yyyy HH:mm:ss')}</p>
                 </div>
                 <button 
-                  onClick={() => deleteSnapshot(snap.id!)}
+                  onClick={() => removeSnapshot(snap.id!)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 transition-all"
                 >
                   <Trash2 size={12} />

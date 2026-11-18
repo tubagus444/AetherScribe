@@ -427,3 +427,32 @@ Data proyek yang sudah ada tetap dipilih lewat lastOpened. Tidak mengubah schema
 v34, migrasi lama atau membersihkan duplikat historis otomatis.
 Tes browser dimulai dari IndexedDB kosong atau schema historis v17/v33 sebelum
 React dimuat; lihat [bukti L02](audits/2026-11-15-l02-installation.md).
+
+## Validasi penulisan dan kebijakan relasi (DB03)
+
+Layanan memvalidasi field runtime yang ditulis. Input pembuatan memerlukan
+nilai wajib dan menerima ID dari Dexie. Patch memvalidasi field yang diberikan
+dan menjaga identitas record serta kepemilikan proyek. Field opsional dapat
+dilepas dengan `undefined`. Referensi baru harus menunjuk ke record yang ada
+di proyek yang sama. Pemeriksaan dan penulisan berbagi transaksi IndexedDB.
+
+| Induk yang dihapus | Anak yang dihapus | Referensi yang dilepas |
+| --- | --- | --- |
+| Proyek | Record milik proyek, termasuk snapshot yang babnya teridentifikasi | Tautan lama dari proyek lain ke bab, Codex, dan peta yang ikut terhapus |
+| Bab | Snapshot dan embedding adegan | Tautan bab pada timeline, sesi AI, dan janji plot |
+| Entri Codex | Relasi dengan ujung pada entri tersebut dan embedding entri | Peserta timeline, penanda, janji plot, dan target lokakarya. Percakapan lokakarya yang masih ada menjadi sesi Studio |
+| Peta | Penanda yang memakai peta tersebut sebagai induk | Portal dari penanda yang masih ada |
+| Kategori Codex kustom | Definisi kategori | Entri dengan slug itu di proyek yang sama pindah ke kategori `other`. Field dan deskripsi entri dipertahankan |
+
+Snapshot hanya dapat dipulihkan atau dihapus melalui bab pemiliknya. Hasil
+embedding yang terlambat tiba akan dilewati bila induknya hilang atau berada di
+proyek lain. Tautan berupa label, slug kategori, dan ID profil kecepatan bersifat
+metadata. Validasi file cadangan dan pemetaan ID impor tetap berlaku pada jalur
+masing-masing.
+
+**Pengaturan → Data & Cadangan → Periksa Relasi Data** menjalankan pemeriksaan
+baca-saja atas semua proyek. Laporan menampilkan tabel, ID record, dan field
+untuk referensi invalid, hilang, atau lintas proyek, termasuk pada cache turunan.
+Data lama tetap dapat dibaca. Patch yang tidak menyentuh tautan lama tetap
+diterima, dan snapshot yatim yang tidak dapat diatribusikan ke proyek yang
+dihapus dipertahankan. Pemeriksaan ini tidak memodifikasi data atau skema.

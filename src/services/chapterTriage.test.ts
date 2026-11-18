@@ -6,9 +6,10 @@ import { writeTriage } from './continuityTriageService';
 import { registerActiveEditor, unregisterActiveEditor } from '@/src/features/editor/editorBridge';
 
 beforeEach(async () => {
+  await db.projects.bulkAdd([1, 2].map(id => ({ id, name: `Proyek ${id}`, description: '', createdAt: 1, lastOpened: 1 })));
   await db.chapters.bulkAdd([1, 2, 3].map(id => ({ id, projectId: 1, title: `Bab ${id}`, content: '<p>Isi asli</p>', summary: 'Ringkasan', status: 'draft' as const, order: id === 3 ? 8 : 0, lastModified: 1 })));
 });
-afterEach(async () => { vi.restoreAllMocks(); await db.chapters.clear(); await db.continuityTriage.clear(); });
+afterEach(async () => { vi.restoreAllMocks(); await db.chapters.clear(); await db.projects.clear(); await db.continuityTriage.clear(); });
 afterAll(async () => { await db.delete(); });
 
 it('F06 duplicates full HTML and metadata into a new ID immediately after source', async () => {

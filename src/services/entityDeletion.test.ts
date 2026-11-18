@@ -58,13 +58,13 @@ it('codex deletion unlinks all structured references while retaining author text
   expect((await db.chatSessions.get(1))!.workshopKey).toBeUndefined();
   expect(await db.codex.get(2)).toBeDefined();
 });
-it('project deletion removes legacy orphan snapshots but preserves live snapshots and backup history', async () => {
+it('project deletion preserves unrelated legacy snapshots and backup history', async () => {
   await db.snapshots.add({ chapterId: 999, content: 'Orphan', label: '', timestamp: 1 });
   await db.backups.add({ timestamp: 1, data: '{}', size: 2 });
   await deleteProjectData(1);
   expect(await db.projects.get(1)).toBeUndefined();
   expect(await db.projects.get(2)).toBeDefined();
-  expect((await db.snapshots.toArray()).map(r => r.chapterId)).toEqual([2]);
+  expect((await db.snapshots.toArray()).map(r => r.chapterId)).toEqual([2, 999]);
   expect(await db.backups.count()).toBe(1);
   expect((await db.mapMarkers.get(2))!.linkedMapId).toBeUndefined();
 });

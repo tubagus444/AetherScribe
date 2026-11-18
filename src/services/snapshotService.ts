@@ -9,16 +9,26 @@
 import { db } from '@/src/db';
 import type { Snapshot } from '@/src/types';
 import { format } from 'date-fns';
+import { validateWriteFields } from '@/src/lib/backupValidation';
+import { requireRow } from './writeIntegrity';
 
 /** Maksimal snapshot otomatis yang disimpan per-bab; sisanya (terlama) dipangkas. */
 const MAX_AUTO_PER_CHAPTER = 12;
 
-export function addSnapshot(snapshot: Omit<Snapshot, 'id'>) {
-  return db.snapshots.add(snapshot);
+export async function addSnapshot(snapshot: Omit<Snapshot, 'id'>) {
+  validateWriteFields('snapshots', snapshot, 'create');
+  return db.transaction('rw', db.chapters, db.snapshots, async () => {
+    await requireRow(db.chapters, snapshot.chapterId);
+    return db.snapshots.add(snapshot);
+  });
 }
 
-export function deleteSnapshot(id: number) {
-  return db.snapshots.delete(id);
+export async function deleteSnapshot(chapterId: number, id: number) {
+  await db.transaction('rw', db.snapshots, async () => {
+    const snapshot = await requireRow(db.snapshots, id);
+    if (snapshot.chapterId !== chapterId) throw new Error('Snapshot berasal dari bab lain.');
+    await db.snapshots.delete(id);
+  });
 }
 
 /** Dipanggil dalam transaksi yang mencakup tabel snapshots. */
@@ -50,7 +60,7 @@ export async function saveAutoSnapshot(chapterId: number, content: string, reaso
 /** Snapshot pendukung untuk operasi editor yang tetap berjalan saat snapshot gagal. */
 export async function createAutoSnapshot(chapterId: number, content: string, reason: string): Promise<number | null> {
   try {
-    return await db.transaction('rw', db.snapshots, () => saveAutoSnapshot(chapterId, content, reason));
+    return await db.transaction('rw', db.chapters, db.snapshots, () => saveAutoSnapshot(chapterId, content, reason));
   } catch (err) {
     console.error('Auto-snapshot gagal:', err);
     return null;

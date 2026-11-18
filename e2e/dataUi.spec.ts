@@ -258,6 +258,58 @@ test('L03 Codex delete cancellation preserves data then confirmation unlinks ref
   expect(after.chapters).toEqual(before.chapters);
 });
 
+test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.codex.update(1, { category: 'character' });
+    await db.codex.add({ id: 3, projectId: 1, name: 'Tokoh lain', description: '', category: 'character', aliases: [], tags: [] });
+    await db.relationships.update(1, { targetId: 3, type: 'Friend' });
+    await db.relationships.add({ id: 2, projectId: 2, sourceId: 2, targetId: 2, type: 'self' });
+    localStorage.setItem('aether_view_mode', 'relationships');
+  });
+  const before = await state(page);
+  await page.reload();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByTitle('Hapus hubungan', { exact: true }).click();
+  await expect.poll(async () => (await state(page)).relationships.map(row => row.id)).toEqual([2]);
+  expect((await state(page)).codex).toEqual(before.codex);
+});
+
+test('DB03 restores the selected version and keeps the previous draft', async ({ page }) => {
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.snapshots.update(1, { label: 'Versi lama', content: '<p>Versi lama bab ini</p>' });
+  });
+  await editor.fill('Draf sebelum pemulihan');
+  await page.getByRole('button', { name: 'Riwayat Versi', exact: true }).click();
+  await expect(page.getByText('Versi lama', { exact: true })).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Pulihkan', exact: true }).click();
+  await expect(editor).toHaveText('Versi lama bab ini');
+  const result = await state(page);
+  expect(result.chapters[0].content).toBe('<p>Versi lama bab ini</p>');
+  expect(result.snapshots).toContainEqual(expect.objectContaining({
+    chapterId: 1, content: '<p>Draf sebelum pemulihan</p>', auto: true,
+  }));
+});
+
+test('DB03 integrity report finds a foreign chapter link and leaves the text intact', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.timeline.update(1, { chapterId: 2 });
+  });
+  const before = await state(page);
+  await settings(page);
+  await page.getByRole('button', { name: 'Periksa Relasi Data', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: '1 masalah relasi ditemukan.' })).toBeVisible();
+  await expect(page.getByText('timeline #1 · chapterId · Target berada di proyek lain', { exact: true })).toBeVisible();
+  expect(await state(page)).toEqual(before);
+});
+
 test('DB02 new project rolls back if its first chapter cannot be created', async ({ page }) => {
   const before = await state(page);
   await page.evaluate(async () => {

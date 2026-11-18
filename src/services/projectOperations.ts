@@ -1,12 +1,19 @@
 import { db } from '@/src/db';
+import { validateWriteFields } from '@/src/lib/backupValidation';
+import { assertWriteId } from './writeIntegrity';
 import { recordWordCount } from '@/src/lib/dailyProgress';
 import type { Project } from '@/src/types';
 
-export function updateProject(id: number, changes: Partial<Pick<Project, 'name' | 'lastOpened' | 'calendar' | 'travelSpeeds' | 'wordGoal' | 'dailyGoal'>>) {
-  return db.projects.update(id, changes);
+export async function updateProject(id: number, changes: Partial<Pick<Project, 'name' | 'lastOpened' | 'calendar' | 'travelSpeeds' | 'wordGoal' | 'dailyGoal'>>) {
+  assertWriteId(id, 'ID proyek');
+  validateWriteFields('projects', changes, 'patch', ['name', 'lastOpened', 'calendar', 'travelSpeeds', 'wordGoal', 'dailyGoal']);
+  const affected = await db.projects.update(id, changes);
+  if (!affected) throw new Error('Proyek tidak ditemukan.');
+  return affected;
 }
 
 export async function createProjectWithChapter(name: string) {
+  validateWriteFields('projects', { name }, 'patch');
   return db.transaction('rw', db.projects, db.chapters, async () => {
     const now = Date.now();
     const projectId = await db.projects.add({ name, description: 'New Manuscript', createdAt: now, lastOpened: now });

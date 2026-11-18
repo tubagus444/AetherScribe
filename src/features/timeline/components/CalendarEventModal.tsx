@@ -99,7 +99,6 @@ export function CalendarEventModal({
     setSaving(true);
     try {
       const payload = {
-        projectId,
         title: title.trim(),
         description: description.trim(),
         type,
@@ -112,7 +111,7 @@ export function CalendarEventModal({
         // Pertahankan eventDate teks lama & order; hapus endDate bila rentang dimatikan.
         await updateTimelineEvent(ev!.id!, payload);
       } else {
-        await addTimelineEvent(payload);
+        await addTimelineEvent({ ...payload, projectId });
       }
       toast.success(isEdit ? 'Peristiwa diperbarui.' : 'Peristiwa ditambahkan ke kalender.');
       onClose();

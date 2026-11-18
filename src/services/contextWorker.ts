@@ -17,7 +17,8 @@ import { buildPresenceIndex } from '@/src/lib/continuity';
 import { buildProseReport } from '@/src/lib/proseAnalysis';
 import { buildPacingReport } from '@/src/lib/pacingHeatmap';
 import { chunkChapter, hashChunk } from '@/src/lib/manuscriptChunker';
-import { SceneEmbedding } from '@/src/types';
+import { SceneEmbedding, VectorEmbedding } from '@/src/types';
+import { saveCodexEmbeddings, saveSceneEmbeddings } from './embeddingWrites';
 import { getEncoding, encodingForModel } from 'js-tiktoken';
 
 
@@ -250,7 +251,7 @@ async function ensureEmbeddings(allCodex: CodexEntry[]): Promise<void> {
 
     self.postMessage({ type: 'PROGRESS', payload: { type: 'embedding_start', total: toEmbed.length, completed: 0 } });
 
-    const toSaveToDb: any[] = [];
+    const toSaveToDb: VectorEmbedding[] = [];
     let done = 0;
     for (const entry of toEmbed) {
       const key = entry.id !== undefined ? entry.id : entry.name;
@@ -281,7 +282,7 @@ async function ensureEmbeddings(allCodex: CodexEntry[]): Promise<void> {
     }
 
     if (toSaveToDb.length > 0) {
-      db.embeddings.bulkPut(toSaveToDb).catch(e => console.warn("Failed to save embeddings to db", e));
+      saveCodexEmbeddings(toSaveToDb).catch(e => console.warn("Failed to save embeddings to db", e));
     }
     self.postMessage({ type: 'PROGRESS', payload: { type: 'embedding_done' } });
   } catch (error: any) {
@@ -525,14 +526,14 @@ async function indexManuscript(projectId: number, chapters: IndexChapterInput[])
       // Yield tiap 10 embedding agar pesan lain (mis. SEARCH) tetap terlayani.
       if (done % 10 === 0) {
         if (toSave.length > 0) {
-          db.sceneEmbeddings.bulkPut(toSave.splice(0)).catch(e => console.warn('Gagal menyimpan sceneEmbeddings', e));
+          saveSceneEmbeddings(toSave.splice(0)).catch(e => console.warn('Gagal menyimpan sceneEmbeddings', e));
         }
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
 
     if (toSave.length > 0) {
-      await db.sceneEmbeddings.bulkPut(toSave).catch(e => console.warn('Gagal menyimpan sceneEmbeddings', e));
+      await saveSceneEmbeddings(toSave).catch(e => console.warn('Gagal menyimpan sceneEmbeddings', e));
     }
     if (staleIds.length > 0) {
       await db.sceneEmbeddings.bulkDelete(staleIds).catch(e => console.warn('Gagal memangkas sceneEmbeddings basi', e));

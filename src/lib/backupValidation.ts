@@ -1,5 +1,6 @@
 import { BACKUP_LIMITS } from './backupLimits';
 import { validateImageDataUrl } from './blobCodec';
+import { record } from './dataContracts';
 
 type Row = Record<string, any>;
 type Check = (value: any, path: string) => void;
@@ -12,12 +13,15 @@ const bool: Check = (v, p) => { if (typeof v !== 'boolean') fail(p); };
 const choice = (...values: unknown[]): Check => (v, p) => { if (!values.includes(v)) fail(p); };
 const array = (check: Check): Check => (v, p) => {
   if (!Array.isArray(v) || v.length > BACKUP_LIMITS.recordsPerTable) fail(p);
-  v.forEach((item: unknown, i: number) => check(item, `${p}[${i}]`));
+  for (let i = 0; i < v.length; i++) check(v[i], `${p}[${i}]`);
 };
-const object = (required: Record<string, Check>, optional: Record<string, Check> = {}): Check => (v, p) => {
-  if (!v || typeof v !== 'object' || Array.isArray(v)) fail(p);
-  for (const [key, check] of Object.entries(required)) check(v[key], `${p}.${key}`);
-  for (const [key, check] of Object.entries(optional)) if (v[key] !== undefined) check(v[key], `${p}.${key}`);
+const object = (required: Record<string, Check>, optional: Record<string, Check> = {}) => {
+  const check: Check = (v, p) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) fail(p);
+    for (const [key, check] of Object.entries(required)) check(v[key], `${p}.${key}`);
+    for (const [key, check] of Object.entries(optional)) if (v[key] !== undefined) check(v[key], `${p}.${key}`);
+  };
+  return Object.assign(check, { required, optional });
 };
 const date = object({ era: nonnegative, year: id, month: id, day: id });
 const point = object({ x: number, y: number });
@@ -29,7 +33,17 @@ const calendar = object({
   seasons: array(object({ name: text, fromMonth: id, toMonth: id, color: text })),
 }, { holidays: array(object({ id: text, name: text, month: id, day: id }, { description: text, color: text })) });
 
-const schemas: Record<string, Check> = {
+const markerFields = object({ id, projectId: id, mapId: id, kind: choice('pin', 'area', 'route'), createdAt: nonnegative }, {
+  codexId: id, title: text, note: text, color: text, linkedMapId: id, meta: object({}, { speedProfileId: text }),
+});
+const markerGeometry: Check = (v, p) => {
+  if (v.kind === 'pin') relativePoint(v.geometry, p);
+  else {
+    array(relativePoint)(v.geometry, p);
+    if (v.geometry.length < (v.kind === 'area' ? 3 : 2)) fail(p);
+  }
+};
+const schemas: Record<string, ReturnType<typeof object>> = {
   projects: object({ id, name: text, description: text, createdAt: nonnegative, lastOpened: nonnegative }, {
     wordGoal: nonnegative, dailyGoal: nonnegative, lastWordCount: nonnegative, lastWordCountDate: text,
     dailyLog: (v, p) => { object({})(v, p); Object.entries(v).forEach(([k, n]) => nonnegative(n, `${p}.${k}`)); },
@@ -70,19 +84,41 @@ const schemas: Record<string, Check> = {
     imageDataUrl: (v) => validateImageDataUrl(v), imageAssetId: (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); },
     imageMissing: bool, scale: object({ distanceUnit: text, ratioToRelative: number }),
   }),
-  mapMarkers: (v, p) => {
-    object({ id, projectId: id, mapId: id, kind: choice('pin', 'area', 'route'), createdAt: nonnegative }, {
-      codexId: id, title: text, note: text, color: text, linkedMapId: id, meta: object({}, { speedProfileId: text }),
-    })(v, p);
-    if (v.kind === 'pin') relativePoint(v.geometry, `${p}.geometry`);
-    else {
-      array(relativePoint)(v.geometry, `${p}.geometry`);
-      if (v.geometry.length < (v.kind === 'area' ? 3 : 2)) fail(`${p}.geometry`);
-    }
-  },
+  mapMarkers: Object.assign((v: Row, p: string) => {
+    markerFields(v, p);
+    markerGeometry(v, `${p}.geometry`);
+  }, markerFields),
   continuityTriage: object({ id, projectId: id, findingId: text, status: choice('dismissed', 'acknowledged'), timestamp: nonnegative }),
 };
 export const BACKUP_TABLES = Object.keys(schemas);
+
+/** Validasi hanya field yang dikirim oleh patch agar field lama tetap utuh. */
+export function validateWriteFields(table: string, row: unknown, mode: 'create' | 'patch', allowed?: readonly string[]) {
+  const schema = schemas[table];
+  if (!record(row) || !schema) throw new Error(`Masukan ${table} tidak valid.`);
+  const keys = new Set(Object.keys(row));
+  if (mode === 'create') for (const key of Object.keys(schema.required)) if (key !== 'id') keys.add(key);
+  for (const key of keys) {
+    if (key === 'id' || (mode === 'patch' && key === 'projectId') || (allowed && !allowed.includes(key))) {
+      throw new Error(`Field ${table}.${key} tidak dapat ditulis.`);
+    }
+    const required = Object.hasOwn(schema.required, key);
+    const check = required ? schema.required[key] : Object.hasOwn(schema.optional, key) ? schema.optional[key] : undefined;
+    if (!check) throw new Error(`Field ${table}.${key} tidak dikenal.`);
+    const value = Object.hasOwn(row, key) ? row[key] : undefined;
+    if (!required && value === undefined) continue;
+    try { check(value, `${table}.${key}`); }
+    catch (cause) { throw new Error(`Nilai ${table}.${key} tidak valid.`, { cause }); }
+  }
+}
+
+export function validateMarkerGeometry(marker: { kind: import('@/src/types').MapMarker['kind']; geometry: unknown }) {
+  try {
+    markerFields.required.kind(marker.kind, 'mapMarkers.kind');
+    markerGeometry(marker, 'mapMarkers.geometry');
+  }
+  catch (cause) { throw new Error('Geometri penanda tidak valid.', { cause }); }
+}
 
 /** Batasi objek langsung sebelum stringify/clone; hanya nilai JSON, tanpa getter/prototype khusus. */
 function validateJsonBudget(value: unknown) {
