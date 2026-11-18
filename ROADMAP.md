@@ -33,6 +33,31 @@ Seluruh item selesai 15 November 2026.
 | L05 | Perluasan strict bertahap untuk helper backup dan Atlas | [Batch strict](docs/audits/2026-11-15-l05-strict.md) |
 | L06 | Pengukuran backup besar dan integrasi worker auto internal dengan antrean/fallback | [Integrasi dan verifikasi akhir](docs/performance/l06-integration.md) |
 
+<a id="database-improvement"></a>
+
+## Rencana peningkatan database — 18 November 2026
+
+Tetap menggunakan IndexedDB + Dexie. Rincian tugas, dependensi, aturan fitur baru,
+dan kriteria penerimaan ada di [rencana peningkatan database](docs/database-improvement-plan.md).
+Pencatatan rencana belum merupakan implementasi; status pelaksanaan hanya di tabel ini.
+
+| Urutan | ID | Pekerjaan | Status |
+|---|---|---|---|
+| 1 | DB01 | Perlindungan dan pemulihan naskah | Direncanakan |
+| 2 | DB02 | Pusatkan operasi perubahan data | Direncanakan |
+| 3 | DB03 | Validasi penulisan dan integritas relasi | Direncanakan |
+| 4 | DB04 | Katalog tabel dan kebijakan data | Direncanakan |
+| 5 | DB05 | Kontrak akses data dan adapter Dexie | Direncanakan |
+| 6 | DB06 | Kontrak data dan evolusi skema | Direncanakan |
+| 7 | DB07 | Format ekspor portabel | Direncanakan |
+| 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Direncanakan |
+| 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
+| 10 | DB10 | Pembuktian migrasi terisolasi | Bersyarat: target migrasi dipilih |
+
+Mulai dengan memeriksa kemampuan yang sudah tersedia pada DB01, lalu kerjakan
+DB02/DB03 per domain mulai bab/editor. Hasil audit lama tetap selesai; daftar ini
+merupakan rencana pengembangan berikutnya.
+
 ## Pilihan tindak lanjut
 
 Belum menjadi pekerjaan aktif. Tidak perlu menambah tes hanya untuk menaikkan

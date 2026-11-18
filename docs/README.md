@@ -8,6 +8,7 @@
 | Memahami arsitektur, worker, state, dan environment | [Arsitektur](architecture.md) |
 | Mencari fitur dan file implementasinya | [Katalog fitur](features.md) |
 | Memeriksa tabel, indeks, dan aturan migrasi | [Database](database.md) |
+| Merencanakan penguatan database dan kesiapan migrasi | [Rencana peningkatan database](database-improvement-plan.md) |
 | Memeriksa format backup, aset gambar, validasi, dan batas pemulihan | [Format backup](backup-format.md) |
 | Memeriksa endpoint proxy | [API](api.md) |
 | Menjalankan tes dan memeriksa hasil serta batas verifikasi terbaru | [Pengujian](testing.md) |
