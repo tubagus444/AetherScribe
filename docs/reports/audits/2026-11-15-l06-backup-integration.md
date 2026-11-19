@@ -48,7 +48,7 @@ restore UI diuji pada server e2e Vite. Fixture production awal ditolak karena
 tabel kosong wajib v8 belum disertakan; fixture diperbaiki tanpa melonggarkan
 validator. Typecheck umum/strict/maintenance, 91 berkas/792 tes beserta coverage,
 55 tes Chromium (3.1 menit), build/clean production serta startup/offline lulus
-lokal. Rincian coverage ada di [panduan tes](../testing.md); belum ada run GitHub.
+lokal. Rincian coverage ada di [panduan tes](../../testing.md); belum ada run GitHub.
 
 Eksperimen latensi/memori sebelumnya bukan pengukuran ulang integrasi. Belum
 menguji browser selain Chromium, peak RSS, disk nyata penuh, koordinasi lintas

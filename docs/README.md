@@ -1,67 +1,24 @@
-# Indeks Dokumentasi — AetherScribe
+# Dokumentasi AetherScribe
 
-## Panduan membaca
+Mulai dari [petunjuk instalasi dan menjalankan aplikasi](../README.md).
+Untuk memahami tujuan dan modul AetherScribe, baca [gambaran aplikasi](overview.md).
+
+## Referensi aplikasi
 
 | Kebutuhan | Dokumen |
-|---|---|
-| Memahami tujuan dan modul aplikasi | [Overview](overview.md) |
-| Memahami arsitektur, worker, state, dan environment | [Arsitektur](architecture.md) |
-| Mencari fitur dan file implementasinya | [Katalog fitur](features.md) |
-| Memeriksa tabel, indeks, dan aturan migrasi | [Database](database.md) |
-| Merencanakan penguatan database dan kesiapan migrasi | [Rencana peningkatan database](database-improvement-plan.md) |
-| Memeriksa format backup, aset gambar, validasi, dan batas pemulihan | [Format backup](backup-format.md) |
-| Memeriksa endpoint proxy | [API](api.md) |
-| Menjalankan tes dan memeriksa hasil serta batas verifikasi terbaru | [Pengujian](testing.md) |
-| Memahami keputusan historis | [Keputusan arsitektur](decisions.md) |
-| Melihat riwayat perubahan | [Changelog](changelog.md) |
-| Memilih dan melacak pekerjaan berikutnya | [ROADMAP — tracker aktif](../ROADMAP.md) |
+| --- | --- |
+| Memahami struktur kode, worker, startup, atau AI | [Arsitektur](architecture.md) |
+| Menemukan fungsi editor, Codex, Atlas, dan modul lain | [Katalog fitur](features.md) |
+| Mengubah penyimpanan, relasi, atau migrasi | [Database](database.md) |
+| Mengubah cadangan, impor, ekspor, atau pemulihan | [Format backup](backup-format.md) |
+| Memeriksa kontrak proxy dan endpoint | [API](api.md) |
+| Menjalankan pemeriksaan lokal atau memahami coverage | [Pengujian](testing.md) |
 
-## Audit aplikasi 9 November 2026
+## Pekerjaan dan riwayat
 
-- [Laporan analisis aplikasi: 21 bagian](audits/2026-11-09-application-audit.md).
-- [Register F01–F29: bukti, dampak, rekomendasi, dan kriteria penerimaan](audits/2026-11-09-findings.md).
-- [Status audit selesai](../ROADMAP.md#audit-2026-11-09) dan [hasil L01-L06](../ROADMAP.md#prioritas-lanjutan).
-- [Arsip pelaksanaan F01-F29](archive/2026-11-15-roadmap-audit-completed.md): bukti per batch dan batas verifikasi historis.
-
-Laporan audit adalah snapshot temuan, bukan daftar perbaikan yang sudah diterapkan. Status pekerjaan hanya diperbarui di `ROADMAP.md`. Label historis **Selesai** dalam katalog/arsip tidak menggantikan verifikasi atas source saat ini. Batas pengujian dan perbedaan dengan dokumentasi lama dijelaskan dalam laporan audit.
-
-## Arsip
-
-Folder [archive/](archive/) mempertahankan rencana, hasil implementasi, dan keputusan audit terdahulu. Dokumen tersebut bukan tracker aktif dan tidak diubah oleh pencatatan audit baru.
-
-## Inventaris dan penguatan bertahap F28
-
-- [F28.1: kontrak, dependensi, ekspor publik dan gap tes (15 November 2026)](audits/2026-11-15-f28-inventory.md). Snapshot dasar untuk pekerjaan bertahap; status aktif tetap di ROADMAP.
-- [F28.2: kontrak data worker, AI dan bab (15 November 2026)](audits/2026-11-15-f28-contracts.md). Sumber tipe bersama, penolakan data invalid, pengaman dan batas validasi.
-- [F28.3: TypeScript strict bertahap (15 November 2026)](audits/2026-11-15-f28-strict.md). Perintah lokal/CI, 26 berkas cakupan awal, bukti probe dan pengecualian tersisa.
-
-- [F28.6: review akhir, pengaman CI dan perbandingan baseline](audits/2026-11-15-f28-review.md). Penutupan F28 beserta pengecualian dan gap lanjutan.
-
-## Hasil L01-L06
-
-Seluruh item selesai. Kondisi aplikasi sekarang dirangkum di
-[ROADMAP](../ROADMAP.md), sedangkan hasil suite terbaru ada di
-[panduan pengujian](testing.md).
-
-| Item | Rujukan utama |
-|---|---|
-| L01 - CI Windows/Ubuntu pada commit 7527305 | [Run, job dan batas verifikasi](audits/2026-11-15-l01-ci.md) |
-| L02 - Instalasi dan migrasi | [Bootstrap kosong, upgrade v17/v33](audits/2026-11-15-l02-installation.md) |
-| L03 - Alur data UI | [Impor, restore, delete dan rollback](audits/2026-11-15-l03-data-ui.md) |
-| L04 - Interaksi Atlas | [Upload, vertex, portal dan perpindahan proyek](audits/2026-11-15-l04-atlas-ui.md) |
-| L05 - Strict bertahap | [Batch backup/Atlas dan pengecualian](audits/2026-11-15-l05-strict.md) |
-| L06 - Worker backup internal | [Integrasi, antrean, fallback dan production/offline](performance/l06-integration.md) |
-
-## Riwayat eksperimen L06
-
-Laporan berikut mendahului integrasi pada commit `4816258`. Angka benchmark dan
-keterangan belum diintegrasikan berlaku pada tahap tersebut.
-
-- [Pengukuran awal dan profiling CPU](performance/l06-backup.md).
-- [Eksperimen A/B worker](performance/l06-worker.md).
-- [Matriks kesiapan eksperimen](performance/l06-readiness.md).
-- [Respons editor dan heap tersampel](performance/l06-editor-load.md).
-- [Kegagalan fasilitas browser dan storage](performance/l06-storage-failures.md).
-
-Catatan bertahap tetap tersedia di [arsip roadmap L01-L06](archive/2026-11-15-roadmap-l01-l06-completed.md)
-dan [arsip verifikasi F24-L06](archive/2026-11-15-testing-history.md).
+- [Roadmap](../ROADMAP.md) untuk pekerjaan berikutnya, pemicu, dan ide diparkir.
+- [Changelog](changelog.md) untuk riwayat perubahan.
+- [Keputusan arsitektur](decisions.md) untuk konteks pemilihan desain.
+- [Panduan agen](../AGENTS.md) untuk aturan repositori dan rujukan sesuai perubahan.
+- [Laporan](reports/README.md) untuk audit, verifikasi, benchmark, dan sampel mentah.
+- [Arsip](archive/README.md) untuk rencana awal dan catatan batch terdahulu.

@@ -1,290 +1,42 @@
-# ROADMAP & BACKLOG AKTIF - AetherScribe
+# Roadmap AetherScribe
 
-Diperbarui 18 November 2026 setelah verifikasi lokal DB04.
-Status pekerjaan ada di dokumen ini; rincian pelaksanaan ada di laporan dan arsip.
+## Pekerjaan aktif
 
-## Ringkasan status
+Belum ada pekerjaan aktif yang dijadwalkan.
 
-- **Audit F01-F29 selesai**, termasuk F28.1-F28.6.
-- **L01-L06 selesai**, termasuk pengukuran dan integrasi worker backup internal.
-- **Verifikasi lokal L01–L06:** 91 berkas/792 tes unit/integrasi beserta coverage,
-  55 tes Chromium, typecheck umum/strict/maintenance, build, clean production dan
-  startup/offline lulus sebelum commit `4816258`.
-- **CI GitHub terakhir yang diverifikasi:** commit `7527305`, Windows dan Ubuntu
-  lulus pada [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
-  Run ini tidak membuktikan commit berikutnya telah diperiksa di GitHub.
+## Pilihan berikutnya
 
-Tidak ada item perbaikan dari dua batch tersebut yang masih terbuka. Pengujian
-berikutnya dipilih berdasarkan kebutuhan pemakaian dan tidak mengubah status
-selesai pekerjaan sebelumnya.
-
-<a id="prioritas-lanjutan"></a>
-
-## Hasil L01-L06
-
-Seluruh item selesai 15 November 2026.
-
-| ID | Hasil | Bukti dan batas |
-|---|---|---|
-| L01 | Verifikasi CI Windows/Ubuntu pada commit 7527305 | [Laporan CI](docs/audits/2026-11-15-l01-ci.md) |
-| L02 | Instalasi kosong, migrasi v17/v33 dan perbaikan bootstrap atomik | [Instalasi dan migrasi](docs/audits/2026-11-15-l02-installation.md) |
-| L03 | Impor, restore dan penghapusan melalui UI, termasuk rollback/isolasi | [Alur data UI](docs/audits/2026-11-15-l03-data-ui.md) |
-| L04 | Upload, vertex, portal, deep-link dan perpindahan proyek Atlas | [Interaksi Atlas](docs/audits/2026-11-15-l04-atlas-ui.md) |
-| L05 | Perluasan strict bertahap untuk helper backup dan Atlas | [Batch strict](docs/audits/2026-11-15-l05-strict.md) |
-| L06 | Pengukuran backup besar dan integrasi worker auto internal dengan antrean/fallback | [Integrasi dan verifikasi akhir](docs/performance/l06-integration.md) |
+| Pilihan | Hasil yang ingin diketahui |
+| --- | --- |
+| Verifikasi CI pada commit yang akan dibagikan | Hasil job Windows dan Ubuntu beserta artefak pada SHA yang sama |
+| Uji alur penulis dengan salinan proyek nyata | Kelancaran menulis, Atlas, ekspor, backup, dan pemulihan di profil terpisah |
+| Uji lingkungan yang dipakai pengguna | Perilaku Drive atau provider nyata, beberapa tab, browser lain, atau aksesibilitas sesuai kebutuhan |
 
 <a id="database-improvement"></a>
 
-## Rencana peningkatan database — 18 November 2026
-
-Tetap menggunakan IndexedDB + Dexie. Rincian tugas, dependensi, aturan fitur baru,
-dan kriteria penerimaan ada di [rencana peningkatan database](docs/database-improvement-plan.md).
-Status pelaksanaan dicatat di tabel ini.
-
-| Urutan | ID | Pekerjaan | Status |
-|---|---|---|---|
-| 1 | DB01 | Perlindungan dan pemulihan naskah | Selesai, diverifikasi lokal |
-| 2 | DB02 | Pusatkan operasi perubahan data | Selesai, diverifikasi lokal |
-| 3 | DB03 | Validasi penulisan dan integritas relasi | Selesai, diverifikasi lokal |
-| 4 | DB04 | Katalog tabel dan kebijakan data | Selesai, diverifikasi lokal |
-| 5 | DB05 | Kontrak akses data dan adapter Dexie | Selesai, diverifikasi lokal |
-| 6 | DB06 | Kontrak data dan evolusi skema | Selesai, diverifikasi lokal |
-| 7 | DB07 | Format ekspor portabel | Selesai, diverifikasi lokal |
-| 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Selesai, diverifikasi lokal |
-| 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
-| 10 | DB10 | Pembuktian migrasi terisolasi | Bersyarat: target migrasi dipilih |
-
-### Hasil DB01
-
-- Isi bab disimpan setelah jeda 1,5 detik. Pencadangan menunggu perubahan lokal
-  yang tertunda. Jika editor belum diedit, cadangan langsung membaca isi terbaru
-  dari database. Jika isi berubah sejak editor memuatnya, transaksi menolak
-  penimpaan dan pencadangan dibatalkan dengan draf tetap terbuka. Footer
-  menampilkan status simpan, dan kegagalan simpan judul dilaporkan lewat notifikasi.
-  [Uji pencadangan antartab](e2e/critical.spec.ts)
-- Perpindahan panel atau bab dari editor menunggu simpan draf. Bila gagal,
-  editor tetap terbuka dan pengguna dapat mencoba perpindahan lagi setelah
-  penyimpanan pulih. [Uji perpindahan setelah gagal simpan](e2e/critical.spec.ts)
-- Cadangan penuh dan cadangan pengaman mempertahankan teks snapshot yang
-  kehilangan bab induk. Pemulihan menandai ID historis agar riwayat tidak
-  terhubung ke bab baru. [Aturan cadangan penuh](docs/backup-format.md#scope-dan-validasi)
-- Pemeriksaan kuota saat aplikasi dibuka tetap memberi peringatan di atas 80%.
-  Permintaan persistensi tersedia di **Pengaturan → Data & Cadangan** saat API
-  peramban mendukungnya. Penolakan dan API yang tidak tersedia tetap memungkinkan
-  pengguna menulis dan mencadangkan.
-- Titik pulih otomatis internal memakai referensi gambar peta dari ruang kerja.
-  File lengkap, folder, Drive, dan titik sebelum pemulihan menyertakan gambar.
-  UI memperlihatkan hasil terbaru per tujuan dan mempertahankan waktu cadangan
-  berhasil sebelumnya ketika upaya baru gagal. Untuk ekspor manual, status
-  mencatat permulaan unduhan. Sesi Drive yang berakhir meminta login ulang.
-- [Uji Chromium](e2e/dataUi.spec.ts) memulihkan file yang diunduh melalui UI ke
-  konteks kosong dan membandingkan naskah, relasi, serta byte gambar peta.
-  Tes juga mencakup fallback persistensi dan kedaluwarsa Drive dengan respons
-  tiruan. Pengujian memakai data sintetis dan profil terisolasi.
-- Verifikasi lokal mencakup 794 tes unit/integrasi, typecheck umum dan strict,
-  maintenance, serta build produksi. Rangkaian Chromium mencatat 41 dari 42 tes
-  lulus. F27 gagal pada percobaan tersebut lalu lulus saat diulang bersama enam
-  tes yang mencakup editor dan DB01.
-
-### Hasil DB02
-
-- Inventaris mutasi dari UI dan hook mencakup bab dan snapshot, proyek dan
-  progres harian, Codex dan kategori, relasi dan Bible, timeline dan kalender,
-  Atlas, sesi dan aksi AI, glosarium, janji plot, serta log. Penulisan kini
-  melewati layanan domain. Live query tetap memasok tampilan dari IndexedDB.
-- Pembuatan proyek dan bab awal, penggantian lintas bab beserta snapshot,
-  pemulihan versi bab, serta pengurutan bab dan timeline memakai transaksi
-  di layanan. Penggantian dan pemulihan membatalkan perubahan jika penulisan
-  snapshot wajib gagal. Flush editor, invalidasi konteks, dan pemberitahuan
-  penghapusan tetap mengikuti urutan operasi yang berlaku.
-- Skema dan format cadangan kompatibel dengan data sebelumnya.
-  [Uji penggantian lintas bab](src/components/modals/CrossChapterReplace.test.tsx)
-  memeriksa rollback pada bab kedua. [Uji Chromium](e2e/dataUi.spec.ts) memeriksa
-  rollback pembuatan proyek dan keberhasilan percobaan ulang.
-- Verifikasi lokal mencakup 795 tes unit/integrasi, typecheck umum dan strict,
-  maintenance, serta build produksi. Putaran awal Chromium mencatat 56 dari
-  60 tes lulus. Keempat tes yang gagal lulus pada pengulangan terfokus
-  bersama 12 tes lainnya.
-
-### Hasil DB03
-
-- Penulisan, pencarian sesi, penghapusan, dan impor memakai ID numerik yang
-  sama untuk kunci Workshop. Validasi berkas memeriksa target sebelum
-  konfirmasi. Ekspor workspace lama menyertakan sesi yang targetnya telah
-  dihapus sebagai chat Studio dengan pesan utuh.
-
-- Layanan membedakan input pembuatan, patch, dan record tersimpan. Penulisan
-  memvalidasi nilai dan memeriksa target referensi dalam transaksi yang sama.
-  Patch dapat melepas tautan opsional. Field lama yang tidak dikirim tetap utuh.
-- [Kebijakan relasi](docs/database.md#validasi-penulisan-dan-kebijakan-relasi-db03)
-  merinci penghapusan anak dan pelepasan tautan. Snapshot lama tanpa induk
-  yang bisa diidentifikasi dipertahankan ketika proyek lain dihapus.
-- Laporan baca-saja tersedia di **Pengaturan → Data & Cadangan → Periksa Relasi
-  Data**. Uji mencakup penolakan tautan invalid atau lintas proyek, rollback,
-  pelestarian naskah lama, pemulihan snapshot, dan penghapusan hubungan tanpa
-  menghapus entri Codex.
-- 799 tes unit/integrasi, typecheck umum dan strict, maintenance, serta build
-  produksi lulus. Rangkaian awal Chromium mencatat 40 dari 41 tes lulus.
-  F26 yang gagal lulus saat diulang, dan ketiga skenario DB03 lulus dalam
-  pengulangan terfokus.
-
-### Hasil DB04
-
-- [Katalog tabel](src/lib/tableCatalog.ts) merinci cakupan, relasi, retensi,
-  ekspor, impor, pemulihan, dan penghapusan untuk 20 tabel Dexie. Tes memeriksa
-  kesesuaian dengan skema aktual dan indeks yang dipakai untuk menyaring
-  record proyek atau bab.
-- Koleksi dan validasi cadangan serta cakupan transaksi impor, pemulihan,
-  dan penghapusan diturunkan dari katalog. Remap ID, aset, deduplikasi Bible,
-  serta pelepasan relasi tetap eksplisit. [Kebijakan data](docs/database.md#katalog-tabel-dan-kebijakan-data-db04)
-- Tes memastikan urutan tabel format v8, impor seluruh tabel yang diekspor,
-  regenerasi cache, serta perlindungan log dan riwayat cadangan saat pemulihan.
-  Verifikasi lokal mencakup 802 tes unit/integrasi, 28 tes Chromium, typecheck
-  umum dan strict, maintenance, serta build produksi.
-
-### Hasil DB05
-
-- Kueri, penulisan, dan langganan perubahan bab serta snapshot memakai kontrak
-  di `src/lib/chapterStorage.ts` dan adapter Dexie di
-  `src/adapters/dexieChapterStorage.ts`. Hook di `src/hooks/useChapterQueries.ts`
-  menangani langganan UI. [Kontrak penyimpanan bab](docs/database.md#kontrak-akses-bab-dan-riwayat-versi-db05)
-- Ganti teks lintas bab dan pemulihan versi tetap atomik bersama snapshot
-  pengaman. Chromium memeriksa pembaruan judul dan riwayat versi antartab, serta
-  rollback naskah dan snapshot saat penulisan gagal.
-- Verifikasi lokal mencakup 802 tes unit/integrasi, typecheck umum dan strict,
-  maintenance, serta build produksi. Sebanyak 64 dari 65 tes Chromium lulus
-  pada putaran penuh. Uji simpan draf terputus oleh hot reload Vite saat berkas
-  sumber disunting dan lulus saat seluruh 20 tes di `e2e/critical.spec.ts` diulang.
-- Cakupan awal adalah bab dan riwayat versi. Bootstrap proyek, cadangan, dan
-  layanan domain lain mengikuti jalur Dexie masing-masing. Skema v34 dan format
-  cadangan v8 tetap berlaku. Evolusi skema dilanjutkan pada DB06.
-
-### Hasil DB06
-
-- `src/lib/chapterContracts.ts` dan `src/lib/chapterRecord.ts` memisahkan
-  bentuk domain, record Dexie, dan DTO bab. Adapter dan jalur ekspor memakai
-  proyeksi yang melepas tuple indeks `listMetadata`. Cadangan lama yang
-  menyertakan tuple diverifikasi dengan checksum asli sebelum impor atau
-  restore membangun ulang indeks dari isi bab.
-- `e2e/installationFixture.ts` menyimpan fixture v17 dan v33. Skenario rollback
-  membatalkan transaksi upgrade native setelah penulisan pertama ke bab
-  berhasil, membandingkan database v17 sebelum dan sesudah kegagalan, lalu
-  mencoba upgrade kembali. Pemeriksaan mencakup struktur tabel dan indeks,
-  naskah, sesi, dan snapshot.
-- Skema tetap v34, blok migrasi lama dipertahankan, dan format cadangan tetap
-  v8. Pengukuran memori F23 mencakup pembacaan kueri. DB06 tidak menambah
-  transformasi migrasi. DB07 melanjutkan kontrak format portabel.
-  [Aturan field dan prosedur migrasi](docs/database.md#kontrak-data-dan-evolusi-skema-db06)
-- Verifikasi lokal mencakup 815 tes unit/integrasi, typecheck umum dan strict,
-  maintenance, serta build produksi. Pada suite penuh Chromium, 70 dari 71
-  tes lulus. Setelah ekspektasi urutan nama indeks pada tes rollback dikoreksi,
-  empat tes instalasi Chromium lulus, termasuk rollback dan upgrade ulang.
-  Fixture memakai data sintetis dan kegagalan upgrade yang diinjeksi.
-
-### Hasil DB07
-
-- `src/lib/backupFormat.ts` dan `src/lib/portableBackup.ts` menyediakan kontrak,
-  pembaca JSON/gzip, validasi checksum dan aset, serta konversi v3–v8 mandiri
-  ke v8. Konversi memeriksa checksum lama sebelum menormalkan tabel dan
-  menambahkan hash gambar inline. Ekspor portabel memakai format v8 dan
-  penyimpanan lokal memakai skema Dexie v34.
-- `src/services/backupService.ts` dan `src/services/driveBackupService.ts`
-  menerapkan syarat aset inline dan batas byte pembaca pada keluaran file,
-  folder, serta Drive. Cadangan referensi internal dipulihkan lewat alur
-  resolusi aset di database asal.
-- `e2e/dataUi.spec.ts` memeriksa validasi unduhan sebelum IndexedDB dibuka
-  serta pemulihan ke tabel kosong. Pemeriksaan mencakup naskah, relasi,
-  snapshot, penanda Atlas, dan byte gambar.
-  [Kontrak format, identitas, dan regenerasi cache](docs/backup-format.md)
-- Verifikasi lokal mencakup 819 tes unit/integrasi, 72 tes Chromium,
-  typecheck umum dan strict, maintenance, serta build produksi. Pengujian
-  memakai fixture sintetis dan respons Drive tiruan. DB08 melanjutkan
-  pengukuran kapasitas dan optimasi.
-
-### Hasil DB08
-
-- Mode `--capacity` di `scripts/measure-data-paths.mjs` memakai
-  `e2e/capacityFixture.ts` untuk mengukur simpan editor, daftar bab,
-  pencarian, chat, snapshot, ekspor, dan restore pada dataset 10, 100, dan
-  500 bab. Ketiga dataset lulus pemeriksaan data ekspor, relasi, aset, dan
-  checksum setelah restore.
-- `src/lib/backupValidation.ts` menghindari alokasi buffer UTF-8 saat
-  menghitung ukuran string ASCII tanpa escape. Pada fixture 500 bab
-  (JSON 20,71 MiB), median serialisasi turun 30,5% dari 174,9 ke 121,5 ms
-  dan backing storage tambahan yang tersampel turun dari 19,65 ke 0 MiB.
-  Kedua target serialisasi tercapai. Heap JS tersampel pada restore
-  meningkat meski backing storage turun.
-- DB08 memakai skema Dexie v34 dan format cadangan v8. Hasil berlaku
-  untuk satu perangkat dan Chromium dengan data sintetis. Evaluasi
-  pagination, chat, retensi cache, dan streaming dicatat bersama
-  metode serta sampel mentah. [Laporan DB08](docs/performance/db08.md)
-- Verifikasi mencakup 824 tes unit/integrasi, regresi benchmark F23,
-  typecheck umum dan strict, maintenance, serta build produksi. Pada
-  putaran penuh Chromium, 71 dari 72 tes lulus, termasuk simpan dan
-  pencadangan lintas tab. Tes edit rute Atlas timeout setelah halaman
-  dimuat ulang, lalu lulus saat keenam tes Atlas diulang.
-
-## Pilihan tindak lanjut
-
-Belum menjadi pekerjaan aktif. Tidak perlu menambah tes hanya untuk menaikkan
-jumlah tes; pilih skenario yang sesuai dengan pemakaian aplikasi.
-
-| Urutan | Pilihan | Bukti yang dicari |
-|---|---|---|
-| 1 | Verifikasi CI pada commit terbaru | Run Windows/Ubuntu untuk SHA terbaru, dengan hasil job dan artefak |
-| 2 | Uji pemakaian dengan salinan proyek nyata | Menulis, Atlas, ekspor, backup dan restore dalam profil terpisah |
-| 3 | Uji sesuai lingkungan pengguna | Drive/provider nyata, beberapa tab, browser lain atau aksesibilitas sesuai kebutuhan |
-
-## Batas verifikasi
-
-- Strict mencakup **32 root/46 source**; maintenance menjaga **54 berkas** dan
-  18 ekspor publik AI. Strict belum mencakup seluruh aplikasi.
-- Hasil lokal terbaru memakai Windows/Node 24.15.0 dan Chromium, fixture sintetis,
-  DB/context terisolasi serta provider/Drive mock. Verifikasi antartab DB05
-  mencakup pembaruan judul bab dan riwayat versi. Browser lain, screen reader
-  manual, akun/provider nyata dan koordinasi operasi lain antartab masih di luar
-  cakupan verifikasi ini.
-- Worker aktif untuk persiapan auto internal besar; antrean berlaku per tab.
-  Collect/flush, serialisasi Blob dan checksum penuh masih pada jalur sebelumnya.
-  Pengukuran latensi/memori eksperimen bukan benchmark ulang integrasi atau peak RSS.
-- Auto internal memakai referensi aset gambar live; file/Drive/pre-restore lengkap.
-  Shutdown paksa tidak menjamin flush async selesai. Disk nyata penuh belum diuji.
-- Coverage Vitest tidak menggabungkan worker/browser native atau child process.
-  Cakupan dan hasil terbaru ada di [panduan pengujian](docs/testing.md).
-
 ## Pekerjaan bersyarat
 
-| Area | Kapan dikerjakan |
-|---|---|
-| Migrasi bertahap | Ketika migrasi baru memproses tabel besar; gunakan cursor/streaming bila sesuai |
-| Font PDF non-Latin | Ketika naskah membutuhkan glyph di luar cakupan font saat ini |
-| Pemisahan Atlas lanjutan | Ketika perubahan toolbar/modal/orchestration membutuhkan pemisahan tanggung jawab |
-| Optimasi backup lanjutan | Ketika pengukuran pemakaian menunjukkan collect/Blob, memori atau lintas tab perlu ditangani |
-
-<a id="audit-2026-11-09"></a>
-
-## Audit F01-F29 - selesai
-
-Seluruh 29 temuan audit 9 November 2026 ditutup. Judul dan prioritas pada laporan
-awal menggambarkan kondisi saat audit, bukan daftar masalah aplikasi sekarang.
-
-- [Register temuan dan kriteria asli](docs/audits/2026-11-09-findings.md).
-- [Arsip pelaksanaan F01-F29](docs/archive/2026-11-15-roadmap-audit-completed.md).
-- [Review akhir F28](docs/audits/2026-11-15-f28-review.md).
-- [Arsip pelaksanaan L01-L06](docs/archive/2026-11-15-roadmap-l01-l06-completed.md).
+| Pekerjaan | Pemicu |
+| --- | --- |
+| [DB09 — Identitas global dan pelacakan perubahan](docs/archive/2026-11-18-database-improvement-plan.md#db09--identitas-global-dan-pelacakan-perubahan-bersyarat) | Kebutuhan sinkronisasi atau penggabungan perangkat sudah jelas |
+| [DB10 — Pembuktian migrasi](docs/archive/2026-11-18-database-improvement-plan.md#db10--pembuktian-migrasi-bersyarat) | Target migrasi dipilih |
+| Migrasi bertahap | Migrasi baru memproses tabel besar |
+| Font PDF non-Latin | Naskah memerlukan glyph di luar cakupan font saat ini |
+| Pemisahan Atlas lanjutan | Toolbar, modal, atau orkestrasi perlu dipisah saat perubahan fitur |
+| Optimasi backup lanjutan | Pengukuran pemakaian menunjukkan kendala collect/Blob, memori, atau koordinasi antartab |
 
 ## Ide diparkir
 
-Belum menjadi komitmen implementasi:
+- Simulator dunia untuk status karakter dan artefak lintas bab.
+- Lensa suara dialog untuk membandingkan gaya bicara tokoh.
+- Moodboard Codex dengan kajian kuota gambar.
+- Peringatan perpindahan POV dengan kajian false positive.
 
-- Simulator dunia: status karakter/artefak lintas bab.
-- Lensa suara dialog: analisis perbedaan gaya bicara tokoh.
-- Moodboard Codex: referensi visual per entri dan kajian kuota penyimpanan.
-- Peringatan POV: deteksi perpindahan sudut pandang dengan kajian false positive.
+<a id="prioritas-lanjutan"></a>
+<a id="audit-2026-11-09"></a>
 
-## Referensi
+## Pekerjaan selesai
 
-- [Indeks dokumentasi](docs/README.md).
-- [Katalog fitur](docs/features.md).
-- [Keputusan arsitektur](docs/decisions.md).
-- [Changelog](docs/changelog.md).
+- [Audit F01–F29](docs/archive/2026-11-15-roadmap-audit-completed.md)
+- [Penguatan L01–L06](docs/archive/2026-11-15-roadmap-l01-l06-completed.md)
+- [Penguatan database DB01–DB08](docs/reports/audits/2026-11-19-db01-db08.md)

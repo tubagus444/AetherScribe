@@ -23,13 +23,33 @@ yang sudah tersedia.
 
 1. **Skema Bersifat Append-Only:**
    - Dilarang mengedit atau menghapus blok `this.version(N)` yang sudah ada di `src/db.ts`. Setiap perubahan skema wajib menambahkan blok `this.version(N + 1).stores({...})` baru dengan migrasi `.upgrade()` bila ada transformasi data.
-2. **Pola "Field JSON Inert Menumpang Objek":**
-   - Sebelum membuat tabel baru, utamakan menumpangkan field opsional non-indeks ke entri yang sudah ada (`CodexEntry`, `Chapter`, `Project`). Pola ini tidak memerlukan migrasi skema dan otomatis ikut alur backup/impor tanpa risiko modifikasi Foreign Key.
-3. **⚠️ Wajib Sinkron di 3 Tempat untuk Tabel Project-Scoped Baru:**
-   - Bila terpaksa menambah tabel baru yang berelasi dengan `projectId` atau Foreign Key lain, kamu **WAJIB** mendaftarkannya di 3 file berikut:
-     1. `src/lib/importRemap.ts`: Daftarkan pemetaan ulang ID saat proyek diimpor.
-     2. `src/contexts/ProjectContext.tsx`: Tambahkan perintah penghapusan di `deleteProject` agar tidak meninggalkan data yatim.
-     3. `src/services/backupService.ts`: Sertakan di `collectProjectData`, `restoreData`, dan ekspor novel.
+2. **Operasi data melalui layanan domain.** Tempatkan validasi, perubahan
+   lintas tabel, dan batas transaksi di layanan. UI dan hook tetap bisa memakai
+   live query untuk membaca data. Pertahankan flush editor, invalidasi cache,
+   dan notifikasi sesuai urutan operasi yang berlaku.
+3. **Kebijakan tabel dan relasi.** Saat menambah tabel, perbarui skema dan
+   [katalog tabel](#katalog-tabel-dan-kebijakan-data-db04). Untuk tabel atau
+   referensi yang ikut impor proyek, lengkapi pemetaan di
+   [`importRemap.ts`](../src/lib/importRemap.ts) dan validasi cadangan. Periksa
+   penghapusan melalui [`entityDeletion.ts`](../src/services/entityDeletion.ts)
+   serta round-trip ekspor, impor, dan pemulihan sesuai kebijakan tabel.
+
+### Desain penyimpanan fitur baru
+
+| Kebutuhan | Pendekatan awal |
+| --- | --- |
+| Atribut kecil mengikuti umur record induk | Field opsional dengan bentuk dan default jelas |
+| Data tumbuh banyak atau memiliki siklus hidup atau query sendiri | Tabel tersendiri dengan relasi eksplisit |
+| Konfigurasi bertingkat atau field kustom | Objek JSON tervalidasi dengan versi bentuk jika diperlukan |
+| Pengurutan atau pencarian berulang yang mahal | Indeks berdasarkan query dan pengukuran |
+| Data turunan yang dapat dihitung ulang | Cache terpisah dengan aturan invalidasi dan retensi |
+| Hubungan lintas entitas | Referensi terstruktur dengan aturan validasi, penghapusan, dan remap |
+
+Untuk setiap fitur yang mengubah penyimpanan, jelaskan pemilik data, bentuk
+record, validasi, query, transaksi, relasi, penghapusan, backup, dan perilaku
+data lama. Field opsional tanpa indeks bisa mengikuti record induk tanpa
+migrasi skema bila pembaca menangani nilai yang belum ada. Field yang membawa
+relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
 
 ---
 
@@ -420,7 +440,7 @@ cadangan lama yang membawa tuple tetap diterima.
 readChapterList hanya membaca index key, bukan record HTML. readLatestChapterModified
 mengambil satu key tertinggi pada proyek. Scene search memakai getAll keyset batch
 256 dalam transaksi readonly untuk snapshot/order yang konsisten. Lihat laporan
-[performa F23](performance/f23.md) untuk angka, overhead index/tulis, batas dan tes.
+[performa F23](reports/benchmarks/f23.md) untuk angka, overhead index/tulis, batas dan tes.
 Migrasi membutuhkan ruang untuk indeks tambahan; kegagalan transaksi tidak boleh
 memicu clear database. Penulisan harus melalui instance Dexie aplikasi agar hook
 berlaku; raw fixture native wajib menyediakan tuple yang valid.
@@ -434,7 +454,7 @@ tidak membuat proyek ganda; kegagalan salah satu insert membatalkan semuanya.
 Data proyek yang sudah ada tetap dipilih lewat lastOpened. Tidak mengubah schema
 v34, migrasi lama atau membersihkan duplikat historis otomatis.
 Tes browser dimulai dari IndexedDB kosong atau schema historis v17/v33 sebelum
-React dimuat; lihat [bukti L02](audits/2026-11-15-l02-installation.md).
+React dimuat; lihat [bukti L02](reports/audits/2026-11-15-l02-installation.md).
 
 ## Validasi penulisan dan kebijakan relasi (DB03)
 
@@ -560,4 +580,4 @@ mewakili v17 sebelum klasifikasi sesi lama dan v33 sebelum covering index.
 Skenario gagal membatalkan transaksi native sesudah write bab pertama berhasil
 dan memeriksa bahwa bahkan backfill sesi v18 ikut rollback. DB06 mempertahankan
 skema v34 dan jalur upgrade yang sudah dirilis. Baseline working set kueri
-tersedia pada [pengukuran F23](performance/f23.md).
+tersedia pada [pengukuran F23](reports/benchmarks/f23.md).

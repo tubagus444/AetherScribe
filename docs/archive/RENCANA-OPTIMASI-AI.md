@@ -2,8 +2,8 @@
 
 > **Arsip memori-proyek.** Tracker optimasi token/biaya AI: hemat token, kualitas
 > tetap maksimal. **Semua item actionable SELESAI.** Dokumen ini dipertahankan
-> sebagai rekam keputusan; detail mekanisme tiap item hidup di `CLAUDE.md`
-> dan `.claude/rules/ai.md`.
+> sebagai rekam keputusan. Mekanisme saat ini dijelaskan dalam
+> [kontrak pengembangan AI dan konteks](../architecture.md#kontrak-pengembangan-ai-dan-konteks).
 
 Konteks: aplikasi pribadi satu-pengguna, BYOK (kunci di klien), local-first.
 Jalur AI: `src/services/ai/index.ts` (facade) → `proxy.ts` → `server.ts` → provider.

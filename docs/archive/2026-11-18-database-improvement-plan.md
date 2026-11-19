@@ -2,10 +2,10 @@
 
 Tanggal penyusunan: 18 November 2026.
 
-Keputusan dasar: tetap menggunakan IndexedDB + Dexie. Dokumen ini merinci
-pekerjaan yang dapat dilakukan kemudian; tidak menyatakan perubahan sudah
-diterapkan. Status pelaksanaan dicatat hanya di [ROADMAP](../ROADMAP.md#database-improvement).
-Checklist di sini adalah ruang lingkup dan kriteria penerimaan, bukan tracker kedua.
+Rencana awal mempertahankan IndexedDB dan Dexie. Ruang lingkup serta kriteria
+penerimaan di bawah merekam rancangan pada saat itu. Lihat
+[hasil DB01–DB08](../reports/audits/2026-11-19-db01-db08.md) dan
+[pemicu DB09–DB10](../../ROADMAP.md#database-improvement).
 
 ## Tujuan dan batas
 
@@ -15,7 +15,7 @@ secara terarah dan aman, bukan skema otomatis mendukung seluruh fitur masa depan
 
 Pekerjaan dilakukan bertahap per domain. Tidak termasuk mengganti database,
 membuat layanan cloud, atau mengaktifkan sinkronisasi sekarang. Perubahan skema
-mengikuti aturan append-only pada [dokumentasi database](database.md).
+mengikuti aturan append-only pada [dokumentasi database](../database.md).
 
 ## Kondisi awal dan pemeriksaan sebelum implementasi
 
@@ -35,9 +35,9 @@ Sebelum setiap batch:
 - Gunakan fixture atau salinan data terisolasi untuk percobaan destruktif.
 - Tentukan lingkup, kompatibilitas, risiko, dan bukti selesai di ROADMAP.
 
-Rujukan: [format backup](backup-format.md), [pengujian](testing.md),
-[hasil instalasi/migrasi](audits/2026-11-15-l02-installation.md), dan
-[integrasi worker backup](performance/l06-integration.md).
+Rujukan: [format backup](../backup-format.md), [pengujian](../testing.md),
+[hasil instalasi/migrasi](../reports/audits/2026-11-15-l02-installation.md), dan
+[integrasi worker backup](../reports/audits/2026-11-15-l06-backup-integration.md).
 
 ## Urutan pekerjaan
 
@@ -120,7 +120,7 @@ Sesudah pola domain pertama terbentuk. Aturan migrasi lama tetap berlaku sepanja
 
 Selesai jika: instalasi kosong dan upgrade historis terpilih mempertahankan data;
 kegagalan migrasi tidak menghasilkan keadaan setengah berubah; dokumentasi dan tipe sinkron.
-Rujukan: [kontrak data bab dan prosedur evolusi skema](database.md#kontrak-data-dan-evolusi-skema-db06).
+Rujukan: [kontrak data bab dan prosedur evolusi skema](../database.md#kontrak-data-dan-evolusi-skema-db06).
 
 ### DB07 — Format ekspor portabel
 
@@ -135,7 +135,7 @@ Sesudah DB04 dan kontrak DB06 ditetapkan.
 Selesai jika: ekspor dapat divalidasi tanpa membuka Dexie dan round-trip ke DB
 kosong mempertahankan data utama, referensi, serta aset. Cache yang dikecualikan
 memiliki prosedur regenerasi. Gunakan format yang sudah ada sebelum membuat format baru.
-Rujukan: [format portabel, pembaca, dan konversi v8](backup-format.md#membaca-dan-mengonversi-arsip-portabel).
+Rujukan: [format portabel, pembaca, dan konversi v8](../backup-format.md#membaca-dan-mengonversi-arsip-portabel).
 
 ### DB08 — Kapasitas dan optimasi berdasarkan pengukuran
 
@@ -150,7 +150,7 @@ Baseline pengukuran boleh dimulai lebih awal jika ada keluhan performa.
 Selesai jika: hasil sebelum/sesudah dapat dibandingkan pada fixture yang sama,
 target batch tercapai, dan penghematan tidak mengorbankan konsistensi backup atau naskah.
 Pemisahan tabel dan indeks baru memerlukan bukti kebutuhan.
-Rujukan: [hasil pengukuran kapasitas dan optimasi DB08](performance/db08.md).
+Rujukan: [hasil pengukuran kapasitas dan optimasi DB08](../reports/benchmarks/db08.md).
 
 ### DB09 — Identitas global dan pelacakan perubahan (bersyarat)
 

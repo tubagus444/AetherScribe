@@ -118,7 +118,7 @@ Untuk diagnosis gunakan `npx playwright show-report` atau
 L01 memverifikasi workflow Windows/Ubuntu berhasil pada commit `7527305`:
 [run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
 Status setiap step, log kedua job dan metadata artefak diperiksa. Lihat
-[bukti dan batas verifikasi](../audits/2026-11-15-l01-ci.md). Hasil ini berlaku untuk
+[bukti dan batas verifikasi](../reports/audits/2026-11-15-l01-ci.md). Hasil ini berlaku untuk
 commit tersebut; catatan belum diverifikasi pada snapshot F24-F28 bersifat historis.
 
 Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
@@ -137,7 +137,7 @@ worker token native dan ekspor Markdown lazy. Port khusus 4181; report opsional
 `--output=test-results/startup.json`. CI menjalankannya sesudah test:production.
 Guard transformers on-demand di contextCancellation gagal pada worker source
 baseline, kemudian lulus. Total F22: 76 berkas/723 tes dan 14 browser tests.
-Metodologi/batas pengukuran: [performance/f22.md](../performance/f22.md).
+Metodologi/batas pengukuran: [performance/f22.md](../reports/benchmarks/f22.md).
 
 
 F23: total 82 berkas/738 tes serta 16 browser tests. Tambahan mencakup metadata
@@ -146,7 +146,7 @@ query equality tanpa JSON, bounded/stable ranking dan protokol semantic search.
 Native browser memverifikasi migrasi serta statistik header/dashboard sesudah
 flush editor. `npm run test:data-paths` membandingkan hasil fixture kecil/sedang/
 besar dan melaporkan waktu serta working-set heap; tidak perlu key/model nyata.
-CI menyimpan JSON benchmark tanpa ambang timing. Lihat [laporan F23](../performance/f23.md).
+CI menyimpan JSON benchmark tanpa ambang timing. Lihat [laporan F23](../reports/benchmarks/f23.md).
 
 F28.2: 87 berkas/782 tes, typecheck, build, 16 Chromium tests dan startup/offline
 lulus lokal (15 November 2026). Matriks input/output context dan pesan Orama,
@@ -156,7 +156,7 @@ completion/SSE/usage invalid serta input duplikasi bab diuji dengan fixture.
 di CI; memeriksa kontrak negatif tanpa directive penekan error. Dua probe pada
 source dec2940 membuktikan completion objek dan COUNT_TOKENS dengan input angka
 belum ditolak sebelum perubahan. Snapshot coverage F24 di atas tidak diukur ulang.
-Lihat [rincian F28.2](../audits/2026-11-15-f28-contracts.md); provider nyata dan workflow
+Lihat [rincian F28.2](../reports/audits/2026-11-15-f28-contracts.md); provider nyata dan workflow
 Atlas menyeluruh tetap belum tercakup.
 
 F28.3 menambahkan `npm run lint:strict` sebagai step CI terpisah. Konfigurasi
@@ -167,7 +167,7 @@ strict dan gagal bila strict dimatikan. Probe sementara membuktikan implicit any
 null/undefined dan catch tanpa narrowing ditolak. Typecheck umum/strict,
 87 berkas/782 tes dan build lulus lokal; tidak mengukur ulang coverage atau
 menjalankan ulang browser/production/offline. Cakupan, pengecualian lama dan cara
-memperluas check ada di [laporan F28.3](../audits/2026-11-15-f28-strict.md).
+memperluas check ada di [laporan F28.3](../reports/audits/2026-11-15-f28-strict.md).
 
 
 F28.5 menambahkan tes hook Atlas/filter kategori-faksi dan service CRUD/cleanup,
@@ -195,7 +195,7 @@ import balik ke facade ditolak. Typecheck umum/strict/maintenance, 89 berkas/785
 Coverage V8 terbaru: 32.11% baris, 31.95% statement, 25.35% branch, 20.71% fungsi;
 angka F24 sebelumnya tetap snapshot historis. Ini tidak mencakup coverage native
 browser/worker/child process dan belum membuktikan runner GitHub/Linux berhasil.
-[Rincian penutupan dan batas guard](../audits/2026-11-15-f28-review.md).
+[Rincian penutupan dan batas guard](../reports/audits/2026-11-15-f28-review.md).
 
 
 L01 selesai 15 November 2026: run 43696531716 completed/success pada Ubuntu dan
@@ -213,7 +213,7 @@ memperbaikinya. projectBootstrap menguji concurrency, rollback dan retry.
 Verifikasi lokal: typecheck umum/strict/maintenance, 90 berkas/787 tes, build,
 21 tes Chromium lulus. CI menemukan spec baru melalui npm run test:e2e; belum
 memverifikasi run GitHub untuk L02. Coverage tidak diukur ulang.
-[Bukti dan batas migrasi](../audits/2026-11-15-l02-installation.md).
+[Bukti dan batas migrasi](../reports/audits/2026-11-15-l02-installation.md).
 
 
 L03 menambahkan delapan skenario e2e/dataUi.spec.ts: file hasil ekspor UI dipilih
@@ -223,7 +223,7 @@ Tes membandingkan record asli serta referensi, menggunakan dua proyek terisolasi
 untuk memastikan proyek lain utuh. Model listing dimock; tanpa provider/Drive.
 Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 29 Chromium tests lulus
 lokal. Tidak mengubah source aplikasi; build/coverage tidak diulang pada tahap ini.
-[Bukti dan batas L03](../audits/2026-11-15-l03-data-ui.md).
+[Bukti dan batas L03](../reports/audits/2026-11-15-l03-data-ui.md).
 
 
 L04 menambahkan enam skenario e2e/atlasUi.spec.ts pada panel Atlas produksi:
@@ -234,7 +234,7 @@ sudah dicabut setelah pergantian proyek, dengan wrapper yang tetap memanggil API
 browser asli. Tidak memock Leaflet/service/IndexedDB atau mengubah source aplikasi.
 Typecheck umum/strict/maintenance, 90 berkas/787 tes dan 35 Chromium tests lulus
 lokal; build/coverage tidak diulang. Catatan gap Atlas pada F28 adalah historis;
-[bukti dan batas L04](../audits/2026-11-15-l04-atlas-ui.md) merinci cakupan saat ini.
+[bukti dan batas L04](../reports/audits/2026-11-15-l04-atlas-ui.md) merinci cakupan saat ini.
 
 
 L05 memperluas lint:strict ke helper backup/remap dan Atlas (28 root/41 source
@@ -243,7 +243,7 @@ input yang tidak nullable, koordinat dan nullable centroid. Policy maintenance
 menjaga 51 file tanpa menaikkan budget file lama. Probe kesalahan tipe, explicit
 any baru dan penyusutan cakupan ditolak. Typecheck umum/strict/maintenance,
 90 berkas/787 tes dan build lulus lokal; browser/coverage tidak diulang karena
-implementasi runtime tidak berubah. [Bukti dan pengecualian](../audits/2026-11-15-l05-strict.md).
+implementasi runtime tidak berubah. [Bukti dan pengecualian](../reports/audits/2026-11-15-l05-strict.md).
 
 
 Pengukuran L06: `npm run measure:backup -- --output=test-results/backup-benchmark.json`
@@ -252,13 +252,13 @@ Merekam elapsed time/timer delay serta sampled heap CDP; checksum dan restore
 penuh/internal memverifikasi seluruh bab serta byte gambar di luar timing.
 Tidak memasang React/editor, tidak memakai akun/data pengguna atau menambahkan
 threshold CI. Typecheck umum/strict/maintenance lulus; suite runtime tidak diulang.
-[Metode dan batas L06](../performance/l06-backup.md). Optimasi belum dilakukan.
+[Metode dan batas L06](../reports/benchmarks/l06-backup.md). Optimasi belum dilakukan.
 
 L06 worker: measure:backup -- --worker membandingkan empat pasangan per ukuran,
 termasuk clone/transfer, kesamaan payload produksi, penolakan input dan restore
 seluruh bab/gambar. Typecheck umum/strict/maintenance lulus. Eksperimen di e2e/
 tidak mengubah aplikasi atau mengklaim worker memory/startup/fallback siap rilis;
-[bukti dan batas](../performance/l06-worker.md).
+[bukti dan batas](../reports/benchmarks/l06-worker.md).
 
 
 L06 readiness: tujuh skenario e2e/backupReadiness.spec.ts menguji startup/crash/
@@ -267,14 +267,14 @@ TipTap asli menguji snapshot dan ketikan dengan jendela delay in-flight yang
 disengaja, bukan benchmark typing latency. Enam siklus memeriksa request/worker
 bersih dan sampel V8 heap (attachment worker-stability.json). Total 42 Chromium
 tests lulus lokal, bersama 787 tes unit/integrasi serta typecheck/strict/maintenance.
-[Status per kriteria dan batas memori/integrasi](../performance/l06-readiness.md).
+[Status per kriteria dan batas memori/integrasi](../reports/benchmarks/l06-readiness.md).
 
 
 L06 backupLoad.spec.ts menambah satu test aplikasi/editor aktif: enam run main/
 worker bergantian, input saat CPU berjalan tanpa delay buatan, CDP heap main dan
 worker selama pekerjaan, seluruh 120 karakter tersimpan/reload. Attachment dan
 file output backup-load.json merekam tiap run. Tanpa threshold performa universal;
-[hasil dan batas interpretasi](../performance/l06-editor-load.md). Typecheck umum/
+[hasil dan batas interpretasi](../reports/benchmarks/l06-editor-load.md). Typecheck umum/
 strict/maintenance, 787 tes unit/integrasi serta 43 Chromium tests lulus lokal.
 
 L06 backupStorage.spec.ts menambah enam skenario service backup aplikasi dengan
@@ -282,7 +282,7 @@ IndexedDB native: kompresi hilang/gagal, crypto hilang, kuota sementara/permanen
 dan kegagalan penyimpanan pre-restore lalu retry. Cocokkan seluruh data/gambar,
 validasi record tersisa dan pelestarian draft/riwayat. Error diinjeksi melalui
 property browser/hook Dexie, bukan disk nyata penuh.
-[Metode dan batas](../performance/l06-storage-failures.md). Suite kini berisi 49
+[Metode dan batas](../reports/benchmarks/l06-storage-failures.md). Suite kini berisi 49
 skenario Chromium, seluruhnya lulus lokal (2.2 menit); typecheck umum/strict/
 maintenance dan enam tes terarah juga lulus. Run pertama memiliki satu inspector
 timeout pada tes beban editor saat dokumentasi ditulis; run ulang tanpa perubahan
@@ -296,7 +296,7 @@ di-restore. Suite menjadi 55 Chromium tests. Unit bertambah menjadi 91 berkas/
 792 tes (antrean, timeout, pemilihan ukuran dan retensi pre-restore).
 test:startup kini memeriksa worker backup production setelah PWA reload offline,
 kesamaan isi dan checksum. Strict 31 root/44 source, maintenance 54 berkas.
-[Kontrak dan batas integrasi](../performance/l06-integration.md). Verifikasi lokal
+[Kontrak dan batas integrasi](../reports/audits/2026-11-15-l06-backup-integration.md). Verifikasi lokal
 lulus: typecheck umum/strict/maintenance, 91 berkas/792 tes beserta coverage,
 seluruh 55 tes Chromium (3.1 menit), build, clean production smoke dan startup/
 offline. Coverage V8: 32.32% baris, 32.15% statement, 25.46% branch, 20.99% fungsi;

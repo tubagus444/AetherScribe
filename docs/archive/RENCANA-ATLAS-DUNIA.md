@@ -2,7 +2,7 @@
 
 > **Arsip memori-proyek.** Spesifikasi awal dan rekam jejak implementasi fitur Atlas Dunia (Peta Interaktif).
 > **Status: 100% SELESAI (v1.0 s/d v2.1 telah dikirim).**
-> Aturan operasional aktif hidup di [`.claude/rules/atlas.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/.claude/rules/atlas.md).
+> Untuk aturan operasional saat ini, buka [kontrak Atlas](../features.md#kontrak-atlas).
 
 ---
 

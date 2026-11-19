@@ -1,9 +1,10 @@
 # AetherScribe
 
 Editor novel berbasis browser yang **local-first** dengan mesin AI modular untuk
-menjaga konsistensi cerita, lore, karakter, dan gaya penulisan. Fokusnya bukan
-sekadar "AI menulis cerita", melainkan membantu penulis **mengelola novel panjang,
-menjaga konteks, dan mempercepat revisi** — tanpa membutuhkan database backend.
+menjaga konsistensi cerita, lore, karakter, dan gaya penulisan. Aplikasi membantu
+penulis **mengelola novel panjang, menjaga konteks, dan mempercepat revisi**.
+
+[Indeks dokumentasi](docs/README.md) · [Roadmap](ROADMAP.md)
 
 ## Fitur Utama
 
@@ -38,7 +39,8 @@ menjaga konteks, dan mempercepat revisi** — tanpa membutuhkan database backend
 
 ## Menjalankan Secara Lokal
 
-**Prasyarat:** Node.js 22.22.2+ pada seri 22, atau 24.15.0+ pada seri 24 (sesuai `engines` dan dependency terkunci). Verifikasi saat ini memakai Node 24.15.0.
+**Prasyarat:** Ikuti `engines.node` di [package.json](package.json).
+Workflow pengujian memakai Node 24.15.0.
 
 1. Install dependency:
    ```bash
@@ -97,10 +99,10 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm run dev` | Jalankan server + Vite (mode pengembangan). |
 | `npm run build` | Build frontend (Vite) dan bundle server (esbuild). |
 | `npm run start` | Jalankan hasil build produksi. |
-| `npm test` | Jalankan unit test (Vitest). |
+| `npm test` | Jalankan Vitest dalam mode watch. |
 | `npm run test:run` | Unit/integrasi sekali jalan. |
 | `npm run test:coverage` | Unit/integrasi dengan laporan coverage V8. |
-| `npm run test:e2e` | 55 skenario Chromium terisolasi, termasuk integrasi worker backup, konkurensi dan kegagalan storage. |
+| `npm run test:e2e` | Jalankan skenario Chromium dengan database dan browser context terisolasi. |
 | `npm run measure:backup` | Ukur backup sintetis besar dan periksa restore; opsional, tanpa ambang waktu CI. |
 | `npm run test:data-paths` | Bandingkan query dan working-set heap dengan fixture sintetis. |
 | `npm run test:startup` | Ukur build dan periksa PWA/worker/ekspor offline (sesudah build). |
@@ -109,16 +111,6 @@ registry npm dan membersihkan direktori sementara setelah selesai.
 | `npm run lint:maintenance` | Jaga budget tipe, cakupan strict dan ekspor publik AI. |
 | `npm run lint:strict` | Typecheck strict bertahap untuk kontrak/helper dan dependensi transitif. |
 
-Panduan lengkap, instalasi browser, bukti regresi dan batas coverage ada di [docs/testing.md](docs/testing.md). Workflow CI menguji Windows/Ubuntu tanpa repository secrets.
-
-Pada Pengaturan AI, key baru disimpan selama sesi tab secara default; pilihan Ingat di browser ini tersedia. Penyimpanan browser bukan enkripsi. Tombol hapus key tidak mencabut key di provider atau menghapus key .env server. Detail: [privasi kredensial](docs/features.md#privasi-kredensial-dan-log-f27).
-
-Pengukuran optimasi pemuatan awal: [laporan F22](docs/performance/f22.md). Aset fitur lazy tetap tersedia setelah cache offline selesai.
-
-Optimasi query metadata dan ranking naskah besar (schema v34): [laporan F23](docs/performance/f23.md).
-
-Backup otomatis internal besar memakai worker dengan antrean per tab dan fallback
-saat gagal. Backup pengaman sebelum restore tetap lengkap. [Perilaku dan batas L06](docs/performance/l06-integration.md).
-Seluruh F01-F29 dan L01-L06 selesai; hasil lokal terakhir mencakup 792 tes unit/
-integrasi dan 55 tes Chromium pada commit `4816258`. Status CI dan pilihan
-pengujian berikutnya ada di [ROADMAP](ROADMAP.md).
+Untuk instalasi Chromium dan cakupan pemeriksaan, buka [panduan pengujian](docs/testing.md).
+Untuk backup, lihat [format backup dan pemulihan](docs/backup-format.md).
+Cara aplikasi menyimpan kunci dijelaskan di [privasi kredensial](docs/features.md#privasi-kredensial-dan-log-f27).

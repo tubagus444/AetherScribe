@@ -3,7 +3,7 @@
 > **Jenis:** snapshot analisis, bukan implementasi perbaikan.  
 > **Konteks:** aplikasi pribadi, single-user, local-first.  
 > **Baseline source:** `a47f895a47a633f02f95511192bddfa47397bef2` (working tree source bersih saat audit).  
-> **Pelacakan kerja:** [ROADMAP.md](../../ROADMAP.md#audit-2026-11-09).  
+> **Pelacakan kerja:** [ROADMAP.md](../../../ROADMAP.md#audit-2026-11-09).<br>
 > **Rincian temuan:** [register F01–F29](2026-11-09-findings.md).
 
 Laporan ini menyimpan hasil investigasi pada sesi audit sebelumnya. Hasil build, test, dan probe di bawah berasal dari sesi tersebut; tidak diklaim sebagai pengujian ulang saat dokumentasi ditulis. Tidak ada perbaikan source, migrasi, akses IndexedDB pengguna, pemanggilan provider/Drive, deployment, atau eksploitasi destruktif dalam audit. Build verifikasi dibuat di direktori sementara OS. Nomor baris merujuk baseline dan dapat bergeser setelah perbaikan.
@@ -37,7 +37,7 @@ Prioritas berikutnya adalah stabilisasi penyimpanan, recovery, batas proxy, inde
 | Eksternal opsional | Provider AI, Ollama, Google Identity Services, Google Drive |
 | Recovery | Backup internal, file, folder lokal, Drive |
 
-Entry point: [main.tsx](../../src/main.tsx), [App.tsx](../../src/App.tsx), [server.ts](../../server.ts). Mengakses server dari perangkat/browser lain tidak memberikan database novel yang sama: IndexedDB terikat origin dan profil browser.
+Entry point: [main.tsx](../../../src/main.tsx), [App.tsx](../../../src/App.tsx), [server.ts](../../../server.ts). Mengakses server dari perangkat/browser lain tidak memberikan database novel yang sama: IndexedDB terikat origin dan profil browser.
 
 ## 3. Technology Stack
 
@@ -55,7 +55,7 @@ Entry point: [main.tsx](../../src/main.tsx), [App.tsx](../../src/App.tsx), [serv
 | Ekspor | DOCX, jsPDF, utilitas EPUB/ZIP |
 | Tes | Vitest 4.1.8 |
 
-Versi ini bukan klaim versi terbaru. Konfigurasi: [package.json](../../package.json), [vite.config.ts](../../vite.config.ts), [tsconfig.json](../../tsconfig.json).
+Versi ini bukan klaim versi terbaru. Konfigurasi: [package.json](../../../package.json), [vite.config.ts](../../../vite.config.ts), [tsconfig.json](../../../tsconfig.json).
 
 Nama environment yang dirujuk: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `HF_API_KEY`/`HUGGINGFACE_API_KEY`, `CLAUDE_API_KEY`, `NODE_ENV`, `DISABLE_HMR`. `HAS_GEMINI_KEY` adalah boolean build-time, bukan nilai key. `APP_URL` ada dalam contoh konfigurasi tetapi tidak ditemukan dipakai; port server hardcoded 3000, bukan membaca `PORT`. Entry point server tidak memuat `.env` secara eksplisit (F21).
 
@@ -84,7 +84,7 @@ Inventaris sekitar 291 berkas TS/TSX termasuk 43 berkas tes, sekitar 56.843 bari
 
 ### Penyesuaian terhadap dokumentasi yang sudah ada
 
-Dokumentasi modular dipertahankan: [overview](../overview.md), [architecture](../architecture.md), [features](../features.md), [database](../database.md), [api](../api.md), [decisions](../decisions.md), [changelog](../changelog.md). Keputusan konsolidasi 2026-10-07 menjadikan `ROADMAP.md` satu-satunya tracker aktif. Karena temuan baru belum diperbaiki, laporan ditempatkan di `docs/audits/`, bukan `docs/archive/`.
+Dokumentasi modular dipertahankan: [overview](../../overview.md), [architecture](../../architecture.md), [features](../../features.md), [database](../../database.md), [api](../../api.md), [decisions](../../decisions.md), [changelog](../../changelog.md). Keputusan konsolidasi 2026-10-07 menjadikan `ROADMAP.md` satu-satunya tracker aktif. Saat audit disusun, temuan masih terbuka. [Catatan penutupan F01–F29](../../archive/2026-11-15-roadmap-audit-completed.md)
 
 | Catatan lama | Konteks hasil audit baru |
 |---|---|
@@ -162,7 +162,7 @@ Mode legacy `arc`/`orphans` masih diterima oleh navigasi tetapi tidak memiliki c
 
 ## 7. Frontend Analysis
 
-Enam studio didefinisikan di [studioNavigation.ts](../../src/lib/studioNavigation.ts): Menulis, Dunia & Lore, Visual & Peta, Analisis & Naskah, Asisten AI, Sistem. State UI/context dipisahkan, live query menghubungkan Dexie ke render, dan preferensi navigasi disimpan lokal. Editor diberi key berdasarkan bab; audit tidak menyimpulkan race pergantian bab hanya dari keberadaan hook.
+Enam studio didefinisikan di [studioNavigation.ts](../../../src/lib/studioNavigation.ts): Menulis, Dunia & Lore, Visual & Peta, Analisis & Naskah, Asisten AI, Sistem. State UI/context dipisahkan, live query menghubungkan Dexie ke render, dan preferensi navigasi disimpan lokal. Editor diberi key berdasarkan bab; audit tidak menyimpulkan race pergantian bab hanya dari keberadaan hook.
 
 Loading/error/empty state tersedia namun belum seragam. Error boundary melindungi error render, bukan seluruh rejection asynchronous. Kelas responsif tersedia tetapi layout nyata belum diuji. ConfirmDialog belum memiliki role/ARIA/focus trap/restoration/Escape lengkap (F25).
 
@@ -170,7 +170,7 @@ Lazy loading sudah luas, tetapi editor ada pada jalur awal dan ActionsPanel diim
 
 ## 8. Backend & API Analysis
 
-Semua handler berada di [server.ts](../../server.ts), tidak memiliki autentikasi aplikasi/RBAC, dan tidak mengoperasikan database novel.
+Semua handler berada di [server.ts](../../../server.ts), tidak memiliki autentikasi aplikasi/RBAC, dan tidak mengoperasikan database novel.
 
 | POST endpoint | Baris handler | Request | Response/error |
 |---|---:|---|---|
@@ -188,7 +188,7 @@ Tidak ditemukan antrean backend, scheduler, upload server, atau CRUD novel. Risi
 
 ## 9. Database Analysis
 
-[db.ts](../../src/db.ts) mendefinisikan AetherScribeDB v33, 20 store:
+[db.ts](../../../src/db.ts) mendefinisikan AetherScribeDB v33, 20 store:
 
 | Kelompok | Store |
 |---|---|
@@ -356,7 +356,7 @@ Estimasi untuk satu pengembang yang memahami repo, bukan tenggat; kelompok dapat
 | Medium 2–6 minggu | QA F24, bundle/query F22/F23, UX F25/F26 | Harness DB/browser dan baseline benchmark | Sedang, sekitar 10–18 hari | Regresi kritis di CI; metrik sebelum/sesudah; keyboard dan mode lama |
 | Long 1–3 bulan | Privacy/maintainability F27/F28; lifecycle gaps | Tipe boundary stabil dan regression suite | Bertahap, effort L untuk refactor | Strictness bertahap, log minimal, migration/PWA/quota/multitab tests |
 
-Mulai tes regresi F24 sejak batch pertama; horizon medium adalah penyempurnaan harness/CI, bukan menunda semua tes. [Checklist aktif](../../ROADMAP.md#audit-2026-11-09) menentukan urutan praktis. Effort per item tidak dijumlahkan sebagai jadwal pasti.
+Mulai tes regresi F24 sejak batch pertama; horizon medium adalah penyempurnaan harness/CI, bukan menunda semua tes. [Arsip pelaksanaan](../../archive/2026-11-15-roadmap-audit-completed.md) menyimpan urutan kerja yang dipilih. Effort per item tidak dijumlahkan sebagai jadwal pasti.
 
 ## 20. Final Assessment
 

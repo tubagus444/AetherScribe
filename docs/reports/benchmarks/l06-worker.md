@@ -2,7 +2,7 @@
 
 > Riwayat sebelum integrasi worker pada commit 4816258. Angka dan status di bawah
 > berlaku pada tahap pengujian ini. Kondisi aplikasi sekarang ada di
-> [laporan integrasi L06](l06-integration.md).
+> [laporan integrasi L06](../audits/2026-11-15-l06-backup-integration.md).
 
 
 15 November 2026, HEAD 0647d07 dengan perubahan profiling/eksperimen di working

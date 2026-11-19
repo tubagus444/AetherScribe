@@ -35,11 +35,6 @@ diproses sebagai JSON oleh importer lain. File dan folder lokal serta Drive
 menerapkan batas baca sebelum menerbitkan arsip. Folder dan Drive dapat
 menggunakan gzip.
 
-Persiapan auto internal besar memakai worker dengan fallback main dan antrean
-save per tab. Pre-restore tetap lengkap dan dikecualikan dari rotasi auto normal
-maupun degradasi kuota. Format/checksum/referensi gambar tetap sama.
-[Kontrak integrasi L06](performance/l06-integration.md).
-
 ## Scope dan validasi
 
 `restoreData(input)` hanya menerima cadangan seluruh workspace (`scope:'all'`). `importProjectData(input)` hanya menerima `scope:'project'` dengan tepat satu proyek dan menambahkan salinan baru melalui remap ID. UI memvalidasi sebelum konfirmasi; service memvalidasi lagi agar internal/Drive tidak dapat melewati pemeriksaan tersebut.
@@ -132,6 +127,28 @@ Untuk checksum envelope, gunakan SHA-256 atas UTF-8
 
 Snapshot lengkap memerlukan ruang tambahan. Saat kuota penuh, mekanisme eviksi auto lama tetap berlaku; jika snapshot masih tidak dapat disimpan, restore dibatalkan. Masalah struktur atau relasi lain pada workspace masih dapat membuat snapshot pra-pemulihan gagal validasi.
 
+## Persiapan backup otomatis dan retensi internal
+
+Pengumpulan cadangan menunggu simpan editor, lalu membaca tabel dalam satu
+transaksi melalui [`backupSnapshot.ts`](../src/services/backupSnapshot.ts).
+Ekspor manuskrip juga membaca snapshot terbaru. Kerjakan pengolahan Blob,
+checksum dan kompresi di luar transaksi IndexedDB.
+
+Cadangan otomatis internal besar memakai worker saat Worker, Web Crypto dan
+gzip tersedia. `internalBackupPreparation.ts` menyusun data ramping, checksum,
+envelope v8 dan gzip. Gunakan hasil serialisasi data untuk checksum dan envelope
+agar data yang sama cukup diserialisasi sekali pada tahap persiapan. Jika worker
+gagal mulai, mengirim respons invalid, crash, atau melewati batas waktu,
+persiapan beralih ke main thread dengan algoritme yang sama. Jika kompresi
+gagal, jalur persiapan dapat menyimpan JSON. Antrean persiapan, simpan, dan
+retensi berlaku per tab. Kesalahan penyimpanan diteruskan ke status aplikasi.
+
+Rotasi berjenjang hanya memangkas cadangan otomatis setelah penyimpanan
+berhasil. Jika penyimpanan gagal karena kuota, buang cadangan otomatis tertua
+yang boleh dieviksikan lalu coba lagi. Seluruh cadangan pengaman pra-restore
+dan cadangan otomatis terbaru dilindungi. Laporkan kegagalan jika tidak ada
+cadangan yang aman dibuang. [Bukti dan batas integrasi L06](reports/audits/2026-11-15-l06-backup-integration.md)
+
 ## Batas input
 
 | Batas | Nilai |
@@ -153,12 +170,6 @@ Tes Chromium menggunakan unduhan JSON dari UI dan profil kosong untuk
 membandingkan naskah, referensi, serta byte gambar. Akun Drive nyata dan file
 novel pengguna berada di luar verifikasi lokal. Fixture legacy menggunakan
 data sintetis yang mewakili versi envelope.
-
-Pengumpulan cadangan menunggu simpan editor, lalu membaca tabel dalam satu
-transaksi melalui `backupSnapshot.ts`. Serialisasi Blob, checksum, dan
-kompresi dilakukan sesudah transaksi. Ekspor manuskrip membaca ulang bab yang
-dipilih dan metadata proyek dari snapshot tersebut. Edit yang terjadi
-sesudah snapshot tercakup pada pencadangan berikutnya.
 
 ## Retensi Drive (F20)
 

@@ -60,16 +60,16 @@ AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reakt
 L06 menambahkan `src/workers/backupWorker.ts` untuk persiapan auto-backup internal
 besar, dengan antrean save per tab, timeout dan fallback main. Algoritme bersama
 ada di `src/lib/internalBackupPreparation.ts`; snapshot dan penyimpanan tetap
-milik service. [Kontrak dan batas](performance/l06-integration.md).
+milik service. [Kontrak dan batas](reports/audits/2026-11-15-l06-backup-integration.md).
 
 Kontrak data context/Orama, respons AI dan pemisahan metadata/input bab dijelaskan
-di [F28.2](audits/2026-11-15-f28-contracts.md). Payload dan hasil tiap task worker
+di [F28.2](reports/audits/2026-11-15-f28-contracts.md). Payload dan hasil tiap task worker
 memakai tipe bersama dan pemeriksaan runtime; JSON provider diperlakukan sebagai
 unknown sebelum teks/usage/error dinormalisasi.
 
 Pemeriksaan strict dilakukan bertahap melalui `tsconfig.strict.json` dan
 `npm run lint:strict`, terpisah dari typecheck umum. Semua import transitif tetap
-ikut diperiksa. Cakupan awal dan pengecualiannya ada di [F28.3](audits/2026-11-15-f28-strict.md).
+ikut diperiksa. Cakupan awal dan pengecualiannya ada di [F28.3](reports/audits/2026-11-15-f28-strict.md).
 
 Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI freezing*), tugas-tugas berat dieksekusi di background Web Worker:
 
@@ -99,7 +99,7 @@ Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI
         │
         ▼
 [src/services/ai/proxy.ts] (Client HTTP call)
-   ├── Menyisipkan header autentikasi BYOK dari localStorage
+   ├── Menyisipkan header autentikasi BYOK dari credentialStore
    └── Menangani parsing Server-Sent Events (SSE) streaming
         │
         ▼ (HTTP POST /api/ai/proxy - Body limit 25MB)
@@ -117,7 +117,47 @@ Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI
   - Pengetahuan statis (*Story Bible* & aturan dunia) ditempatkan di segmen cache awal yang stabil.
   - Pengetahuan volatil (*Codex* & entri yang sering disunting) ditempatkan di segmen berikutnya.
   - Riwayat chat dan konteks bab diletakkan di akhir agar modifikasi teks naskah tidak membatalkan cache prompt *Story Bible*.
-- **Circuit Breaker & Fallback:** Kegagalan koneksi atau error rate-limit (429) akan ditangani secara anggun dengan jeda backoff eksponensial dan opsi fallback provider otomatis.
+- **Circuit breaker dan fallback:** Dispatch menangani kegagalan sementara dan
+  rate-limit dengan backoff. Fallback mengikuti mode lokal dan daftar provider
+  yang diizinkan pengguna. [Kebijakan provider](api.md#kebijakan-provider-klien-f17)
+
+### Kontrak pengembangan AI dan konteks
+
+- Fitur memanggil facade `src/services/ai/index.ts`. Gunakan orkestrasi di
+  `dispatch.ts`, pembatalan di `execution.ts`, dan validasi respons di
+  `responseContracts.ts`. Modul internal mengimpor pemilik fungsi secara
+  langsung supaya state breaker dan controller tetap dikelola di satu tempat.
+- Pada mode caching, `buildCachedContextSegments` menyusun segmen stabil
+  Story Bible lalu Codex dan graf. Teruskan segmen lewat `cachedContext` secara
+  terpisah dari `systemInstruction`. Jaga urutan deterministik dan kesamaan
+  byte segmen lintas aksi. Mode lain memakai konteks relevan melalui worker.
+- Jalur AI dan pratinjau token berbagi `loreFormat.ts`. Potong lore pada batas
+  entri dan kirim batas dari `getMaxCachedLoreChars()` lewat payload worker.
+- Gunakan kontrak dari `contextProtocol.ts`, `rag/oramaProtocol.ts`, dan
+  `responseContracts.ts` untuk validasi input dan hasil. Pertahankan tipe
+  nilai seperti Map dan Set pada transport worker serta terima usage nol.
+- SSE harus meneruskan error provider dan `AbortError`. Saat retry, reset
+  buffer percobaan sebelumnya dan gunakan hasil final. Bersihkan timer saat
+  selesai, unmount, atau ganti bab.
+- Sesi asisten memakai `chatSessions.kind` untuk membedakan Studio, Scribble,
+  dan Workshop. Tetapkan jenis pada sesi baru dan jaga riwayat Studio terpisah
+  dari dua jenis lain. Aturan remap target Workshop ada di
+  [format backup](backup-format.md#round-trip-f10).
+- Saat menyimpan ringkasan otomatis, pakai hash isi sumber dan commit
+  bersyarat di transaksi. Pertahankan nilai nol yang valid pada pengaturan
+  suhu dan metrik usage. [Ringkasan dan metrik](features.md#ringkasan-otomatis-dan-metrik-ai-f29f13)
+
+### Kontrak panel pengaturan
+
+Pertahankan `SettingsPanel` sebagai shell tab. Tambahkan kontrol pada section
+terkait dan pusatkan baca/tulis pengaturan AI di `useAISettings.ts`. Gunakan
+`useConnectionTest.ts` serta komponen status koneksi yang ada.
+
+Facade AI dan panel memakai `credentialStore` bersama. Terapkan perubahan mode
+penyimpanan kredensial pada Save. Pertahankan kunci legacy saat mount dan
+laporkan kegagalan storage sebelum menampilkan sukses. Clear membersihkan
+penyimpanan sesi, penyimpanan browser, dan isian tab aktif.
+[Privasi kredensial dan diagnostik](#boundary-kredensial-dan-diagnostik-f27)
 
 ---
 
@@ -218,7 +258,7 @@ mengosongkan promise untuk retry, dan checkpoint cancellation tetap berlaku.
 Precache glob/limit tetap mencakup chunk baru; tidak mengecualikan fitur lazy dari
 offline. Test produksi test:startup mengaktifkan SW untuk assertion offline, tetapi
 memblokirnya pada sample timing agar install cache tidak mencampur ukuran startup.
-Lihat [metodologi dan raw data](performance/f22.md).
+Lihat [metodologi dan raw data](reports/benchmarks/f22.md).
 
 ## Query Metadata dan Ranking F23
 
@@ -233,7 +273,7 @@ serialization; referensi stabil tetap dipertahankan untuk data setara. Tipe non-
 dipandang berubah secara konservatif. sceneQueries melakukan keyset getAll batch
 256 dalam satu readonly transaction; contextWorker memakai StableTopK dan tetap
 memeriksa cancel. Tidak ada await timer/model di dalam transaksi ranking. Detail
-schema, benchmark, dan tradeoff: [database](database.md), [F23](performance/f23.md).
+schema, benchmark, dan tradeoff: [database](database.md), [F23](reports/benchmarks/f23.md).
 
 ## Pemisahan layanan AI F28.4
 
@@ -284,7 +324,7 @@ settings/resultParsing), sementara budget AST menjangkau 38 berkas. Guard menjag
 nama ekspor publik AI dan arah static import modul internal; ia tidak menggantikan
 tes perilaku atau pemeriksaan tipe. Policy diperbarui melalui review dengan alasan,
 bukan regenerasi otomatis untuk meloloskan CI. Lihat
-[review akhir F28](audits/2026-11-15-f28-review.md) untuk inventaris, pengecualian,
+[review akhir F28](reports/audits/2026-11-15-f28-review.md) untuk inventaris, pengecualian,
 perbandingan baseline dan batas penutupan.
 
 
@@ -292,4 +332,4 @@ L05 memperluas cakupan strict ke helper backup/Atlas, termasuk dependensi nyata:
 28 root/41 source, dengan 51 file di maintenance policy. Pengaman compile-only
 backupAtlas.typecheck.ts ditambahkan tanpa perubahan perilaku runtime. Angka
 cakupan tahap F28 di atas merupakan snapshot historis. Daftar modul, escape lama
-serta cara verifikasi ada di [laporan L05](audits/2026-11-15-l05-strict.md).
+serta cara verifikasi ada di [laporan L05](reports/audits/2026-11-15-l05-strict.md).

@@ -1,28 +1,8 @@
 # Pengujian dan batas coverage
 
-Panduan ini menjelaskan pemeriksaan aplikasi setelah penyelesaian F01-F29 dan L01-L06.
-Tes memakai fixture sintetis, browser context baru, DB terisolasi, dan mock
-provider/Drive. Jangan menjalankannya dengan browser profile atau data pengguna.
-
-## Hasil verifikasi terbaru
-
-Snapshot lokal 15 November 2026, implementasi dalam commit `4816258`, Windows/
-Node 24.15.0 dan Chromium 159.0.8154.6:
-
-| Pemeriksaan | Hasil |
-|---|---|
-| Unit/integrasi dan coverage | 91 berkas/792 tes lulus |
-| Browser Chromium | 55 skenario lulus, sekitar 3.1 menit |
-| Typecheck umum/strict/maintenance | Lulus; strict 31 root/44 source, policy 54 berkas dan 18 ekspor publik AI |
-| Build dan clean production | Lulus, termasuk instalasi dependensi terisolasi dan pemeriksaan secret sintetis |
-| Startup/offline | PWA reload, worker context/backup dan ekspor Markdown lulus |
-
-L06 mencakup save/restore melalui Pengaturan, tiga permintaan backup bersamaan
-dengan maksimal satu worker, startup/crash/respons invalid/timeout 30 detik,
-fallback, kegagalan crypto/kompresi/kuota dan perlindungan pre-restore. Rincian
-alur dan batasnya ada di [integrasi worker](performance/l06-integration.md).
-Peringatan build lama tentang chunk besar, eval ONNX dan usia Browserslist tetap ada.
-Perapian dokumentasi sesudah commit ini tidak menjalankan ulang suite runtime.
+Tes memakai fixture sintetis, browser context baru, database terisolasi,
+dan respons tiruan dari provider dan Drive. Hasil per tanggal atau commit
+tersedia di [indeks laporan](reports/README.md).
 
 ## Menjalankan pemeriksaan
 
@@ -74,6 +54,8 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 | Backup F03/F04/F19 | backupService/backupConsistency: validasi, snapshot wajib, aset, atomic restore dan konsistensi snapshot | Blob/FileReader/Web Crypto/gzip native: Atlas dipulihkan dan snapshot pengaman dibuat; restore versi asing ditolak |
 | Round-trip F10 | projectRoundTrip: remap FK/triage/workshop, rollback dan legacy | Export/import service produksi memakai native IndexedDB dan remap triage; L03 melengkapi ekspor/impor lewat tombol, filechooser dan dialog aplikasi |
 | Delete F11 | entityDeletion: relasi turunannya, rollback dan cache | L03 menguji delete bab/Codex/proyek, pembatalan, cleanup dan isolasi proyek lain |
+| Simpan dan cadangan DB01–DB08 | Validasi relasi, katalog tabel, kontrak bab, dan pembacaan cadangan portabel | Autosave dan cadangan antartab, rollback upgrade, serta restore cadangan ke database kosong. [Verifikasi DB01–DB08](reports/audits/2026-11-19-db01-db08.md) |
+| Worker backup L06 | Antrean per tab, estimasi ukuran, fallback, dan retensi snapshot pengaman | Save/restore, permintaan bersamaan dan kegagalan worker. [Verifikasi L06](reports/audits/2026-11-15-l06-backup-integration.md) |
 | Search F08/F09 | oramaSearch dan SemanticSearchPanel: protokol, generated ID, rollback, isolasi dan hasil basi | Worker Orama native: insert/search/delete serta isolasi antarproyek |
 | Streaming F12/F14/F15 | SSE parser, proxyStream, useChatSession, useEditorAI: error, abort, retry/reset dan cleanup | Stream sintetis; belum provider atau jaringan eksternal nyata |
 | Cancel F16 | contextTimeout/contextCancellation: payload CANCEL, timeout, isolasi, checkpoint dan late cancel | Context worker native menguji token count dan Aho-Corasick; timeout/cancel tetap diuji dengan transport/model mock |
@@ -94,9 +76,7 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 entry server, termasuk file yang belum disentuh tes. Ia tidak menggabungkan
 coverage browser/worker native atau child process smoke production.
 
-Snapshot L06 pada commit `4816258`: 32.32% baris, 32.15% statement,
-25.46% branch dan 20.99% fungsi. Snapshot sebelumnya tersedia dalam
-[arsip verifikasi](archive/2026-11-15-testing-history.md).
+Snapshot coverage per commit tersedia di [arsip verifikasi](archive/2026-11-15-testing-history.md).
 
 Angka rendah pada seluruh aplikasi menjelaskan batas suite, bukan jaminan bahwa
 alur lain aman. Belum ada ambang persentase global; CI menggagalkan tes/assertion
@@ -114,26 +94,23 @@ dijalankan terhadap isi `useEditorSave.ts` sebelum commit perbaikan `270b5f2`
 flush harus reject: nilai aktual `false`, ekspektasi `true`. Source perbaikan
 dipulihkan sesudah probe; tes lalu lulus. Probe hanya memakai context/fixture
 sintetis, tanpa membuka profil browser atau DB pengguna. Bukti baseline regresi
-lain tetap dicatat pada masing-masing item ROADMAP/changelog; tidak semua tes
+lain tersedia di [laporan audit](reports/README.md) dan [changelog](changelog.md). Tidak semua tes
 dapat dijalankan pada seluruh checkout lama karena kontrak antar-modul berubah.
 
 ## CI dan artefak
 
 `.github/workflows/critical-tests.yml` berjalan pada push, pull request dan manual,
 di Windows serta Ubuntu dengan Node 24.15.0. Setiap job menjalankan `npm ci`,
-typecheck umum dan strict bertahap, unit/integrasi dengan coverage, browser kritis, dan build/smoke
-production. Tidak membutuhkan repository secrets atau izin tulis repository.
+typecheck umum dan strict bertahap, pemeriksaan maintenance, unit/integrasi
+dengan coverage, Chromium, regresi jalur data, smoke test produksi, dan
+startup offline. Workflow memakai izin baca repo.
 
 Coverage, HTML report browser, screenshot dan trace kegagalan disimpan sebagai
 artefak CI selama tujuh hari. Di lokal, direktori tersebut diabaikan Git.
 Untuk diagnosis gunakan `npx playwright show-report` atau
 `npx playwright show-trace <path-trace.zip>`. Artefak berisi fixture sintetis.
-L01 memverifikasi workflow Windows/Ubuntu berhasil pada commit `7527305`:
-[run 43696531716](https://github.com/tubagus444/AetherScribe/actions/runs/43696531716).
-Status setiap step, log kedua job dan metadata artefak diperiksa. Lihat
-[bukti dan batas verifikasi](audits/2026-11-15-l01-ci.md). Hasil ini berlaku untuk
-commit tersebut; catatan belum diverifikasi pada snapshot F24-F28 bersifat historis.
-Commit terbaru belum diklaim lulus di GitHub; hasil lokal tidak menggantikan run CI.
+Untuk contoh catatan SHA, job, dan metadata artefak, lihat
+[laporan verifikasi CI L01](reports/audits/2026-11-15-l01-ci.md).
 
 Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 [setup-node](https://github.com/actions/setup-node),
@@ -142,7 +119,6 @@ Rujukan konfigurasi: [Playwright CI](https://playwright.dev/docs/ci),
 
 ## Riwayat verifikasi
 
-Catatan per tahap F24-L06, jumlah tes lama dan probe regresi disimpan di
-[arsip verifikasi](archive/2026-11-15-testing-history.md). Laporan eksperimen
-L06 mendahului integrasi; kondisi aplikasi sekarang dijelaskan di
-[laporan integrasi](performance/l06-integration.md).
+Catatan per batch, percobaan ulang, dan pengukuran tersedia di
+[indeks laporan](reports/README.md). Untuk kondisi worker backup saat
+ini, baca [format backup](backup-format.md#persiapan-backup-otomatis-dan-retensi-internal).

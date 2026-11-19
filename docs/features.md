@@ -1,11 +1,10 @@
 # Katalog Fitur — AetherScribe
 
-Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencakup status, arsitektur file, tabel database, endpoint, dan catatan teknis.
+Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak teknis.
 
 ---
 
 ## Editor Manuskrip (TipTap 3)
-- **Status:** Selesai
 - **Deskripsi:** Editor kaya fitur berbasis TipTap 3 yang dioptimalkan untuk penulisan novel panjang dengan penghitung kata langsung, mode fokus, dan jaring pengaman autosave anti kehilangan data.
 - **File terkait:** `src/features/editor/components/NovelEditor.tsx`, `src/features/editor/components/EditorToolbar.tsx`, `src/features/editor/hooks/useEditorSave.ts`, `src/features/editor/editorBridge.ts`, `src/hooks/useGlobalEvents.ts`
 - **Tabel DB:** `chapters`, `snapshots`
@@ -13,14 +12,32 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 - **Catatan:** Seluruh paket `@tiptap/*` WAJIB dipin tepat ke versi `3.22.5`. Autosave memakai debounce 1,5 detik; flush membaca HTML terbaru termasuk konten kosong. `flushActiveEditor(): Promise<void>` hanya resolve setelah update tepat satu bab, dan reject pada error DB, ID invalid, atau update nol baris. Tanpa editor aktif, flush tetap no-op.
 - **Penanganan gagal simpan (F05):** Status menjadi `Gagal menyimpan`, draft tetap di editor, dan reload melalui bridge ditolak sampai save berhasil. Find & Replace membatalkan penggantian/snapshot/reload ketika flush gagal; klik ulang mencoba flush lagi. Edit berikutnya juga mencoba autosave kembali. Timer status sukses sebelumnya tidak boleh menghapus pesan kegagalan. Rejection autosave dan lifecycle ditangani agar tidak menjadi unhandled rejection.
 - **Lifecycle:** `pagehide` dan `visibilitychange` mencoba flush, tetapi penyelesaian IndexedDB saat browser menutup halaman tidak dijamin. Pembaruan skema dari koneksi lain hanya menutup DB dan memuat ulang setelah flush sukses; kegagalan mempertahankan tab/koneksi dan menampilkan pesan. Menutup paksa tab setelah save gagal tetap dapat menghilangkan draft yang hanya ada di memori.
-- **Verifikasi F05:** Tes hook React, Find & Replace dengan `fake-indexeddb`, dan handler `versionchange` memakai fixture terisolasi; belum diuji pada browser/IndexedDB native atau upgrade lintas-tab nyata.
+- **Verifikasi F05:** Tes hook, Find & Replace, dan penanganan versi memakai fixture terisolasi. Skenario simpan, retry dan perilaku antartab tercantum di [panduan pengujian](testing.md#inventaris-alur-kritis).
 
 ---
+
+## Kontrak editor dan analitik naskah
+
+- Pertahankan draf ketika simpan gagal. Transisi yang memerlukan simpan
+  menunggu flush, termasuk perpindahan panel atau bab dan pengambilan
+  snapshot cadangan. [Perlindungan dan pengujian simpan](testing.md#inventaris-alur-kritis)
+- Peta Kontinuitas, Lensa Karakter, Janji Plot, dan Atlas berbagi
+  `PresenceIndex`. Gunakan `buildPresenceIndexAsync` untuk scan on-demand dan
+  `usePresenceIndex` untuk hitung ulang otomatis. Fungsi murni `buildPresenceIndex`
+  dipakai oleh worker dan tes.
+- `ConsistencyUnderline` menggabungkan temuan deterministik, kutipan AI,
+  Buku Gaya, dan Glosarium. Perluas `flagCharactersForChapter` untuk
+  aturan nama berbasis timeline serta `findGlossaryIssues` untuk istilah
+  non-nama. Temuan AI berasal dari cache per paragraf dan bab. Jaga
+  invalidasi saat teks berubah, batas cache, dan kunci pembatalan inline.
+- Metrik prosa berbagi `proseAnalysis.ts` dan `pacingHeatmap.ts`. Jika
+  `Chapter.tension` kosong, tampilkan perkiraan tanpa menyimpannya. Janji
+  Plot memakai entri yang dideklarasikan penulis, lalu menurunkan status
+  kemunculan lewat `plotPromises.ts`.
 
 ## Manajemen Bab & Papan Babak (Kanban Act)
 - **F11:** Penghapusan pada ChapterList dan papan outline memakai service domain yang sama. Snapshot/indeks bab ikut dihapus; timeline, chat dan janji plot tetap ada dengan tautan bab dilepas. Urutan sisa bab tetap dinormalisasi atomik. Penghapusan peta, Codex, dan proyek juga memakai `entityDeletion.ts`; kebijakan retensi/unlink lengkap ada di [database](database.md).
 - **Perbaikan F06:** ChapterList memakai tipe metadata tanpa content. Duplikasi melakukan flush editor sebelum membaca entitas lengkap dari DB, menyalin HTML/metadata ke ID baru dan menempatkannya sesudah sumber. Operasi daftar memakai `chapterOperations.ts`: urutan awal order lalu ID, dinormalisasi 0..N-1 dalam transaksi pada tambah/hapus/duplikasi/perpindahan. Kegagalan transaksi rollback; kegagalan flush membatalkan duplikasi dan ditampilkan melalui toast. Relasi/snapshot/chat bab tidak ikut digandakan; cleanup referensi saat delete ditangani service F11.
-- **Status:** Selesai
 - **Deskripsi:** Pengorganisasian bab naskah dengan drag-and-drop reordering, penetapan status draf, target kata per bab, dan visualisasi babak naratif (Act I, II-A, II-B, III).
 - **File terkait:** `src/features/chapters/components/OutlinePanel.tsx`, `src/features/chapters/components/ChapterList.tsx`, `src/features/chapters/hooks/useChapters.ts`
 - **Tabel DB:** `chapters`
@@ -30,7 +47,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Story Bible & Aturan Dunia
-- **Status:** Selesai
 - **Deskripsi:** Tempat mendeklarasikan aturan kanon novel (Tone, Genre, Aturan Sihir, Larangan Narasi) yang otomatis diumpankan ke AI sebagai pondasi pengetahuan stabil.
 - **File terkait:** `src/features/lore/components/BiblePanel.tsx`, `src/lib/storyBible.ts`
 - **Tabel DB:** `bible`
@@ -40,7 +56,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Codex & Ensiklopedia Lore
-- **Status:** Selesai
 - **Deskripsi:** Ensiklopedia komprehensif untuk mencatat karakter, tempat, item, sihir, dan lore dengan dukungan alias multi-kata untuk deteksi teks instan.
 - **File terkait:** `src/features/codex/components/CodexPanel.tsx`, `src/features/codex/components/CodexDetailModal.tsx`, `src/features/codex/components/CodexForm.tsx`, `src/lib/codexKeywords.ts`
 - **Tabel DB:** `codex`, `codexCategories`
@@ -50,7 +65,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Kategori Kustom & Field Template Codex
-- **Status:** Selesai
 - **Deskripsi:** Pembuat kategori entri fleksibel (misal: Bestiari, Artefak) dengan template field terstruktur (teks, angka, select) yang otomatis ter-denormalisasi.
 - **File terkait:** `src/lib/codexFields.ts`, `src/lib/codexCategories.ts`, `src/features/codex/components/CategoryManagerModal.tsx`
 - **Tabel DB:** `codexCategories`, `codex`
@@ -59,8 +73,30 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
+## Kontrak Codex dan graf lore
+
+- Gunakan `useCodexCategories`, `getCategoryDef`, dan `CategoryIcon` untuk
+  kategori per proyek. Nilai field kustom menyimpan label saat entri
+  disimpan agar format AI dan ekspor dapat membaca entri secara mandiri.
+  Gunakan `codexFields.ts` pada form, tampilan, AI, dan ekspor.
+- Pertahankan daftar Codex khusus highlight dan mention yang menyaring
+  entri `hidden`. Konsistensi dan konteks AI memakai data lengkap sesuai
+  kebijakan provider. Ekspor Markdown menyaring `hidden` secara default
+  dan selalu mengecualikan `secret`.
+- Nama dari Bengkel Nama dapat ditambahkan sebagai alias. `namePalette`,
+  `worldStatus`, dan `todo` adalah metadata alur kerja yang ikut
+  cadangan. Saran kelengkapan dihitung saat dibaca dan tidak dipersist.
+- Kembangkan derivasi graf di `loreGraph.ts` dan jalankan graf visual
+  melalui worker. `LoreGraphPanel` memakai `graph2ScreenCoords` untuk
+  klik dan hover. Hit-test bawaan pernah hanya menjangkau satu node
+  pada render kanvas kustom. Pertahankan callback ref untuk memasang
+  observer ukuran ketika kanvas muncul setelah data termuat.
+- Workshop memakai `chatSessions.kind = 'workshop'` dan kunci per target
+  untuk melanjutkan diskusi. Parsing dan penyembunyian blok draf
+  ditangani `codexDraft.ts`. Simpan entri lewat aksi pengguna dan
+  pertahankan instruksi tambahan Workshop di luar cache pengetahuan.
+
 ## Hubungan Karakter & Entitas (Relationship Mapper)
-- **Status:** Selesai
 - **Deskripsi:** Pemetaan jejaring hubungan sosial dan politik antar entitas Codex (Musuh, Keluarga, Sekutu, Bawahan) yang dapat dianalisis oleh AI.
 - **File terkait:** `src/features/lore/components/RelationshipMapper.tsx`, `src/features/codex/relationshipTypes.ts`, `src/lib/loreFormat.ts`
 - **Tabel DB:** `relationships`, `codex`
@@ -70,7 +106,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Kebenaran Tersembunyi (Hidden Truth & Secrets)
-- **Status:** Selesai
 - **Deskripsi:** Fitur pemisah antara kanon publik dan rahasia penulis; entri atau catatan bertanda rahasia disuntikkan ke AI untuk pencegahan kebocoran plot namun disaring dari ekspor pembaca.
 - **File terkait:** `src/features/codex/components/CodexForm.tsx`, `src/lib/loreFormat.ts`
 - **Tabel DB:** `codex` (`hidden`, `secret`)
@@ -79,18 +114,18 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
+<a id="pelacak-janji-plot-chekhovs-gun--rekomendasi-kata-kunci"></a>
+
 ## Janji Plot (Chekhov's Gun & Payoff)
-- **Status:** Selesai
 - **Deskripsi:** Pelacak janji naratif yang ditanam di awal cerita (ramalan, senjata, rahasia) dan verifikasi apakah janji tersebut telah terbayar (payoff/reveal) di bab tertentu.
 - **File terkait:** `src/features/consistency/components/PlotPromisePanel.tsx`, `src/lib/plotPromises.ts`
 - **Tabel DB:** `plotPromises`, `chapters`, `codex`
 - **Endpoint:** Tidak ada (lokal)
-- **Catatan:** Pelacakan kemunculan bekerja secara deterministik nol-token menggunakan `PresenceIndex`. Mendukung penautan `payoffCodexId` ke entri rahasia.
+- **Catatan:** Pelacakan kemunculan bekerja secara deterministik nol-token menggunakan `PresenceIndex`. Kata kunci non-Codex dicari dengan Aho-Corasick. `extractKeywordCandidates` menyarankan frasa kapital, istilah penting, dan istilah glosarium dari judul/deskripsi. Penulis dapat menautkan `payoffCodexId` ke entri rahasia.
 
 ---
 
 ## Bengkel Nama (Name Forge)
-- **Status:** Selesai
 - **Deskripsi:** Generator nama karakter dan faksi berbasis fonotaktik (konsonan/vokal) dan morfem leksikal kustom per kelompok faksi.
 - **File terkait:** `src/features/codex/components/NameForgeModal.tsx`, `src/lib/nameForge.ts`
 - **Tabel DB:** `codex` (`namePalette`)
@@ -99,18 +134,18 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
+<a id="glosarium-istilah-in-world--mode-strictmatch"></a>
+
 ## Glosarium Istilah In-World
-- **Status:** Selesai
 - **Deskripsi:** Kamus istilah dunia fiksi non-nama (satuan, gelar, istilah sihir) dengan deteksi salah-eja otomatis di editor yang ditandai garis bawah teal.
-- **File terkait:** `src/features/consistency/components/GlossaryPanel.tsx`, `src/lib/glossary.ts`, `src/features/editor/components/ConsistencyUnderline.tsx`
+- **File terkait:** `src/features/consistency/components/GlossaryPanel.tsx`, `src/lib/glossary.ts`, `src/features/editor/extensions/ConsistencyUnderline.ts`
 - **Tabel DB:** `glossary`
 - **Endpoint:** Tidak ada (lokal)
-- **Catatan:** Algoritma mencakup pencocokan varian salah yang dideklarasikan serta deteksi kesalahan ketik serupa (*Levenshtein distance* terkontrol).
+- **Catatan:** Algoritma mencakup pencocokan varian salah yang dideklarasikan serta deteksi kesalahan ketik serupa dengan jarak Levenshtein. Mode `strictMatch` mencocokkan varian dengan memperhatikan kapitalisasi dan mengecualikan entri dari deteksi typo berbasis kemiripan.
 
 ---
 
 ## Peta Kontinuitas (Continuity Dashboard & Triase)
-- **Status:** Selesai
 - **Deskripsi:** Dasbor audit konsistensi naskah komprehensif yang memvalidasi kemunculan karakter, urutan waktu linimasa, janji plot tertidur, dan entitas yatim piatu.
 - **File terkait:** `src/features/consistency/components/ContinuityDashboard.tsx`, `src/lib/continuity.ts`, `src/hooks/usePresenceIndex.ts`
 - **Tabel DB:** `continuityTriage`, `chapters`, `codex`, `timeline`
@@ -120,7 +155,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Lensa Karakter (Character Arc)
-- **Status:** Selesai
 - **Deskripsi:** Visualisasi frekuensi kemunculan karakter di sepanjang bab, sebaran adegan bersama antar tokoh, dan audit sudut pandang (POV).
 - **File terkait:** `src/features/consistency/components/CharacterArcPanel.tsx`, `src/lib/characterArc.ts`
 - **Tabel DB:** `chapters`, `codex`
@@ -130,7 +164,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Kalender Dunia (World Calendar & Era)
-- **Status:** Selesai (v1 Visual, Fase 2 Audit Kronologi & Kalkulator Perjalanan, serta Pengayaan Worldbuilding & Navigasi Tahunan)
 - **Deskripsi:** Sistem penanggalan in-world multi-era dengan kustomisasi jumlah hari per bulan, nama hari per minggu, pita musim, festival/hari libur tahunan berulang (*recurring holidays*), pelacak usia karakter dinamis (*dynamic age tracker*), navigasi visual tahunan (*bird's-eye heatmap view*), kalkulator selisih & durasi perjalanan berbagai moda, serta deteksi deterministik anomali urutan tanggal mundur antar-bab.
 - **File terkait:** `src/features/timeline/components/WorldCalendarPanel.tsx`, `src/lib/worldCalendar.ts`, `src/lib/chronologyAudit.ts`, `src/features/timeline/components/CalendarCalculatorModal.tsx`, `src/features/timeline/components/ChronologyAuditModal.tsx`, `src/features/timeline/components/CalendarEditorModal.tsx`, `src/features/timeline/components/CalendarEventModal.tsx`, `src/features/codex/components/CodexForm.tsx`, `src/features/codex/components/CodexDetailModal.tsx`
 - **Tabel DB:** `projects` (`calendar`), `timeline` (`startDate`, `endDate`), `codex` (`birthDate`)
@@ -140,7 +173,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Timeline Cerita
-- **Status:** Selesai
 - **Deskripsi:** Linimasa vertikal kronologi peristiwa cerita dengan filter tipe plot, penautan karakter, dan integrasi tanggal bebas maupun terstruktur.
 - **File terkait:** `src/features/timeline/components/TimelinePanel.tsx`, `src/lib/timelineSummary.ts`
 - **Tabel DB:** `timeline`, `chapters`, `codex`
@@ -149,8 +181,19 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
+## Kontrak Linimasa dan kalender
+
+Kalender dan Timeline Cerita berbagi tabel `timeline`. Tanggal terstruktur
+disimpan di `startDate` dan `endDate`, catatan bebas di `eventDate`.
+Event tanpa tanggal terstruktur tetap tampil di Timeline Cerita. Gunakan
+`characterIds` untuk referensi Codex dan pertahankan remap saat impor.
+
+Gunakan `worldCalendar.ts` untuk pengurutan, format, offset hari, rentang
+musim, dan selisih tanggal. Indeks era berbasis nol, bulan dan hari berbasis
+satu, dan hitung selisih hanya dalam satu era. Analitik konsistensi yang
+berbasis urutan bab memakai `chapterId` dan `characterIds`.
+
 ## Atlas Dunia (Peta Interaktif Leaflet)
-- **Status:** Selesai (v1.0 s/d v2.1)
 - **Deskripsi:** Kanvas peta interaktif berbasis Leaflet CRS.Simple untuk mengunggah peta, menandai pin, poligon batas wilayah, rute perjalanan, kalibrasi skala jarak, deteksi wilayah yatim, dan navigasi sub-peta bertingkat.
 - **File terkait:** `src/features/atlas/components/AtlasPanel.tsx`, `src/features/atlas/components/MapCanvas.tsx`, `src/features/atlas/components/atlasMarkerIcons.ts`, `src/lib/atlasColors.ts`, `src/lib/mapGeometry.ts`, `src/lib/atlasAnalytics.ts`, `src/lib/atlasHierarchy.ts`
 - **Tabel DB:** `maps`, `mapMarkers`
@@ -158,12 +201,30 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 - **Catatan:** Menggunakan Leaflet murni (bukan wrapper React). Koordinat disimpan dalam rasio relatif 0–1. File/Drive/ekspor novel dan snapshot pra-restore menyertakan gambar lengkap. Auto internal v8 menyimpan referensi SHA-256 untuk mencocokkan gambar live, bukan menghapus Blob saat restore; referensi yang tidak tersedia membatalkan pemulihan. Kebijakan legacy dan batasnya dijelaskan di [format backup](backup-format.md).
 - **Keamanan label (F01, 13 November 2026):** Ikon dibangun lewat DOM; judul marker dan nama Codex dimasukkan dengan `textContent`. Tooltip dinamis diberikan ke Leaflet sebagai HTMLElement, sehingga markup dari data tersimpan/impor tampil harfiah. SVG dekoratif hanya memakai atribut konstan. Nilai data tidak diinterpolasi ke string HTML.
 - **Warna:** Hanya hex `#RGB`/`#RRGGBB` (case-insensitive) diterima. Override invalid diabaikan dan resolver melanjutkan ke warna faksi/kategori/jenis. Boundary render, termasuk SVG path dan handle edit, memvalidasi lagi; callback warna invalid memakai fallback `#64748b`. Data sumber tetap disimpan tanpa perubahan.
-- **Verifikasi F01:** 49 tes baru memakai Leaflet asli di jsdom dan fixture JSON sintetis: badge pin/area/route/portal, hover tooltip, nama marker/Codex, penolakan elemen/handler injeksi, warna, handle edit, dan interaksi klik/dobel-klik. Belum ada verifikasi visual atau eksekusi payload di browser native.
+- **Verifikasi F01:** Tes Leaflet di jsdom memeriksa label, tooltip, warna, handle edit, dan interaksi klik. Verifikasi F28.5 juga menguji label yang berisi markup di Chromium. [Cakupan pengujian](testing.md#inventaris-alur-kritis)
 
 ---
 
+## Kontrak Atlas
+
+- Pakai konversi `mapGeometry.ts` antara koordinat ternormalisasi 0–1
+  dan Leaflet `CRS.Simple`. Sumbu Y gambar dan lintang bergerak berlawanan.
+  Pertahankan callback/data terbaru pada listener imperatif melalui ref.
+- Samakan `selectedMapId` dengan peta aktif untuk query penanda. Edit
+  geometri memakai layer terpisah dan disimpan saat drag selesai atau
+  struktur berubah. Pertahankan batas minimum tiga vertex area dan dua
+  vertex rute.
+- Bentuk label/tooltip Leaflet sebagai DOM dengan `textContent`. Validasi
+  warna dengan allowlist Atlas pada resolusi dan render, termasuk handle
+  edit. Gunakan pengolahan raster yang ada untuk upload dan backup gambar.
+- `useAtlasSelection` mengelola seleksi dan mode edit, `useAtlasFilters`
+  mengelola filter, dan `useAtlas` memasok live query. Penghapusan peta
+  mengikuti layanan domain, termasuk pelepasan portal. Gunakan
+  `usePresenceIndex` untuk kemunculan bab dan `openCodexEntry` untuk deep-link.
+  [Arsitektur Atlas](architecture.md#pemisahan-atlas-f285) ·
+  [Aset cadangan](backup-format.md#aset-gambar-atlas)
+
 ## Papan & Hubungan Faksi (React Flow)
-- **Status:** Selesai
 - **Deskripsi:** Visualisasi hierarki dan relasi politik antar kelompok faksi di kanvas interaktif React Flow dengan pewarnaan otomatis dan pemetaan wilayah.
 - **File terkait:** `src/features/lore/components/FactionsPanel.tsx`, `src/features/lore/components/FactionBoardCanvas.tsx`, `src/lib/factions.ts`
 - **Tabel DB:** `codex` (`factionTag`, `factionBoard`), `relationships`
@@ -172,8 +233,20 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
+## Kontrak Story Bible, relasi, dan faksi
+
+- Gunakan `storyBible.ts` untuk label slug dan format prompt, termasuk
+  batas per bidang. Sinkronisasi dari database perlu menghormati edit
+  yang tertunda. Draf AI baru disimpan lewat aksi pengguna.
+- Label dan arah hubungan berasal dari `relationshipTypes.ts`. Gunakan
+  tabel relasi yang ada dan turunkan keanggotaan faksi dari tag Codex.
+- Komputasi tampilan faksi memakai `factions.ts`, termasuk
+  `buildFactionBoard`. React Flow mengelola posisi selama drag dan
+  menyimpan posisi pada `onNodeDragStop`. Di `FloatingEdge`, terapkan
+  warna dengan inline `style: { stroke: color }` agar CSS bawaan React
+  Flow tidak menimpa warna.
+
 ## Heatmap Tensi & Pacing
-- **Status:** Selesai
 - **Deskripsi:** Grafik heatmap visual untuk memantau ritme ketegangan cerita bab demi bab, membandingkan tensi deklarasi penulis dengan estimasi rasio dialog otomatis.
 - **File terkait:** `src/features/consistency/components/PacingHeatmapPanel.tsx`, `src/lib/pacingHeatmap.ts`
 - **Tabel DB:** `chapters` (`tension`)
@@ -183,7 +256,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Graf Lore Visual Interaktif (Force Graph)
-- **Status:** Selesai
 - **Deskripsi:** Graf jaringan fisika interaktif yang memvisualisasikan bagaimana setiap karakter, faksi, lokasi, dan item saling terhubung di dalam cerita.
 - **File terkait:** `src/features/codex/components/LoreGraphPanel.tsx`, `src/lib/loreGraph.ts`, `src/features/codex/workers/loreGraphWorker.ts`
 - **Tabel DB:** `codex`, `relationships`
@@ -193,7 +265,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Pelacak Kelengkapan Worldbuilding
-- **Status:** Selesai
 - **Deskripsi:** Dasbor manajemen mutu worldbuilding yang menampilkan tingkat kematangan setiap entri lore (Rangka, Sebagian, Lengkap) dan daftar gap/TODO penulis.
 - **File terkait:** `src/features/codex/components/CodexHealthDashboard.tsx`, `src/lib/worldCompleteness.ts`
 - **Tabel DB:** `codex` (`worldStatus`, `todo`)
@@ -203,7 +274,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Lokakarya Codex (Codex Workshop)
-- **Status:** Selesai
 - **Deskripsi:** Ruang diskusi interaktif khusus bersama AI untuk menggali dan merancang detail entri lore baru atau menyempurnakan entri yang sudah ada.
 - **File terkait:** `src/features/codex-workshop/components/CodexWorkshopPanel.tsx`, `src/features/codex-workshop/hooks/useCodexWorkshop.ts`
 - **Tabel DB:** `chatSessions` (`kind: 'workshop'`, `workshopKey`), `codex`
@@ -213,7 +283,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Asisten AI & Studio Brainstorming
-- **Status:** Selesai
 - **Deskripsi:** Panel obrolan multi-sesi dengan AI yang dilengkapi pemahaman penuh atas Story Bible dan entri Codex terkait dengan dukungan streaming mulus.
 - **File terkait:** `src/features/assistant/components/AIAssistantPanel.tsx`, `src/services/ai/index.ts`, `src/features/assistant/hooks/useChatSession.ts`
 - **Tabel DB:** `chatSessions`, `aiUsageLogs`
@@ -223,7 +292,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Scribble & Aksi Rewrite Prosa
-- **Status:** Selesai
 - **Deskripsi:** Fitur penyuntingan dan penulisan ulang teks langsung dari seleksi editor (Tulis Ulang, Perpanjang, Cek Dialog, dll) dengan opsi preview perbandingan.
 - **File terkait:** `src/features/editor/components/ActionsPanel.tsx`, `src/services/ai/index.ts`, `src/lib/cleanRewriteOutput.ts`
 - **Tabel DB:** `aiActions`, `chapters`, `snapshots`
@@ -233,7 +301,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Pencarian Semantik & Federated Search
-- **Status:** Selesai
 - **Deskripsi:** Mesin pencari adegan naskah berdasarkan makna (cosine similarity vektor MiniLM) yang dipadukan secara paralel dengan pencarian teks leksikal BM25 Orama untuk entri Codex.
 - **File terkait:** `src/features/search/components/SemanticSearchPanel.tsx`, `src/services/contextEngine.ts`, `src/services/rag/oramaStore.ts`
 - **Tabel DB:** `sceneEmbeddings`, `codex`, `chapters`
@@ -243,7 +310,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Laporan Kualitas Prosa (Prose Report)
-- **Status:** Selesai
 - **Deskripsi:** Analitik gaya penulisan naskah tanpa token, mengukur keterbacaan (Flesch-Kincaid adaptif), proporsi kalimat panjang, rasio dialog, dan kata pasif.
 - **File terkait:** `src/features/consistency/components/ProseReportPanel.tsx`, `src/lib/proseAnalysis.ts`
 - **Tabel DB:** `chapters`
@@ -253,7 +319,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Ekspor Manuskrip Multi-Format
-- **Status:** Selesai
 - **Deskripsi:** Pengekspor naskah novel ke format EPUB (XHTML standar), DOCX (hierarki dokumen rapi), PDF, dan Markdown utuh.
 - **File terkait:** `src/components/modals/ExportManager.tsx`, `src/lib/epub.ts`, `src/lib/zip.ts`
 - **Tabel DB:** `chapters`, `projects`, `codex`
@@ -263,7 +328,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Snapshot & Visual Diff Revisi
-- **Status:** Selesai
 - **Deskripsi:** Sistem versioning draf naskah bab per-titik waktu dengan modal perbandingan visual kata-demi-kata (LCS diff) berwarna hijau/merah.
 - **File terkait:** `src/features/editor/components/SnapshotPanel.tsx`, `src/components/modals/SnapshotDiffModal.tsx`, `src/lib/textDiff.ts`
 - **Tabel DB:** `snapshots`
@@ -274,7 +338,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ## Pencadangan Otomatis & Google Drive Sync
 - **F19/F20:** Backup penuh/per-proyek dan ekspor manuskrip melakukan flush tervalidasi serta membaca snapshot transaksi readonly. Serialisasi Blob/kompresi di luar transaksi. Drive upload sukses dengan ID mendahului retensi; gagal prune dilaporkan terpisah. Lihat [kontrak backup](backup-format.md).
-- **Status:** Selesai
 - **Deskripsi:** Sistem cadangan berkala ke file terkompresi gzip, retensi kuota otomatis, dan integrasi opsional ke folder Google Drive pribadi via GIS token.
 - **File terkait:** `src/services/backupService.ts`, `src/services/driveBackupService.ts`, `src/lib/backupValidation.ts`, `src/lib/backupIO.ts`, `src/lib/backupLimits.ts`, `src/lib/backupRetention.ts`, `src/hooks/useAutoBackup.tsx`
 - **Tabel DB:** `backups`
@@ -284,7 +347,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Dashboard Statistik & Progres Menulis
-- **Status:** Selesai
 - **Deskripsi:** Dasbor ringkasan eksekutif novel: total kata, target harian, distribusi status bab, kuota penyimpanan browser, dan audit token AI.
 - **File terkait:** `src/components/panels/DashboardPanel.tsx`, `src/lib/dailyProgress.ts`, `src/hooks/useDailyProgress.ts`
 - **Tabel DB:** `projects`, `chapters`, `aiUsageLogs`
@@ -294,7 +356,6 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 ---
 
 ## Navigasi Studio & Footer Utilitas Sistem
-- **Status:** Selesai
 - **Deskripsi:** Navigasi 5 studio kerja utama (Menulis, Dunia & Lore, Visual & Peta, Analisis & Naskah, Asisten AI) dengan footer dock minimalis untuk utilitas sistem (Pengaturan, Panduan Pengguna, Log Error).
 - **File terkait:** `src/components/layout/Sidebar.tsx`, `src/lib/studioNavigation.ts`
 - **Tabel DB:** Tidak ada (state navigasi lokal)
@@ -305,33 +366,12 @@ Dokumentasi seluruh modul fitur yang ada di dalam aplikasi AetherScribe, mencaku
 
 ---
 
-## Glosarium Istilah In-World & Mode strictMatch
-- **Status:** Selesai
-- **Deskripsi:** Basis data istilah *in-world* non-nama (satuan ukuran, pangkat, kalender, salam, idiom) untuk menjaga konsistensi ejaan secara deterministik di editor TipTap. Mendukung deteksi varian salah yang dideklarasikan, pendeteksian typo berbasis jarak edit (Levensthein), serta opsi mode `strictMatch` per-entri.
-- **File terkait:** `src/types.ts`, `src/lib/glossary.ts`, `src/lib/glossary.test.ts`, `src/features/consistency/components/GlossaryPanel.tsx`
-- **Tabel DB:** `glossary`
-- **Endpoint:** Tidak ada (100% deterministik, 0 token AI)
-- **Catatan:** Mode `strictMatch` (`GlossaryEntry.strictMatch`) menggunakan pencocokan regex case-sensitive persis (`g` tanpa `i`) dan mengecualikan entri dari fuzzy typo guessing. Mengeliminasi false-positive pada kata umum/istilah pendek (seperti "mana", "ki", "chi", singkatan "PM").
-
----
-
-## Pelacak Janji Plot (Chekhov's Gun) & Rekomendasi Kata Kunci
-- **Status:** Selesai
-- **Deskripsi:** Pembukuan janji naratif (*plot promises*) yang dideklarasikan penulis—artefak, ramalan, misteri, atau rahasia yang harus terbayar (*payoff*). Sistem melacak di bab mana elemen muncul (via Codex ID atau kata kunci Aho-Corasick) dan membunyikan alarm bila elemen tertidur (*dormant*) terlalu lama. Dilengkapi ekstraktor rekomendasi kata kunci otomatis 1-klik saat membuat janji baru.
-- **File terkait:** `src/types.ts`, `src/lib/plotPromises.ts`, `src/lib/plotPromises.test.ts`, `src/features/consistency/components/PlotPromisePanel.tsx`
-- **Tabel DB:** `plotPromises`
-- **Endpoint:** Tidak ada (100% deterministik, 0 token AI)
-- **Catatan:** Fungsi `extractKeywordCandidates` mengekstrak frasa berhuruf kapital multi-kata, istilah tunggal penting (bukan kata hubung/stop words), serta entri glosarium yang cocok di judul/deskripsi janji, menyajikannya sebagai badge pil interaktif yang langsung menambahkan kata kunci ke formulir.
-
----
-
 ## Pengecek Kontinuitas & Audit Konsistensi Batch (Prompt Caching)
-- **Status:** Selesai
 - **Deskripsi:** Pengecekan konsistensi naskah dengan AI terhadap Story Bible, Codex Lore, Relasi Karakter, dan Linimasa Peristiwa. Menyediakan mode pemeriksaan bab tunggal dan mode **Audit Batch** (antrian berurutan untuk banyak bab sekaligus).
 - **File terkait:** `src/features/consistency/components/ConsistencyPanel.tsx`, `src/services/ai/index.ts`, `src/lib/timelineSummary.ts`
 - **Tabel DB:** `chapters`, `codex`, `bible`, `relationships`, `timeline`
 - **Endpoint:** Provider AI (`openrouter`, `google`, `claude`, `groq`, dll.)
-- **Catatan:** Mode Batch memproses bab secara sekuensial dengan bilah progres real-time dan opsi pembatalan aman. Karena knowledge base yang dikirimkan identik antar-bab, bab ke-2 dan seterusnya memanfaatkan *prompt caching hit* (~100% reusable context di Anthropic/Gemini) yang menghemat biaya token hingga 90% dan mempercepat respons. Hasil disajikan dalam akordeon ringkas per bab dengan deep link langsung ke kutipan terkait di editor manuskrip.
+- **Catatan:** Mode Batch memproses bab secara sekuensial dengan bilah progres real-time dan opsi pembatalan aman. Segmen pengetahuan yang identik antar-bab dapat memakai cache prompt pada provider yang mendukungnya. Besarnya penghematan bergantung pada cache hit dan aturan provider. Hasil disajikan dalam akordeon ringkas per bab dengan deep link langsung ke kutipan terkait di editor manuskrip.
 
 
 ## Round-trip Proyek (F10)
@@ -423,7 +463,7 @@ token/eksak tidak mengimpor runtime model. Tokenizer tetap ada di entry worker.
 Aset lazy tetap diprecache agar tersedia sesudah instalasi offline selesai.
 Smoke production membuktikan reload editor, worker token baru dan unduhan Markdown
 melalui dialog ekspor saat jaringan offline. Model semantik eksternal tetap butuh
-unduhan/cache tersendiri. Hasil pengukuran dan batas ada di [laporan F22](performance/f22.md).
+unduhan/cache tersendiri. Hasil pengukuran dan batas ada di [laporan F22](reports/benchmarks/f22.md).
 
 ## Query Naskah Besar (F23)
 
@@ -436,4 +476,4 @@ satu key waktu edit terbaru. Schema naik append-only ke v34, tanpa tabel baru.
 Pencarian adegan tetap menilai semua vektor proyek dengan skor exact dan urutan
 seri yang sama, tetapi membacanya per batch dan mempertahankan hanya top-k hit.
 Memori dibatasi; latency pencarian tidak dijanjikan selalu turun. Analisis yang
-memerlukan isi bab tetap membaca teks. Metodologi/hasil: [F23](performance/f23.md).
+memerlukan isi bab tetap membaca teks. Metodologi/hasil: [F23](reports/benchmarks/f23.md).

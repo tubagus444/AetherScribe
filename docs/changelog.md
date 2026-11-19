@@ -4,6 +4,34 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-19
+
+### [Docs] Tata ulang panduan agen dan dokumentasi
+
+- Pusatkan aturan lintas agen di [`AGENTS.md`](../AGENTS.md). Claude Code
+  mengimpornya dan memakai aturan berbasis path untuk membuka referensi teknis
+  yang relevan.
+- Kelompokkan audit, verifikasi, benchmark, dan data mentah di
+  [indeks laporan](reports/README.md). Panduan pengujian menautkan snapshot
+  berdasarkan tanggal atau commit.
+- Ringkas [roadmap](../ROADMAP.md) dan simpan rincian DB01–DB08 di
+  [laporan penutupan](reports/audits/2026-11-19-db01-db08.md).
+
+### [Data] Kontrak bab, cadangan portabel, dan pengukuran kapasitas
+
+- Pisahkan domain bab, record Dexie, dan DTO ekspor. Tambahkan bukti rollback
+  upgrade dan pembangunan kembali metadata bab. [Kontrak data](database.md#kontrak-data-dan-evolusi-skema-db06)
+- Sediakan pembaca dan konversi arsip mandiri v3–v8. Kurangi alokasi saat
+  validasi JSON cadangan besar. [Format backup](backup-format.md) · [Benchmark DB08](reports/benchmarks/db08.md)
+
+## 2026-11-18
+
+### [Data] Perlindungan naskah dan kebijakan data
+
+- Lindungi simpan draf dan pemulihan. Pusatkan mutasi di layanan domain serta
+  validasi relasi dan kebijakan tabel. Tempatkan akses bab dan snapshot
+  di balik kontrak penyimpanan. [Verifikasi DB01–DB05](reports/audits/2026-11-19-db01-db08.md#db01)
+
 ## 2026-11-15
 
 ### [Docs] Rapikan Penutupan F01-F29 dan L01-L06
@@ -144,7 +172,7 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 - Tambahkan schema v34 append-only: covering metadata/timestamp index bab dan scene keyset index. Migrasi cursor tidak mengumpulkan seluruh manuskrip; creating/updating hook menjaga tuple dalam transaksi yang sama, menghitung kata hanya jika content berubah. Import/restore tidak mempercayai tuple file; rollback/delete tidak meninggalkan cache terpisah. Tidak menambah tabel/FK/dependency; backup tetap v8.
 - ChapterList, WritingStats dan Dashboard memakai key metadata tanpa HTML; latest-modified auto-index membaca satu key. Ganti JSON stringify comparison dengan structural equality, konservatif untuk objek non-data. Preserve ID/order/status/count dan last-chapter tie berdasarkan ID.
 - Exact semantic search membaca batch 256 dalam readonly snapshot dan menyimpan stable top-k; skor/tie/project isolation dan cancel tetap diuji. Tidak mengklaim semua pencarian lebih cepat atau menghindari seluruh vector scoring.
-- Benchmark native IndexedDB kecil/sedang/besar mempertahankan hasil. Fixture 500 bab: list 193,3 ke 7 ms, timestamp 79,5 ke 0,4 ms, working-set full rows 12,59 MB ke metadata 32,2 KB (+5,4 KB backing); bukan peak heap seluruh app. Scene 10.000: 416 ke 427 ms, dengan bounded memory. Raw/metodologi/tradeoff ada di docs/performance/f23.md; test:data-paths ditambahkan ke CI.
+- Benchmark native IndexedDB kecil/sedang/besar mempertahankan hasil. Fixture 500 bab: list 193,3 ke 7 ms, timestamp 79,5 ke 0,4 ms, working-set full rows 12,59 MB ke metadata 32,2 KB (+5,4 KB backing); bukan peak heap seluruh app. Scene 10.000: 416 ke 427 ms, dengan bounded memory. Raw/metodologi/tradeoff ada di docs/reports/benchmarks/f23.md; test:data-paths ditambahkan ke CI.
 - Guard tanpa serialisasi gagal pada source baseline 1c693f8 lalu lulus. 82 berkas/738 tes, 16 Chromium tests, typecheck/build/diff-check dan startup/offline smoke lulus. Migration v33 diuji di fake-indexeddb dan browser native; data/HTML serta statistik header/dashboard utuh. Peringatan build lama tetap ada; GitHub/Linux, multi-tab upgrade/quota, browser lain dan model nyata belum diverifikasi.
 
 
@@ -152,7 +180,7 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 - Lazy-load ExportManager sehingga library PDF/DOCX tidak dievaluasi saat editor dibuka. Pisahkan actionIcons dari ActionsPanel untuk menghilangkan import statis panel melalui menu seleksi; peringatan mixed import ActionsPanel hilang.
 - Impor transformers hanya di getEmbedder; worker ES module mendukung chunk dinamis. Promise bersama/retry, konfigurasi model dan checkpoint cancel tetap dipertahankan. Tokenizer masih statis. Precache seluruh aset lazy dipertahankan untuk offline; tidak menambah dependency/schema atau mengurangi cakupan offline.
-- Tambahkan measure-startup.mjs/test:startup dan langkah CI: lima sample context sintetis baru, ukuran entry/gzip/worker, Resource Timing dan CDP ScriptDuration; lalu production PWA offline reload, native token worker dan unduhan ekspor Markdown lazy. Laporan/batas ada di docs/performance/f22.md beserta raw sebelum/sesudah.
+- Tambahkan measure-startup.mjs/test:startup dan langkah CI: lima sample context sintetis baru, ukuran entry/gzip/worker, Resource Timing dan CDP ScriptDuration; lalu production PWA offline reload, native token worker dan unduhan ekspor Markdown lazy. Laporan/batas ada di docs/reports/benchmarks/f22.md beserta raw sebelum/sesudah.
 - Hasil lokal: entry JS 2.026.553 ke 1.251.421 byte; median editor terlihat 474 ke 408 ms, script 220 ke 174 ms. Precache sekitar 10,8 MiB hampir tetap; bukan klaim percepatan universal. Guard import transformer gagal pada source baseline 786cc5d lalu lulus. 76 berkas/723 tes, 14 browser tests, typecheck/build/diff-check dan production startup/offline smoke lulus. Peringatan bundle/ONNX/Browserslist lama tetap ada; GitHub/Linux dan model embedding nyata belum diverifikasi.
 
 
@@ -291,7 +319,7 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ### [Docs] Audit Aplikasi dan Backlog Perbaikan Berdasarkan Prioritas
 
-- Menambahkan [indeks dokumentasi](README.md), [laporan audit 21 bagian](audits/2026-11-09-application-audit.md), dan [register 29 temuan F01–F29](audits/2026-11-09-findings.md).
+- Menambahkan [indeks dokumentasi](README.md), [laporan audit 21 bagian](reports/audits/2026-11-09-application-audit.md), dan [register 29 temuan F01–F29](reports/audits/2026-11-09-findings.md).
 - Menyimpan bukti source/baris, severity, metode dan batas verifikasi, rekomendasi, effort, dependensi, risiko perubahan, serta kriteria penerimaan tiap temuan.
 - Menambahkan checklist P1/P2/P3 di [ROADMAP.md](../ROADMAP.md#audit-2026-11-09) sebagai satu-satunya tracker aktif; seluruh temuan masih terbuka.
 - Menjelaskan perbedaan temuan baseline sekarang dengan klaim/keputusan dokumentasi historis tanpa mengubah arsip atau menyatakan keputusan baru sudah diterapkan.

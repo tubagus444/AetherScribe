@@ -13,9 +13,13 @@
 
 ## 3. Filosofi Arsitektur
 - **Local-First & Offline-Ready:** Seluruh data novel, bab, dan ensiklopedia disimpan di browser pengguna via IndexedDB (Dexie). Tidak ada database di sisi backend.
-- **BYOK (Bring Your Own Key):** Kunci API AI (Gemini, Claude, Groq, OpenRouter, OpenAI, Hugging Face) disimpan di sisi klien (*localStorage*) dan dikirimkan saat memanggil proxy.
+- **BYOK (Bring Your Own Key):** Kunci API yang baru disimpan di sesi tab
+  secara default dan dikirim saat memanggil proxy. Pengguna dapat memilih
+  menyimpannya di browser. [Privasi kredensial](features.md#privasi-kredensial-dan-log-f27)
 - **Deterministik Sebelum AI:** Fitur pelacakan kontinuitas, glosarium, relasi, dan metrik prosa bekerja 100% deterministik di mesin lokal (nol-token). AI hanya dilibatkan untuk tugas penalaran bahasa (rewrite, chat asistensi, analisis konsistensi mendalam).
-- **Komputasi Berat di Latar Belakang:** Pencocokan nama (Aho-Corasick), pencarian semantik lokal (*transformers.js*), dan BM25 (*Orama*) dijalankan di dedicated Web Worker agar antarmuka penulisan selalu responsif 60 FPS.
+- **Komputasi berat di latar belakang:** Pencocokan nama (Aho-Corasick),
+  embeddings lokal, dan BM25 (Orama) memakai Web Worker untuk mengurangi
+  beban main thread.
 
 ## 4. Daftar Modul Utama
 

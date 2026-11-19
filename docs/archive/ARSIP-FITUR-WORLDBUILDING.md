@@ -2,7 +2,7 @@
 
 > **Arsip memori-proyek.** Catatan implementasi 17 modul worldbuilding yang telah dibangun ke dalam AetherScribe.
 > **Status: Seluruh fitur inti di bawah SUDAH TERPASANG & AKTIF di aplikasi.**
-> Sisa ide riset/parkir dan Fase 2 Kalender Dunia dipantau di [`ROADMAP.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/ROADMAP.md).
+> Untuk ide dan pekerjaan bersyarat saat ini, buka [roadmap](../../ROADMAP.md).
 
 ---
 

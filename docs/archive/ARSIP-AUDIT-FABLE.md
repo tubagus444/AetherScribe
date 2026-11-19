@@ -2,7 +2,7 @@
 
 > **Arsip memori-proyek.** Catatan komprehensif seluruh perbaikan teknis dari audit Fable 5.
 > **Status: 30+ Temuan Berdampak Tinggi/Sedang SUDAH SELESAI.**
-> Sisa pekerjaan yang masih tertunda telah dipindahkan ke [`ROADMAP.md`](file:///d:/novel/Aplikasi%20Novel/Aplikasi-Pembuatan-Novel/ROADMAP.md).
+> Untuk status dan prioritas saat ini, buka [roadmap](../../ROADMAP.md).
 
 ---
 

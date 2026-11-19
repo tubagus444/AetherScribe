@@ -3,7 +3,7 @@
 Snapshot sebelum perapian dokumentasi, setelah commit 4816258. Catatan bertahap
 memuat keputusan yang berlaku saat masing-masing tahap berlangsung. Status akhir
 L01-L06 selesai; rujukan sekarang: [ROADMAP](../../ROADMAP.md) dan
-[integrasi worker L06](../performance/l06-integration.md).
+[integrasi worker L06](../reports/audits/2026-11-15-l06-backup-integration.md).
 
 ---
 
@@ -35,7 +35,7 @@ Item ditandai selesai setelah kriteria selesai terpenuhi dan dokumentasi diperba
 | 5 | L05 | Perluas TypeScript strict | Pilih batch modul berikutnya; catat import transitif, selesaikan diagnostik tanpa escape baru, perbarui policy dan pastikan CI/regresi lulus. | Selesai 15 Nov 2026 |
 | 6 | L06 | Ukur jalur backup naskah besar | Ukur serialisasi/kompresi dan respons UI dengan fixture besar. Jika ada jank bermakna, rancang pemindahan ke worker tanpa mengubah snapshot/checksum/restore. | Pengukuran dan integrasi worker internal selesai |
 
-L01 telah diverifikasi; [bukti run, job dan batasnya](../audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](../audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](../audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](../audits/2026-11-15-l04-atlas-ui.md). L05 selesai untuk batch backup/Atlas; [cakupan dan pengecualian](../audits/2026-11-15-l05-strict.md). L06 berikutnya mengukur backup besar. L05 dikerjakan dalam
+L01 telah diverifikasi; [bukti run, job dan batasnya](../reports/audits/2026-11-15-l01-ci.md). L02 selesai; [bukti instalasi/migrasi dan perbaikan bootstrap](../reports/audits/2026-11-15-l02-installation.md). L03 selesai; [bukti tes alur data UI](../reports/audits/2026-11-15-l03-data-ui.md). L04 selesai; [bukti interaksi Atlas](../reports/audits/2026-11-15-l04-atlas-ui.md). L05 selesai untuk batch backup/Atlas; [cakupan dan pengecualian](../reports/audits/2026-11-15-l05-strict.md). L06 berikutnya mengukur backup besar. L05 dikerjakan dalam
 batch kecil per modul. L06 dimulai dari pengukuran, bukan langsung menambah worker.
 Pengujian provider/Drive nyata memerlukan ruang lingkup tersendiri; tes regresi
 awal tetap memakai mock, kredensial sintetis dan database terisolasi.
@@ -55,7 +55,7 @@ awal tetap memakai mock, kredensial sintetis dan database terisolasi.
   Angka coverage bukan jaminan semua alur aman.
 
 Daftar pengaman dan gap rinci ada di [panduan pengujian](../testing.md) dan
-[review akhir F28](../audits/2026-11-15-f28-review.md).
+[review akhir F28](../reports/audits/2026-11-15-f28-review.md).
 
 ## Pekerjaan bersyarat
 
@@ -75,40 +75,40 @@ sekarang. P1/P2/P3 dan estimasi lama adalah riwayat pelaksanaan, bukan urutan ak
 
 | Temuan audit | Status |
 |---|---|
-| [F01](../audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas | Selesai |
-| [F02](../audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost | Selesai |
-| [F03](../audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas | Selesai |
-| [F04](../audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai | Selesai |
-| [F05](../audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal | Selesai |
-| [F06](../audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu | Selesai |
-| [F07](../audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada | Selesai |
-| [F08](../audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi | Selesai |
-| [F09](../audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key | Selesai |
-| [F10](../audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip | Selesai |
-| [F11](../audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim | Selesai |
-| [F12](../audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong | Selesai |
-| [F13](../audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan | Selesai |
-| [F14](../audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt | Selesai |
-| [F15](../audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal | Selesai |
-| [F16](../audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver | Selesai |
-| [F17](../audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud | Selesai |
-| [F18](../audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try | Selesai |
-| [F19](../audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten | Selesai |
-| [F20](../audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses | Selesai |
-| [F21](../audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik | Selesai |
-| [F22](../audits/2026-11-09-findings.md#f22) — Distribusi frontend berat | Selesai |
-| [F23](../audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah | Selesai |
-| [F24](../audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia | Selesai |
-| [F25](../audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus | Selesai |
-| [F26](../audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong | Selesai |
-| [F27](../audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia | Selesai |
-| [F28](../audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak | Selesai |
-| [F29](../audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir | Selesai |
+| [F01](../reports/audits/2026-11-09-findings.md#f01) — Stored XSS pada label Atlas | Selesai |
+| [F02](../reports/audits/2026-11-09-findings.md#f02) — Proxy melampaui batas localhost | Selesai |
+| [F03](../reports/audits/2026-11-09-findings.md#f03) — Restore internal membuang gambar Atlas | Selesai |
+| [F04](../reports/audits/2026-11-09-findings.md#f04) — Validasi scope dan struktur restore tidak memadai | Selesai |
+| [F05](../reports/audits/2026-11-09-findings.md#f05) — Flush editor resolve meskipun save gagal | Selesai |
+| [F06](../reports/audits/2026-11-09-findings.md#f06) — Duplikasi kosong dan urutan bab ambigu | Selesai |
+| [F07](../reports/audits/2026-11-09-findings.md#f07) — Setter triage memakai compound index yang tidak ada | Selesai |
+| [F08](../reports/audits/2026-11-09-findings.md#f08) — Panel mencari pada instance Orama yang tidak diinisialisasi | Selesai |
+| [F09](../reports/audits/2026-11-09-findings.md#f09) — Creating hook kehilangan generated key | Selesai |
+| [F10](../reports/audits/2026-11-09-findings.md#f10) — Triage dan workshop key tidak round-trip | Selesai |
+| [F11](../reports/audits/2026-11-09-findings.md#f11) — Delete entitas meninggalkan referensi yatim | Selesai |
+| [F12](../reports/audits/2026-11-09-findings.md#f12) — Error SSE dianggap sukses kosong | Selesai |
+| [F13](../reports/audits/2026-11-09-findings.md#f13) — Usage Claude tertimpa dan temperature nol diabaikan | Selesai |
+| [F14](../reports/audits/2026-11-09-findings.md#f14) — Buffer keluaran bercampur antar-attempt | Selesai |
+| [F15](../reports/audits/2026-11-09-findings.md#f15) — Interval rewrite tidak dibersihkan saat gagal | Selesai |
+| [F16](../reports/audits/2026-11-09-findings.md#f16) — Pesan cancel tidak cocok dengan receiver | Selesai |
+| [F17](../reports/audits/2026-11-09-findings.md#f17) — Fallback dapat melewati batas lokal ke cloud | Selesai |
+| [F18](../reports/audits/2026-11-09-findings.md#f18) — Input salah tipe menyebabkan rejection sebelum try | Selesai |
+| [F19](../reports/audits/2026-11-09-findings.md#f19) — Snapshot lintas tabel dan editor belum konsisten | Selesai |
+| [F20](../reports/audits/2026-11-09-findings.md#f20) — Prune dilakukan sebelum upload sukses | Selesai |
+| [F21](../reports/audits/2026-11-09-findings.md#f21) — Startup production tidak deterministik | Selesai |
+| [F22](../reports/audits/2026-11-09-findings.md#f22) — Distribusi frontend berat | Selesai |
+| [F23](../reports/audits/2026-11-09-findings.md#f23) — Full scans pada jalur yang sering berubah | Selesai |
+| [F24](../reports/audits/2026-11-09-findings.md#f24) — Coverage integrasi kritis belum tersedia | Selesai |
+| [F25](../reports/audits/2026-11-09-findings.md#f25) — ConfirmDialog belum mengelola semantik dan fokus | Selesai |
+| [F26](../reports/audits/2026-11-09-findings.md#f26) — Mode legacy dapat menampilkan panel kosong | Selesai |
+| [F27](../reports/audits/2026-11-09-findings.md#f27) — Base64 key dan prompt preview bukan perlindungan rahasia | Selesai |
+| [F28](../reports/audits/2026-11-09-findings.md#f28) — Kontrak longgar dan modul bertanggung jawab terlalu banyak | Selesai |
+| [F29](../reports/audits/2026-11-09-findings.md#f29) — Ringkasan lama dapat dianggap mutakhir | Selesai |
 
 Bukti per batch, tanggal, commit, reproduksi dan hasil tes lama tetap tersedia di
 [arsip pelaksanaan F01-F29](../archive/2026-11-15-roadmap-audit-completed.md).
-Kriteria asli ada di [register temuan](../audits/2026-11-09-findings.md), dengan
-konteks pada [laporan audit](../audits/2026-11-09-application-audit.md).
+Kriteria asli ada di [register temuan](../reports/audits/2026-11-09-findings.md), dengan
+konteks pada [laporan audit](../reports/audits/2026-11-09-application-audit.md).
 
 ### Bukti penutupan terbaru
 
@@ -116,7 +116,7 @@ konteks pada [laporan audit](../audits/2026-11-09-application-audit.md).
   data-path correctness/benchmark, build/clean production serta startup/offline lulus lokal.
 - Coverage V8: 32.11% baris, 31.95% statement, 25.35% branch, 20.71% fungsi.
 - F28 membandingkan inventaris awal/akhir, meninjau acceptance, mencatat pengecualian
-  dan menambahkan pengaman CI. Lihat [review akhir](../audits/2026-11-15-f28-review.md).
+  dan menambahkan pengaman CI. Lihat [review akhir](../reports/audits/2026-11-15-f28-review.md).
 - Angka di atas adalah snapshot verifikasi F28.6, bukan pemeriksaan ulang setelah
   setiap perubahan dokumentasi. L01 memverifikasi run Windows/Ubuntu pada commit
   `7527305`; commit lokal dokumentasi `b9a9437` dan perubahan berikutnya tidak diklaim diuji run tersebut.
@@ -145,7 +145,7 @@ Bug proyek bawaan ganda diperbaiki dengan transaksi bootstrap atomik; tes rollba
 storage failure dan retry ditambahkan. Typecheck umum/strict/maintenance,
 90 berkas/787 tes, build dan 21 tes Chromium lulus lokal. Angka ini melengkapi
 snapshot F28.6 di atas; bukan hasil runner GitHub baru. Batas versi/tab/browser
-ada di [laporan L02](../audits/2026-11-15-l02-installation.md).
+ada di [laporan L02](../reports/audits/2026-11-15-l02-installation.md).
 
 
 ## Verifikasi lanjutan L03
@@ -154,7 +154,7 @@ Delapan skenario UI baru mencakup ekspor/impor, restore penuh, pembatalan,
 penolakan file/scope, rollback write failure serta delete bab/Codex/proyek dan
 isolasi proyek lain. Typecheck umum/strict/maintenance, 90 berkas/787 tes dan
 29 tes Chromium lulus lokal. Tidak mengubah kode produksi; batas fixture dan
-kegagalan yang belum diuji ada di [laporan L03](../audits/2026-11-15-l03-data-ui.md).
+kegagalan yang belum diuji ada di [laporan L03](../reports/audits/2026-11-15-l03-data-ui.md).
 
 
 ## Verifikasi lanjutan L04
@@ -163,7 +163,7 @@ Enam skenario UI Atlas melengkapi upload PNG/penolakan SVG, edit vertex area/rut
 portal induk-anak/unlink, deep-link Codex serta pergantian proyek dan URL Blob
 cleanup. Pin baru diverifikasi masuk ke proyek/peta yang benar. Typecheck
 umum/strict/maintenance, 90 berkas/787 tes dan 35 tes Chromium lulus lokal.
-Tidak mengubah source aplikasi; [batas pengujian L04](../audits/2026-11-15-l04-atlas-ui.md)
+Tidak mengubah source aplikasi; [batas pengujian L04](../reports/audits/2026-11-15-l04-atlas-ui.md)
 tetap berlaku. L05-Pengukuran L06 selesai; optimasi belum diputuskan.
 
 
@@ -173,7 +173,7 @@ Delapan helper backup/Atlas, empat dependensi transitif dan satu pengaman tipe
 baru memperluas strict menjadi 28 root/41 source. Maintenance policy menjadi
 51 berkas; semua budget file lama tetap. Probe type error/explicit any/penyusutan
 cakupan ditolak. Typecheck umum/strict/maintenance, 90 berkas/787 tes dan build
-lulus lokal, tanpa perubahan implementasi runtime. [Laporan L05](../audits/2026-11-15-l05-strict.md)
+lulus lokal, tanpa perubahan implementasi runtime. [Laporan L05](../reports/audits/2026-11-15-l05-strict.md)
 mencatat escape lama dan batas strict; Pengukuran L06 selesai; optimasi belum diputuskan.
 
 
@@ -183,20 +183,20 @@ Empat dataset sintetis, tiga sampel per ukuran, native IndexedDB/Blob/gzip:
 200 ribu kata memiliki estimasi collect + auto-save 132 ms; 2.5 juta kata dengan
 empat PNG sekitar 1.67 detik. Jeda timer terburuk 222 ms pada sampel besar;
 bukan klaim editor membeku sepanjang durasi backup. Checksum, restore penuh dan
-internal mempertahankan seluruh bab dan byte gambar. [Metode, data mentah dan batas](../performance/l06-backup.md).
+internal mempertahankan seluruh bab dan byte gambar. [Metode, data mentah dan batas](../reports/benchmarks/l06-backup.md).
 Implementasi backup belum dioptimasi. Profiling terarah diperlukan sebelum memilih
 worker atau perubahan lain; tahap optimasi perlu keputusan berikutnya.
 
 Profiling CPU tahap kedua L06 juga selesai: encoding/checksum/Blob menjadi kandidat
 optimasi; waktu native belum seluruhnya teratribusi. Hasil dan rancangan eksperimen
-worker dicatat dalam [laporan L06](../performance/l06-backup.md#tahap-kedua-profiling-cpu).
+worker dicatat dalam [laporan L06](../reports/benchmarks/l06-backup.md#tahap-kedua-profiling-cpu).
 Implementasi optimasi belum dilakukan.
 
 
 Eksperimen worker L06 selesai pada empat workload. Pada 2.5 juta kata + empat
 PNG, median persiapan main/worker sekitar 1282/1307 ms dan jeda timer terburuk
 209/14 ms. Payload cocok dengan service produksi, input invalid ditolak dan
-restore bab/gambar lulus. [Metode dan keputusan eksperimen](../performance/l06-worker.md).
+restore bab/gambar lulus. [Metode dan keputusan eksperimen](../reports/benchmarks/l06-worker.md).
 Belum mengaktifkan worker dalam aplikasi; integrasi memerlukan pengukuran memori,
 startup/fallback, regresi dan end-to-end yang dijelaskan pada laporan.
 
@@ -204,20 +204,20 @@ startup/fallback, regresi dan end-to-end yang dijelaskan pada laporan.
 Pengujian kesiapan worker L06 menambahkan tujuh skenario: startup/crash/timeout/
 respons invalid, fallback offline, batas snapshot saat mengetik dan enam siklus
 worker dengan pemeriksaan cleanup/heap. Typecheck umum/strict/maintenance,
-90 berkas/787 tes dan 42 browser tests lulus lokal. [Matriks lulus/belum teruji](../performance/l06-readiness.md)
+90 berkas/787 tes dan 42 browser tests lulus lokal. [Matriks lulus/belum teruji](../reports/benchmarks/l06-readiness.md)
 mencatat bahwa peak RAM, latency editor saat CPU penuh dan integrasi produksi
 belum dibuktikan. Worker tetap eksperimen, belum diaktifkan pada aplikasi.
 
 
 Uji L06 berikutnya memakai TipTap aktif tanpa delay buatan. Pada run terarah,
 perintah ketik terburuk main/worker 407/48 ms, tetapi sampled V8 heap gabungan
-88.5/112.3 MiB. Seluruh 120 karakter tersimpan/reload. [Metode dan batas](../performance/l06-editor-load.md)
+88.5/112.3 MiB. Seluruh 120 karakter tersimpan/reload. [Metode dan batas](../reports/benchmarks/l06-editor-load.md)
 menjelaskan bahwa angka bukan latensi input murni atau peak RAM/RSS total.
 43 browser tests lulus; worker tetap eksperimen dan belum diintegrasikan.
 
 Enam tes L06 berikutnya memeriksa kegagalan kompresi/crypto/storage pada service
 backup aplikasi. Round-trip bab/gambar, retensi aman saat kuota penuh, pembatalan
-restore dan retry lulus pada fixture browser native. [Bukti dan batas simulasi](../performance/l06-storage-failures.md).
+restore dan retry lulus pada fixture browser native. [Bukti dan batas simulasi](../reports/benchmarks/l06-storage-failures.md).
 Seluruh 49 skenario Chromium dan typecheck umum/strict/maintenance lulus lokal;
 worker tetap belum diintegrasikan.
 
@@ -226,7 +226,7 @@ worker tetap belum diintegrasikan.
 Status eksperimen di atas adalah riwayat sebelum integrasi. Auto internal besar
 kini memakai worker dengan antrean per tab, timeout/cleanup dan fallback main.
 Pre-restore tetap lengkap dan dilindungi dari rotasi auto normal. Folder/Drive,
-format v8 dan schema v34 tetap kompatibel. [Kontrak, bukti dan batas](../performance/l06-integration.md).
+format v8 dan schema v34 tetap kompatibel. [Kontrak, bukti dan batas](../reports/audits/2026-11-15-l06-backup-integration.md).
 Strict menjadi 31 root/44 source dan maintenance 54 berkas; budget lama tetap.
 Hasil akhir regresi ada di [panduan tes](../testing.md). Optimasi lanjutan
 collect/Blob, koordinasi lintas tab dan pengukuran RSS bukan bagian batch ini.
