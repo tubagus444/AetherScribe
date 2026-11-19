@@ -1,18 +1,11 @@
-import { assembleBackupJson } from './backupEnvelope';
+import { assembleBackupJson, backupChecksum } from './backupEnvelope';
+import { BACKUP_FORMAT_VERSION } from './backupFormat';
 import { validateBackup } from './backupValidation';
 
 export interface PreparedInternalBackup {
   data: string | Uint8Array;
   size: number;
   compressed: boolean;
-}
-
-export async function backupChecksum(text: string): Promise<string | undefined> {
-  try {
-    if (typeof crypto === 'undefined' || !crypto.subtle) return undefined;
-    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-  } catch { return undefined; }
 }
 
 export async function compressBackup(text: string): Promise<{ blob: Blob; compressed: boolean }> {
@@ -47,7 +40,7 @@ export async function prepareInternalBackup(input: unknown, kind: 'auto' | 'pre-
   const meta: Record<string, unknown> = { version: input.version, timestamp: input.timestamp };
   if (input.scope) meta.scope = input.scope;
   if (input.projectName) meta.projectName = input.projectName;
-  if (input.version >= 8) meta.imageMode = kind === 'auto' ? 'references' : 'full';
+  if (input.version === BACKUP_FORMAT_VERSION) meta.imageMode = kind === 'auto' ? 'references' : 'full';
   if (checksum) meta.checksum = checksum;
   const json = assembleBackupJson(meta, text);
   const { blob, compressed } = await compressBackup(json);

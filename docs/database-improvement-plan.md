@@ -135,6 +135,7 @@ Sesudah DB04 dan kontrak DB06 ditetapkan.
 Selesai jika: ekspor dapat divalidasi tanpa membuka Dexie dan round-trip ke DB
 kosong mempertahankan data utama, referensi, serta aset. Cache yang dikecualikan
 memiliki prosedur regenerasi. Gunakan format yang sudah ada sebelum membuat format baru.
+Rujukan: [format portabel, pembaca, dan konversi v8](backup-format.md#membaca-dan-mengonversi-arsip-portabel).
 
 ### DB08 — Kapasitas dan optimasi berdasarkan pengukuran
 

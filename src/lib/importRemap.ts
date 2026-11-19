@@ -11,6 +11,7 @@ import type {
   MapMarker, ContinuityTriage,
 } from '@/src/types';
 import type { ChapterExportRecord } from './chapterContracts';
+import type { BackupMapRecord } from './backupFormat';
 
 /**
  * Logika MURNI untuk impor per-novel (#4B). Tanpa akses IndexedDB — id baru
@@ -48,7 +49,7 @@ export interface ProjectBackupData {
   plotPromises?: PlotPromise[];
   glossary?: GlossaryEntry[];
   /** Peta Atlas — gambar tersimpan sebagai data URL (`imageDataUrl`), didekode di service. */
-  maps?: any[];
+  maps?: BackupMapRecord[];
   mapMarkers?: MapMarker[];
   continuityTriage?: ContinuityTriage[];
 }

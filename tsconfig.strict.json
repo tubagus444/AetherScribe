@@ -26,6 +26,7 @@
     "src/lib/importRemap.ts",
     "src/lib/backupIO.ts",
     "src/lib/backupEnvelope.ts",
+    "src/lib/portableBackup.ts",
     "src/lib/backupRetention.ts",
     "src/lib/mapGeometry.ts",
     "src/lib/atlasColors.ts",

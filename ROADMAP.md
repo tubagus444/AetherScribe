@@ -49,7 +49,7 @@ Status pelaksanaan dicatat di tabel ini.
 | 4 | DB04 | Katalog tabel dan kebijakan data | Selesai, diverifikasi lokal |
 | 5 | DB05 | Kontrak akses data dan adapter Dexie | Selesai, diverifikasi lokal |
 | 6 | DB06 | Kontrak data dan evolusi skema | Selesai, diverifikasi lokal |
-| 7 | DB07 | Format ekspor portabel | Direncanakan |
+| 7 | DB07 | Format ekspor portabel | Selesai, diverifikasi lokal |
 | 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Direncanakan |
 | 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
 | 10 | DB10 | Pembuktian migrasi terisolasi | Bersyarat: target migrasi dipilih |
@@ -180,6 +180,26 @@ Status pelaksanaan dicatat di tabel ini.
   tes lulus. Setelah ekspektasi urutan nama indeks pada tes rollback dikoreksi,
   empat tes instalasi Chromium lulus, termasuk rollback dan upgrade ulang.
   Fixture memakai data sintetis dan kegagalan upgrade yang diinjeksi.
+
+### Hasil DB07
+
+- `src/lib/backupFormat.ts` dan `src/lib/portableBackup.ts` menyediakan kontrak,
+  pembaca JSON/gzip, validasi checksum dan aset, serta konversi v3–v8 mandiri
+  ke v8. Konversi memeriksa checksum lama sebelum menormalkan tabel dan
+  menambahkan hash gambar inline. Ekspor portabel memakai format v8 dan
+  penyimpanan lokal memakai skema Dexie v34.
+- `src/services/backupService.ts` dan `src/services/driveBackupService.ts`
+  menerapkan syarat aset inline dan batas byte pembaca pada keluaran file,
+  folder, serta Drive. Cadangan referensi internal dipulihkan lewat alur
+  resolusi aset di database asal.
+- `e2e/dataUi.spec.ts` memeriksa validasi unduhan sebelum IndexedDB dibuka
+  serta pemulihan ke tabel kosong. Pemeriksaan mencakup naskah, relasi,
+  snapshot, penanda Atlas, dan byte gambar.
+  [Kontrak format, identitas, dan regenerasi cache](docs/backup-format.md)
+- Verifikasi lokal mencakup 819 tes unit/integrasi, 72 tes Chromium,
+  typecheck umum dan strict, maintenance, serta build produksi. Pengujian
+  memakai fixture sintetis dan respons Drive tiruan. DB08 melanjutkan
+  pengukuran kapasitas dan optimasi.
 
 ## Pilihan tindak lanjut
 

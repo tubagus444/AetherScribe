@@ -318,6 +318,18 @@ describe('F04 restore boundary', () => {
 });
 
 describe('bounded decoding and raster-only images', () => {
+  it('rejects an oversized encoded backup before creating a directory file', async () => {
+    const input = await backupService.collectAllData();
+    const blob = new Blob();
+    Object.defineProperty(blob, 'size', { value: BACKUP_LIMITS.fileBytes + 1 });
+    vi.spyOn(backupService, 'compressData').mockResolvedValue({ blob, compressed: true });
+    const getFileHandle = vi.fn();
+    const dir = { getFileHandle } as unknown as FileSystemDirectoryHandle;
+
+    await expect(backupService.saveToDirectory(input, dir)).rejects.toThrow(/Ukuran file cadangan/);
+    expect(getFileHandle).not.toHaveBeenCalled();
+  });
+
   it.each(['https://example.test/image.png', 'data:image/svg+xml;base64,PHN2Zz4=', 'data:text/html;base64,PGgxPg==', 'data:image/png;base64,%%%'])('rejects %s without fetch', async url => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('synthetic-image'));
     await expect(dataUrlToBlob(url)).rejects.toThrow();

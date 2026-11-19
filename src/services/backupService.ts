@@ -6,14 +6,18 @@ import { readBackupSnapshot } from './backupSnapshot';
 
 import { db } from '@/src/db';
 import { PROJECT_IMPORT_TABLES, RESTORE_RECORD_TABLES, RESTORE_TABLES } from '@/src/lib/tableCatalog';
-import type { BackupRecord, Snapshot } from '@/src/types';
-import type { ChapterExportRecord, PersistedChapter } from '@/src/lib/chapterContracts';
-import { chapterFromRecord } from '@/src/lib/chapterRecord';
+import type { BackupRecord } from '@/src/types';
+import { BACKUP_FORMAT_VERSION, type BackupData, type BackupMapRecord, type BackupScope } from '@/src/lib/backupFormat';
+import { backupChecksum } from '@/src/lib/backupEnvelope';
+import { BACKUP_LIMITS } from '@/src/lib/backupLimits';
+import {
+  normalizeBackupData, preserveOrphanedSnapshots, serializePortableBackup, verifyBackup, verifyEmbeddedImage,
+} from '@/src/lib/portableBackup';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
-import { backupChecksum, compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
+import { compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
 import { prepareAutoBackup, serializeInternalBackup } from './internalBackupWorker';
 import { blobToDataUrl, dataUrlToBlob } from '@/src/lib/blobCodec';
-import { detachMissingWorkshopEntries, validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation';
+import { validateBackup } from '@/src/lib/backupValidation';
 import { decodeBackupText } from '@/src/lib/backupIO';
 import {
   remapProjectDependents,
@@ -24,56 +28,7 @@ import {
   type ProjectBackupCounts,
 } from '@/src/lib/importRemap';
 
-export interface BackupData<ChapterRow extends PersistedChapter = ChapterExportRecord> {
-  version: number;
-  timestamp: number;
-  // SHA-256 hex dari JSON `data` (#5). Ada sejak v4; cadangan lama tanpa field ini
-  // dilewati verifikasinya (backward-compatible). Menangkap file terpotong/rusak
-  // SEBELUM ditimpakan ke DB.
-  checksum?: string;
-  // Lingkup ekspor (#4). 'project' = ekspor SATU novel yang mandiri (untuk arsip /
-  // memindahkan). Tak ada / 'all' = cadangan penuh semua proyek (perilaku lama,
-  // backward-compatible). PENTING: file 'project' TIDAK boleh dipulihkan lewat jalur
-  // restore-penuh (yang meng-clear semua tabel) — itu akan menghapus proyek lain;
-  // impor per-proyek (remap id) adalah jalur terpisah yang menyusul.
-  scope?: 'all' | 'project';
-  // Nama proyek sumber saat scope='project' (untuk nama file & label impor nanti).
-  projectName?: string;
-  /** v8: auto internal berisi referensi hash; file/Drive/pre-restore lengkap. */
-  imageMode?: 'full' | 'references';
-  data: {
-    projects: any[];
-    chapters: ChapterRow[];
-    codex: any[];
-    bible: any[];
-    aiActions: any[];
-    snapshots: Snapshot[];
-    timeline: any[];
-    relationships: any[];
-    chatSessions: any[];
-    codexCategories?: any[];
-    plotPromises?: any[];
-    glossary?: any[];
-    // Atlas Dunia (v7). `maps[].imageBlob` diganti `imageDataUrl` (base64) karena Blob
-    // tak selamat lewat JSON. v8 internal auto memakai imageAssetId (SHA-256).
-    // Snapshot pre-restore selalu menyertakan gambar lengkap.
-    maps?: any[];
-    mapMarkers?: any[];
-    continuityTriage?: any[];
-  };
-}
-
-type ValidatedBackup = BackupData<PersistedChapter & { listMetadata?: unknown }>;
-
-function normalizeBackupData(data: ValidatedBackup['data']) {
-  return { ...normalizeLegacyData(data), chapters: data.chapters.map(chapterFromRecord) };
-}
-
-function preserveOrphanedSnapshots(data: Pick<BackupData['data'], 'chapters' | 'snapshots'>) {
-  const chapterIds = new Set(data.chapters.map(chapter => chapter.id));
-  data.snapshots = data.snapshots.map(snapshot =>
-    snapshot.orphaned || chapterIds.has(snapshot.chapterId) ? snapshot : { ...snapshot, orphaned: true });
-}
+export type { BackupData } from '@/src/lib/backupFormat';
 
 /**
  * Deteksi kegagalan kuota penyimpanan (IndexedDB penuh). Nama/kode berbeda antar
@@ -95,7 +50,7 @@ function isQuotaError(err: any): boolean {
 
 export const backupService = {
   /** Ganti `imageBlob` (Blob) → `imageDataUrl` (base64) agar aman di JSON. */
-  async serializeMaps(maps: any[]): Promise<any[]> {
+  async serializeMaps(maps: any[]): Promise<BackupMapRecord[]> {
     return Promise.all(maps.map(async (m) => {
       const { imageBlob, imageDataUrl: _url, imageAssetId: _id, imageMissing: _missing, ...rest } = m;
       if (!(imageBlob instanceof Blob)) return { ...rest, imageMissing: true };
@@ -108,11 +63,11 @@ export const backupService = {
 
   /** Kebalikan `serializeMaps`: `imageDataUrl` → `imageBlob` (Blob). Async → panggil
    *  di LUAR transaksi Dexie; Blob/aset disiapkan sebelum clear. */
-  async deserializeMaps(maps: any[] | undefined, allowReferences = false): Promise<any[]> {
-    const needsLive = allowReferences && (maps ?? []).some(m => !m.imageDataUrl && !m.imageMissing);
+  async deserializeMaps(maps: BackupMapRecord[] = [], allowReferences = false) {
+    const needsLive = allowReferences && maps.some(m => !m.imageDataUrl && !m.imageMissing);
     const liveMaps = needsLive ? await db.maps.toArray() : [];
     const assets = new Map<string, Blob>();
-    const needed = new Set<string>((maps ?? []).filter(m => m.imageAssetId && !m.imageDataUrl && !m.imageMissing).map(m => m.imageAssetId));
+    const needed = new Set(maps.flatMap(m => m.imageAssetId && !m.imageDataUrl && !m.imageMissing ? [m.imageAssetId] : []));
     // Jangan menahan salinan base64 seluruh gambar live sekaligus hanya untuk
     // resolusi referensi. Hash satu per satu, berhenti setelah semua aset ditemukan.
     for (const live of liveMaps) {
@@ -121,14 +76,12 @@ export const backupService = {
       const hash = await this.computeChecksum(await blobToDataUrl(live.imageBlob));
       if (hash && needed.has(hash)) { assets.set(hash, live.imageBlob); needed.delete(hash); }
     }
-    return Promise.all((maps ?? []).map(async (m) => {
+    return Promise.all(maps.map(async (m) => {
       const { imageDataUrl, imageAssetId, imageMissing, ...rest } = m;
       let imageBlob: Blob | undefined;
       if (imageDataUrl) {
         imageBlob = await dataUrlToBlob(imageDataUrl);
-        if (imageAssetId && await this.computeChecksum(imageDataUrl) !== imageAssetId) {
-          throw new Error('Identitas gambar cadangan tidak cocok. Pemulihan dibatalkan.');
-        }
+        await verifyEmbeddedImage(imageDataUrl, imageAssetId);
       } else if (!imageMissing) {
         if (allowReferences && imageAssetId) imageBlob = assets.get(imageAssetId);
         // Legacy v7 internal tidak menyimpan hash. Pertahankan hanya peta dengan
@@ -152,7 +105,7 @@ export const backupService = {
     preserveOrphanedSnapshots(data);
     data.maps = await this.serializeMaps(data.maps ?? []);
     return {
-      version: 8, // v8: kebijakan aset eksplisit; v7: maps/mapMarkers
+      version: BACKUP_FORMAT_VERSION,
       timestamp: Date.now(),
       scope: 'all',
       imageMode: 'full',
@@ -174,7 +127,7 @@ export const backupService = {
     const project = data.projects[0];
     data.maps = await this.serializeMaps(data.maps ?? []);
     return {
-      version: 8,
+      version: BACKUP_FORMAT_VERSION,
       timestamp: Date.now(),
       scope: 'project',
       imageMode: 'full',
@@ -287,8 +240,16 @@ export const backupService = {
   },
 
   serializeExternalBackup(data: BackupData, space?: number): string {
-    validateBackup(data, data.scope === 'project' ? 'project' : 'all');
-    return JSON.stringify(data, null, space);
+    return serializePortableBackup(data, space);
+  },
+
+  async prepareExternalBackup(data: BackupData) {
+    const json = serializePortableBackup(data, undefined, BACKUP_LIMITS.jsonBytes);
+    const encoded = await this.compressData(json);
+    if (encoded.blob.size > BACKUP_LIMITS.fileBytes) {
+      throw new Error('Ukuran file cadangan melewati batas yang diizinkan.');
+    }
+    return encoded;
   },
 
   /**
@@ -307,8 +268,7 @@ export const backupService = {
   async saveToDirectory(data: BackupData, dirHandle: FileSystemDirectoryHandle): Promise<void> {
     // Write compressed data (ekstensi mengikuti hasil kompresi: .json.gz hanya bila
     // benar-benar ter-gzip; bila tidak → .json mentah agar bisa dipulihkan — BK4)
-    const jsonString = this.serializeExternalBackup(data);
-    const { blob, compressed } = await this.compressData(jsonString);
+    const { blob, compressed } = await this.prepareExternalBackup(data);
 
     const ext = compressed ? '.json.gz' : '.json';
     const filename = `aetherscribe-autobackup-${new Date().toISOString().replace(/[:.]/g, '-')}${ext}`;
@@ -343,25 +303,15 @@ export const backupService = {
    * Salinan input tetap membawa data/checksum asli; normalisasi legacy dilakukan
    * setelah verifikasi, hanya pada data yang akan ditulis.
    */
-  async validateInput(input: unknown, scope: 'all' | 'project'): Promise<ValidatedBackup> {
-    validateBackup(input, scope);
-    // Salin sebelum await agar caller tidak mengubah record setelah validasi.
-    const backup = JSON.parse(JSON.stringify(input)) as ValidatedBackup;
-    if (backup.checksum) {
-      const actual = await this.computeChecksum(JSON.stringify(backup.data));
-      if (!actual || actual !== backup.checksum) throw new Error('Verifikasi integritas gagal: cadangan rusak atau checksum tidak dapat diverifikasi.');
-    }
-    return backup;
+  validateInput(input: unknown, scope: BackupScope) {
+    return verifyBackup(input, scope);
   },
 
   /** Restore-penuh: validasi → resolusi gambar → snapshot pengaman lengkap →
    * clear/refill atomik. Cache embedding dibuang untuk regenerasi. */
   async restoreData(input: unknown): Promise<void> {
     const parsedData = await this.validateInput(input, 'all');
-    const normalized = normalizeBackupData(parsedData.data);
-    detachMissingWorkshopEntries(normalized);
-    const data = normalized as BackupData['data'];
-    preserveOrphanedSnapshots(data);
+    const data = normalizeBackupData(parsedData);
     // Dekode/resolusi aset sebelum snapshot atau mutasi database.
     const mapRows = await this.deserializeMaps(data.maps, true);
 
@@ -430,7 +380,7 @@ export const backupService = {
   async importProjectData(input: unknown): Promise<{ projectId: number; counts: ProjectBackupCounts }> {
     const backup = await this.validateInput(input, 'project');
 
-    const data = normalizeBackupData(backup.data) as unknown as ProjectBackupData;
+    const data = normalizeBackupData(backup) as ProjectBackupData;
     const counts = summarizeProjectBackup(data);
 
     // Dekode gambar peta di LUAR transaksi; id lama dipertahankan untuk

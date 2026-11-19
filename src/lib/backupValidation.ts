@@ -1,4 +1,5 @@
 import { BACKUP_LIMITS } from './backupLimits';
+import { BACKUP_FORMAT_VERSION, MIN_BACKUP_VERSION, type BackupScope } from './backupFormat';
 import { validateImageDataUrl } from './blobCodec';
 import { record } from './dataContracts';
 import { BACKUP_TABLES, type BackupTableName } from './tableCatalog';
@@ -153,19 +154,22 @@ function validateJsonBudget(value: unknown) {
 }
 
 /** Schema terpusat untuk UI dan kedua boundary service. Tidak memutasi input. */
-export function validateBackup(backup: unknown, scope: 'all' | 'project'): asserts backup is Row & { data: Record<string, Row[]> } {
+export function validateBackup(backup: unknown, scope?: BackupScope): asserts backup is Row & { data: Record<string, Row[]> } {
   validateJsonBudget(backup);
   object({ version: number, timestamp: nonnegative, data: object({}) }, {
     scope: choice('all', 'project'), projectName: text, checksum: (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); },
     imageMode: choice('full', 'references'),
   })(backup, 'envelope');
   const b = backup as Row;
-  if (!Number.isInteger(b.version) || b.version < 3 || b.version > 8) fail('versi didukung hanya 3–8');
+  if (!Number.isInteger(b.version) || b.version < MIN_BACKUP_VERSION || b.version > BACKUP_FORMAT_VERSION) {
+    fail(`versi ${b.version} belum didukung (didukung ${MIN_BACKUP_VERSION}–${BACKUP_FORMAT_VERSION})`);
+  }
+  scope ??= b.scope === 'project' ? 'project' : 'all';
   if (scope === 'all' && b.scope !== undefined && b.scope !== 'all') {
     throw new Error('File ekspor per-novel tidak dapat mengganti workspace. Gunakan “Impor Novel”.');
   }
   if (scope === 'project' && b.scope !== 'project') throw new Error('Ini bukan file ekspor per-novel. Gunakan pemulihan cadangan penuh.');
-  if (b.version === 8 && (!b.imageMode || !b.scope)) fail('scope dan imageMode wajib pada v8');
+  if (b.version === BACKUP_FORMAT_VERSION && (!b.imageMode || !b.scope)) fail(`scope dan imageMode wajib pada v${BACKUP_FORMAT_VERSION}`);
   if (scope === 'project' && b.imageMode === 'references') fail('impor novel membutuhkan gambar lengkap');
   const d = b.data as Record<string, Row[]>;
   if (scope === 'project' && Array.isArray(d.projects) && d.projects.length !== 1) throw new Error('File ini bukan ekspor satu novel.');
@@ -173,7 +177,7 @@ export function validateBackup(backup: unknown, scope: 'all' | 'project'): asser
   let count = 0;
   for (const table of BACKUP_TABLES) {
     const rows = d[table];
-    if (rows === undefined && (b.version < 8 || scope === 'project') && !['projects', 'chapters', 'codex'].includes(table)) continue;
+    if (rows === undefined && (b.version < BACKUP_FORMAT_VERSION || scope === 'project') && !['projects', 'chapters', 'codex'].includes(table)) continue;
     array(backupSchemas[table])(rows, table);
     count += rows.length;
     if (count > BACKUP_LIMITS.recordsTotal) fail('jumlah record total');
@@ -207,7 +211,7 @@ export function validateBackup(backup: unknown, scope: 'all' | 'project'): asser
     if (table === 'maps') {
       if ('imageBlob' in row) fail('maps.imageBlob tidak dapat diimpor dari JSON');
       if (row.imageMissing && (row.imageDataUrl || row.imageAssetId)) fail('status gambar ambigu');
-      if (b.version === 8 && !row.imageMissing) {
+      if (b.version === BACKUP_FORMAT_VERSION && !row.imageMissing) {
         if (!row.imageAssetId || (b.imageMode === 'full' && !row.imageDataUrl) || (b.imageMode === 'references' && row.imageDataUrl)) fail('gambar tidak sesuai imageMode');
       }
     }

@@ -1,6 +1,39 @@
 # Format Backup dan Pemulihan
 
-Format yang dihasilkan saat ini adalah **v8**; skema IndexedDB tetap **v34**. Implementasi utama: `src/services/backupService.ts`, schema `src/lib/backupValidation.ts`, pembaca terbatas `src/lib/backupIO.ts`, dan batas `src/lib/backupLimits.ts`.
+Ekspor menggunakan **format v8**. Versi ini independen dari skema IndexedDB
+**v34**. Konstanta versi berada di `src/lib/backupFormat.ts`.
+
+## Membaca dan mengonversi arsip portabel
+
+`src/lib/portableBackup.ts` dapat digunakan dari skrip atau browser tanpa
+Dexie. `readPortableBackup(blob, scope?)` membaca JSON UTF-8 atau gzip dengan
+batas ukuran, memvalidasi record dan relasi, serta memeriksa checksum envelope
+dan hash aset yang disertakan. `validatePortableBackup(input, scope?)` melakukan
+pemeriksaan yang sama pada objek yang sudah dibaca. Jika `scope` tidak
+diberikan, pembaca menggunakan nilai di envelope atau `all` untuk arsip lama
+tanpa scope.
+
+`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v8.
+Konverter memeriksa checksum asli, mengisi tabel legacy yang absen dengan
+array kosong, menormalkan record seperti saat restore, dan membuat envelope
+v8 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
+dipertahankan. Gambar inline legacy diberi hash jika belum memilikinya.
+Konverter menolak gambar yang hanya bisa diambil dari database asal. Untuk
+sumber semacam itu, gunakan ekspor lengkap dari workspace yang memiliki aset.
+
+```ts
+import { readBackupFile } from './src/lib/backupIO';
+import { convertPortableBackup, serializePortableBackup } from './src/lib/portableBackup';
+
+const input = await readBackupFile(file);
+const portable = await convertPortableBackup(input);
+const json = serializePortableBackup(portable, 2);
+```
+
+Hasilnya dapat disimpan sebagai `.json`, dibaca lagi oleh aplikasi, atau
+diproses sebagai JSON oleh importer lain. File dan folder lokal serta Drive
+menerapkan batas baca sebelum menerbitkan arsip. Folder dan Drive dapat
+menggunakan gzip.
 
 Persiapan auto internal besar memakai worker dengan fallback main dan antrean
 save per tab. Pre-restore tetap lengkap dan dikecualikan dari rotasi auto normal
@@ -43,9 +76,52 @@ mewajibkan ID serta struktur record yang valid.
 | Auto internal | `imageMode:'references'`, hanya `imageAssetId` | Cocokkan SHA-256 dengan Blob yang masih tersedia di tabel maps; jika tidak ada, batalkan sebelum snapshot/clear. |
 | Snapshot pra-restore | `imageMode:'full'` | Gambar lengkap untuk mengembalikan workspace meskipun gambar live telah diganti/dihapus oleh restore. |
 
-`imageAssetId` adalah SHA-256 dari data URL kanonis hasil serialisasi Blob, bukan ID numerik peta. Dengan demikian penggantian gambar pada ID peta yang sama tidak salah dianggap sebagai aset lama. Field khusus backup dilepas sebelum baris maps dimasukkan ke IndexedDB. Tidak ada tabel aset/migrasi baru.
+`imageAssetId` adalah SHA-256 heksadesimal huruf kecil dari byte UTF-8 string
+`imageDataUrl` secara persis, termasuk awalan MIME dan padding base64.
+`maps.id` adalah ID record yang dipakai `mapMarkers`. Field khusus backup
+dilepas sebelum baris peta dimasukkan ke IndexedDB.
 
 Auto internal sengaja bukan cadangan gambar mandiri. Jika gambar lama sudah tidak tersedia, gunakan file/Drive lengkap. Untuk legacy tanpa hash maupun data URL, restore hanya mempertahankan Blob live dengan `id`, `projectId`, `createdAt`, `width`, dan `height` yang sama; jika tidak cocok, restore dibatalkan. Legacy tidak dapat membuktikan versi historis gambar ketika gambar pernah diganti dengan dimensi sama. Peta yang memang sudah tidak memiliki Blob saat dicadangkan diberi `imageMissing:true`; status tersebut dipertahankan secara eksplisit.
+
+## Record, satuan waktu, dan identitas
+
+Setiap tabel di `data` berisi array record JSON. ID berupa bilangan bulat aman
+positif dan unik per tabel dalam satu arsip. Restore workspace mempertahankan
+ID. Impor satu novel membuat ID baru dan memetakan ulang referensi. Pada tabel
+yang punya `projectId`, referensi mengarah ke record dalam proyek yang sama.
+Teks naskah, isi pesan, judul, dan slug kategori dipertahankan sebagai string.
+
+| Record | Isi dan relasi penting |
+| --- | --- |
+| `projects` dan `chapters` | Proyek, naskah HTML, metadata penulis, dan urutan bab. Bab merujuk ke proyek lewat `projectId`. |
+| `snapshots` | Isi historis dan `chapterId`. Pada cadangan penuh, `orphaned:true` menjadikan ID tersebut identitas historis. |
+| `codex`, `codexCategories` | Entri dan definisi kategori kustom. `category` memakai slug bawaan atau slug kustom dalam proyek. |
+| `bible`, `aiActions`, `glossary` | Aturan cerita, prompt, dan istilah milik proyek. `bible.key` dan `codexCategories.slug` unik dalam proyek masing-masing. |
+| `timeline`, `relationships` | Peristiwa dapat merujuk ke bab dan daftar ID Codex. Relasi merujuk ke dua ID Codex melalui `sourceId` dan `targetId`. |
+| `chatSessions`, `plotPromises` | Pesan dan tautan bab aktif, target Workshop `entry:<id>`, serta janji plot dengan referensi bab/Codex opsional. |
+| `maps`, `mapMarkers` | Dimensi peta dalam piksel dan gambar inline untuk ekspor lengkap. Penanda memakai koordinat relatif 0–1 dengan `mapId`, `linkedMapId`, dan `codexId` sesuai jenis relasinya. |
+| `continuityTriage` | Status temuan kontinuitas. `findingId` unik dalam proyek dan ID yang termuat di dalamnya diremap ketika mengimpor. |
+
+`timestamp`, `createdAt`, `updatedAt`, `lastOpened`, `lastModified`,
+`lastMessageAt`, dan waktu pesan memakai milidetik sejak epoch Unix.
+`summaryUpdatedAt` menyimpan `lastModified` sumber ringkasan.
+`dailyLog` memakai kunci tanggal lokal `YYYY-MM-DD`. Tanggal dunia fiksi
+memakai objek `WorldDate` dengan `era` (indeks mulai 0), `year`, `month`,
+dan `day` (mulai 1). `eventDate` lama tetap berupa label bebas.
+Untuk checksum envelope, gunakan SHA-256 atas UTF-8
+`JSON.stringify(envelope.data)` dalam urutan properti yang dibaca dari file.
+
+### Data turunan
+
+- `chapters.listMetadata` dibangun ulang otomatis saat bab disimpan dalam
+  proses restore atau impor.
+- `embeddings` dibuat kembali oleh worker saat konteks Codex digunakan
+  dan model embedding tersedia. Buka proyek dan jalankan fitur AI yang
+  menelusuri konteks Codex untuk memicu pembaruan.
+- Untuk `sceneEmbeddings`, buka **Cari Adegan** dan klik **Bangun indeks**
+  setelah restore atau impor. Gunakan **Perbarui indeks** setelah mengedit.
+- `backups`, `errors`, `aiUsageLogs`, dan handle folder tetap lokal sesuai
+  [kebijakan tabel](database.md#katalog-tabel-dan-kebijakan-data-db04).
 
 ## Urutan restore dan kegagalan
 
@@ -73,7 +149,16 @@ File ditolak sebelum pembacaan jika ukurannya berlebihan. Unduhan Drive dihitung
 
 `src/services/backupService.test.ts` dan `driveBackupService.test.ts` menguji DB sintetis terisolasi, auto/full/pre-restore, undo gambar, legacy v3–v7, scope/versi/schema/FK, checksum, rollback transaksi, kegagalan snapshot, batas ukuran/dekompresi, dan Drive dengan fetch mock. Tujuh probe regresi gagal pada kode sebelum perbaikan lalu lulus setelahnya.
 
-Belum diuji dengan IndexedDB browser native, akun Drive nyata, atau file novel pengguna. Fixture legacy adalah data sintetis yang mewakili versi envelope, bukan koleksi file historis pengguna. F19: pengumpulan backup/ekspor melakukan flush tervalidasi, lalu membaca tabel dalam satu transaksi readonly melalui backupSnapshot.ts. Blob diserialisasi dan checksum/kompresi dilakukan setelah transaksi. Ekspor manuskrip membaca ulang bab terpilih dan metadata proyek dari snapshot tersebut, bukan state live-query lama. Snapshot menjamin konsistensi antar-store pada saat baca, bukan menyertakan edit yang baru terjadi setelah flush/snapshot. F10: triage dan workshopKey kini diremap pada impor, termasuk ID relasi/timeline di findingId; teks pesan tetap utuh.
+Tes Chromium menggunakan unduhan JSON dari UI dan profil kosong untuk
+membandingkan naskah, referensi, serta byte gambar. Akun Drive nyata dan file
+novel pengguna berada di luar verifikasi lokal. Fixture legacy menggunakan
+data sintetis yang mewakili versi envelope.
+
+Pengumpulan cadangan menunggu simpan editor, lalu membaca tabel dalam satu
+transaksi melalui `backupSnapshot.ts`. Serialisasi Blob, checksum, dan
+kompresi dilakukan sesudah transaksi. Ekspor manuskrip membaca ulang bab yang
+dipilih dan metadata proyek dari snapshot tersebut. Edit yang terjadi
+sesudah snapshot tercakup pada pencadangan berikutnya.
 
 ## Retensi Drive (F20)
 

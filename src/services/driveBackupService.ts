@@ -101,8 +101,7 @@ export async function syncProjectToDrive(force: boolean = false, onRetentionWarn
 
   // Generate backup content and compress
   const backupObject = await backupService.collectAllData();
-  const backupDataString = backupService.serializeExternalBackup(backupObject);
-  const { blob: contentBlob, compressed } = await backupService.compressData(backupDataString);
+  const { blob: contentBlob, compressed } = await backupService.prepareExternalBackup(backupObject);
 
   // Create new version. Ekstensi & mimeType mengikuti hasil kompresi (BK4): bila
   // kompresi gagal, simpan JSON mentah agar tetap bisa dipulihkan.

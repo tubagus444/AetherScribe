@@ -3,6 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/** SHA-256 hex of the exact UTF-8 text used by the v8 envelope and Atlas assets. */
+export async function backupChecksum(text: string): Promise<string | undefined> {
+  try {
+    if (typeof crypto === 'undefined' || !crypto.subtle) return undefined;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  } catch { return undefined; }
+}
+
 /**
  * Rakit string JSON cadangan penuh dengan MENYISIPKAN `dataString` (hasil satu kali
  * `JSON.stringify(data)`) alih-alih men-stringify ulang objek `data` yang besar.

@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 
 // Browser imports use Vite's URL. The type comes from the source module.
 type DbModule = typeof import('../src/db');
+type PortableBackupModule = typeof import('../src/lib/portableBackup');
+type BackupServiceModule = typeof import('../src/services/backupService');
 
 test.beforeEach(async ({ context, page, baseURL }) => {
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
@@ -87,6 +89,41 @@ test('DB01 restores a full downloaded file into a fresh browser context', async 
     const dialog = target.getByRole('alertdialog', { name: 'Timpa semua data?' });
     await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
     await expect.poll(() => state(target)).toEqual(source);
+  } finally {
+    await fresh.close();
+  }
+});
+
+test('DB07 validates a downloaded file without IndexedDB and restores it into empty tables', async ({ page, browser, baseURL }) => {
+  await settings(page);
+  const file = await exported(page, false);
+  const source = await state(page);
+  const fresh = await browser.newContext({ baseURL, serviceWorkers: 'block' });
+  try {
+    await fresh.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+    const target = await fresh.newPage();
+    await target.route('**/__portable_backup', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+    await target.goto('/__portable_backup');
+    const result = await target.evaluate(async text => {
+      const before = await indexedDB.databases();
+      const readerPath = '/src/lib/portableBackup.ts';
+      const { readPortableBackup }: PortableBackupModule = await import(readerPath);
+      const backup = await readPortableBackup(new Blob([text]), 'all');
+      const afterValidation = await indexedDB.databases();
+      const servicePath = '/src/services/backupService.ts';
+      const { backupService }: BackupServiceModule = await import(servicePath);
+      const dbPath = '/src/db.ts';
+      const { db }: DbModule = await import(dbPath);
+      const empty = await Promise.all(db.tables.map(table => table.count()));
+      await backupService.restoreData(backup);
+      return { before, afterValidation, empty, imageMode: backup.imageMode };
+    }, file.buffer.toString('utf8'));
+    expect(result.before).toEqual([]);
+    expect(result.afterValidation).toEqual([]);
+    expect(result.imageMode).toBe('full');
+    expect(result.empty.length).toBeGreaterThan(0);
+    expect(result.empty.every(count => count === 0)).toBe(true);
+    expect(await state(target)).toEqual(source);
   } finally {
     await fresh.close();
   }
