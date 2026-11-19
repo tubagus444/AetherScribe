@@ -150,6 +150,7 @@ Baseline pengukuran boleh dimulai lebih awal jika ada keluhan performa.
 Selesai jika: hasil sebelum/sesudah dapat dibandingkan pada fixture yang sama,
 target batch tercapai, dan penghematan tidak mengorbankan konsistensi backup atau naskah.
 Pemisahan tabel dan indeks baru memerlukan bukti kebutuhan.
+Rujukan: [hasil pengukuran kapasitas dan optimasi DB08](performance/db08.md).
 
 ### DB09 — Identitas global dan pelacakan perubahan (bersyarat)
 

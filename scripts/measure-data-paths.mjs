@@ -4,9 +4,11 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { arch, cpus, release, totalmem } from 'node:os';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const base = 'http://127.0.0.1:4182';
+const capacity = process.argv.includes('--capacity');
 const env = { ...process.env, PORT: '4182', GEMINI_API_KEY: '', OPENAI_API_KEY: '', GROQ_API_KEY: '', OPENROUTER_API_KEY: '', CLAUDE_API_KEY: '', HF_API_KEY: '', HUGGINGFACE_API_KEY: '' };
 const server = spawn(process.execPath, ['--import', 'tsx', 'e2e/server.ts'], { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
 let logs = ''; server.stdout.on('data', value => { logs += value; }); server.stderr.on('data', value => { logs += value; });
@@ -25,10 +27,58 @@ try {
   const page = await context.newPage();
   await page.route('**/__f23_bench', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
   await page.goto(`${base}/__f23_bench`);
-  await page.evaluate(async () => { const modulePath = '/e2e/dataPathsFixture.ts'; window.f23 = await import(modulePath); });
+  await page.evaluate(async capacity => {
+    const modulePath = capacity ? '/e2e/capacityFixture.ts' : '/e2e/dataPathsFixture.ts';
+    if (capacity) window.db08 = await import(modulePath);
+    else window.f23 = await import(modulePath);
+  }, capacity);
   const session = await context.newCDPSession(page);
   const samples = [];
-  for (const [chapters, words, scenes] of [[10, 1000, 100], [100, 2000, 1000], [500, 5000, 10000]]) {
+  if (capacity) {
+    const scenarios = [
+      { chapters: 10, words: 1000, scenes: 100, sessions: 5, messages: 20, snapshots: 5, maps: 1 },
+      { chapters: 100, words: 2000, scenes: 1000, sessions: 30, messages: 60, snapshots: 30, maps: 2 },
+      { chapters: 500, words: 5000, scenes: 10000, sessions: 100, messages: 100, snapshots: 120, maps: 4 },
+    ];
+    for (const scenario of scenarios) {
+      const fixture = await page.evaluate(scenario => window.db08.seedCapacity(scenario), scenario);
+      const jsonBytes = await page.evaluate(() => window.db08.prepareCapacity());
+      await page.evaluate(scenario => window.db08.measureCapacity(scenario), scenario);
+      const timings = [];
+      for (let iteration = 0; iteration < 5; iteration++) {
+        await session.send('HeapProfiler.collectGarbage');
+        timings.push(await page.evaluate(scenario => window.db08.measureCapacity(scenario), scenario));
+      }
+      const heap = {};
+      for (const operation of ['serialize', 'verify', 'restore']) {
+        const probes = [];
+        for (let iteration = 0; iteration < 3; iteration++) {
+          await session.send('HeapProfiler.collectGarbage');
+          const before = await session.send('Runtime.getHeapUsage');
+          let peak = before.usedSize, backing = before.backingStorageSize ?? 0;
+          let pending = Promise.resolve();
+          const sample = async () => {
+            const entry = await session.send('Runtime.getHeapUsage');
+            peak = Math.max(peak, entry.usedSize);
+            backing = Math.max(backing, entry.backingStorageSize ?? 0);
+          };
+          const timer = setInterval(() => { pending = pending.then(sample); }, 20);
+          try {
+            await page.evaluate(operation => window.db08.runCapacityProbe(operation), operation);
+          } finally {
+            clearInterval(timer);
+            await pending;
+          }
+          await sample();
+          probes.push({ heapBytes: peak - before.usedSize, backingBytes: backing - (before.backingStorageSize ?? 0) });
+        }
+        heap[operation] = probes;
+      }
+      assert.equal(await page.evaluate(scenario => window.db08.verifyCapacity(scenario), scenario), true);
+      samples.push({ ...scenario, ...fixture, jsonBytes, timings, heap });
+      console.log(`Capacity: ${scenario.chapters} chapters, ${jsonBytes} JSON bytes, round-trip verified`);
+    }
+  } else for (const [chapters, words, scenes] of [[10, 1000, 100], [100, 2000, 1000], [500, 5000, 10000]]) {
     await page.evaluate(async ([count, words, scenes]) => { await window.f23.seed(count, words); await window.f23.seedScenes(scenes); }, [chapters, words, scenes]);
     const timing = await page.evaluate(async () => {
       const m = window.f23;
@@ -55,7 +105,15 @@ try {
     await page.evaluate(() => window.f23.release());
     samples.push({ chapters, wordsPerChapter: words, scenes, vectorDimensions: 384, timing, heap });
   }
-  const report = { baseCommit: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), node: process.version, chromium: browser.version(), conditions: 'Native IndexedDB, isolated blank page, same v34 dataset for baseline-equivalent and optimized queries; five warm samples; heap holds fetched rows at query working-set point', samples };
+  const report = {
+    baseCommit: execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
+    node: process.version, chromium: browser.version(),
+    ...(capacity && { device: { platform: process.platform, release: release(), arch: arch(), cpu: cpus()[0]?.model, logicalCpus: cpus().length, memoryBytes: totalmem() } }),
+    conditions: capacity
+      ? 'Native IndexedDB in a blank page; five warm timings and three main-thread V8 heap probes (20 ms CDP sampling); no editor UI/model/remote network'
+      : 'Native IndexedDB, isolated blank page, same v34 dataset for baseline-equivalent and optimized queries; five warm samples; heap holds fetched rows at query working-set point',
+    samples,
+  };
   const output = process.argv.find(arg => arg.startsWith('--output='))?.slice(9);
   if (output) { const target = path.resolve(root, output); mkdirSync(path.dirname(target), { recursive: true }); writeFileSync(target, JSON.stringify(report, null, 2) + '\n'); }
   console.log(JSON.stringify(report, null, 2));

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { backupChecksum } from './backupEnvelope';
 import { BACKUP_FORMAT_VERSION } from './backupFormat';
+import { BACKUP_LIMITS } from './backupLimits';
 import { compressBackup } from './internalBackupPreparation';
 import { convertPortableBackup, readPortableBackup, serializePortableBackup, validatePortableBackup } from './portableBackup';
 import { BACKUP_TABLES } from './tableCatalog';
@@ -75,4 +76,24 @@ describe('portable backup without database dependencies', () => {
     expect(() => serializePortableBackup(converted, undefined, bytes - 1)).toThrow(/Ukuran file/);
     expect(serializePortableBackup(converted, undefined, bytes)).toBe(json);
   });
+
+  it.each(['Plain ASCII text', 'Quotes " and \\', 'Control \u0001\n\t', 'Café 🚀', 'Lone surrogate \uD800'])(
+    'counts the serialized JSON bytes at the exact string limit for %j',
+    async content => {
+      const bytes = new TextEncoder().encode(JSON.stringify(content)).byteLength;
+      const minimal = {
+        version: 3, timestamp: 1,
+        data: { projects: [{ ...project, name: 'P' }], chapters: [{ ...chapter, content }], codex: [] },
+      };
+      const original = BACKUP_LIMITS.stringBytes;
+      try {
+        Object.defineProperty(BACKUP_LIMITS, 'stringBytes', { value: bytes });
+        await expect(validatePortableBackup(minimal)).resolves.toEqual(minimal);
+        Object.defineProperty(BACKUP_LIMITS, 'stringBytes', { value: bytes - 1 });
+        await expect(validatePortableBackup(minimal)).rejects.toThrow(/ukuran teks/);
+      } finally {
+        Object.defineProperty(BACKUP_LIMITS, 'stringBytes', { value: original });
+      }
+    },
+  );
 });

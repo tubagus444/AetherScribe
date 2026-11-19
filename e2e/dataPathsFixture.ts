@@ -40,10 +40,10 @@ export async function migrateV33() {
   return { version: db.verno, rows: await readChapterList(1), chapter: await db.chapters.get(7) };
 }
 
-export async function seedScenes(size: number) {
+export async function seedScenes(size: number, chapterCount = size) {
   await db.sceneEmbeddings.clear();
   await db.sceneEmbeddings.bulkAdd(Array.from({ length: size }, (_, index) => ({
-    id: String(index).padStart(8, '0'), projectId: 1, chapterId: index + 1, chunkIndex: 0,
+    id: String(index).padStart(8, '0'), projectId: 1, chapterId: index % chapterCount + 1, chunkIndex: Math.floor(index / chapterCount),
     snippet: 'fixture', contentHash: 'fixture', lastUpdated: 1, embedding: Float32Array.from({ length: 384 }, (_, j) => j === 0 ? (index % 31) / 31 : 0),
   })));
 }

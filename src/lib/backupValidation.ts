@@ -94,6 +94,8 @@ const backupSchemas = {
   continuityTriage: object({ id, projectId: id, findingId: text, status: choice('dismissed', 'acknowledged'), timestamp: nonnegative }),
 } satisfies Record<BackupTableName, ReturnType<typeof object>>;
 const schemas: Record<string, ReturnType<typeof object>> = backupSchemas;
+const jsonStringEncoder = new TextEncoder();
+const needsJsonEncoding = /["\\]|[^\x20-\x7e]/;
 
 /** Validasi hanya field yang dikirim oleh patch agar field lama tetap utuh. */
 export function validateWriteFields(table: string, row: unknown, mode: 'create' | 'patch', allowed?: readonly string[]) {
@@ -132,7 +134,8 @@ function validateJsonBudget(value: unknown) {
     if (++nodes > 2_000_000 || depth > BACKUP_LIMITS.depth) fail('struktur terlalu besar/dalam');
     if (typeof v === 'string') {
       if (v.length > BACKUP_LIMITS.stringBytes) fail('ukuran teks melebihi 16 MiB');
-      const encoded = new TextEncoder().encode(JSON.stringify(v)).byteLength;
+      // Printable ASCII without JSON escapes occupies one byte per character plus quotes.
+      const encoded = needsJsonEncoding.test(v) ? jsonStringEncoder.encode(JSON.stringify(v)).byteLength : v.length + 2;
       if (encoded > BACKUP_LIMITS.stringBytes) fail('ukuran teks melebihi 16 MiB');
       bytes += encoded;
     } else if (typeof v === 'number') { number(v, 'angka'); bytes += 24; }

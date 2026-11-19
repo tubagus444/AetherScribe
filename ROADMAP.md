@@ -50,7 +50,7 @@ Status pelaksanaan dicatat di tabel ini.
 | 5 | DB05 | Kontrak akses data dan adapter Dexie | Selesai, diverifikasi lokal |
 | 6 | DB06 | Kontrak data dan evolusi skema | Selesai, diverifikasi lokal |
 | 7 | DB07 | Format ekspor portabel | Selesai, diverifikasi lokal |
-| 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Direncanakan |
+| 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Selesai, diverifikasi lokal |
 | 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
 | 10 | DB10 | Pembuktian migrasi terisolasi | Bersyarat: target migrasi dipilih |
 
@@ -200,6 +200,29 @@ Status pelaksanaan dicatat di tabel ini.
   typecheck umum dan strict, maintenance, serta build produksi. Pengujian
   memakai fixture sintetis dan respons Drive tiruan. DB08 melanjutkan
   pengukuran kapasitas dan optimasi.
+
+### Hasil DB08
+
+- Mode `--capacity` di `scripts/measure-data-paths.mjs` memakai
+  `e2e/capacityFixture.ts` untuk mengukur simpan editor, daftar bab,
+  pencarian, chat, snapshot, ekspor, dan restore pada dataset 10, 100, dan
+  500 bab. Ketiga dataset lulus pemeriksaan data ekspor, relasi, aset, dan
+  checksum setelah restore.
+- `src/lib/backupValidation.ts` menghindari alokasi buffer UTF-8 saat
+  menghitung ukuran string ASCII tanpa escape. Pada fixture 500 bab
+  (JSON 20,71 MiB), median serialisasi turun 30,5% dari 174,9 ke 121,5 ms
+  dan backing storage tambahan yang tersampel turun dari 19,65 ke 0 MiB.
+  Kedua target serialisasi tercapai. Heap JS tersampel pada restore
+  meningkat meski backing storage turun.
+- DB08 memakai skema Dexie v34 dan format cadangan v8. Hasil berlaku
+  untuk satu perangkat dan Chromium dengan data sintetis. Evaluasi
+  pagination, chat, retensi cache, dan streaming dicatat bersama
+  metode serta sampel mentah. [Laporan DB08](docs/performance/db08.md)
+- Verifikasi mencakup 824 tes unit/integrasi, regresi benchmark F23,
+  typecheck umum dan strict, maintenance, serta build produksi. Pada
+  putaran penuh Chromium, 71 dari 72 tes lulus, termasuk simpan dan
+  pencadangan lintas tab. Tes edit rute Atlas timeout setelah halaman
+  dimuat ulang, lalu lulus saat keenam tes Atlas diulang.
 
 ## Pilihan tindak lanjut
 

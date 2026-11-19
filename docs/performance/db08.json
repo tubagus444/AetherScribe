@@ -1,0 +1,714 @@
+{
+  "baseCommit": "01bae63",
+  "node": "v24.15.0",
+  "chromium": "159.0.8154.6",
+  "device": {
+    "platform": "win32",
+    "release": "10.0.19045",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz",
+    "logicalCpus": 12,
+    "memoryBytes": 16995966976
+  },
+  "conditions": "Native IndexedDB in a blank page; five warm timings and three main-thread V8 heap probes (20 ms CDP sampling); no editor UI/model/remote network",
+  "optimization": "Count unescaped printable ASCII directly during backup JSON validation",
+  "units": {
+    "timings": "ms",
+    "heap": "sampled peak delta bytes"
+  },
+  "samples": [
+    {
+      "chapters": 10,
+      "words": 1000,
+      "scenes": 100,
+      "sessions": 5,
+      "messages": 20,
+      "snapshots": 5,
+      "maps": 1,
+      "imageBytes": 68,
+      "jsonBytes": 140508,
+      "before": {
+        "storage": {
+          "quota": 10737561600,
+          "usage": 143360,
+          "usageDetails": {
+            "indexedDB": 143360
+          }
+        },
+        "timings": [
+          {
+            "save": 1.9,
+            "list": 0.9,
+            "search": 5.9,
+            "chat": 1.4,
+            "snapshots": 1.5,
+            "collect": 6.7,
+            "serialize": 1.9,
+            "verify": 2.3,
+            "restore": 21.4
+          },
+          {
+            "save": 1.6,
+            "list": 0.9,
+            "search": 6.3,
+            "chat": 1.4,
+            "snapshots": 1.1,
+            "collect": 5.5,
+            "serialize": 2,
+            "verify": 2.3,
+            "restore": 19.5
+          },
+          {
+            "save": 1.7,
+            "list": 1,
+            "search": 6.2,
+            "chat": 1.3,
+            "snapshots": 1.2,
+            "collect": 5.8,
+            "serialize": 1.9,
+            "verify": 2.3,
+            "restore": 21.3
+          },
+          {
+            "save": 1.5,
+            "list": 0.8,
+            "search": 6.7,
+            "chat": 1.4,
+            "snapshots": 1.2,
+            "collect": 5.3,
+            "serialize": 2.1,
+            "verify": 2.2,
+            "restore": 19.4
+          },
+          {
+            "save": 1.8,
+            "list": 0.9,
+            "search": 6.2,
+            "chat": 1.1,
+            "snapshots": 0.9,
+            "collect": 5,
+            "serialize": 2,
+            "verify": 2.1,
+            "restore": 19.5
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 661392,
+              "backingBytes": 126500
+            },
+            {
+              "heapBytes": 667416,
+              "backingBytes": 126500
+            },
+            {
+              "heapBytes": 660928,
+              "backingBytes": 126500
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 919296,
+              "backingBytes": 258494
+            },
+            {
+              "heapBytes": 919192,
+              "backingBytes": 258494
+            },
+            {
+              "heapBytes": 919084,
+              "backingBytes": 258494
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 1208400,
+              "backingBytes": 1058307
+            },
+            {
+              "heapBytes": 1998380,
+              "backingBytes": 1062301
+            },
+            {
+              "heapBytes": 945660,
+              "backingBytes": 1062301
+            }
+          ]
+        }
+      },
+      "after": {
+        "storage": {
+          "quota": 10737561600,
+          "usage": 143360,
+          "usageDetails": {
+            "indexedDB": 143360
+          }
+        },
+        "timings": [
+          {
+            "save": 1.6,
+            "list": 0.8,
+            "search": 5.6,
+            "chat": 1,
+            "snapshots": 0.9,
+            "collect": 4.5,
+            "serialize": 1.4,
+            "verify": 2.1,
+            "restore": 18.9
+          },
+          {
+            "save": 1.3,
+            "list": 1,
+            "search": 5.8,
+            "chat": 1.1,
+            "snapshots": 0.8,
+            "collect": 5.2,
+            "serialize": 1.4,
+            "verify": 1.8,
+            "restore": 19.3
+          },
+          {
+            "save": 1.5,
+            "list": 0.7,
+            "search": 6.4,
+            "chat": 1.6,
+            "snapshots": 1,
+            "collect": 5.3,
+            "serialize": 1.2,
+            "verify": 1.8,
+            "restore": 17.1
+          },
+          {
+            "save": 1.4,
+            "list": 0.8,
+            "search": 5.6,
+            "chat": 1,
+            "snapshots": 0.7,
+            "collect": 4.8,
+            "serialize": 1.2,
+            "verify": 1.7,
+            "restore": 17
+          },
+          {
+            "save": 1.4,
+            "list": 0.6,
+            "search": 5.6,
+            "chat": 1,
+            "snapshots": 0.8,
+            "collect": 4.4,
+            "serialize": 1.8,
+            "verify": 1.8,
+            "restore": 16.7
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 498916,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 504852,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 498436,
+              "backingBytes": 0
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 756528,
+              "backingBytes": 131994
+            },
+            {
+              "heapBytes": 756388,
+              "backingBytes": 131994
+            },
+            {
+              "heapBytes": 756316,
+              "backingBytes": 131994
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 1210448,
+              "backingBytes": 678815
+            },
+            {
+              "heapBytes": 508632,
+              "backingBytes": 680806
+            },
+            {
+              "heapBytes": 1248144,
+              "backingBytes": 682803
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chapters": 100,
+      "words": 2000,
+      "scenes": 1000,
+      "sessions": 30,
+      "messages": 60,
+      "snapshots": 30,
+      "maps": 2,
+      "imageBytes": 136,
+      "jsonBytes": 2424623,
+      "before": {
+        "storage": {
+          "quota": 10738163712,
+          "usage": 745472,
+          "usageDetails": {
+            "indexedDB": 745472
+          }
+        },
+        "timings": [
+          {
+            "save": 1.4,
+            "list": 2,
+            "search": 44.1,
+            "chat": 7,
+            "snapshots": 3.9,
+            "collect": 40.7,
+            "serialize": 24.1,
+            "verify": 33.1,
+            "restore": 170.4
+          },
+          {
+            "save": 1.4,
+            "list": 2.1,
+            "search": 43.7,
+            "chat": 7.1,
+            "snapshots": 3.5,
+            "collect": 40.9,
+            "serialize": 23,
+            "verify": 33.4,
+            "restore": 172.7
+          },
+          {
+            "save": 1.8,
+            "list": 2.3,
+            "search": 44.2,
+            "chat": 7.4,
+            "snapshots": 3.8,
+            "collect": 40.7,
+            "serialize": 23.6,
+            "verify": 32.8,
+            "restore": 171.6
+          },
+          {
+            "save": 2,
+            "list": 2.2,
+            "search": 44.4,
+            "chat": 7.3,
+            "snapshots": 3.3,
+            "collect": 40.3,
+            "serialize": 24,
+            "verify": 33.3,
+            "restore": 173.9
+          },
+          {
+            "save": 1.4,
+            "list": 2,
+            "search": 44.7,
+            "chat": 6.8,
+            "snapshots": 3.9,
+            "collect": 42.6,
+            "serialize": 24.6,
+            "verify": 34.3,
+            "restore": 172.2
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 3956176,
+              "backingBytes": 2218916
+            },
+            {
+              "heapBytes": 3019672,
+              "backingBytes": 2218916
+            },
+            {
+              "heapBytes": 3173288,
+              "backingBytes": 2218916
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 7356696,
+              "backingBytes": 4515189
+            },
+            {
+              "heapBytes": 7405268,
+              "backingBytes": 4515189
+            },
+            {
+              "heapBytes": 7356680,
+              "backingBytes": 4515189
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 15540480,
+              "backingBytes": 18383628
+            },
+            {
+              "heapBytes": 20479724,
+              "backingBytes": 18383628
+            },
+            {
+              "heapBytes": 15251116,
+              "backingBytes": 18408056
+            }
+          ]
+        }
+      },
+      "after": {
+        "storage": {
+          "quota": 10738163712,
+          "usage": 745472,
+          "usageDetails": {
+            "indexedDB": 745472
+          }
+        },
+        "timings": [
+          {
+            "save": 1.6,
+            "list": 2.1,
+            "search": 43.8,
+            "chat": 7,
+            "snapshots": 3.8,
+            "collect": 40.3,
+            "serialize": 15.3,
+            "verify": 23.7,
+            "restore": 146.6
+          },
+          {
+            "save": 1.5,
+            "list": 1.9,
+            "search": 44.1,
+            "chat": 7.1,
+            "snapshots": 3.7,
+            "collect": 40.2,
+            "serialize": 15.5,
+            "verify": 23.8,
+            "restore": 148.4
+          },
+          {
+            "save": 1.5,
+            "list": 2,
+            "search": 44.5,
+            "chat": 7.3,
+            "snapshots": 4.2,
+            "collect": 40.5,
+            "serialize": 15.8,
+            "verify": 24.1,
+            "restore": 151.5
+          },
+          {
+            "save": 1.4,
+            "list": 2.1,
+            "search": 43.5,
+            "chat": 7.2,
+            "snapshots": 3.4,
+            "collect": 39.8,
+            "serialize": 15.5,
+            "verify": 23.5,
+            "restore": 148.1
+          },
+          {
+            "save": 1.5,
+            "list": 2,
+            "search": 44.3,
+            "chat": 7,
+            "snapshots": 4.1,
+            "collect": 41.3,
+            "serialize": 15.5,
+            "verify": 24.1,
+            "restore": 149.9
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 2544796,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 2583244,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 2583508,
+              "backingBytes": 0
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 6914868,
+              "backingBytes": 2296273
+            },
+            {
+              "heapBytes": 7071328,
+              "backingBytes": 2296273
+            },
+            {
+              "heapBytes": 6912908,
+              "backingBytes": 2296273
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 14648984,
+              "backingBytes": 11726876
+            },
+            {
+              "heapBytes": 13617828,
+              "backingBytes": 11726876
+            },
+            {
+              "heapBytes": 13630968,
+              "backingBytes": 11751304
+            }
+          ]
+        }
+      }
+    },
+    {
+      "chapters": 500,
+      "words": 5000,
+      "scenes": 10000,
+      "sessions": 100,
+      "messages": 100,
+      "snapshots": 120,
+      "maps": 4,
+      "imageBytes": 272,
+      "jsonBytes": 21713707,
+      "before": {
+        "storage": {
+          "quota": 10743689216,
+          "usage": 6270976,
+          "usageDetails": {
+            "indexedDB": 6270976
+          }
+        },
+        "timings": [
+          {
+            "save": 2.4,
+            "list": 7.9,
+            "search": 402.6,
+            "chat": 32.7,
+            "snapshots": 20.2,
+            "collect": 315.5,
+            "serialize": 174,
+            "verify": 260.5,
+            "restore": 1331
+          },
+          {
+            "save": 2.6,
+            "list": 8.5,
+            "search": 400.6,
+            "chat": 33.1,
+            "snapshots": 19.3,
+            "collect": 329,
+            "serialize": 171.4,
+            "verify": 261.4,
+            "restore": 1315.4
+          },
+          {
+            "save": 2.5,
+            "list": 7.7,
+            "search": 399.3,
+            "chat": 33.1,
+            "snapshots": 20.4,
+            "collect": 311.5,
+            "serialize": 178,
+            "verify": 254.8,
+            "restore": 1283.1
+          },
+          {
+            "save": 2,
+            "list": 8,
+            "search": 396.7,
+            "chat": 32.8,
+            "snapshots": 19.9,
+            "collect": 308.3,
+            "serialize": 174.9,
+            "verify": 254.8,
+            "restore": 1301.6
+          },
+          {
+            "save": 2.2,
+            "list": 9.2,
+            "search": 406.3,
+            "chat": 32.8,
+            "snapshots": 20.1,
+            "collect": 307.1,
+            "serialize": 179.9,
+            "verify": 260.9,
+            "restore": 1420.7
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 24905752,
+              "backingBytes": 20602048
+            },
+            {
+              "heapBytes": 24970012,
+              "backingBytes": 20602048
+            },
+            {
+              "heapBytes": 24847772,
+              "backingBytes": 20602048
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 65510512,
+              "backingBytes": 41619633
+            },
+            {
+              "heapBytes": 65793824,
+              "backingBytes": 41619633
+            },
+            {
+              "heapBytes": 65793944,
+              "backingBytes": 41619633
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 137696220,
+              "backingBytes": 126530894
+            },
+            {
+              "heapBytes": 112765356,
+              "backingBytes": 126656434
+            },
+            {
+              "heapBytes": 112307196,
+              "backingBytes": 126656428
+            }
+          ]
+        }
+      },
+      "after": {
+        "storage": {
+          "quota": 10743689216,
+          "usage": 6270976,
+          "usageDetails": {
+            "indexedDB": 6270976
+          }
+        },
+        "timings": [
+          {
+            "save": 2.4,
+            "list": 9.1,
+            "search": 395.6,
+            "chat": 34.8,
+            "snapshots": 19.9,
+            "collect": 310.3,
+            "serialize": 130.6,
+            "verify": 201,
+            "restore": 1145
+          },
+          {
+            "save": 2.4,
+            "list": 15.1,
+            "search": 408.8,
+            "chat": 33.2,
+            "snapshots": 20.5,
+            "collect": 305.2,
+            "serialize": 122,
+            "verify": 196.1,
+            "restore": 1139.4
+          },
+          {
+            "save": 2.2,
+            "list": 8.6,
+            "search": 403.2,
+            "chat": 32,
+            "snapshots": 19.6,
+            "collect": 304.9,
+            "serialize": 118.1,
+            "verify": 195.9,
+            "restore": 1142.4
+          },
+          {
+            "save": 2.3,
+            "list": 8,
+            "search": 391.7,
+            "chat": 32.2,
+            "snapshots": 20.4,
+            "collect": 310.7,
+            "serialize": 121.5,
+            "verify": 195.7,
+            "restore": 1141.5
+          },
+          {
+            "save": 2.7,
+            "list": 8.5,
+            "search": 397.9,
+            "chat": 32.6,
+            "snapshots": 19.7,
+            "collect": 313.9,
+            "serialize": 119.4,
+            "verify": 196.8,
+            "restore": 1139.2
+          }
+        ],
+        "heap": {
+          "serialize": [
+            {
+              "heapBytes": 22856516,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 22130768,
+              "backingBytes": 0
+            },
+            {
+              "heapBytes": 22152768,
+              "backingBytes": 0
+            }
+          ],
+          "verify": [
+            {
+              "heapBytes": 63053384,
+              "backingBytes": 21017585
+            },
+            {
+              "heapBytes": 63170472,
+              "backingBytes": 21017585
+            },
+            {
+              "heapBytes": 63054732,
+              "backingBytes": 21017585
+            }
+          ],
+          "restore": [
+            {
+              "heapBytes": 118408416,
+              "backingBytes": 84071974
+            },
+            {
+              "heapBytes": 149479676,
+              "backingBytes": 85451753
+            },
+            {
+              "heapBytes": 149622104,
+              "backingBytes": 85577866
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
