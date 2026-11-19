@@ -1,6 +1,7 @@
 import Dexie, { liveQuery } from 'dexie';
 import { db } from '@/src/db';
 import { CHAPTER_LIST_INDEX, chapterListRow, type ChapterListKey, type ChapterListMetadata } from '@/src/lib/chapterMetadata';
+import { chapterFromRecord } from '@/src/lib/chapterRecord';
 import { ChapterStorageError, type ChapterReader, type ChapterStorage, type ChapterTransactions } from '@/src/lib/chapterStorage';
 import { domainTables, removeChapterRelations } from '@/src/services/entityDeletion';
 
@@ -18,12 +19,14 @@ async function access<T>(run: () => Promise<T>): Promise<T> {
 }
 
 const read: ChapterReader = {
-  readChapter: id => access(() => db.chapters.get(id)),
-  readChaptersById: ids => access(() => db.chapters.bulkGet(ids)),
-  readFirstChapter: projectId => access(() => db.chapters.where('projectId').equals(projectId).first()),
+  readChapter: id => access(() => db.chapters.get(id).then(row => row && chapterFromRecord(row))),
+  readChaptersById: ids => access(() =>
+    db.chapters.bulkGet(ids).then(rows => rows.map(row => row && chapterFromRecord(row)))),
+  readFirstChapter: projectId => access(() =>
+    db.chapters.where('projectId').equals(projectId).first().then(row => row && chapterFromRecord(row))),
   readProjectChapters: (projectId, sort) => access(() => {
     const rows = db.chapters.where('projectId').equals(projectId);
-    return sort === 'manuscript' ? rows.sortBy('order') : rows.toArray();
+    return (sort === 'manuscript' ? rows.sortBy('order') : rows.toArray()).then(chapters => chapters.map(chapterFromRecord));
   }),
   readChapterList: projectId => access(async () => {
     const rows: ChapterListMetadata[] = [];

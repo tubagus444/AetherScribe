@@ -6,10 +6,11 @@ import { parseWorkshopEntryKey, workshopEntryKey } from './workshopReference';
  */
 
 import type {
-  Project, Chapter, CodexEntry, StoryBibleRule, AIAction,
+  Project, CodexEntry, StoryBibleRule, AIAction,
   Snapshot, TimelineEvent, Relationship, ChatSession, CustomCategory, PlotPromise, GlossaryEntry,
   MapMarker, ContinuityTriage,
 } from '@/src/types';
+import type { ChapterExportRecord } from './chapterContracts';
 
 /**
  * Logika MURNI untuk impor per-novel (#4B). Tanpa akses IndexedDB — id baru
@@ -35,7 +36,7 @@ import type {
 /** Bentuk `data` dari file ekspor per-novel (mirror BackupData['data'], bertipe kuat). */
 export interface ProjectBackupData {
   projects: Project[];
-  chapters: Chapter[];
+  chapters: ChapterExportRecord[];
   codex: CodexEntry[];
   bible: StoryBibleRule[];
   aiActions: AIAction[];

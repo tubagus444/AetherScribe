@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterAll, afterEach, expect, it, vi } from 'vitest';
 import { db } from '@/src/db';
+import { dexieChapterStorage } from '@/src/adapters/dexieChapterStorage';
 import { observeChapterQuery, readChapterList, readLatestChapterModified } from './chapterQueries';
 import { backupService } from './backupService';
 import * as utils from '@/src/lib/utils';
@@ -50,17 +51,39 @@ it('rollback does not leave metadata behind; moving projects updates both indexe
   expect((await readChapterList(2))[0]).toMatchObject({ id, projectId: 2, _computedWordCount: 2 });
 });
 
-it('import/restore rebuild derived keys instead of trusting metadata from the file', async () => {
+it('DB06 keeps derived keys in storage and rebuilds them when reading old v8 backups', async () => {
   await db.projects.add({ id: 1, name: 'Fixture', description: '', createdAt: 1, lastOpened: 1 });
   const id = await db.chapters.add(chapter());
-  const project = await backupService.collectProjectData(1); delete project.checksum;
-  project.data.chapters[0].listMetadata = [99, 'spoofed', 'done', 999, 999];
+  await db.chapters.update(id, { summary: 'Keep summary', tension: 4 });
+  const stored = await db.chapters.get(id);
+  expect(stored?.listMetadata).toEqual([0, 'A', 'outline', 2, 1]);
+  expect(await dexieChapterStorage.read.readChapter(id)).not.toHaveProperty('listMetadata');
+  expect(await dexieChapterStorage.read.readChaptersById([id + 99, id])).toEqual([
+    undefined, await dexieChapterStorage.read.readFirstChapter(1),
+  ]);
+  const addLegacyMetadata = async (backup: Awaited<ReturnType<typeof backupService.collectAllData>>) => {
+    expect(backup.version).toBe(8);
+    expect(backup.data.chapters[0]).not.toHaveProperty('listMetadata');
+    const data = { ...backup.data, chapters: backup.data.chapters.map(row => ({
+      ...row, listMetadata: [99, 'spoofed', 'done', 999, 999], futureField: 'keep',
+    })) };
+    const checksum = await backupService.computeChecksum(JSON.stringify(data));
+    expect(checksum).toMatch(/^[0-9a-f]{64}$/);
+    return { ...backup, data, checksum };
+  };
+  const project = await addLegacyMetadata(await backupService.collectProjectData(1));
   const imported = await backupService.importProjectData(project);
   expect((await readChapterList(imported.projectId))[0]).toMatchObject({ title: 'A', _computedWordCount: 2, lastModified: 1 });
-  const full = await backupService.collectAllData();
+  expect(await db.chapters.where('projectId').equals(imported.projectId).first()).toMatchObject({
+    summary: 'Keep summary', tension: 4, futureField: 'keep',
+  });
+  const full = await addLegacyMetadata(await backupService.collectAllData());
   await db.chapters.update(id, { content: 'three new words', lastModified: 10 });
   await backupService.restoreData(full);
-  expect((await readChapterList(1))[0]._computedWordCount).toBe(2);
+  expect(await db.chapters.get(id)).toMatchObject({
+    content: '<p>one two</p>', summary: 'Keep summary', tension: 4, futureField: 'keep',
+    listMetadata: [0, 'A', 'outline', 2, 1],
+  });
   expect(await readLatestChapterModified(1)).toBe(1);
 });
 

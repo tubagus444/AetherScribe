@@ -48,7 +48,7 @@ Status pelaksanaan dicatat di tabel ini.
 | 3 | DB03 | Validasi penulisan dan integritas relasi | Selesai, diverifikasi lokal |
 | 4 | DB04 | Katalog tabel dan kebijakan data | Selesai, diverifikasi lokal |
 | 5 | DB05 | Kontrak akses data dan adapter Dexie | Selesai, diverifikasi lokal |
-| 6 | DB06 | Kontrak data dan evolusi skema | Direncanakan |
+| 6 | DB06 | Kontrak data dan evolusi skema | Selesai, diverifikasi lokal |
 | 7 | DB07 | Format ekspor portabel | Direncanakan |
 | 8 | DB08 | Kapasitas dan optimasi berdasarkan pengukuran | Direncanakan |
 | 9 | DB09 | Identitas global dan pelacakan perubahan | Bersyarat: kebutuhan sinkronisasi |
@@ -158,6 +158,28 @@ Status pelaksanaan dicatat di tabel ini.
 - Cakupan awal adalah bab dan riwayat versi. Bootstrap proyek, cadangan, dan
   layanan domain lain mengikuti jalur Dexie masing-masing. Skema v34 dan format
   cadangan v8 tetap berlaku. Evolusi skema dilanjutkan pada DB06.
+
+### Hasil DB06
+
+- `src/lib/chapterContracts.ts` dan `src/lib/chapterRecord.ts` memisahkan
+  bentuk domain, record Dexie, dan DTO bab. Adapter dan jalur ekspor memakai
+  proyeksi yang melepas tuple indeks `listMetadata`. Cadangan lama yang
+  menyertakan tuple diverifikasi dengan checksum asli sebelum impor atau
+  restore membangun ulang indeks dari isi bab.
+- `e2e/installationFixture.ts` menyimpan fixture v17 dan v33. Skenario rollback
+  membatalkan transaksi upgrade native setelah penulisan pertama ke bab
+  berhasil, membandingkan database v17 sebelum dan sesudah kegagalan, lalu
+  mencoba upgrade kembali. Pemeriksaan mencakup struktur tabel dan indeks,
+  naskah, sesi, dan snapshot.
+- Skema tetap v34, blok migrasi lama dipertahankan, dan format cadangan tetap
+  v8. Pengukuran memori F23 mencakup pembacaan kueri. DB06 tidak menambah
+  transformasi migrasi. DB07 melanjutkan kontrak format portabel.
+  [Aturan field dan prosedur migrasi](docs/database.md#kontrak-data-dan-evolusi-skema-db06)
+- Verifikasi lokal mencakup 815 tes unit/integrasi, typecheck umum dan strict,
+  maintenance, serta build produksi. Pada suite penuh Chromium, 70 dari 71
+  tes lulus. Setelah ekspektasi urutan nama indeks pada tes rollback dikoreksi,
+  empat tes instalasi Chromium lulus, termasuk rollback dan upgrade ulang.
+  Fixture memakai data sintetis dan kegagalan upgrade yang diinjeksi.
 
 ## Pilihan tindak lanjut
 

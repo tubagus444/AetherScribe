@@ -341,7 +341,7 @@ export function ExportManager({ projectId, project, onClose }: ExportManagerProp
       // Lepas mark catatan revisi dari konten sebelum konversi format apa pun agar
       // catatan pribadi penulis tidak ikut terbawa ke berkas hasil ekspor.
       const snapshot = await readBackupSnapshot(projectId);
-      const freshChapters = (snapshot.chapters as Chapter[]).filter(c => selectedIds.has(c.id!)).sort((a, b) => a.order - b.order || a.id! - b.id!);
+      const freshChapters = snapshot.chapters.filter(c => selectedIds.has(c.id)).sort((a, b) => a.order - b.order || a.id - b.id);
       const cleaned = freshChapters.map(c => ({ ...c, content: stripRevisionComments(c.content || '') }));
       switch (format) {
         case 'md': exportMarkdown(cleaned, snapshot.projects[0]); break;

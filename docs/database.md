@@ -401,8 +401,10 @@ Chapter.summarySourceHash?: string adalah field JSON inert SHA-256 (64 hex), tan
 Versi 10-33 tidak diubah. v34 menambah indeks chapters [projectId+listMetadata]
 dan [projectId+lastModified], serta sceneEmbeddings [projectId+id]. listMetadata
 adalah tuple turunan [order,title,status,countWords,lastModified]; bukan tabel
-baru atau FK. Migrasi cursor menghitung tuple dari HTML per bab tanpa toArray
-seluruh manuskrip. Teks/status/order asli tidak diubah.
+baru atau FK. `Collection.modify()` menghitung tuple dari HTML per bab. Pada
+Dexie yang terkunci di proyek ini, metode itu mengumpulkan primary key lalu
+membaca record per batch 200, tanpa `toArray()` seluruh manuskrip. Teks, status,
+dan urutan asli dipertahankan.
 
 Hooks creating/updating di AetherScribeDB menjaga tuple pada transaksi yang sama
 dengan insert/update/put/bulkPut. Generated ID dibaca dari primary key cursor,
@@ -411,9 +413,9 @@ memakai count lama; import/restore yang membuat record menghitung ulang dari HTM
 termasuk jika file membawa metadata palsu. Unknown metadata tidak dipercaya.
 
 Delete/clear dan rollback otomatis menghapus/mengembalikan index key bersama
-record. Tidak ada tabel project-scoped baru yang perlu ditambah ke FK remap atau
-collect/delete; field ikut serialisasi Chapter yang sudah ada dan hook membangun
-ulang setelah import/restore. Format backup tetap v8, legacy tetap diterima.
+record. Hook membangun ulang tuple setelah impor atau restore. Ekspor sejak
+DB06 melepas tuple dari bentuk serialisasi bab. Format backup tetap v8 dan
+cadangan lama yang membawa tuple tetap diterima.
 
 readChapterList hanya membaca index key, bukan record HTML. readLatestChapterModified
 mengambil satu key tertinggi pada proyek. Scene search memakai getAll keyset batch
@@ -509,3 +511,53 @@ Dexie dipetakan ke `ChapterStorageError` dengan jenis `quota` atau `failed`.
 - Kontrak ini mencakup bab dan riwayat versi. Bootstrap proyek, impor/pemulihan
   cadangan, dan validasi referensi dari domain lain tetap memakai transaksi Dexie
   masing-masing. Skema v34 dan format cadangan v8 tetap berlaku.
+
+## Kontrak data dan evolusi skema (DB06)
+
+Bab menjadi cakupan pertama karena bentuk record IndexedDB berbeda dari data
+yang dibutuhkan editor dan cadangan.
+
+| Bentuk | Kontrak |
+| --- | --- |
+| `Chapter` | Bentuk domain. ID bisa belum ada saat menyiapkan bab. Adapter DB05 mengembalikan isi dan metadata penulis. |
+| `ChapterCreateInput` / `ChapterPatch` | Input layanan DB03. ID dibuat saat insert, dan patch hanya memvalidasi field yang disertakan. |
+| `ChapterRecord` | Record Dexie dengan ID dan `listMetadata` turunan untuk covering index v34. Migrasi dan hook penulisan mengisi tuple. |
+| `ChapterExportRecord` | DTO JSON dengan ID sumber untuk restore atau remap relasi ketika mengimpor novel. Isinya mencakup metadata penulis. |
+
+`status` yang absen dibaca sebagai `outline` pada daftar bab. Record bab
+tetap dapat memiliki status absen. `tension` yang absen berarti otomatis dan
+`act` yang absen berarti bab belum masuk babak. Ketiadaan metadata ringkasan,
+termasuk hash sumber, tetap dipertahankan. Gunakan default pembacaan tanpa
+menulisnya kembali bila nilai lama sudah punya makna. Pada patch, field
+opsional yang tidak dikirim dipertahankan, sedangkan `undefined` eksplisit
+menghapus nilainya. Field inti bab pada cadangan tetap tunduk pada validasi
+struktur dan relasi. Cadangan historis dengan `listMetadata` diverifikasi
+terhadap checksum asli sebelum tuple dilepas dan dibangun ulang.
+
+Untuk perubahan berikutnya:
+
+1. Identifikasi bentuk record yang sudah beredar. Tentukan field wajib,
+   perbedaan antara absen dan nilai eksplisit, default saat membaca, serta
+   penanganan data legacy yang tidak memenuhi kontrak baru. Perbarui validator
+   penulisan, cadangan, dan kebijakan tabel bila relevan.
+2. Gunakan skema yang ada untuk field opsional non-indeks jika default saat
+   membaca cukup. Tambahkan versi berikutnya untuk perubahan tabel, indeks,
+   atau backfill yang harus persist. Pertahankan blok versi yang sudah dirilis.
+3. Kerjakan transformasi di transaksi upgrade. Gunakan cursor atau batch untuk
+   tabel besar, batasi jumlah record besar yang ditahan, dan ukur waktu serta
+   puncak memori pada fixture sintetis representatif sebelum rilis. Hindari
+   operasi jaringan atau kerja async di luar IndexedDB selama transaksi.
+   Biarkan error membatalkan transaksi. Penanganan gagal buka harus tetap
+   menampilkan isu dan mempertahankan database untuk percobaan ulang.
+4. Uji instalasi kosong dan migrasi dari versi historis yang terpengaruh.
+   Simpan definisi fixture terpisah dari skema terkini. Periksa isi, ID, relasi,
+   dan indeks sebelum/sesudah migrasi. Injeksi kegagalan setelah sebagian write
+   selesai untuk memeriksa rollback perubahan data dan skema, lalu coba ulang.
+   Gunakan browser nyata untuk perilaku upgrade dan koordinasi antartab.
+
+Fixture Chromium di [installationFixture.ts](../e2e/installationFixture.ts)
+mewakili v17 sebelum klasifikasi sesi lama dan v33 sebelum covering index.
+Skenario gagal membatalkan transaksi native sesudah write bab pertama berhasil
+dan memeriksa bahwa bahkan backfill sesi v18 ikut rollback. DB06 mempertahankan
+skema v34 dan jalur upgrade yang sudah dirilis. Baseline working set kueri
+tersedia pada [pengukuran F23](performance/f23.md).

@@ -120,6 +120,7 @@ Sesudah pola domain pertama terbentuk. Aturan migrasi lama tetap berlaku sepanja
 
 Selesai jika: instalasi kosong dan upgrade historis terpilih mempertahankan data;
 kegagalan migrasi tidak menghasilkan keadaan setengah berubah; dokumentasi dan tipe sinkron.
+Rujukan: [kontrak data bab dan prosedur evolusi skema](database.md#kontrak-data-dan-evolusi-skema-db06).
 
 ### DB07 — Format ekspor portabel
 

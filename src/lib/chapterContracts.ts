@@ -1,8 +1,11 @@
 import type { Chapter } from '@/src/types';
 import { requestId } from '@/src/lib/dataContracts';
+import { chapterFromRecord } from './chapterRecord';
 export type PersistedChapter = Chapter & { id: number };
-export type ChapterCreateInput = Omit<Chapter, 'id' | 'listMetadata'> & { id?: never; listMetadata?: never };
+export type ChapterCreateInput = Omit<Chapter, 'id'> & { id?: never; listMetadata?: never };
 export type ChapterPatch = Partial<Pick<Chapter, 'title' | 'status' | 'act' | 'tension'>>;
+/** A JSON backup carries the original ID for relation remapping. */
+export type ChapterExportRecord = PersistedChapter & { listMetadata?: never };
 
 export class ChapterContentConflictError extends Error {
   constructor() {
@@ -12,7 +15,7 @@ export class ChapterContentConflictError extends Error {
 }
 
 export function chapterCreateInput(chapter: Chapter): ChapterCreateInput {
- const { id, listMetadata, ...input } = chapter;
+ const { id, ...input } = chapterFromRecord(chapter);
  return input;
 }
 export function chapterIdentity(chapter: Chapter): number {

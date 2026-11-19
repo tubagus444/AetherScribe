@@ -15,6 +15,12 @@ Schema memeriksa envelope, tipe field inti dan metadata yang dikenal, array, enu
 
 Versi 3–7 diterima sebagai legacy. Scope yang tidak ditulis pada legacy diperlakukan sebagai seluruh workspace, sesuai format lama. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–8 ditolak. Pada v8, scope dan `imageMode` wajib; restore penuh juga mewajibkan seluruh tabel backup. Ekspor per-proyek tetap memiliki tabel opsional sesuai cakupannya.
 
+Ekspor v8 sejak DB06 menyertakan ID sumber, naskah, dan metadata penulis untuk
+bab. `listMetadata` disimpan di IndexedDB sebagai tuple indeks turunan.
+Cadangan lama yang membawanya tetap dapat dibaca. Setelah checksum asli cocok,
+impor dan restore melepas tuple tersebut. Dexie menghitungnya dari isi dan
+metadata bab pada saat insert.
+
 Checksum SHA-256, bila tersedia pada input, wajib cocok; ketidaktersediaan Web Crypto tidak lagi melewati verifikasi. Legacy tanpa checksum masih diterima setelah validasi struktur. Checksum mendeteksi kerusakan, bukan membuktikan asal/kepercayaan suatu file.
 
 Cadangan seluruh workspace mempertahankan snapshot tanpa bab induk di

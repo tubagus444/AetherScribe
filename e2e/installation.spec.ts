@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+type DbModule = typeof import('../src/db');
+type InstallationFixture = typeof import('./installationFixture');
 
 test.beforeEach(async ({ context, page, baseURL }) => {
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
@@ -8,10 +11,14 @@ test.beforeEach(async ({ context, page, baseURL }) => {
   expect(await page.evaluate(() => indexedDB.databases())).toEqual([]);
 });
 
-async function records(page: import('@playwright/test').Page) {
+async function records(page: Page) {
   return page.evaluate(async () => {
-    const path = '/src/db.ts'; const { db } = await import(path);
-    return { version: db.verno, projects: await db.projects.toArray(), chapters: await db.chapters.toArray(), bible: await db.bible.toArray(), sessions: await db.chatSessions.toArray() };
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    return {
+      version: db.verno, projects: await db.projects.toArray(), chapters: await db.chapters.toArray(),
+      bible: await db.bible.toArray(), sessions: await db.chatSessions.toArray(), snapshots: await db.snapshots.toArray(),
+    };
   });
 }
 
@@ -25,6 +32,7 @@ test('L02 empty database bootstraps exactly one usable project and survives edit
   expect(initial.chapters).toHaveLength(1);
   expect(initial.bible).toHaveLength(1);
   expect(initial.chapters[0].projectId).toBe(initial.projects[0].id);
+  expect(initial.chapters[0].listMetadata?.[0]).toBe(initial.chapters[0].order);
   await editor.fill('L02 first manuscript');
   await expect.poll(async () => (await records(page)).chapters[0].content).toContain('L02 first manuscript');
   await page.reload();
@@ -34,11 +42,12 @@ test('L02 empty database bootstraps exactly one usable project and survives edit
   expect(reopened.chapters.map(c => c.id)).toEqual(initial.chapters.map(c => c.id));
 });
 
-for (const version of [17, 33]) {
+for (const version of [17, 33] as const) {
   test(`L02 v${version} upgrades before React and preserves an editable manuscript`, async ({ page }) => {
     const nativeVersion = await page.evaluate(async version => {
       const path = '/e2e/installationFixture.ts';
-      return (await import(path)).seedLegacy(version);
+      const fixture: InstallationFixture = await import(path);
+      return fixture.seedLegacy(version);
     }, version);
     expect(nativeVersion).toBe(version * 10);
     await page.goto('/');
@@ -50,7 +59,11 @@ for (const version of [17, 33]) {
     expect(migrated.projects[0]).toMatchObject({ id: 7, name: 'Legacy L02' });
     expect(migrated.chapters).toHaveLength(1);
     expect(migrated.chapters[0]).toMatchObject({ id: 9, projectId: 7, content: '<p>Legacy manuscript survives</p>' });
-    expect(migrated.chapters[0].listMetadata?.[3]).toBe(3);
+    expect(migrated.chapters[0].listMetadata).toEqual([0, 'Legacy chapter', 'outline', 3, 1]);
+    expect(migrated.chapters[0]).not.toHaveProperty('status');
+    expect(migrated.snapshots).toEqual([
+      { id: 4, chapterId: 9, content: '<p>Original manuscript</p>', label: 'Original', timestamp: 1 },
+    ]);
     expect(migrated.sessions[0]).toMatchObject({ id: 3, kind: version === 17 ? 'scribble' : 'studio' });
     await editor.fill('Edited after migration');
     await expect.poll(async () => (await records(page)).chapters[0].content).toContain('Edited after migration');
@@ -60,3 +73,33 @@ for (const version of [17, 33]) {
     expect((await records(page)).chapters).toHaveLength(1);
   });
 }
+
+test('DB06 abort rolls back v17 upgrade and preserves the manuscript for retry', async ({ page }) => {
+  const { before, after, issues } = await page.evaluate(async () => {
+    const path = '/e2e/installationFixture.ts';
+    const fixture: InstallationFixture = await import(path);
+    await fixture.seedLegacy(17, true);
+    const before = await fixture.readInstalledDatabase();
+    const issues = await fixture.abortUpgradeAfterChapterWrite();
+    return { before, after: await fixture.readInstalledDatabase(), issues };
+  });
+
+  expect(before.version).toBe(170);
+  expect(before.chapters).toHaveLength(2);
+  expect(before.sessions[0]).not.toHaveProperty('kind');
+  expect(before.chapterIndexes).toEqual(['order', 'projectId']);
+  expect(after).toEqual(before);
+  expect(issues).toEqual([expect.objectContaining({ level: 'error', message: expect.stringContaining('Gagal membuka database') })]);
+
+  await page.goto('/');
+  await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Legacy manuscript survives');
+  const retried = await records(page);
+  expect(retried.version).toBe(34);
+  expect(retried.chapters.map(chapter => chapter.listMetadata)).toEqual([
+    [0, 'Legacy chapter', 'outline', 3, 1],
+    [1, 'Legacy second chapter', 'draft', 2, 2],
+  ]);
+  expect(retried.chapters.map(({ listMetadata, ...chapter }) => chapter)).toEqual(before.chapters);
+  expect(retried.sessions).toEqual([{ ...before.sessions[0], kind: 'scribble' }]);
+  expect(retried.snapshots).toEqual(before.snapshots);
+});

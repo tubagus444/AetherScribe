@@ -1,4 +1,5 @@
 import { chapterListKey } from '@/src/lib/chapterMetadata';
+import type { ChapterRecord } from '@/src/lib/chapterRecord';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -10,7 +11,7 @@ import { flushActiveEditor } from '@/src/features/editor/editorBridge';
 
 export class AetherScribeDB extends Dexie {
   projects!: Table<Project>;
-  chapters!: Table<Chapter>;
+  chapters!: Table<ChapterRecord, number, Chapter>;
   codex!: Table<CodexEntry>;
   bible!: Table<StoryBibleRule>;
   aiActions!: Table<AIAction>;
@@ -240,7 +241,7 @@ export class AetherScribeDB extends Dexie {
       chapter.listMetadata = chapterListKey(chapter);
     });
     this.chapters.hook('updating', (changes, _key, chapter) => {
-      const patch = changes as Partial<Chapter>;
+      const patch = changes as Partial<ChapterRecord>;
       const unchangedContent = !Object.prototype.hasOwnProperty.call(changes, 'content') || patch.content === chapter.content;
       const cached = unchangedContent && chapter.listMetadata ? chapter.listMetadata[3] : undefined;
       return { listMetadata: chapterListKey({ ...chapter, ...patch }, cached) };

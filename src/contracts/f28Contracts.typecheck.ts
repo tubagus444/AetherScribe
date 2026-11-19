@@ -1,6 +1,7 @@
 import type { Chapter } from '@/src/types';
 import type { ChapterListMetadata } from '@/src/lib/chapterMetadata';
-import type { ChapterCreateInput, PersistedChapter } from '@/src/lib/chapterContracts';
+import type { ChapterCreateInput, ChapterExportRecord, PersistedChapter } from '@/src/lib/chapterContracts';
+import type { ChapterRecord } from '@/src/lib/chapterRecord';
 import type { ContextPayloads, ContextResults, ContextWorkerMessage } from '@/src/services/contextProtocol';
 import type { OramaMessage } from '@/src/services/rag/oramaProtocol';
 import type { AIRenderParams } from '@/src/services/ai/types';
@@ -13,6 +14,9 @@ type EntityNeedsId = False<Chapter extends PersistedChapter ? true : false>;
 type CreateRejectsExistingEntity = False<Chapter extends ChapterCreateInput ? true : false>;
 type CreateHasNoId = True<Equal<NonNullable<ChapterCreateInput['id']>, never>>;
 type CreateHasNoDerivedTuple = True<Equal<NonNullable<ChapterCreateInput['listMetadata']>, never>>;
+type DomainHasNoDerivedTuple = False<'listMetadata' extends keyof Chapter ? true : false>;
+type ExportRequiresIdentity = False<Chapter extends ChapterExportRecord ? true : false>;
+type StorageRecordNeedsProjection = False<ChapterRecord extends ChapterExportRecord ? true : false>;
 type TaskCoverage = True<Equal<keyof ContextPayloads, keyof ContextResults>>;
 type InvalidTokenRequest = False<{ type: 'COUNT_TOKENS'; id: 1; payload: { projectId: 1 } } extends ContextWorkerMessage ? true : false>;
 type InvalidCancel = False<{ type: 'CANCEL'; cancelId: 1 } extends ContextWorkerMessage ? true : false>;

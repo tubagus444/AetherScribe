@@ -7,6 +7,8 @@ import { readBackupSnapshot } from './backupSnapshot';
 import { db } from '@/src/db';
 import { PROJECT_IMPORT_TABLES, RESTORE_RECORD_TABLES, RESTORE_TABLES } from '@/src/lib/tableCatalog';
 import type { BackupRecord, Snapshot } from '@/src/types';
+import type { ChapterExportRecord, PersistedChapter } from '@/src/lib/chapterContracts';
+import { chapterFromRecord } from '@/src/lib/chapterRecord';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
 import { backupChecksum, compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
 import { prepareAutoBackup, serializeInternalBackup } from './internalBackupWorker';
@@ -22,7 +24,7 @@ import {
   type ProjectBackupCounts,
 } from '@/src/lib/importRemap';
 
-export interface BackupData {
+export interface BackupData<ChapterRow extends PersistedChapter = ChapterExportRecord> {
   version: number;
   timestamp: number;
   // SHA-256 hex dari JSON `data` (#5). Ada sejak v4; cadangan lama tanpa field ini
@@ -41,7 +43,7 @@ export interface BackupData {
   imageMode?: 'full' | 'references';
   data: {
     projects: any[];
-    chapters: any[];
+    chapters: ChapterRow[];
     codex: any[];
     bible: any[];
     aiActions: any[];
@@ -59,6 +61,12 @@ export interface BackupData {
     mapMarkers?: any[];
     continuityTriage?: any[];
   };
+}
+
+type ValidatedBackup = BackupData<PersistedChapter & { listMetadata?: unknown }>;
+
+function normalizeBackupData(data: ValidatedBackup['data']) {
+  return { ...normalizeLegacyData(data), chapters: data.chapters.map(chapterFromRecord) };
 }
 
 function preserveOrphanedSnapshots(data: Pick<BackupData['data'], 'chapters' | 'snapshots'>) {
@@ -335,10 +343,10 @@ export const backupService = {
    * Salinan input tetap membawa data/checksum asli; normalisasi legacy dilakukan
    * setelah verifikasi, hanya pada data yang akan ditulis.
    */
-  async validateInput(input: unknown, scope: 'all' | 'project'): Promise<BackupData> {
+  async validateInput(input: unknown, scope: 'all' | 'project'): Promise<ValidatedBackup> {
     validateBackup(input, scope);
     // Salin sebelum await agar caller tidak mengubah record setelah validasi.
-    const backup = JSON.parse(JSON.stringify(input)) as BackupData;
+    const backup = JSON.parse(JSON.stringify(input)) as ValidatedBackup;
     if (backup.checksum) {
       const actual = await this.computeChecksum(JSON.stringify(backup.data));
       if (!actual || actual !== backup.checksum) throw new Error('Verifikasi integritas gagal: cadangan rusak atau checksum tidak dapat diverifikasi.');
@@ -350,7 +358,7 @@ export const backupService = {
    * clear/refill atomik. Cache embedding dibuang untuk regenerasi. */
   async restoreData(input: unknown): Promise<void> {
     const parsedData = await this.validateInput(input, 'all');
-    const normalized = normalizeLegacyData(parsedData.data);
+    const normalized = normalizeBackupData(parsedData.data);
     detachMissingWorkshopEntries(normalized);
     const data = normalized as BackupData['data'];
     preserveOrphanedSnapshots(data);
@@ -402,7 +410,7 @@ export const backupService = {
     if (!backup) throw new Error('Backup not found');
 
     const json = await this.decodeInternalBackup(backup);
-    const parsedData: BackupData = JSON.parse(json);
+    const parsedData: unknown = JSON.parse(json);
     await this.restoreData(parsedData);
   },
 
@@ -422,7 +430,7 @@ export const backupService = {
   async importProjectData(input: unknown): Promise<{ projectId: number; counts: ProjectBackupCounts }> {
     const backup = await this.validateInput(input, 'project');
 
-    const data = normalizeLegacyData(backup.data) as unknown as ProjectBackupData;
+    const data = normalizeBackupData(backup.data) as unknown as ProjectBackupData;
     const counts = summarizeProjectBackup(data);
 
     // Dekode gambar peta di LUAR transaksi; id lama dipertahankan untuk
