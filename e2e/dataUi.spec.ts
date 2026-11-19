@@ -1,6 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+// Browser imports use Vite's URL. The type comes from the source module.
+type DbModule = typeof import('../src/db');
+
 test.beforeEach(async ({ context, page, baseURL }) => {
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
   await page.route('**/api/ai/ollama-models', route => route.fulfill({ json: { models: [] } }));
@@ -8,7 +11,7 @@ test.beforeEach(async ({ context, page, baseURL }) => {
   await page.route('**/__data_ui', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
   await page.goto('/__data_ui');
   await page.evaluate(async () => {
-    const path = '/src/db.ts'; const { db } = await import(path);
+    const path = '/src/db.ts'; const { db }: DbModule = await import(path);
     for (const id of [1, 2]) {
       await db.projects.add({ id, name: id === 1 ? 'L03 Main' : 'L03 Other', description: '', createdAt: 1, lastOpened: id === 1 ? 10 : 1 });
       await db.chapters.add({ id, projectId: id, title: `L03 Chapter ${id}`, content: `<p>Keep manuscript ${id}</p>`, order: 0, lastModified: 1 });
@@ -30,7 +33,7 @@ test.beforeEach(async ({ context, page, baseURL }) => {
 
 async function state(page: Page) {
   return page.evaluate(async () => {
-    const path = '/src/db.ts'; const { db } = await import(path);
+    const path = '/src/db.ts'; const { db }: DbModule = await import(path);
     return {
       projects: (await db.projects.toArray()).map(p => ({ id: p.id, name: p.name })),
       chapters: (await db.chapters.toArray()).map(c => ({ id: c.id, projectId: c.projectId, content: c.content })),
@@ -92,7 +95,7 @@ test('DB01 restores a full downloaded file into a fresh browser context', async 
 test('DB01 restores a downloaded workspace containing a legacy orphan snapshot', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     await db.snapshots.add({ id: 19, chapterId: 999, content: '<p>Draf historis</p>', label: 'Versi lama', timestamp: 1 });
   });
   await settings(page);
@@ -178,7 +181,7 @@ test('L03 project export/import file chooser permits cancellation then remaps a 
   expect(after.chapters.filter(c => c.projectId <= 2)).toEqual(before.chapters);
   const imported = after.projects.find(p => p.id !== 1 && p.id !== 2);
   expect(imported).toBeDefined();
-  expect(after.projects.filter(p => p.id <= 2)).toEqual(before.projects);
+  expect(after.projects.filter(p => p.id === 1 || p.id === 2)).toEqual(before.projects);
   expect(after.codex.filter(e => e.projectId <= 2)).toEqual(before.codex);
   expect(after.chapters.find(c => c.projectId === imported?.id)?.content).toBe(before.chapters[0].content);
   const copiedCodex = after.codex.find(e => e.projectId === imported?.id);
@@ -191,7 +194,7 @@ test('L03 project export/import file chooser permits cancellation then remaps a 
 test('Workshop exports preserve legacy messages and reject dangling file links before import confirmation', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     await db.chatSessions.add({ projectId: 1, kind: 'workshop', workshopKey: 'entry:099', title: 'Lokakarya lama',
       lastMessageAt: 1, messages: [{ role: 'user', content: 'Teks lama entry:099', timestamp: 1 }] });
   });
@@ -213,7 +216,7 @@ test('Workshop exports preserve legacy messages and reject dangling file links b
   await dialog.getByRole('button', { name: 'Ya, impor' }).click();
   await expect.poll(() => page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     return (await db.chatSessions.toArray()).filter(row => row.projectId !== 1).map(({ kind, workshopKey, messages }) =>
       ({ kind, workshopKey, text: messages[0]?.content }));
   })).toEqual([{ kind: 'studio', text: 'Teks lama entry:099' }]);
@@ -222,7 +225,7 @@ test('Workshop exports preserve legacy messages and reject dangling file links b
 test('L03 full restore can be cancelled then restores file data and retains safety snapshot', async ({ page }) => {
   await settings(page);
   const file = await exported(page, false), original = await state(page);
-  await page.evaluate(async () => { const path = '/src/db.ts'; await (await import(path)).db.chapters.update(1, { content: '<p>Changed before restore</p>' }); });
+  await page.evaluate(async () => { const path = '/src/db.ts'; const { db }: DbModule = await import(path); await db.chapters.update(1, { content: '<p>Changed before restore</p>' }); });
   const before = await state(page);
   await choose(page, false, file);
   const dialog = page.getByRole('alertdialog', { name: 'Timpa semua data?' });
@@ -232,7 +235,7 @@ test('L03 full restore can be cancelled then restores file data and retains safe
   await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
   await expect.poll(async () => (await state(page)).chapters[0].content).toBe('<p>Keep manuscript 1</p>');
   expect(await state(page)).toEqual(original);
-  expect(await page.evaluate(async () => { const path = '/src/db.ts'; return (await (await import(path)).db.backups.toArray()).filter(b => b.kind === 'pre-restore').length; })).toBeGreaterThan(0);
+  expect(await page.evaluate(async () => { const path = '/src/db.ts'; const { db }: DbModule = await import(path); return (await db.backups.toArray()).filter(b => b.kind === 'pre-restore').length; })).toBeGreaterThan(0);
   await page.reload();
   await page.getByRole('button', { name: 'Menulis', exact: true }).click();
   await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Keep manuscript 1');
@@ -255,7 +258,7 @@ for (const project of [true, false]) {
     const file = await exported(page, project), before = await state(page);
     await choose(page, project, file);
     await page.evaluate(async () => {
-      const path = '/src/db.ts'; const { db } = await import(path);
+      const path = '/src/db.ts'; const { db }: DbModule = await import(path);
       const fail = () => { throw new Error('L03 synthetic transaction failure'); };
       db.chapters.hook('creating', fail);
       Reflect.set(window, 'undoL03Failure', () => db.chapters.hook('creating').unsubscribe(fail));
@@ -311,7 +314,7 @@ test('L03 Codex delete cancellation preserves data then confirmation unlinks ref
 test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     await db.codex.update(1, { category: 'character' });
     await db.codex.add({ id: 3, projectId: 1, name: 'Tokoh lain', description: '', category: 'character', aliases: [], tags: [] });
     await db.relationships.update(1, { targetId: 3, type: 'Friend' });
@@ -330,7 +333,7 @@ test('DB03 restores the selected version and keeps the previous draft', async ({
   const editor = page.locator('.tiptap[contenteditable="true"]');
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     await db.snapshots.update(1, { label: 'Versi lama', content: '<p>Versi lama bab ini</p>' });
   });
   await editor.fill('Draf sebelum pemulihan');
@@ -349,7 +352,7 @@ test('DB03 restores the selected version and keeps the previous draft', async ({
 test('DB03 integrity report finds a foreign chapter link and leaves the text intact', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     await db.timeline.update(1, { chapterId: 2 });
   });
   const before = await state(page);
@@ -364,7 +367,7 @@ test('DB02 new project rolls back if its first chapter cannot be created', async
   const before = await state(page);
   await page.evaluate(async () => {
     const path = '/src/db.ts';
-    const { db } = await import(path);
+    const { db }: DbModule = await import(path);
     const fail = () => { throw new Error('DB02 synthetic chapter failure'); };
     db.chapters.hook('creating', fail);
     Reflect.set(window, 'allowChapterCreation', () => db.chapters.hook('creating').unsubscribe(fail));
