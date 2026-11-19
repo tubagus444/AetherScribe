@@ -1,6 +1,7 @@
 import { db } from '@/src/db';
 import { assertWriteId } from './writeIntegrity';
 import { PROJECT_DELETE_TABLES, TABLE_CATALOG } from '@/src/lib/tableCatalog';
+import { detachWorkshopEntry, parseWorkshopEntryKey } from '@/src/lib/workshopReference';
 
 export const domainTables = () => PROJECT_DELETE_TABLES.map(name => db[name]);
 
@@ -8,7 +9,7 @@ async function removeChapterReferences(chapterIds: number[]) {
   if (!chapterIds.length) return;
   const targets = new Set(chapterIds);
   const pointsToTarget = (id?: number) => id !== undefined && targets.has(id);
-  await db.snapshots.where('chapterId').anyOf(chapterIds).delete();
+  await db.snapshots.where('chapterId').anyOf(chapterIds).filter(row => row.orphaned !== true).delete();
   await db.sceneEmbeddings.where('chapterId').anyOf(chapterIds).delete();
   await db.timeline.filter(r => pointsToTarget(r.chapterId)).modify(r => { delete r.chapterId; });
   await db.chatSessions.filter(r => pointsToTarget(r.chapterId) || pointsToTarget(r.activeChapterId)).modify(r => {
@@ -54,7 +55,6 @@ async function removeCodexReferences(codexIds: number[]) {
   if (!codexIds.length) return;
   const targets = new Set(codexIds);
   const embeddingKeys = new Set(codexIds.map(String));
-  const workshopKeys = new Set(codexIds.map(id => `entry:${id}`));
   const pointsToTarget = (id?: number) => id !== undefined && targets.has(id);
   await db.relationships.filter(r => targets.has(r.sourceId) || targets.has(r.targetId)).delete();
   await db.embeddings.filter(r => embeddingKeys.has(String(r.codexId))).delete();
@@ -66,10 +66,10 @@ async function removeCodexReferences(codexIds: number[]) {
     if (pointsToTarget(r.codexId)) delete r.codexId;
     if (pointsToTarget(r.payoffCodexId)) delete r.payoffCodexId;
   });
-  await db.chatSessions.filter(r => r.workshopKey !== undefined && workshopKeys.has(r.workshopKey)).modify(r => {
-    delete r.workshopKey;
-    r.kind = 'studio';
-  });
+  await db.chatSessions.filter(row => {
+    const entryId = parseWorkshopEntryKey(row.workshopKey);
+    return typeof entryId === 'number' && targets.has(entryId);
+  }).modify(detachWorkshopEntry);
 }
 
 export async function deleteCodexEntry(id: number) {

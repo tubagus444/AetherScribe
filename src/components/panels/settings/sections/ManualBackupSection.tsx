@@ -45,7 +45,7 @@ export function ManualBackupSection() {
       // Satu sumber kebenaran: termasuk chatSessions & versi terbaru.
       const backup = await backupService.collectAllData();
 
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const blob = new Blob([backupService.serializeExternalBackup(backup, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -74,7 +74,7 @@ export function ManualBackupSection() {
       const backup = await backupService.collectProjectData(effectiveProjectId);
       const safeName = (backup.projectName || 'proyek')
         .replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'proyek';
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const blob = new Blob([backupService.serializeExternalBackup(backup, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

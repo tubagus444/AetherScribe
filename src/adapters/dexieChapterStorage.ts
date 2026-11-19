@@ -39,7 +39,7 @@ const read: ChapterReader = {
     return Array.isArray(key) && typeof key[1] === 'number' ? key[1] : 0;
   }),
   readChapterSnapshots: chapterId => access(() =>
-    db.snapshots.where('chapterId').equals(chapterId).reverse().sortBy('timestamp')),
+    db.snapshots.where('chapterId').equals(chapterId).filter(row => row.orphaned !== true).reverse().sortBy('timestamp')),
 };
 
 const edit: ChapterTransactions['edit'] = {
@@ -59,7 +59,7 @@ const repositories: ChapterTransactions = {
     ...snapshots,
     addSnapshot: snapshot => db.snapshots.add(snapshot),
     readAutomaticSnapshots: chapterId => db.snapshots.where('chapterId').equals(chapterId)
-      .filter(row => row.auto === true).sortBy('timestamp'),
+      .filter(row => row.auto === true && row.orphaned !== true).sortBy('timestamp'),
   },
   create: {
     ...edit,

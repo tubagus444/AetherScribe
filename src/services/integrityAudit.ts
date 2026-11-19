@@ -1,12 +1,13 @@
 import { db } from '@/src/db';
 import { requestId } from '@/src/lib/dataContracts';
 import { domainTables } from './entityDeletion';
+import { parseWorkshopEntryKey } from '@/src/lib/workshopReference';
 
 export interface IntegrityIssue {
   table: string;
   recordId: string | number | undefined;
   field: string;
-  reason: 'invalid' | 'missing' | 'cross-project';
+  reason: 'invalid' | 'missing' | 'cross-project' | 'detached';
 }
 
 export async function auditProjectIntegrity(): Promise<IntegrityIssue[]> {
@@ -38,16 +39,17 @@ export async function auditProjectIntegrity(): Promise<IntegrityIssue[]> {
         };
         switch (table.name) {
           case 'snapshots':
+            if (row.orphaned === true) report('chapterId', 'detached');
+            else reference('chapterId', chapters, true);
+            break;
           case 'sceneEmbeddings':
             reference('chapterId', chapters, true);
             break;
           case 'chatSessions': {
             reference('chapterId', chapters);
             reference('activeChapterId', chapters);
-            if (typeof row.workshopKey === 'string' && row.workshopKey.startsWith('entry:')) {
-              const match = /^entry:(\d+)$/.exec(row.workshopKey);
-              reference('workshopKey', codex, true, match ? Number(match[1]) : NaN);
-            }
+            const entryId = parseWorkshopEntryKey(row.workshopKey);
+            if (entryId !== undefined) reference('workshopKey', codex, true, entryId);
             break;
           }
           case 'timeline':

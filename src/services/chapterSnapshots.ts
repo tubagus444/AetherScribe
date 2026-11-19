@@ -1,14 +1,14 @@
 import { format } from 'date-fns';
 import { validateWriteFields } from '@/src/lib/backupValidation';
-import type { ChapterStorage, ChapterTransactions } from '@/src/lib/chapterStorage';
+import type { ChapterStorage, ChapterTransactions, SnapshotInput } from '@/src/lib/chapterStorage';
 import { assertWriteId } from '@/src/lib/dataContracts';
 import { AUTO_SNAPSHOT_LIMIT } from '@/src/lib/tableCatalog';
-import type { Snapshot } from '@/src/types';
 
 export async function requireSnapshot(repositories: Pick<ChapterTransactions['history'], 'readSnapshot'>, chapterId: number, id: number) {
   assertWriteId(id, 'ID snapshots');
   const snapshot = await repositories.readSnapshot(id);
   if (!snapshot) throw new Error('Record snapshots tidak ditemukan.');
+  if (snapshot.orphaned) throw new Error('Snapshot tanpa bab induk tersedia dalam cadangan penuh.');
   if (snapshot.chapterId !== chapterId) throw new Error('Snapshot berasal dari bab lain.');
   return snapshot;
 }
@@ -34,8 +34,8 @@ export async function saveAutoSnapshot(repositories: ChapterTransactions['histor
 
 export function createSnapshotOperations(storage: ChapterStorage) {
   return {
-    async addSnapshot(snapshot: Omit<Snapshot, 'id'>) {
-      validateWriteFields('snapshots', snapshot, 'create');
+    async addSnapshot(snapshot: SnapshotInput) {
+      validateWriteFields('snapshots', snapshot, 'create', ['chapterId', 'content', 'label', 'timestamp', 'auto']);
       assertWriteId(snapshot.chapterId, 'ID chapters');
       return storage.transact('history', async repositories => {
         if (!await repositories.readChapter(snapshot.chapterId)) throw new Error('Record chapters tidak ditemukan.');

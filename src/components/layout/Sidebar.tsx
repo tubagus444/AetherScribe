@@ -63,19 +63,22 @@ export function Sidebar() {
 
   const currentStudioId = getStudioForViewMode(viewMode);
 
-  const handleStudioClick = (studioId: StudioId) => {
+  const handleStudioClick = async (studioId: StudioId) => {
     if (studioId === currentStudioId) return;
     const targetMode = getLastActiveTabForStudio(studioId);
-    rememberLastActiveTab(studioId, targetMode);
-    setViewMode(targetMode);
+    if (await setViewMode(targetMode)) rememberLastActiveTab(studioId, targetMode);
   };
 
-  const handleSubTabClick = (studioId: StudioId, mode: ViewMode) => {
+  const handleSubTabClick = async (studioId: StudioId, mode: ViewMode) => {
+    if (!await setViewMode(mode)) return;
     rememberLastActiveTab(studioId, mode);
-    setViewMode(mode);
     if (window.innerWidth < 768 && mode !== 'write') {
       setSidebarOpen(false);
     }
+  };
+
+  const openUtility = async (mode: ViewMode) => {
+    if (await setViewMode(mode) && window.innerWidth < 768) setSidebarOpen(false);
   };
 
   // 5 Studio Utama
@@ -184,9 +187,9 @@ export function Sidebar() {
               <ChapterList
                 projectId={projectId}
                 activeChapterId={activeChapterId}
-                onSelect={(id) => {
-                  setActiveChapterId(id);
-                  setViewMode('write');
+                onSelect={async (id) => {
+                  if (!await setActiveChapterId(id)) return;
+                  await setViewMode('write');
                   if (window.innerWidth < 768) {
                     setSidebarOpen(false);
                   }
@@ -207,10 +210,7 @@ export function Sidebar() {
 
         <div className="flex items-center gap-1">
           <button
-            onClick={() => {
-              setViewMode('settings');
-              if (window.innerWidth < 768) setSidebarOpen(false);
-            }}
+            onClick={() => openUtility('settings')}
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer",
               viewMode === 'settings'
@@ -224,10 +224,7 @@ export function Sidebar() {
           </button>
 
           <button
-            onClick={() => {
-              setViewMode('guide');
-              if (window.innerWidth < 768) setSidebarOpen(false);
-            }}
+            onClick={() => openUtility('guide')}
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer",
               viewMode === 'guide'
@@ -241,10 +238,7 @@ export function Sidebar() {
           </button>
 
           <button
-            onClick={() => {
-              setViewMode('errors');
-              if (window.innerWidth < 768) setSidebarOpen(false);
-            }}
+            onClick={() => openUtility('errors')}
             className={cn(
               "w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer",
               viewMode === 'errors'

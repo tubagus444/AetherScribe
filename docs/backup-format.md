@@ -17,6 +17,18 @@ Versi 3–7 diterima sebagai legacy. Scope yang tidak ditulis pada legacy diperl
 
 Checksum SHA-256, bila tersedia pada input, wajib cocok; ketidaktersediaan Web Crypto tidak lagi melewati verifikasi. Legacy tanpa checksum masih diterima setelah validasi struktur. Checksum mendeteksi kerusakan, bukan membuktikan asal/kepercayaan suatu file.
 
+Cadangan seluruh workspace mempertahankan snapshot tanpa bab induk di
+`data.snapshots`. Field opsional `orphaned: true` menandai bahwa `chapterId`
+adalah ID historis. Teks, label, dan waktu tetap utuh. Saat membaca cadangan
+lama, aplikasi memeriksa checksum asli sebelum menambahkan penanda untuk
+snapshot yang induknya hilang. Snapshot bertanda tidak muncul di riwayat bab
+meskipun ID lama dipakai kembali. Untuk mengambil teksnya, periksa field
+`content` berdasarkan ID snapshot pada ekspor seluruh workspace.
+
+Impor satu novel tetap mensyaratkan bab induk yang ada di file. Pengecualian
+cadangan penuh berlaku khusus untuk relasi bab pada snapshot dan tetap
+mewajibkan ID serta struktur record yang valid.
+
 ## Aset gambar Atlas
 
 | Jalur | Isi gambar | Kebijakan pemulihan |
@@ -36,7 +48,7 @@ Auto internal sengaja bukan cadangan gambar mandiri. Jika gambar lama sudah tida
 3. Kumpulkan workspace saat ini dan simpan snapshot pra-restore lengkap. Jika validasi, pembacaan, atau penyimpanan snapshot gagal, batalkan dan tampilkan pesan; jangan clear workspace.
 4. Clear/refill tabel domain dalam satu transaksi atomik. Kegagalan insert mengembalikan seluruh perubahan transaksi; snapshot pengaman tetap tersedia. Cache embedding dibuang untuk regenerasi.
 
-Snapshot lengkap memerlukan ruang tambahan. Saat kuota penuh, mekanisme eviksi auto lama tetap berlaku; jika snapshot masih tidak dapat disimpan, restore dibatalkan. Snapshot juga dapat gagal validasi jika workspace saat ini sudah mempunyai record/referensi tidak valid; perbaikan ini tidak otomatis memperbaiki orphan F11.
+Snapshot lengkap memerlukan ruang tambahan. Saat kuota penuh, mekanisme eviksi auto lama tetap berlaku; jika snapshot masih tidak dapat disimpan, restore dibatalkan. Masalah struktur atau relasi lain pada workspace masih dapat membuat snapshot pra-pemulihan gagal validasi.
 
 ## Batas input
 
@@ -63,4 +75,12 @@ Unggah dahulu, pastikan HTTP sukses dan response memuat ID file; baru jalankan r
 
 ## Round-trip F10
 
-Triage yang ikut ekspor dipulihkan dengan projectId/primary key baru. gap-/unused- memetakan Codex, rel- memetakan relasi, tl- dan chrono-invalid-range-/same-chapter-/retro-chap- memetakan timeline. Format rel-source-target legacy ditangani sebagai pasangan Codex. Target yang tidak tersedia berarti status basi dan tidak diimpor; format asing ditolak agar tidak menerapkan status ke temuan yang keliru. workshopKey entry:<id> hanya memetakan target Codex, sedangkan new:<seed> dan semua teks bebas tetap literal. Tidak ada perubahan format v8 atau schema DB.
+Triage yang ikut ekspor dipulihkan dengan projectId/primary key baru. gap-/unused- memetakan Codex, rel- memetakan relasi, tl- dan chrono-invalid-range-/same-chapter-/retro-chap- memetakan timeline. Format rel-source-target legacy ditangani sebagai pasangan Codex. Target yang tidak tersedia berarti status basi dan tidak diimpor; format asing ditolak agar tidak menerapkan status ke temuan yang keliru.
+
+Kunci Workshop `entry:<id>` harus menunjuk ke entri Codex di proyek yang sama.
+Penulisan dan remap impor menormalkan bentuk lama seperti `entry:01`. Validasi
+berkas memeriksa sintaks dan target sebelum konfirmasi impor. Jika workspace lama
+memiliki rujukan ke entri yang sudah dihapus, ekspor menyimpan salinan sesi sebagai
+chat Studio dengan pesan lengkap. Pemulihan workspace dari cadangan penuh lama
+menerapkan aturan yang sama setelah memeriksa checksum asli. Kunci `new:<seed>`
+dan teks pesan tetap literal.

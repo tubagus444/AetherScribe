@@ -6,6 +6,8 @@ import { BACKUP_LIMITS } from '@/src/lib/backupLimits';
 import { readBackupFile, readBackupResponse, readBoundedStream } from '@/src/lib/backupIO';
 import { dataUrlToBlob } from '@/src/lib/blobCodec';
 import { BACKUP_TABLES, TABLE_CATALOG, type BackupTableName } from '@/src/lib/tableCatalog';
+import { dexieChapterStorage } from '@/src/adapters/dexieChapterStorage';
+import { changeChapters, restoreChapterSnapshot } from './chapterOperations';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
@@ -179,6 +181,54 @@ describe('F03 Atlas recovery', () => {
 });
 
 describe('F04 restore boundary', () => {
+  it('preserves an orphan snapshot in full, automatic, and pre-restore backups', async () => {
+    const snapshot = { chapterId: 2, content: '<p>Draf bab lama</p>', label: 'Riwayat lama', timestamp: 1, auto: true };
+    const id = await db.snapshots.add(snapshot);
+    const detached = { ...snapshot, id, orphaned: true };
+    const full = await backupService.collectAllData();
+    expect(JSON.parse(backupService.serializeExternalBackup(full)).data.snapshots).toEqual([detached]);
+    expect(await db.snapshots.get(id)).toEqual({ ...snapshot, id });
+
+    await backupService.saveToInternalDB(full);
+    await backupService.restoreFromBackup((await latest('auto')).id!);
+    expect(await db.snapshots.get(id)).toEqual(detached);
+
+    // Restore yang mengganti workspace tetap menyimpan teks lama pada titik undo.
+    await backupService.restoreData(legacy());
+    expect(await db.snapshots.count()).toBe(0);
+    const undo = await latest('pre-restore');
+    expect(JSON.parse(await backupService.decodeInternalBackup(undo)).data.snapshots).toEqual([detached]);
+    await backupService.restoreFromBackup(undo.id!);
+
+    // ID bab yang digunakan lagi tidak mengambil alih riwayat lama.
+    await db.chapters.add({ id: 2, projectId: 1, title: 'Bab baru', order: 1, content: 'Teks baru', lastModified: 5 });
+    expect(await dexieChapterStorage.read.readChapterSnapshots(2)).toEqual([]);
+    expect(await dexieChapterStorage.transact('history', rows => rows.readAutomaticSnapshots(2))).toEqual([]);
+    expect((await backupService.collectProjectData(1)).data.snapshots).toEqual([]);
+    await expect(restoreChapterSnapshot(2, id)).rejects.toThrow(/tanpa bab induk/);
+    await changeChapters(1, 'delete', 2);
+    expect(await db.snapshots.get(id)).toEqual(detached);
+  });
+
+  it('normalizes an unmarked legacy orphan only after validating its original checksum', async () => {
+    const input = legacy();
+    const orphan = { id: 11, chapterId: 99, label: 'Legacy', content: 'Teks lama', timestamp: 1 };
+    input.data.snapshots = [orphan];
+    input.checksum = await backupService.computeChecksum(JSON.stringify(input.data));
+    await backupService.restoreData(input);
+    expect(input.data.snapshots).toEqual([orphan]);
+    expect(await db.snapshots.get(11)).toEqual({ ...orphan, orphaned: true });
+  });
+
+  it.each([false, true])('rejects a detached snapshot in project import (marked: %s)', async marked => {
+    const input = legacy();
+    input.scope = 'project';
+    input.data.snapshots = [{ id: 1, chapterId: marked ? 2 : 99, label: '', content: 'Legacy', timestamp: 1,
+      ...(marked ? { orphaned: true as const } : {}) }];
+    await expect(backupService.importProjectData(input)).rejects.toThrow(/snapshots.chapterId/);
+    expect(await db.projects.count()).toBe(1);
+  });
+
   it.each([3, 4, 5, 6, 7])('accepts legacy v%i with omitted optional stores through normalization', async version => {
     const input = legacy(version);
     delete (input.data as any).chatSessions;
@@ -201,7 +251,7 @@ describe('F04 restore boundary', () => {
     ['unknown table', b => b.data.unrecognized = []],
     ['inherited schema name', b => b.data.toString = []],
     ['invalid nested data', b => b.data.projects[0].calendar = { months: 'wrong' }],
-    ['orphan snapshot', b => b.data.snapshots = [{ id: 1, chapterId: 999, content: '', label: '', timestamp: 1 }]],
+    ['invalid snapshot chapter ID', b => b.data.snapshots = [{ id: 1, chapterId: 0, content: '', label: '', timestamp: 1 }]],
     ['nonfinite number', b => b.data.chapters[0].lastModified = NaN],
     ['malformed checksum', b => b.checksum = 'abc'],
     ['checksum mismatch', b => b.checksum = '0'.repeat(64)],

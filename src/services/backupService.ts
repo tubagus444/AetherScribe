@@ -6,12 +6,12 @@ import { readBackupSnapshot } from './backupSnapshot';
 
 import { db } from '@/src/db';
 import { PROJECT_IMPORT_TABLES, RESTORE_RECORD_TABLES, RESTORE_TABLES } from '@/src/lib/tableCatalog';
-import { BackupRecord } from '@/src/types';
+import type { BackupRecord, Snapshot } from '@/src/types';
 import { selectBackupsToDelete, selectBackupToEvict } from '@/src/lib/backupRetention';
 import { backupChecksum, compressBackup, prepareInternalBackup } from '@/src/lib/internalBackupPreparation';
 import { prepareAutoBackup, serializeInternalBackup } from './internalBackupWorker';
 import { blobToDataUrl, dataUrlToBlob } from '@/src/lib/blobCodec';
-import { validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation';
+import { detachMissingWorkshopEntries, validateBackup, normalizeLegacyData } from '@/src/lib/backupValidation';
 import { decodeBackupText } from '@/src/lib/backupIO';
 import {
   remapProjectDependents,
@@ -45,7 +45,7 @@ export interface BackupData {
     codex: any[];
     bible: any[];
     aiActions: any[];
-    snapshots: any[];
+    snapshots: Snapshot[];
     timeline: any[];
     relationships: any[];
     chatSessions: any[];
@@ -59,6 +59,12 @@ export interface BackupData {
     mapMarkers?: any[];
     continuityTriage?: any[];
   };
+}
+
+function preserveOrphanedSnapshots(data: Pick<BackupData['data'], 'chapters' | 'snapshots'>) {
+  const chapterIds = new Set(data.chapters.map(chapter => chapter.id));
+  data.snapshots = data.snapshots.map(snapshot =>
+    snapshot.orphaned || chapterIds.has(snapshot.chapterId) ? snapshot : { ...snapshot, orphaned: true });
 }
 
 /**
@@ -135,6 +141,7 @@ export const backupService = {
    */
   async collectAllData(): Promise<BackupData> {
     const data = await readBackupSnapshot() as BackupData['data'];
+    preserveOrphanedSnapshots(data);
     data.maps = await this.serializeMaps(data.maps ?? []);
     return {
       version: 8, // v8: kebijakan aset eksplisit; v7: maps/mapMarkers
@@ -271,12 +278,18 @@ export const backupService = {
     return compressBackup(dataString);
   },
 
+  serializeExternalBackup(data: BackupData, space?: number): string {
+    validateBackup(data, data.scope === 'project' ? 'project' : 'all');
+    return JSON.stringify(data, null, space);
+  },
+
   /**
    * Writes the backup JSON to a file via File System Access API.
    */
   async saveToFile(data: BackupData, fileHandle: FileSystemFileHandle): Promise<void> {
+    const json = this.serializeExternalBackup(data, 2);
     const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify(data, null, 2));
+    await writable.write(json);
     await writable.close();
   },
 
@@ -286,7 +299,7 @@ export const backupService = {
   async saveToDirectory(data: BackupData, dirHandle: FileSystemDirectoryHandle): Promise<void> {
     // Write compressed data (ekstensi mengikuti hasil kompresi: .json.gz hanya bila
     // benar-benar ter-gzip; bila tidak → .json mentah agar bisa dipulihkan — BK4)
-    const jsonString = JSON.stringify(data);
+    const jsonString = this.serializeExternalBackup(data);
     const { blob, compressed } = await this.compressData(jsonString);
 
     const ext = compressed ? '.json.gz' : '.json';
@@ -337,7 +350,10 @@ export const backupService = {
    * clear/refill atomik. Cache embedding dibuang untuk regenerasi. */
   async restoreData(input: unknown): Promise<void> {
     const parsedData = await this.validateInput(input, 'all');
-    const data = normalizeLegacyData(parsedData.data) as BackupData['data'];
+    const normalized = normalizeLegacyData(parsedData.data);
+    detachMissingWorkshopEntries(normalized);
+    const data = normalized as BackupData['data'];
+    preserveOrphanedSnapshots(data);
     // Dekode/resolusi aset sebelum snapshot atau mutasi database.
     const mapRows = await this.deserializeMaps(data.maps, true);
 

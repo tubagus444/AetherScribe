@@ -1,4 +1,5 @@
 import { validateBackup } from './backupValidation';
+import { parseWorkshopEntryKey, workshopEntryKey } from './workshopReference';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -199,11 +200,11 @@ export function remapProjectDependents(
       if (nc !== undefined) remapped.activeChapterId = nc;
       else delete remapped.activeChapterId;
     }
-    if (cs.workshopKey?.startsWith('entry:')) {
-      const match = /^entry:(\d+)$/.exec(cs.workshopKey);
-      const entry = match ? codexIdMap.get(Number(match[1])) : undefined;
+    const workshopEntryId = parseWorkshopEntryKey(cs.workshopKey);
+    if (workshopEntryId !== undefined) {
+      const entry = workshopEntryId === null ? undefined : codexIdMap.get(workshopEntryId);
       if (entry === undefined) throw new Error('Target sesi workshop tidak valid.');
-      remapped.workshopKey = `entry:${entry}`;
+      remapped.workshopKey = workshopEntryKey(entry);
     }
     return remapped as ChatSession;
   });

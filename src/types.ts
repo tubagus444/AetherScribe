@@ -19,6 +19,8 @@ export interface Snapshot {
   timestamp: number;
   /** true bila dibuat otomatis sebelum aksi destruktif (rewrite AI, replace-all, restore). */
   auto?: boolean;
+  /** Cadangan historis tanpa induk. chapterId hanya menyimpan ID asal. */
+  orphaned?: true;
 }
 
 export type TimelineEventType = 'plot' | 'character' | 'world' | 'subplot' | 'reveal' | 'other';

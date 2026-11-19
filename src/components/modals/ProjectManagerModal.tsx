@@ -31,6 +31,14 @@ export function ProjectManagerModal() {
 
   if (!isProjectManagerOpen) return null;
 
+  const handleSwitch = async (id: number) => {
+    try {
+      await switchProject(id);
+    } catch {
+      toast.error('Gagal beralih naskah. Periksa status simpan di editor, lalu coba lagi.');
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim() || isSaving) return;
@@ -121,8 +129,12 @@ export function ProjectManagerModal() {
                         </span>
                         <button
                           onClick={async () => {
-                            await deleteProject(p.id!);
-                            setConfirmDeleteId(null);
+                            try {
+                              await deleteProject(p.id!);
+                              setConfirmDeleteId(null);
+                            } catch {
+                              toast.error('Gagal menghapus naskah. Periksa status simpan di editor, lalu coba lagi.');
+                            }
                           }}
                           className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-[11px] font-semibold transition-colors"
                         >
@@ -139,7 +151,7 @@ export function ProjectManagerModal() {
                       <>
                         {currentProjectId !== p.id && (
                           <button 
-                            onClick={() => switchProject(p.id!)}
+                            onClick={() => handleSwitch(p.id!)}
                             className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white rounded-lg text-xs font-medium transition-colors"
                           >
                             Ganti

@@ -34,8 +34,8 @@ export function getActiveEditorChapterId(): number | null {
   return current ? current.getChapterId() : null;
 }
 
-/** Persist edit aktif; reject jika save gagal/tidak menemukan bab.
- * Caller wajib membatalkan operasi lanjutan saat reject (no-op tanpa editor).
+/** Simpan perubahan lokal yang tertunda. Pemanggil membatalkan operasi berikutnya
+ * jika penulisan gagal atau isi di penyimpanan telah berubah sejak editor memuatnya.
  */
 export async function flushActiveEditor(): Promise<void> {
   if (current) await current.flush();

@@ -50,8 +50,8 @@ export const TABLE_CATALOG = {
   aiActions: { ...projectData, relations: ['projectId → projects'] },
   snapshots: {
     ...projectData,
-    relations: ['chapterId → chapters'],
-    retention: `${AUTO_SNAPSHOT_LIMIT} snapshot otomatis per bab. Snapshot manual bertahan sampai dihapus, bab pemilik dihapus, atau workspace dipulihkan.`,
+    relations: ['chapterId → chapters, atau ID historis bila orphaned'],
+    retention: `${AUTO_SNAPSHOT_LIMIT} snapshot otomatis per bab. Snapshot manual bertahan sampai dihapus, bab pemilik dihapus, atau workspace dipulihkan. Snapshot tanpa bab induk dipertahankan dalam cadangan penuh.`,
     scope: 'chapter',
   },
   timeline: { ...projectData, relations: ['projectId → projects', 'chapterId → chapters', 'characterIds[] → codex'] },

@@ -2,6 +2,7 @@ import { BACKUP_LIMITS } from './backupLimits';
 import { validateImageDataUrl } from './blobCodec';
 import { record } from './dataContracts';
 import { BACKUP_TABLES, type BackupTableName } from './tableCatalog';
+import { detachWorkshopEntry, parseWorkshopEntryKey } from './workshopReference';
 
 type Row = Record<string, any>;
 type Check = (value: any, path: string) => void;
@@ -63,7 +64,7 @@ const backupSchemas = {
   }),
   bible: object({ id, projectId: id, key: text, instruction: text }, { isVirtual: bool }),
   aiActions: object({ id, projectId: id, label: text, prompt: text }, { icon: text }),
-  snapshots: object({ id, chapterId: id, content: text, label: text, timestamp: nonnegative }, { auto: bool }),
+  snapshots: object({ id, chapterId: id, content: text, label: text, timestamp: nonnegative }, { auto: bool, orphaned: choice(true) }),
   timeline: object({ id, projectId: id, title: text, description: text, type: choice('plot', 'character', 'world', 'subplot', 'reveal', 'other'), order: nonnegative }, {
     chapterId: id, eventDate: text, characterIds: array(id), startDate: date, endDate: date,
   }),
@@ -188,8 +189,19 @@ export function validateBackup(backup: unknown, scope: 'all' | 'project'): asser
   };
   for (const [table, rows] of Object.entries(d)) for (const row of rows) {
     if (table !== 'projects' && table !== 'snapshots' && !projects.has(row.projectId)) fail(`${table}.projectId referensi tidak valid`);
-    for (const key of ['chapterId', 'activeChapterId', 'plantedChapterId']) ref(row, key, chapters, table);
+    const detachedSnapshot = table === 'snapshots' && (row.orphaned === true || !chapters.has(row.chapterId));
+    if (detachedSnapshot && scope === 'project') fail('snapshots.chapterId referensi tidak valid');
+    if (!detachedSnapshot) ref(row, 'chapterId', chapters, table);
+    for (const key of ['activeChapterId', 'plantedChapterId']) ref(row, key, chapters, table);
     for (const key of ['sourceId', 'targetId', 'codexId', 'payoffCodexId']) ref(row, key, codex, table);
+    if (table === 'chatSessions') {
+      const entryId = parseWorkshopEntryKey(row.workshopKey);
+      if (entryId === null) fail('chatSessions.workshopKey referensi tidak valid');
+      // Full restore can recover legacy sessions from a deleted entry as Studio chats.
+      if (entryId !== undefined && (scope === 'project' || codex.has(entryId))) {
+        ref({ projectId: row.projectId, workshopKey: entryId }, 'workshopKey', codex, table);
+      }
+    }
     for (const key of ['mapId', 'linkedMapId']) ref(row, key, maps, table);
     for (const value of row.characterIds ?? []) ref({ ...row, characterId: value }, 'characterId', codex, table);
     if (table === 'maps') {
@@ -215,4 +227,16 @@ export function validateBackup(backup: unknown, scope: 'all' | 'project'): asser
  */
 export function normalizeLegacyData(data: Record<string, any>): Record<string, Row[]> {
   return Object.fromEntries(BACKUP_TABLES.map(table => [table, data[table] ?? []]));
+}
+
+export function detachMissingWorkshopEntries(data: Record<string, Row[]>) {
+  if (!data.chatSessions.length) return;
+  const codexIds = new Set(data.codex.map(row => row.id));
+  data.chatSessions = data.chatSessions.map(session => {
+    const id = parseWorkshopEntryKey(session.workshopKey);
+    if (typeof id !== 'number' || codexIds.has(id)) return session;
+    const detached = { ...session };
+    detachWorkshopEntry(detached);
+    return detached;
+  });
 }

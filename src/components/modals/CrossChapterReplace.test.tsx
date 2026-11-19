@@ -33,7 +33,8 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
       getHTML: () => '<p>lama draft terbaru</p>', isDestroyed: false,
       commands: { setContent: vi.fn() },
     } as unknown as Editor;
-    renderHook(() => useEditorSave({ chapterId: 1, chapter, editor }));
+    const { result } = renderHook(() => useEditorSave({ chapterId: 1, chapter, editor }));
+    act(() => result.current.onEditorUpdate({ editor }));
     render(<CrossChapterReplace projectId={1} onSelectChapter={vi.fn()} onClose={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Cari teks'), { target: { value: 'lama' } });
     await act(() => vi.advanceTimersByTimeAsync(300));
@@ -55,7 +56,8 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Ganti Semua' })); });
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(update).toHaveBeenCalledTimes(1);
-    expect(transaction).not.toHaveBeenCalled();
+    expect(transaction).toHaveBeenCalledTimes(1);
+    expect(transaction.mock.calls[0][1]).toEqual([db.chapters]);
     expect(await db.snapshots.count()).toBe(0);
     expect(editor.commands.setContent).not.toHaveBeenCalled();
     expect((await db.chapters.get(1))?.content).toBe(chapter.content);

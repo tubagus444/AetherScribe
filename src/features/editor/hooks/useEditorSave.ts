@@ -1,180 +1,134 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Editor } from '@tiptap/react';
+import { ChapterContentConflictError } from '@/src/lib/chapterContracts';
 import { readChapter } from '@/src/services/chapterQueries';
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Editor } from '@tiptap/react';
 import { saveChapterContent, updateChapter } from '@/src/services/chapterOperations';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { useToast } from '@/src/hooks/useToast';
-import { registerActiveEditor, unregisterActiveEditor, ActiveEditorBridge } from '@/src/features/editor/editorBridge';
+import { registerActiveEditor, unregisterActiveEditor, type ActiveEditorBridge } from '@/src/features/editor/editorBridge';
+import type { Chapter } from '@/src/types';
 
 interface UseEditorSaveProps {
   chapterId: number;
-  chapter: any;
+  chapter: Pick<Chapter, 'title' | 'content'> | null | undefined;
   editor: Editor | null;
+}
+
+interface DraftState {
+  baseContent?: string;
+  pending?: string;
+  writing?: Promise<void>;
+  mounted: boolean;
+  saveTimer?: ReturnType<typeof setTimeout>;
+  statusTimer?: ReturnType<typeof setTimeout>;
 }
 
 export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps) {
   const { setSaveStatus } = useEditorPanel();
   const { toast } = useToast();
   const [title, setTitle] = useState('');
-  
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const chapterIdRef = useRef(chapterId);
-  const isMountedRef = useRef(true);
-  const htmlRef = useRef(editor?.getHTML() || "");
-  const saveFailedRef = useRef(false);
-  const saveRevisionRef = useRef(0);
-  const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draft = useMemo<DraftState>(() => ({ mounted: false }), [chapterId]);
 
-  const clearStatusTimeout = useCallback(() => {
-    if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-    statusTimeoutRef.current = null;
-  }, []);
-
-  const performSave = useCallback(async (id: number, content: string): Promise<void> => {
-    const revision = ++saveRevisionRef.current;
-    const isLatest = () => revision === saveRevisionRef.current;
-    clearStatusTimeout();
-    if (isMountedRef.current) setSaveStatus('Menyimpan...');
-    try {
-      await saveChapterContent(id, content);
-      if (isLatest()) saveFailedRef.current = false;
-      if (isMountedRef.current && isLatest()) {
-        setSaveStatus('Tersimpan');
-        statusTimeoutRef.current = setTimeout(() => {
-          statusTimeoutRef.current = null;
-          if (isMountedRef.current) setSaveStatus('');
-        }, 2000);
-      }
-    } catch (err) {
-      if (isLatest()) {
-        saveFailedRef.current = true;
-        clearStatusTimeout();
-        if (isMountedRef.current) setSaveStatus('Gagal menyimpan');
-      }
-      console.error('Failed to save chapter:', err);
-      // Caller yang mengubah DB/reload harus berhenti; draft editor tetap utuh.
-      throw err;
-    }
-  }, [setSaveStatus, clearStatusTimeout]);
-
-  // Autosave/lifecycle tidak punya pemanggil yang menunggu Promise. Error sudah
-  // ditampilkan performSave; tangani rejection tanpa mengubah kontrak flush.
-  const saveInBackground = useCallback((id: number, content: string) => {
-    void performSave(id, content).catch(() => {});
-  }, [performSave]);
-
+  const initialContent = chapter?.content;
   useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-      clearStatusTimeout();
-      // Final cleanup on unmount
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-        const html = htmlRef.current;
-        if (chapterIdRef.current) {
-          saveInBackground(chapterIdRef.current, html);
-        }
-      }
-    };
-  }, [editor, saveInBackground, clearStatusTimeout]);
+    draft.baseContent ??= initialContent;
+  }, [draft, initialContent]);
 
-  useEffect(() => {
-    if (chapterIdRef.current !== chapterId) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveInBackground(chapterIdRef.current, htmlRef.current);
-        saveTimeoutRef.current = null;
-      }
-      chapterIdRef.current = chapterId;
-    }
-  }, [chapterId, saveInBackground]);
-
-  // Flush segera: batalkan timer debounce lalu simpan konten editor TERKINI ke DB.
-  // Dipakai sebelum operasi lintas-bab (mis. Find & Replace global) agar edit yang
-  // belum tersimpan tidak hilang. Membaca HTML langsung dari editor (bukan htmlRef)
-  // agar tetap akurat walau belum ada event update sejak mount.
   const flushNow = useCallback(async () => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-    }
-    const id = chapterIdRef.current;
-    const html = editor && !editor.isDestroyed ? editor.getHTML() : htmlRef.current;
-    htmlRef.current = html;
-    await performSave(id, html);
-  }, [editor, performSave]);
+    clearTimeout(draft.saveTimer);
+    draft.saveTimer = undefined;
 
-  // Daftarkan editor aktif ke bridge agar operasi lintas-bab bisa flush + reload aman.
+    while (draft.pending !== undefined) {
+      if (!draft.writing) {
+        const content = draft.pending;
+        const write = async () => {
+          try {
+            if (draft.baseContent === undefined) throw new Error('Isi awal bab belum dimuat.');
+            await saveChapterContent(chapterId, content, draft.baseContent);
+            draft.baseContent = content;
+            if (draft.pending === content) {
+              draft.pending = undefined;
+              if (draft.mounted) {
+                setSaveStatus('Tersimpan');
+                draft.statusTimer = setTimeout(() => {
+                  if (draft.mounted) setSaveStatus('');
+                }, 2000);
+              }
+            }
+          } catch (error) {
+            if (draft.mounted) {
+              setSaveStatus(error instanceof ChapterContentConflictError
+                ? 'Gagal menyimpan. Isi bab telah berubah. Salin draf sebelum memuat ulang.'
+                : 'Gagal menyimpan');
+            }
+            console.error('Failed to save chapter:', error);
+            throw error;
+          }
+        };
+        draft.writing = write().finally(() => { draft.writing = undefined; });
+      }
+      await draft.writing;
+    }
+  }, [chapterId, draft, setSaveStatus]);
+
+  const saveInBackground = useCallback(() => {
+    void flushNow().catch(() => {});
+  }, [flushNow]);
+
+  useEffect(() => {
+    draft.mounted = true;
+    return () => {
+      draft.mounted = false;
+      clearTimeout(draft.statusTimer);
+      if (draft.saveTimer !== undefined) saveInBackground();
+    };
+  }, [draft, saveInBackground]);
+
   useEffect(() => {
     if (!editor) return;
     const bridge: ActiveEditorBridge = {
-      getChapterId: () => chapterIdRef.current,
+      getChapterId: () => chapterId,
       flush: flushNow,
       reload: async () => {
-        if (saveFailedRef.current) {
-          throw new Error('Draft belum tersimpan. Coba simpan ulang sebelum memuat ulang editor.');
-        }
-        if (!editor || editor.isDestroyed) return;
-        const fresh = await readChapter(chapterIdRef.current);
-        if (!editor || editor.isDestroyed) return;
-        const content = fresh?.content ?? '';
-        // emitUpdate:false → tidak memicu autosave (mencegah penimpaan balik hasil replace).
-        editor.commands.setContent(content, { emitUpdate: false });
-        // Selaraskan snapshot flush agar flush unmount/ganti-bab berikutnya tak memakai
-        // konten basi pra-replace.
-        htmlRef.current = content;
+        const ensureClean = () => {
+          if (draft.pending !== undefined) {
+            throw new Error('Draft belum tersimpan. Coba simpan ulang sebelum memuat ulang editor.');
+          }
+        };
+        ensureClean();
+        if (editor.isDestroyed) return;
+        const fresh = await readChapter(chapterId);
+        if (editor.isDestroyed || !draft.mounted) return;
+        ensureClean();
+        editor.commands.setContent(fresh?.content ?? '', { emitUpdate: false });
+        draft.baseContent = fresh?.content;
       },
     };
     registerActiveEditor(bridge);
     return () => unregisterActiveEditor(bridge);
-  }, [editor, flushNow]);
+  }, [chapterId, draft, editor, flushNow]);
 
-  // Sync title when chapter loads
   useEffect(() => {
-    if (chapter) {
-      if (title !== chapter.title) {
-        setTitle(chapter.title);
-      }
-    }
-  }, [chapter?.title]); // Only dependency needed is title, not content
+    if (chapter?.title !== undefined) setTitle(chapter.title);
+  }, [chapter?.title]);
 
   const onEditorUpdate = useCallback(({ editor: currentEditor }: { editor: Editor }) => {
-    const idToSave = chapterIdRef.current;
-
-    // Tangkap konten terkini SEGERA (bukan di dalam timeout) agar flush saat ganti
-    // bab / unmount selalu menyimpan teks terbaru, bukan snapshot lama. Mencegah
-    // kehilangan edit terakhir bila user pindah bab/keluar < 1.5s setelah mengetik.
-    htmlRef.current = currentEditor.getHTML();
-    saveRevisionRef.current++;
-
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    clearStatusTimeout();
+    draft.pending = currentEditor.getHTML();
+    clearTimeout(draft.saveTimer);
+    clearTimeout(draft.statusTimer);
     setSaveStatus('Menyimpan...');
-
-    saveTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        saveInBackground(idToSave, htmlRef.current);
-        saveTimeoutRef.current = null;
-      }
-    }, 1500);
-  }, [setSaveStatus, saveInBackground, clearStatusTimeout]);
+    draft.saveTimer = setTimeout(saveInBackground, 1500);
+  }, [draft, saveInBackground, setSaveStatus]);
 
   const handleTitleChange = useCallback(async (newTitle: string) => {
     setTitle(newTitle);
     try {
-      const affected = await updateChapter(chapterIdRef.current, { title: newTitle });
-      if (affected !== 1) throw new Error('Bab tidak ditemukan.');
+      await updateChapter(chapterId, { title: newTitle });
     } catch (error) {
       console.error('Failed to save chapter title:', error);
       toast.error('Gagal menyimpan judul bab. Ubah judul untuk mencoba lagi.');
     }
-  }, [toast]);
+  }, [chapterId, toast]);
 
-  return {
-    title,
-    handleTitleChange,
-    onEditorUpdate,
-  };
+  return { title, handleTitleChange, onEditorUpdate };
 }

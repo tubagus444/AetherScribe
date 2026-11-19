@@ -32,6 +32,91 @@ test('F05 editor persists a draft across reload', async ({ page }) => {
   await expect(editor).toHaveText('Draft browser F24');
 });
 
+test('DB01 failed autosave keeps the editor open until navigation can save the draft', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.chapters.add({ projectId: 1, title: 'Bab kedua', content: '<p>Isi bab kedua</p>', order: 1, lastModified: 1 });
+    const audit = { attempts: 0, update: db.chapters.update.bind(db.chapters) };
+    Reflect.set(window, 'draftNavigationAudit', audit);
+    db.chapters.update = async () => {
+      audit.attempts++;
+      throw new DOMException('Injected quota failure', 'QuotaExceededError');
+    };
+  });
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  await editor.fill('Draf harus tetap terbuka');
+  await expect(page.getByRole('status').filter({ hasText: 'Gagal menyimpan' })).toBeVisible();
+
+  const tabs = page.getByRole('navigation', { name: /Sub-navigasi/ });
+  const attempts = () => page.evaluate(() => Reflect.get(window, 'draftNavigationAudit').attempts);
+  const outline = tabs.getByRole('button', { name: 'Outline', exact: true });
+  await outline.click();
+  await expect.poll(attempts).toBe(2);
+  await expect(editor).toHaveText('Draf harus tetap terbuka');
+  expect(await page.evaluate(() => localStorage.getItem('aether_view_mode'))).toBe('write');
+
+  await page.locator('aside').getByText('Bab kedua', { exact: true }).click();
+  await expect.poll(attempts).toBe(3);
+  await expect(editor).toHaveText('Draf harus tetap terbuka');
+
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    db.chapters.update = Reflect.get(window, 'draftNavigationAudit').update;
+  });
+  await outline.click();
+  await expect(editor).toHaveCount(0);
+  await tabs.getByRole('button', { name: 'Editor', exact: true }).click();
+  await expect(editor).toHaveText('Draf harus tetap terbuka');
+  await page.reload();
+  await expect(editor).toHaveText('Draf harus tetap terbuka');
+});
+
+for (const dirty of [false, true]) {
+  test(`DB01 backup from an older tab preserves newer text (${dirty ? 'local draft' : 'untouched editor'})`, async ({ page, context }) => {
+    const writer = await context.newPage();
+    await writer.route('**/__backup_writer', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+    await writer.goto('/__backup_writer');
+    const current = await writer.evaluate(async () => {
+      const chapterPath = '/src/services/chapterOperations.ts';
+      const queryPath = '/src/services/chapterQueries.ts';
+      const { saveChapterContent } = await import(chapterPath);
+      const { readChapter } = await import(queryPath);
+      await saveChapterContent(1, '<p>Versi terbaru dari tab lain</p>', '<p>F24 starting manuscript</p>');
+      const chapter = await readChapter(1);
+      return { content: chapter.content, lastModified: chapter.lastModified };
+    });
+
+    const editor = page.locator('.tiptap[contenteditable="true"]');
+    await expect(editor).toHaveText('F24 starting manuscript');
+    if (dirty) {
+      await editor.fill('Draf lokal dari tab lama');
+      await expect(page.getByRole('status').filter({ hasText: 'Isi bab telah berubah' })).toBeVisible();
+    }
+
+    const result = await page.evaluate(async () => {
+      const path = '/src/services/backupService.ts';
+      const { backupService } = await import(path);
+      try {
+        const { data } = await backupService.collectAllData();
+        return { content: data.chapters[0].content, lastModified: data.chapters[0].lastModified };
+      } catch (error) {
+        return { error: error.name };
+      }
+    });
+
+    expect(result).toEqual(dirty ? { error: 'ChapterContentConflictError' } : current);
+    if (dirty) await expect(editor).toHaveText('Draf lokal dari tab lama');
+    expect(await writer.evaluate(async () => {
+      const path = '/src/services/chapterQueries.ts';
+      const { readChapter } = await import(path);
+      const chapter = await readChapter(1);
+      return { content: chapter.content, lastModified: chapter.lastModified };
+    })).toEqual(current);
+  });
+}
+
 test('DB05 chapter list and snapshot history refresh after writes in another tab', async ({ page, context }) => {
   await page.getByRole('button', { name: 'Riwayat Versi' }).click();
   await expect(page.getByText('Belum ada snapshot tersimpan.')).toBeVisible();

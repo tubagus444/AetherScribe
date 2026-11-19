@@ -27,7 +27,7 @@ it('validates chapter patches and snapshot ownership without losing manuscript t
   await expect(changeChapters(9, 'add')).rejects.toThrow(/tidak ditemukan/);
   await expect(updateChapter(1, { tension: 9 } as never)).rejects.toThrow(/tension/);
   await expect(updateChapter(1, { projectId: 2 } as never)).rejects.toThrow(/projectId/);
-  await expect(saveChapterContent(1, null as never)).rejects.toThrow(/content/);
+  await expect(saveChapterContent(1, null as never, '<p>Naskah asli</p>')).rejects.toThrow(/content/);
   await expect(addSnapshot({ chapterId: 9, content: 'Asing', label: '', timestamp: 1 })).rejects.toThrow(/tidak ditemukan/);
   const snapshot = await addSnapshot({ chapterId: 2, content: 'Bab lain', label: '', timestamp: 1 });
   await expect(restoreChapterSnapshot(1, snapshot)).rejects.toThrow(/bab lain/);
@@ -37,6 +37,16 @@ it('validates chapter patches and snapshot ownership without losing manuscript t
   await restoreChapterSnapshot(1, own);
   expect((await db.chapters.get(1))?.content).toBe('');
   expect(await db.snapshots.where('chapterId').equals(1).count()).toBe(2);
+});
+
+it('accepts one of two concurrent chapter edits based on the same saved content', async () => {
+  const original = '<p>Naskah asli</p>';
+  const edits = ['<p>Versi A</p>', '<p>Versi B</p>'];
+  const results = await Promise.allSettled(edits.map(content => saveChapterContent(1, content, original)));
+  const winner = results.findIndex(result => result.status === 'fulfilled');
+  expect(winner).toBeGreaterThanOrEqual(0);
+  expect(results[1 - winner]).toMatchObject({ status: 'rejected', reason: { name: 'ChapterContentConflictError' } });
+  expect((await db.chapters.get(1))?.content).toBe(edits[winner]);
 });
 
 it('rejects missing and cross-project references in each authoring domain', async () => {

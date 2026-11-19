@@ -22,9 +22,11 @@ type ChapterEdits = Pick<ChapterReader, 'readChapter' | 'readProjectChapters'> &
   patchChapter(id: number, changes: ChapterChanges): Promise<number>;
 };
 
+export type SnapshotInput = Omit<Snapshot, 'id' | 'orphaned'>;
+
 type Snapshots = {
   readSnapshot(id: number): Promise<Snapshot | undefined>;
-  addSnapshot(snapshot: Omit<Snapshot, 'id'>): Promise<number>;
+  addSnapshot(snapshot: SnapshotInput): Promise<number>;
   readAutomaticSnapshots(chapterId: number): Promise<Snapshot[]>;
   deleteSnapshots(ids: number[]): Promise<void>;
 };

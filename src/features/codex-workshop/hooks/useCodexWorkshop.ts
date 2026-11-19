@@ -1,7 +1,8 @@
 import { useProjectChapters } from '@/src/hooks/useChapterQueries';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { updateCodexEntry, addCodexEntry } from '@/src/services/codexOperations';
-import { addChatSession, updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
+import { addChatSession, updateChatSession, deleteChatSession, findWorkshopSession } from '@/src/services/chatSessionOperations';
+import { workshopEntryKey } from '@/src/lib/workshopReference';
 import { db } from '@/src/db';
 import { CodexEntry, ChatMessage } from '@/src/types';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
@@ -101,7 +102,7 @@ export function useCodexWorkshop(projectId: number) {
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
 
   const workshopKey = useMemo(() => {
-    if (mode === 'edit' && entryId) return `entry:${entryId}`;
+    if (mode === 'edit' && entryId) return workshopEntryKey(entryId);
     const seed = (workshopTarget?.seedName || '').trim().toLowerCase();
     return `new:${seed || '__blank__'}`;
   }, [mode, entryId, workshopTarget?.seedName]);
@@ -206,10 +207,7 @@ export function useCodexWorkshop(projectId: number) {
     let promise = workshopLocks.get(lockKey);
     if (!promise) {
       promise = (async () => {
-        const existing = await db.chatSessions
-          .where('projectId').equals(projectId)
-          .and((s) => s.kind === 'workshop' && s.workshopKey === workshopKey)
-          .first();
+        const existing = await findWorkshopSession(projectId, workshopKey);
         if (existing?.id) return { id: existing.id, messages: existing.messages };
         const id = await addChatSession({
           projectId,

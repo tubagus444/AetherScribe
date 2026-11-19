@@ -57,9 +57,8 @@ export function StudioTabBar() {
     return null;
   }
 
-  const handleTabClick = (tab: StudioTabDef) => {
-    rememberLastActiveTab(studioId, tab.mode);
-    setViewMode(tab.mode);
+  const handleTabClick = async (tab: StudioTabDef) => {
+    if (await setViewMode(tab.mode)) rememberLastActiveTab(studioId, tab.mode);
   };
 
   return (

@@ -56,10 +56,18 @@ Status pelaksanaan dicatat di tabel ini.
 
 ### Hasil DB01
 
-- Isi bab disimpan setelah jeda 1,5 detik. Pembacaan untuk cadangan menunggu
-  penyimpanan editor aktif. Footer menampilkan gagal simpan dan hasil tulis lama
-  tidak menandai edit yang lebih baru sebagai tersimpan. Kegagalan simpan judul
-  dilaporkan lewat notifikasi.
+- Isi bab disimpan setelah jeda 1,5 detik. Pencadangan menunggu perubahan lokal
+  yang tertunda. Jika editor belum diedit, cadangan langsung membaca isi terbaru
+  dari database. Jika isi berubah sejak editor memuatnya, transaksi menolak
+  penimpaan dan pencadangan dibatalkan dengan draf tetap terbuka. Footer
+  menampilkan status simpan, dan kegagalan simpan judul dilaporkan lewat notifikasi.
+  [Uji pencadangan antartab](e2e/critical.spec.ts)
+- Perpindahan panel atau bab dari editor menunggu simpan draf. Bila gagal,
+  editor tetap terbuka dan pengguna dapat mencoba perpindahan lagi setelah
+  penyimpanan pulih. [Uji perpindahan setelah gagal simpan](e2e/critical.spec.ts)
+- Cadangan penuh dan cadangan pengaman mempertahankan teks snapshot yang
+  kehilangan bab induk. Pemulihan menandai ID historis agar riwayat tidak
+  terhubung ke bab baru. [Aturan cadangan penuh](docs/backup-format.md#scope-dan-validasi)
 - Pemeriksaan kuota saat aplikasi dibuka tetap memberi peringatan di atas 80%.
   Permintaan persistensi tersedia di **Pengaturan → Data & Cadangan** saat API
   peramban mendukungnya. Penolakan dan API yang tidak tersedia tetap memungkinkan
@@ -99,6 +107,11 @@ Status pelaksanaan dicatat di tabel ini.
   bersama 12 tes lainnya.
 
 ### Hasil DB03
+
+- Penulisan, pencarian sesi, penghapusan, dan impor memakai ID numerik yang
+  sama untuk kunci Workshop. Validasi berkas memeriksa target sebelum
+  konfirmasi. Ekspor workspace lama menyertakan sesi yang targetnya telah
+  dihapus sebagai chat Studio dengan pesan utuh.
 
 - Layanan membedakan input pembuatan, patch, dan record tersimpan. Penulisan
   memvalidasi nilai dan memeriksa target referensi dalam transaksi yang sama.

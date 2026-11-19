@@ -6,8 +6,10 @@ import { normalizeViewMode } from '@/src/lib/studioNavigation';
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { ViewMode, WorkshopTarget } from '@/src/types';
 import { useProject } from '@/src/contexts/ProjectContext';
+import { flushActiveEditor, getActiveEditorChapterId } from '@/src/features/editor/editorBridge';
 
 const VIEW_MODE_STORAGE_KEY = 'aether_view_mode';
 /** Baca panel terakhir dari localStorage; fallback ke 'write' bila kosong/tidak valid. */
@@ -22,9 +24,9 @@ function loadInitialViewMode(): ViewMode {
 
 interface NavigationContextType {
   activeChapterId: number | null;
-  setActiveChapterId: (id: number | null) => void;
+  setActiveChapterId: (id: number | null) => Promise<boolean>;
   viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
+  setViewMode: (mode: ViewMode) => Promise<boolean>;
   /** Teks yang harus disorot & di-scroll di editor setelah berpindah ke sana. */
   pendingHighlight: string | null;
   /** Pindah ke editor pada bab tertentu lalu sorot sepotong teks (mis. dari Cek Konsistensi). */
@@ -62,37 +64,69 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const prevProjectIdRef = useRef<number | null>(null);
   // Panel asal sebelum membuka Lokakarya, agar tombol Kembali memulihkan tempat semula.
   const workshopReturnRef = useRef<ViewMode>('codex');
+  const navigationRequest = useRef(0);
+
+  const navigate = useCallback((leavesEditor: boolean, apply: () => void): Promise<boolean> => {
+    const request = ++navigationRequest.current;
+    if (!leavesEditor || getActiveEditorChapterId() === null) {
+      apply();
+      return Promise.resolve(true);
+    }
+    // Editor menampilkan kegagalan dan mempertahankan draf untuk percobaan berikutnya.
+    return flushActiveEditor().then(() => {
+      if (navigationRequest.current !== request) return false;
+      // Lepas editor sebelum ia menerima input berikutnya setelah simpan berhasil.
+      flushSync(apply);
+      return true;
+    }, () => false);
+  }, []);
+
+  const selectChapter = useCallback((id: number | null) => {
+    if (id === activeChapterId) return Promise.resolve(true);
+    return navigate(viewMode === 'write', () => setActiveChapterId(id));
+  }, [activeChapterId, navigate, viewMode]);
+
+  const selectView = useCallback((mode: ViewMode) => {
+    const next = normalizeViewMode(mode, !!workshopTarget);
+    if (next === viewMode) return Promise.resolve(true);
+    return navigate(viewMode === 'write', () => setViewMode(next));
+  }, [navigate, viewMode, workshopTarget]);
 
   const jumpToText = useCallback((chapterId: number, text: string) => {
-    setActiveChapterId(chapterId);
-    setViewMode('write');
-    setPendingHighlight(text);
-  }, []);
+    void navigate(viewMode === 'write' && chapterId !== activeChapterId, () => {
+      setActiveChapterId(chapterId);
+      setViewMode('write');
+      setPendingHighlight(text);
+    });
+  }, [activeChapterId, navigate, viewMode]);
 
   const clearPendingHighlight = useCallback(() => setPendingHighlight(null), []);
 
   const openCodexEntry = useCallback((entryId: number) => {
-    setPendingCodexEntryId(entryId);
-    setViewMode('codex');
-  }, []);
+    void navigate(viewMode === 'write', () => {
+      setPendingCodexEntryId(entryId);
+      setViewMode('codex');
+    });
+  }, [navigate, viewMode]);
 
   const clearPendingCodexEntry = useCallback(() => setPendingCodexEntryId(null), []);
 
   const openAtlasMarker = useCallback((mapId: number, markerId?: number) => {
-    setPendingAtlasTarget({ mapId, markerId });
-    setViewMode('atlas');
-  }, []);
+    void navigate(viewMode === 'write', () => {
+      setPendingAtlasTarget({ mapId, markerId });
+      setViewMode('atlas');
+    });
+  }, [navigate, viewMode]);
 
   const clearPendingAtlasTarget = useCallback(() => setPendingAtlasTarget(null), []);
 
   const openWorkshop = useCallback((target: WorkshopTarget) => {
-    setViewMode(prev => {
-      // 'workshop' bersifat transien — jangan jadikan titik kembali bila dibuka berulang.
-      if (prev !== 'workshop') workshopReturnRef.current = prev;
-      return 'workshop';
+    void navigate(viewMode === 'write', () => {
+      if (viewMode !== 'workshop') workshopReturnRef.current = viewMode;
+      setWorkshopTarget(target);
+      setViewMode('workshop');
     });
-    setWorkshopTarget(target);
-  }, []);
+  }, [navigate, viewMode]);
 
   const closeWorkshop = useCallback(() => {
     setWorkshopTarget(null);
@@ -152,9 +186,9 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   return (
     <NavigationContext.Provider value={{
       activeChapterId,
-      setActiveChapterId,
+      setActiveChapterId: selectChapter,
       viewMode,
-      setViewMode: mode => setViewMode(normalizeViewMode(mode, !!workshopTarget)),
+      setViewMode: selectView,
       pendingHighlight,
       jumpToText,
       clearPendingHighlight,

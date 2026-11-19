@@ -10,6 +10,7 @@ import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ErrorService } from '@/src/services/errorService';
 import { oramaSync } from '@/src/services/rag/oramaSync';
+import { flushActiveEditor } from '@/src/features/editor/editorBridge';
 
 interface ProjectContextType {
   projectId: number | null;
@@ -40,11 +41,16 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     projectId ? db.projects.get(projectId) : undefined
   , [projectId]);
 
+  const activateProject = useCallback(async (id: number) => {
+    await updateProject(id, { lastOpened: Date.now() });
+    setProjectId(id);
+    oramaSync.init(id);
+  }, []);
+
   const switchProject = useCallback(async (id: number) => {
+    await flushActiveEditor();
     try {
-      await updateProject(id, { lastOpened: Date.now() });
-      setProjectId(id);
-      oramaSync.init(id);
+      await activateProject(id);
     } catch (error) {
       ErrorService.log({
         message: 'Failed to switch project',
@@ -54,9 +60,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, []);
+  }, [activateProject]);
 
   const createProject = useCallback(async (name: string) => {
+    await flushActiveEditor();
     try {
       const newId = await createProjectWithChapter(name);
       setProjectId(newId);
@@ -79,6 +86,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const deletingActive = projectId === id;
       let nextId: number | undefined;
       if (deletingActive) {
+        await flushActiveEditor();
         const other = await db.projects.where('id').notEqual(id).first();
         nextId = other?.id;
       }
@@ -88,7 +96,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       // Pindah proyek hanya setelah penghapusan sukses.
       if (deletingActive) {
         if (nextId) {
-          await switchProject(nextId);
+          await activateProject(nextId);
         } else {
           const defaultId = await ensureDefaultProject();
           if (defaultId) setProjectId(defaultId);
@@ -103,7 +111,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       });
       throw error;
     }
-  }, [projectId, switchProject]);
+  }, [activateProject, projectId]);
 
   // Memo value + useCallback agar konsumen/anak ber-memo tidak re-render sia-sia. (LQ2)
   const value = useMemo(() => ({

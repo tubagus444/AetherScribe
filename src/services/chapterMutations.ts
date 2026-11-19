@@ -1,4 +1,4 @@
-import { chapterCreateInput, type ChapterCreateInput, type ChapterPatch } from '@/src/lib/chapterContracts';
+import { ChapterContentConflictError, chapterCreateInput, type ChapterCreateInput, type ChapterPatch } from '@/src/lib/chapterContracts';
 import type { ChapterStorage, ChapterTransactions } from '@/src/lib/chapterStorage';
 import { assertWriteId } from '@/src/lib/dataContracts';
 import { flushActiveEditor, getActiveEditorChapterId, reloadActiveEditor } from '@/src/features/editor/editorBridge';
@@ -9,10 +9,16 @@ import { requireSnapshot, saveAutoSnapshot } from './chapterSnapshots';
 
 const chapterNotInProject = 'Bab tidak ditemukan dalam proyek ini.';
 
-async function saveContent(patch: ChapterStorage['patchChapter'], id: number, content: string) {
+async function saveContent(repository: ChapterTransactions['edit'], id: number, content: string, baseContent?: string) {
   assertWriteId(id, 'ID bab');
   validateWriteFields('chapters', { content }, 'patch');
-  const affected = await patch(id, { content, lastModified: Date.now() });
+  if (baseContent !== undefined) {
+    const current = await repository.readChapter(id);
+    if (!current) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
+    if (current.content === content) return;
+    if (current.content !== baseContent) throw new ChapterContentConflictError();
+  }
+  const affected = await repository.patchChapter(id, { content, lastModified: Date.now() });
   if (affected !== 1) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
 }
 
@@ -30,8 +36,9 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
       return affected;
     },
 
-    saveChapterContent(id: number, content: string) {
-      return saveContent(storage.patchChapter, id, content);
+    async saveChapterContent(id: number, content: string, baseContent: string) {
+      if (typeof baseContent !== 'string') throw new Error('Isi awal bab tidak tersedia.');
+      return storage.transact('edit', repository => saveContent(repository, id, content, baseContent));
     },
 
     async moveChapter(projectId: number, chapterId: number, targetId: number, adoptStatus: boolean) {
@@ -85,7 +92,7 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
           const { html, count } = replaceInHtml(content, regex, replacement);
           if (!count) continue;
           await saveAutoSnapshot(repositories, chapter.id!, content, `Sebelum ganti ${count}× "${query}"`);
-          await saveContent(repositories.patchChapter, chapter.id!, html);
+          await saveContent(repositories, chapter.id!, html);
           totalReplaced += count;
           chaptersChanged++;
         }
@@ -104,7 +111,7 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
         if (!chapter) throw new Error('Record chapters tidak ditemukan.');
         const snapshot = await requireSnapshot(repositories, chapterId, snapshotId);
         await saveAutoSnapshot(repositories, chapterId, chapter.content, 'Sebelum pemulihan');
-        await saveContent(repositories.patchChapter, chapterId, snapshot.content);
+        await saveContent(repositories, chapterId, snapshot.content);
       });
       if (getActiveEditorChapterId() === chapterId) await reloadActiveEditor();
     },
@@ -134,6 +141,7 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
 
       assertWriteId(chapterId, 'ID bab');
       if (action === 'delete') {
+        if (getActiveEditorChapterId() === chapterId) await flushActiveEditor();
         await storage.transact('remove', async repositories => {
           const rows = await repositories.readProjectChapters(projectId, 'manuscript');
           const index = rows.findIndex(row => row.id === chapterId);

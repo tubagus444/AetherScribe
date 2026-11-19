@@ -89,6 +89,25 @@ test('DB01 restores a full downloaded file into a fresh browser context', async 
   }
 });
 
+test('DB01 restores a downloaded workspace containing a legacy orphan snapshot', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.snapshots.add({ id: 19, chapterId: 999, content: '<p>Draf historis</p>', label: 'Versi lama', timestamp: 1 });
+  });
+  await settings(page);
+  const file = await exported(page, false);
+  const expected = { id: 19, chapterId: 999, content: '<p>Draf historis</p>', label: 'Versi lama', timestamp: 1, orphaned: true };
+  expect(JSON.parse(file.buffer.toString()).data.snapshots).toContainEqual(expected);
+  expect((await state(page)).snapshots.find(row => row.id === 19)).not.toHaveProperty('orphaned');
+
+  await choose(page, false, file);
+  const dialog = page.getByRole('alertdialog', { name: 'Timpa semua data?' });
+  await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
+  await expect.poll(async () => (await state(page)).snapshots.find(row => row.id === 19)).toEqual(expected);
+  expect((await state(page)).chapters).toHaveLength(2);
+});
+
 for (const supported of [true, false]) {
   test(`DB01 persistence ${supported ? 'denied' : 'unavailable'} allows file backup`, async ({ page }) => {
     await page.evaluate(supported => {
@@ -167,6 +186,37 @@ test('L03 project export/import file chooser permits cancellation then remaps a 
   expect(copiedCodex?.id).not.toBe(1);
   expect(after.markers.find(m => m.projectId === imported?.id)?.codexId).toBe(copiedCodex?.id);
   expect(after.timeline.find(e => e.projectId === imported?.id)?.characterIds).toEqual([copiedCodex?.id]);
+});
+
+test('Workshop exports preserve legacy messages and reject dangling file links before import confirmation', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.chatSessions.add({ projectId: 1, kind: 'workshop', workshopKey: 'entry:099', title: 'Lokakarya lama',
+      lastMessageAt: 1, messages: [{ role: 'user', content: 'Teks lama entry:099', timestamp: 1 }] });
+  });
+  await settings(page);
+  const file = await exported(page, true);
+  const parsed = JSON.parse(file.buffer.toString());
+  expect(parsed.data.chatSessions[0]).toMatchObject({ kind: 'studio', messages: [{ content: 'Teks lama entry:099' }] });
+  expect(parsed.data.chatSessions[0]).not.toHaveProperty('workshopKey');
+
+  delete parsed.checksum;
+  parsed.data.chatSessions[0].workshopKey = 'entry:099';
+  await choose(page, true, { ...file, buffer: Buffer.from(JSON.stringify(parsed)) });
+  await expect(page.getByText(/chatSessions\.workshopKey referensi tidak valid/)).toBeVisible();
+  const dialog = page.getByRole('alertdialog', { name: 'Impor sebagai proyek baru?' });
+  await expect(dialog).toHaveCount(0);
+  expect((await state(page)).projects).toHaveLength(2);
+
+  await choose(page, true, file);
+  await dialog.getByRole('button', { name: 'Ya, impor' }).click();
+  await expect.poll(() => page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    return (await db.chatSessions.toArray()).filter(row => row.projectId !== 1).map(({ kind, workshopKey, messages }) =>
+      ({ kind, workshopKey, text: messages[0]?.content }));
+  })).toEqual([{ kind: 'studio', text: 'Teks lama entry:099' }]);
 });
 
 test('L03 full restore can be cancelled then restores file data and retains safety snapshot', async ({ page }) => {

@@ -8,7 +8,9 @@ import { flushActiveEditor, reloadActiveEditor } from '../editorBridge';
 import { EditorPanelContext } from '@/src/contexts/EditorPanelContext';
 
 const { update, get } = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }));
-vi.mock('@/src/db', () => ({ db: { chapters: { update, get } } }));
+vi.mock('@/src/db', () => ({
+  db: { chapters: { update, get }, transaction: (_mode: string, _tables: unknown, run: () => Promise<unknown>) => run() },
+}));
 const { titleError } = vi.hoisted(() => ({ titleError: vi.fn() }));
 vi.mock('@/src/hooks/useToast', () => ({ useToast: () => ({ toast: { error: titleError } }) }));
 
@@ -21,21 +23,30 @@ describe('F05 editor persistence', () => {
       {children}
     </EditorPanelContext.Provider>
   );
-  const mount = () => renderHook(() => useEditorSave({ chapterId: 1, chapter: { title: 'Bab' }, editor }), { wrapper });
+  const baseContent = '<p>database lama</p>';
+  const mount = () => renderHook(() => useEditorSave({ chapterId: 1, chapter: { title: 'Bab', content: baseContent }, editor }), { wrapper });
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     update.mockResolvedValue(1);
-    get.mockResolvedValue({ content: '<p>database lama</p>' });
+    get.mockResolvedValue({ content: baseContent });
     html = '<p>draft terbaru</p>';
     editor = { getHTML: () => html, isDestroyed: false, commands: { setContent: vi.fn() } } as unknown as Editor;
   });
   afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
-  it.each(['reject', 'missing'])('rejects flush on %s, keeps draft and permits retry', async failure => {
+  it('does not read or write chapter content when flushing an untouched editor', async () => {
     mount();
+    await flushActiveEditor();
+    expect(get).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it.each(['reject', 'missing'])('rejects flush on %s, keeps draft and permits retry', async failure => {
+    const { result } = mount();
+    act(() => result.current.onEditorUpdate({ editor }));
     if (failure === 'reject') update.mockRejectedValueOnce(new Error('quota'));
     else update.mockResolvedValueOnce(0);
     await expect(flushActiveEditor()).rejects.toThrow();
@@ -47,11 +58,12 @@ describe('F05 editor persistence', () => {
   });
 
   it('does not reload over a draft after a failed save', async () => {
-    mount();
+    const { result } = mount();
+    act(() => result.current.onEditorUpdate({ editor }));
     update.mockRejectedValueOnce(new Error('quota'));
     await flushActiveEditor().catch(() => {});
     await expect(reloadActiveEditor()).rejects.toThrow();
-    expect(get).not.toHaveBeenCalled();
+    expect(get).toHaveBeenCalledTimes(1);
     expect(editor.commands.setContent).not.toHaveBeenCalled();
   });
 
@@ -63,24 +75,30 @@ describe('F05 editor persistence', () => {
     expect(titleError).toHaveBeenCalledWith(expect.stringContaining('Gagal menyimpan judul'));
   });
 
-  it('keeps a newer edit pending when an earlier save finishes', async () => {
+  it('flushes a newer edit after the in-flight write and waits for both', async () => {
     const { result } = mount();
     let finish!: (affected: number) => void;
-    update.mockReturnValueOnce(new Promise<number>(resolve => { finish = resolve; }));
+    let finishSecond!: (affected: number) => void;
+    update.mockReturnValueOnce(new Promise<number>(resolve => { finish = resolve; }))
+      .mockReturnValueOnce(new Promise<number>(resolve => { finishSecond = resolve; }));
+    get.mockResolvedValueOnce({ content: baseContent }).mockResolvedValueOnce({ content: html });
+    act(() => result.current.onEditorUpdate({ editor }));
     const firstSave = flushActiveEditor();
     html = '<p>edit lebih baru</p>';
     act(() => result.current.onEditorUpdate({ editor }));
-    finish(1);
-    await firstSave;
+    await act(async () => { finish(1); });
+    expect(update).toHaveBeenNthCalledWith(2, 1, expect.objectContaining({ content: html }));
     expect(status).toHaveBeenLastCalledWith('Menyimpan...');
-    await act(() => vi.advanceTimersByTimeAsync(1500));
+    await act(async () => { finishSecond(1); await firstSave; });
     expect(status).toHaveBeenLastCalledWith('Tersimpan');
+    await act(() => vi.advanceTimersByTimeAsync(1500));
+    expect(update).toHaveBeenCalledTimes(2);
   });
 
   it.each(['', '<p></p>', '<p>isi baru</p>'])('flushes current content %j and cancels debounce', async content => {
     const { result } = mount();
-    act(() => result.current.onEditorUpdate({ editor }));
     html = content;
+    act(() => result.current.onEditorUpdate({ editor }));
     await flushActiveEditor();
     await act(() => vi.advanceTimersByTimeAsync(1500));
     expect(update).toHaveBeenCalledTimes(1);
@@ -91,8 +109,11 @@ describe('F05 editor persistence', () => {
 
   it('keeps failure visible past an older saved-status timer and handles autosave rejection', async () => {
     const { result } = mount();
+    act(() => result.current.onEditorUpdate({ editor }));
     await flushActiveEditor();
     update.mockRejectedValueOnce(new Error('quota'));
+    get.mockResolvedValueOnce({ content: html });
+    html = '<p>perubahan baru</p>';
     act(() => result.current.onEditorUpdate({ editor }));
     await act(() => vi.advanceTimersByTimeAsync(3500));
     expect(status).toHaveBeenLastCalledWith('Gagal menyimpan');

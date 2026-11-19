@@ -5,6 +5,7 @@ const reasonLabels: Record<IntegrityIssue['reason'], string> = {
   invalid: 'ID tidak valid',
   missing: 'Target tidak ditemukan',
   'cross-project': 'Target berada di proyek lain',
+  detached: 'Snapshot tanpa bab induk. Teks tersedia dalam cadangan penuh.',
 };
 
 export function DataIntegritySection() {
