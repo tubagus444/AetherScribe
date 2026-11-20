@@ -24,6 +24,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
   agar tetap terbaca pada panel sempit.
 - Perlebar dialog Kelola Kategori dan tampilkan di atas navigasi aplikasi.
   Daftar kategori kustom dapat digulir sendiri pada desktop.
+- Tampilkan detail Codex di atas header aplikasi, dengan judul tetap terlihat
+  saat isi digulir. Ringkas jumlah alias dan tag pada kartu.
+- Susun dialog detail Codex dalam dua kolom pada layar lebar. Konten panjang
+  pada deskripsi dan field dapat digulir di areanya masing-masing.
+- Perlebar dialog detail, sembunyikan bilah gulir, dan gunakan ruang kolom
+  sampai bawah untuk deskripsi pada desktop.
+- Pindahkan Hubungan, Kemunculan, dan Disebut oleh ke tab Keterkaitan pada
+  dialog detail Codex.
 
 ## 2026-11-19
 

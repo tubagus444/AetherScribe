@@ -578,6 +578,116 @@ test('Codex saves optional details and shows the current value and chapter histo
   await expect(card.getByText('Kembali berlatih', { exact: true })).toBeVisible();
 });
 
+test('Codex keeps the detail header visible while a long entry scrolls on desktop and phone', async ({ page }) => {
+  const entryName = 'Negeri dengan Catatan Codex Panjang';
+  await page.evaluate(async name => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.codex.update(1, {
+      name,
+      description: 'Catatan sejarah penduduk dan penguasa negeri ini.\n\n'.repeat(40),
+      aliases: Array.from({ length: 24 }, (_, index) => `Nama negeri ${index + 1}`),
+      tags: Array.from({ length: 24 }, (_, index) => `catatan-${index + 1}`),
+      details: [{ id: 'kronologi', label: 'Kronologi', value: 'Catatan sejarah dari masa pemerintahan lama.\n'.repeat(35), includeInAI: false }],
+    });
+    await db.codex.add({ id: 3, projectId: 1, name: 'Penjaga Arsip', category: 'character', aliases: [], tags: [], description: `Menjaga arsip ${name}.` });
+    await db.chapters.update(1, { content: `<p>Perjalanan ke ${name}.</p>` });
+    localStorage.setItem('aether_view_mode', 'codex');
+  }, entryName);
+  await page.reload();
+
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: entryName }) });
+  const dialog = page.getByRole('dialog', { name: entryName });
+  const body = dialog.getByRole('region', { name: 'Isi entri Codex' });
+  const description = dialog.getByRole('region', { name: 'Teks deskripsi' });
+  const details = dialog.getByRole('region', { name: 'Detail entri' });
+  const field = details.getByRole('region', { name: 'Nilai Kronologi' });
+  const detailsTab = dialog.getByRole('tab', { name: 'Deskripsi & Detail' });
+  const linksTab = dialog.getByRole('tab', { name: 'Keterkaitan' });
+  const links = dialog.getByRole('tabpanel', { name: 'Keterkaitan' });
+  const close = dialog.getByRole('button', { name: 'Tutup', exact: true });
+  const heading = dialog.getByRole('heading', { name: entryName });
+
+  for (const width of [1280, 390]) {
+    if (width === 390) await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+    await page.setViewportSize({ width, height: 500 });
+    await expect(card.getByText('+21 alias', { exact: true })).toBeVisible();
+    await expect(card.getByText('+21 tag', { exact: true })).toBeVisible();
+    await card.getByRole('heading', { name: entryName }).click();
+    await expect(heading).toBeInViewport({ ratio: 1 });
+    await close.click({ trial: true });
+    const bounds = await dialog.boundingBox();
+    expect(bounds!.y).toBeGreaterThanOrEqual(10);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(490);
+    await expect(body.getByText('Nama negeri 24', { exact: true })).toBeVisible();
+    await expect(body.getByText('#catatan-24', { exact: true })).toBeVisible();
+
+    const descriptionBox = (await description.boundingBox())!;
+    const fieldBox = (await field.boundingBox())!;
+    if (width === 1280) {
+      expect(bounds!.width).toBeGreaterThanOrEqual(width - 42);
+      expect(fieldBox.x).toBeGreaterThanOrEqual(descriptionBox.x + descriptionBox.width);
+      expect(bounds!.y + bounds!.height - (descriptionBox.y + descriptionBox.height)).toBeLessThanOrEqual(26);
+      await expect(field).toBeInViewport({ ratio: 1 });
+    } else {
+      expect(fieldBox.y).toBeGreaterThanOrEqual(descriptionBox.y + descriptionBox.height);
+    }
+    const pane = width === 1280 ? details : body;
+    await expect(pane).toHaveCSS('scrollbar-width', 'none');
+    await expect(field).toHaveCSS('scrollbar-width', 'none');
+    await expect(description).toHaveCSS('scrollbar-width', 'none');
+    await field.hover();
+    const paneScroll = await pane.evaluate(element => element.scrollTop);
+    await page.mouse.wheel(0, 70);
+    await expect.poll(() => field.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    expect(await pane.evaluate(element => element.scrollTop)).toBe(paneScroll);
+    expect(await description.evaluate(element => element.scrollTop)).toBe(0);
+    await description.focus();
+    await page.keyboard.press('End');
+    await expect.poll(() => description.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThan(1);
+
+    await expect(detailsTab).toHaveAttribute('aria-selected', 'true');
+    await expect(dialog.getByRole('heading', { name: 'Kemunculan' })).toHaveCount(0);
+    const descriptionScroll = await description.evaluate(element => {
+      element.scrollTo({ top: 80, behavior: 'instant' });
+      return element.scrollTop;
+    });
+    await detailsTab.press('ArrowRight');
+    await expect(linksTab).toBeFocused();
+    await expect(linksTab).toHaveAttribute('aria-selected', 'true');
+    await expect(dialog.getByRole('region', { name: 'Teks deskripsi' })).toHaveCount(0);
+    await expect(links.getByRole('heading', { name: 'Hubungan' })).toBeVisible();
+    await expect(links.getByRole('heading', { name: 'Kemunculan' })).toBeVisible();
+    await expect(links.getByRole('heading', { name: 'Disebut oleh' })).toBeVisible();
+    await expect(links.getByRole('button', { name: 'Penjaga Arsip' })).toBeVisible();
+    await links.getByRole('button', { name: 'Cek Kemunculan di Chapter' }).click();
+    await expect(links.getByRole('button', { name: 'L03 Chapter 1' })).toBeVisible();
+    if (width === 1280) {
+      await links.getByTitle('Entri tujuan').selectOption('3');
+      await links.getByRole('button', { name: 'Tambah', exact: true }).click();
+      await expect(links.getByTitle('Hapus hubungan', { exact: true })).toHaveCount(2);
+      await links.getByTitle('Hapus hubungan', { exact: true }).last().click();
+      await expect(links.getByTitle('Hapus hubungan', { exact: true })).toHaveCount(1);
+    }
+    await detailsTab.click();
+    expect(await description.evaluate(element => element.scrollTop)).toBe(descriptionScroll);
+    await expect(heading).toBeInViewport({ ratio: 1 });
+    if (width === 390) {
+      await linksTab.click();
+      await expect(links.getByRole('button', { name: 'L03 Chapter 1' })).toBeVisible();
+      await links.getByRole('button', { name: 'Penjaga Arsip' }).click();
+      const related = page.getByRole('dialog', { name: 'Penjaga Arsip' });
+      const relatedTab = related.getByRole('tab', { name: 'Deskripsi & Detail' });
+      await expect(relatedTab).toHaveAttribute('aria-selected', 'true');
+      await expect(relatedTab).toBeFocused();
+      await related.getByRole('button', { name: 'Tutup', exact: true }).click();
+    } else {
+      await close.click();
+    }
+    await expect(dialog).toBeHidden();
+  }
+});
+
 test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';

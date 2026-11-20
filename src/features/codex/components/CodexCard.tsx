@@ -20,6 +20,8 @@ interface CodexCardProps {
   onSelect: (entry: CodexEntry) => void;
 }
 
+const metadataPreviewLimit = 3;
+
 // Dimemo-kan: di daftar virtual, kartu terus mount/unmount saat scroll — memo
 // mencegah render ulang kartu yang props-nya tak berubah (mis. saat mengetik di
 // kotak cari). Deskripsi sengaja dirender sebagai teks polos, BUKAN
@@ -46,6 +48,8 @@ function CodexCardImpl({
   }).slice(0, 2);
   // Kelengkapan worldbuilding (#11): status kematangan (badge kecil).
   const status = effectiveStatus(entry);
+  const aliases = entry.aliases ?? [];
+  const tags = entry.tags ?? [];
 
   return (
     <article
@@ -71,7 +75,7 @@ function CodexCardImpl({
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                <span className="min-w-0 break-words text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                <span className="line-clamp-2 min-w-0 break-words text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
                   {getCategoryLabel(entry.category, categories)}
                 </span>
                 <WorldStatusBadge status={status.status} suggested={status.suggested} size="sm" />
@@ -117,27 +121,33 @@ function CodexCardImpl({
           <AppearancesList entry={entry} projectId={projectId} />
         </div>
 
-        {(entry.aliases?.length ?? 0) > 0 && (
+        {aliases.length > 0 && (
           <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
               <Tag size={12} /> Alias:
             </span>
-            {entry.aliases!.map(a => (
-              <span key={a} className="min-w-0 break-words text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+            {aliases.slice(0, metadataPreviewLimit).map(a => (
+              <span key={a} className="max-w-full truncate text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
                 {a}
               </span>
             ))}
+            {aliases.length > metadataPreviewLimit && (
+              <span className="self-center text-[11px] text-slate-500 dark:text-slate-400">+{aliases.length - metadataPreviewLimit} alias</span>
+            )}
           </div>
         )}
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          {(entry.tags?.length ?? 0) > 0 ? (
+          {tags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5 min-w-0">
-              {entry.tags!.map(t => (
-                <span key={t} className="min-w-0 break-words text-[10px] font-semibold text-indigo-500 dark:text-indigo-400">
+              {tags.slice(0, metadataPreviewLimit).map(t => (
+                <span key={t} className="max-w-full truncate text-[10px] font-semibold text-indigo-500 dark:text-indigo-400">
                   #{t}
                 </span>
               ))}
+              {tags.length > metadataPreviewLimit && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">+{tags.length - metadataPreviewLimit} tag</span>
+              )}
             </div>
           ) : <span />}
 

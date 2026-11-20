@@ -84,6 +84,16 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
   mengukur tinggi per baris sehingga kartu dengan isi berbeda dapat
   menyesuaikan tingginya. Tombol Asisten AI berada di deretan aksi Codex.
   Indikator pengindeksan aktif mendapat ruang di bawah panel.
+- Kartu menampilkan pratinjau hingga tiga alias dan tiga tag. Dialog detail
+  menampilkan daftar lengkap di atas navigasi aplikasi. Di layar lebar,
+  deskripsi dan identitas tampil di kiri dan detail entri di kanan.
+  Deskripsi, nilai detail, dan riwayat yang panjang memiliki area gulir
+  sendiri. Di layar sempit, kedua bagian ditumpuk. Judul dan tombol tutup
+  tetap terlihat saat membaca entri.
+  Bilah gulir dialog disembunyikan. Di layar lebar, alias, tag, dan tanggal
+  lahir tampil di atas deskripsi agar teks bisa mengisi kolom sampai bawah.
+  Tab **Keterkaitan** memuat Hubungan, Kemunculan, dan Disebut oleh. Beralih
+  tab mempertahankan posisi baca deskripsi dan field.
 - Label kategori dan tag yang dipilih pada filter dapat tampil dalam beberapa
   baris. Kontrol memakai pilihan bawaan browser dan bisa digunakan lewat papan ketik.
 - Di formulir entri, **Tambah detail** menambahkan kolom dengan nama dan
