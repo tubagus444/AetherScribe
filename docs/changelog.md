@@ -4,6 +4,19 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-20
+
+### [UI] Perluas ruang kartu di panel Codex
+
+- Satukan gulir judul, filter, formulir, dan kartu dalam ruang panel yang
+  tersedia. Jumlah kolom mengikuti lebar panel dan baris menyesuaikan tinggi
+  kartu. Pindahkan tombol Asisten AI ke deretan aksi dan beri ruang khusus
+  untuk indikator pengindeksan aktif. [Kontrak Codex](features.md#kontrak-codex-dan-graf-lore)
+- Tampilkan label filter kategori dan tag yang panjang dalam beberapa baris
+  agar tetap terbaca pada panel sempit.
+- Perlebar dialog Kelola Kategori dan tampilkan di atas navigasi aplikasi.
+  Daftar kategori kustom dapat digulir sendiri pada desktop.
+
 ## 2026-11-19
 
 ### [Docs] Tata ulang panduan agen dan dokumentasi

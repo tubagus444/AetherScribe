@@ -12,6 +12,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 | Penguatan tipe dan modul F28 | [Inventaris](audits/2026-11-15-f28-inventory.md), [kontrak](audits/2026-11-15-f28-contracts.md), [strict](audits/2026-11-15-f28-strict.md), dan [review akhir](audits/2026-11-15-f28-review.md) |
 | Verifikasi L01–L06 | [CI Windows/Ubuntu](audits/2026-11-15-l01-ci.md), [instalasi dan migrasi](audits/2026-11-15-l02-installation.md), [alur data UI](audits/2026-11-15-l03-data-ui.md), [Atlas](audits/2026-11-15-l04-atlas-ui.md), [strict](audits/2026-11-15-l05-strict.md), dan [integrasi worker backup](audits/2026-11-15-l06-backup-integration.md) |
 | Penguatan database 18–19 November 2026 | [Hasil lokal DB01–DB08](audits/2026-11-19-db01-db08.md) |
+| Tata letak Codex 20 November 2026 | [Verifikasi gulir dan kartu Codex](audits/2026-11-20-codex-layout.md) |
 
 ## Benchmark
 

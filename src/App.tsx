@@ -33,7 +33,7 @@ const ExportManager = React.lazy(() => import('@/src/components/modals/ExportMan
 
 export default function App() {
   const { projectId, project, isLoading } = useProject();
-  const { setActiveChapterId, setViewMode } = useNavigation();
+  const { setActiveChapterId, setViewMode, viewMode } = useNavigation();
   const { 
     isFocusMode,
     setIsFocusMode,
@@ -124,7 +124,7 @@ export default function App() {
         </div>
       </div>
 
-      <IndexingIndicator />
+      <IndexingIndicator inline={viewMode === 'codex'} />
       <ProjectManagerModal />
       
       <Suspense fallback={null}>

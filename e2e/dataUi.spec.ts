@@ -348,6 +348,185 @@ test('L03 Codex delete cancellation preserves data then confirmation unlinks ref
   expect(after.chapters).toEqual(before.chapters);
 });
 
+test('Codex scrolls its toolbar away and shows the entire last card at desktop and phone widths', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.codex.bulkAdd(Array.from({ length: 24 }, (_, index) => ({
+      projectId: 1,
+      name: `Zanara ${String(index + 1).padStart(2, '0')}`,
+      category: 'location',
+      description: index % 2 ? 'Sebuah tempat di balik pegunungan. '.repeat(20) : 'Kota kecil.',
+      aliases: index % 2 ? ['Pegunungan Putih', 'Gerbang Utara', 'Lembah Teduh'] : [],
+      tags: ['jelajah'],
+    })));
+    localStorage.setItem('aether_view_mode', 'codex');
+  });
+  await page.reload();
+
+  const list = page.getByLabel('Daftar entri Codex');
+  const heading = list.getByRole('heading', { name: 'Kamus Data (Codex)' });
+  const first = list.getByRole('article').filter({ hasText: 'L03 Codex 1' });
+  const last = list.getByRole('article').filter({ hasText: 'Zanara 24' });
+
+  for (const [width, columns] of [[1536, 3], [1280, 2], [390, 1]]) {
+    if (columns === 1) await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+    await page.setViewportSize({ width, height: 560 });
+    await list.evaluate(element => { element.scrollTop = 0; });
+    await expect(heading).toBeInViewport({ ratio: 1 });
+    await expect(first).toBeInViewport();
+    await expect.poll(() => first.evaluate(card => getComputedStyle(card.parentElement!).gridTemplateColumns.split(' ').length)).toBe(columns);
+    await expect(list.getByRole('button', { name: 'Asisten AI', exact: true })).toBeInViewport({ ratio: 1 });
+
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('semantic-indexing-progress', { detail: { type: 'embedding_start' } }));
+    });
+    const indexing = page.getByRole('status').filter({ hasText: /Indexing Lore|Initializing AI models|Initializing semantic search/ });
+    await expect(indexing).toBeInViewport({ ratio: 1 });
+    const listBox = await list.boundingBox();
+    const indexingBox = await indexing.boundingBox();
+    expect(listBox!.y + listBox!.height).toBeLessThanOrEqual(indexingBox!.y);
+
+    await expect.poll(async () => {
+      await list.evaluate(element => { element.scrollTop = element.scrollHeight; });
+      if (await last.count() === 0) return false;
+      const cardBox = await last.boundingBox();
+      const viewport = await list.boundingBox();
+      return !!(cardBox && viewport && cardBox.y >= viewport.y && cardBox.y + cardBox.height <= viewport.y + viewport.height);
+    }).toBe(true);
+    await expect(heading).not.toBeInViewport();
+    await expect(last).toBeInViewport({ ratio: 1 });
+    await expect(last.getByText('#jelajah', { exact: true })).toBeInViewport({ ratio: 1 });
+    expect(await last.evaluate(card => {
+      const { right, bottom } = card.getBoundingClientRect();
+      return card.contains(document.elementFromPoint(right - 10, bottom - 10));
+    })).toBe(true);
+  }
+
+  await last.getByTitle('Ubah Entri', { exact: true }).click();
+  await expect(list.getByRole('heading', { name: 'Ubah Entri' })).toBeInViewport();
+  const save = list.getByRole('button', { name: 'Simpan Perubahan' });
+  await save.scrollIntoViewIfNeeded();
+  await expect(save).toBeInViewport({ ratio: 1 });
+  await list.getByRole('button', { name: 'Batal', exact: true }).click();
+  const search = list.getByRole('textbox', { name: 'Cari entri Codex' });
+  await search.fill('Zanara 24');
+  await expect(list.getByRole('article')).toHaveCount(1);
+  await list.evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(last).toBeInViewport({ ratio: 1 });
+});
+
+test('Codex displays the full category and tag filter labels on desktop and phone widths', async ({ page }) => {
+  const categoryLabel = 'Persekutuan Penjaga Arsip Kerajaan di Balik Pegunungan Utara';
+  const tag = 'CatatanKronologiPerjalananKePerpustakaanUtamaKerajaanUtara';
+  await page.evaluate(async ({ categoryLabel, tag }) => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.codexCategories.add({ projectId: 1, slug: 'penjaga-arsip', label: categoryLabel, icon: 'users', color: 'indigo', order: 1 });
+    await db.codex.add({ projectId: 1, name: 'Penjaga Arsip', category: 'penjaga-arsip', description: '', aliases: [], tags: [tag] });
+    localStorage.setItem('aether_view_mode', 'codex');
+  }, { categoryLabel, tag });
+  await page.reload();
+
+  const list = page.getByLabel('Daftar entri Codex');
+  const category = list.getByRole('combobox', { name: 'Filter berdasarkan kategori' });
+  const tags = list.getByRole('combobox', { name: 'Filter berdasarkan tag' });
+
+  async function expectFilterLabel(label: string, wraps: boolean) {
+    const text = list.locator('span[aria-hidden="true"]').filter({ hasText: label });
+    await expect(text).toBeInViewport({ ratio: 1 });
+    const layout = await text.evaluate(element => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const bounds = element.getBoundingClientRect();
+      const lines = Array.from(range.getClientRects());
+      return {
+        wraps: lines.length > 1,
+        fits: lines.length > 0 && lines.every(line => (
+          line.left >= bounds.left && line.right <= bounds.right + 1 && line.bottom <= bounds.bottom + 1
+        )),
+      };
+    });
+    expect(layout).toEqual({ fits: true, wraps });
+  }
+
+  await expectFilterLabel('Semua Kategori', false);
+  await expectFilterLabel('Semua Tag', false);
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 640 });
+  await expectFilterLabel('Semua Kategori', false);
+  await expectFilterLabel('Semua Tag', false);
+  await category.selectOption('penjaga-arsip');
+  await expectFilterLabel(categoryLabel, true);
+  await tags.press('End');
+  await expectFilterLabel(`#${tag}`, true);
+
+  await expect(tags).toHaveValue(tag);
+  await expect(list.getByRole('article')).toHaveCount(1);
+  await expect(list.getByRole('heading', { name: 'Penjaga Arsip', exact: true })).toBeVisible();
+});
+
+test('Codex category manager stays above the app header and scrolls a long list', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.codexCategories.bulkAdd(Array.from({ length: 32 }, (_, index) => ({
+      projectId: 1,
+      slug: `kategori-kustom-${index + 1}`,
+      label: `Kategori Kustom ${index + 1}`,
+      icon: 'users',
+      color: 'indigo',
+      order: index + 1,
+    })));
+    localStorage.setItem('aether_view_mode', 'codex');
+  });
+  await page.setViewportSize({ width: 1280, height: 500 });
+  await page.reload();
+
+  const trigger = page.getByRole('button', { name: 'Kategori', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Kelola Kategori' });
+  const close = dialog.getByRole('button', { name: 'Tutup', exact: true });
+  const input = dialog.getByRole('textbox', { name: 'Kategori baru' });
+  const builtins = dialog.getByRole('heading', { name: 'Kategori bawaan' });
+  const custom = dialog.getByRole('region', { name: 'Kategori kustom' });
+  const last = custom.getByText('Kategori Kustom 32', { exact: true });
+
+  await expect(close).toBeFocused();
+  await expect(close).toBeInViewport({ ratio: 1 });
+  await close.click({ trial: true });
+  expect((await custom.boundingBox())!.x).toBeGreaterThan((await input.boundingBox())!.x + (await input.boundingBox())!.width);
+  await expect(dialog.getByRole('listitem')).toHaveCount(6);
+  await expect(dialog.getByRole('listitem').last()).toBeInViewport({ ratio: 1 });
+
+  await custom.hover();
+  await page.mouse.wheel(0, 4000);
+  await expect(last).toBeInViewport({ ratio: 1 });
+  await expect(custom.getByText('Kategori Kustom 1', { exact: true })).not.toBeInViewport();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await expect(builtins).toBeInViewport({ ratio: 1 });
+
+  await custom.getByTitle('Hapus kategori', { exact: true }).last().click();
+  const confirm = page.getByRole('alertdialog', { name: 'Hapus "Kategori Kustom 32"?' });
+  await expect(confirm).toBeInViewport({ ratio: 1 });
+  await confirm.getByRole('button', { name: 'Batal', exact: true }).click();
+  await expect(last).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 560 });
+  await trigger.click();
+  await expect(input).toBeInViewport({ ratio: 1 });
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport({ ratio: 1 });
+  await expect(input).not.toBeInViewport();
+  await expect(close).toBeInViewport({ ratio: 1 });
+  await close.click();
+  await expect(dialog).toBeHidden();
+});
+
 test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';

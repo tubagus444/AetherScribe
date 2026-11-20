@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, Database } from 'lucide-react';
+import { cn } from '@/src/lib/utils';
 
-export function IndexingIndicator() {
+export function IndexingIndicator({ inline = false }: { inline?: boolean }) {
   const [isIndexing, setIsIndexing] = useState(false);
   const [progress, setProgress] = useState(0); 
   const [status, setStatus] = useState('');
@@ -51,11 +52,17 @@ export function IndexingIndicator() {
     <AnimatePresence>
       {isIndexing && (
         <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          initial={{ opacity: 0, y: inline ? 0 : 50, scale: inline ? 1 : 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 50, scale: 0.9 }}
+          exit={{ opacity: 0, y: inline ? 0 : 50, scale: inline ? 1 : 0.9 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="fixed bottom-6 right-6 flex items-center gap-3 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-4 py-3 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700/50 z-[9999] overflow-hidden min-w-[200px]"
+          role="status"
+          className={cn(
+            'flex items-center gap-3 overflow-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-white border-slate-200 dark:border-slate-700/50 px-4',
+            inline
+              ? 'relative shrink-0 border-t py-2'
+              : 'fixed bottom-6 right-6 z-[9999] min-w-[200px] rounded-xl border py-3 shadow-lg',
+          )}
         >
            <div 
              className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-300 ease-out" 

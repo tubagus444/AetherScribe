@@ -108,7 +108,7 @@ export function MainView() {
           )}
 
           {viewMode === 'codex' && projectId && (
-            <ViewContainer key="codex" className="z-20 !overflow-hidden">
+            <ViewContainer key="codex" className="z-20 !p-0 !overflow-hidden">
               <Suspense fallback={<LoadingFallback />}>
                 <CodexPanel projectId={projectId} />
               </Suspense>

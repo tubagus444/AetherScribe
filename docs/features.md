@@ -70,11 +70,22 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 - **Tabel DB:** `codexCategories`, `codex`
 - **Endpoint:** Tidak ada (lokal)
 - **Catatan:** Nilai field disimpan di `CodexEntry.customFields` dengan snapshot `label` agar jalur baca (ekspor & AI) mandiri tanpa perlu join tabel.
+- Dialog Kelola Kategori tampil di atas navigasi aplikasi. Pada desktop,
+  formulir ada di kiri, kategori bawaan dan kustom di kanan. Daftar kustom
+  memiliki area gulir sendiri. Pada layar sempit, isi ditumpuk dalam satu area
+  gulir dengan judul dan tombol tutup tetap terlihat.
 
 ---
 
 ## Kontrak Codex dan graf lore
 
+- Judul, aksi, filter, formulir, dan daftar entri berbagi area gulir di
+  bawah navigasi studio. Jumlah kolom mengikuti lebar panel. Virtualisasi
+  mengukur tinggi per baris sehingga kartu dengan isi berbeda dapat
+  menyesuaikan tingginya. Tombol Asisten AI berada di deretan aksi Codex.
+  Indikator pengindeksan aktif mendapat ruang di bawah panel.
+- Label kategori dan tag yang dipilih pada filter dapat tampil dalam beberapa
+  baris. Kontrol memakai pilihan bawaan browser dan bisa digunakan lewat papan ketik.
 - Gunakan `useCodexCategories`, `getCategoryDef`, dan `CategoryIcon` untuk
   kategori per proyek. Nilai field kustom menyimpan label saat entri
   disimpan agar format AI dan ekspor dapat membaca entri secara mandiri.

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Search, MessageSquareText, Database, Tags, FlaskConical, Download } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus, Search, MessageSquareText, Database, Tags, FlaskConical, Download, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScribbleAssistantPanel } from '@/src/features/assistant/components/ScribbleAssistantPanel';
 import { useNavigation } from '@/src/contexts/NavigationContext';
-import { VirtuosoGrid } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 
 import { CodexForm } from '@/src/features/codex/components/CodexForm';
 import { CodexCard } from '@/src/features/codex/components/CodexCard';
@@ -21,10 +21,52 @@ interface CodexPanelProps {
   projectId: number;
 }
 
+function CodexListHeader({ context }: { context?: React.ReactNode }) {
+  return context;
+}
+
+const codexListComponents = { Header: CodexListHeader };
+
+interface CodexFilterSelectProps {
+  label: string;
+  allLabel: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}
+
+function CodexFilterSelect({ label, allLabel, value, options, onChange }: CodexFilterSelectProps) {
+  const selectedLabel = value === 'all'
+    ? allLabel
+    : options.find(option => option.value === value)?.label ?? allLabel;
+
+  return (
+    <div className="relative flex min-w-0 max-w-full grow basis-40 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-indigo-500 sm:max-w-64 md:basis-auto xl:grow-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+      {/* Render the selected text separately so it can wrap while the native picker handles input. */}
+      <span aria-hidden="true" className="min-w-0 [overflow-wrap:anywhere]">{selectedLabel}</span>
+      <ChevronDown aria-hidden="true" size={16} className="shrink-0" />
+      <select
+        aria-label={label}
+        title={label}
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        className="absolute inset-0 size-full cursor-pointer bg-white text-slate-900 opacity-0 dark:bg-slate-900 dark:text-slate-200"
+      >
+        <option value="all">{allLabel}</option>
+        {options.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function CodexPanel({ projectId }: CodexPanelProps) {
   const { openWorkshop, pendingCodexEntryId, clearPendingCodexEntry } = useNavigation();
   const { toast } = useToast();
   const [isManagingCategories, setIsManagingCategories] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
   const {
     entries,
     filteredEntries,
@@ -67,6 +109,27 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
     resolveDangling
   } = useCodexPanel(projectId);
 
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(([{ contentRect }]) => {
+      // Allow roughly 320px per card and a 16px gap between cards.
+      setColumns(contentRect.width >= 992 ? 3 : contentRect.width >= 656 ? 2 : 1);
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  const rows = useMemo(() => {
+    const result = [];
+    if (!isAdding) {
+      for (let index = 0; index < filteredEntries.length; index += columns) {
+        result.push(filteredEntries.slice(index, index + columns));
+      }
+    }
+    return result;
+  }, [filteredEntries, columns, isAdding]);
+
   const handleResolveDangling = async (ref: DanglingRef) => {
     await resolveDangling(ref);
     toast.success(ref.kind === 'relationship' ? 'Relasi menggantung dihapus.' : 'Tautan janji dilepas.');
@@ -107,15 +170,14 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [confirmDeleteId, setConfirmDeleteId]);
 
-  return (
-    <div className="max-w-5xl mx-auto h-[calc(100vh-8rem)] flex flex-col pt-1">
-      <div className="shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 border-b border-slate-100 dark:border-slate-800/60 pb-6">
+  const listHeader = (
+    <div ref={contentRef} className="px-4 pt-4 sm:px-6 sm:pt-6">
+      <header>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-4">
           <div>
-            <h2 className="text-3xl font-serif font-bold text-slate-900 dark:text-slate-100 italic">Kamus Data (Codex)</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium tracking-wide">Data pembangunan dunia untuk injeksi konteks AI.</p>
+            <h2 className="text-2xl font-serif font-bold text-slate-900 dark:text-slate-100 italic">Kamus Data (Codex)</h2>
             {stats.total > 0 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium break-words">
                 <span className="font-bold text-slate-600 dark:text-slate-300">{stats.total} entri</span>
                 {Object.entries(stats.byCategory)
                   .sort((a, b) => b[1] - a[1])
@@ -125,7 +187,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
             )}
           </div>
           {!isAdding && (
-            <div className="self-start md:self-auto flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => openWorkshop({ mode: 'create' })}
                 className="flex items-center gap-2 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all active:scale-95"
@@ -150,6 +212,13 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
                 </button>
               )}
               <button
+                onClick={() => setIsAssistantOpen(value => !value)}
+                aria-expanded={isAssistantOpen}
+                className="flex items-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95"
+              >
+                <MessageSquareText size={16} /> Asisten AI
+              </button>
+              <button
                 onClick={startAdding}
                 className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-indigo-700 transition-all shadow-md hover:shadow-indigo-500/20 active:scale-95"
               >
@@ -160,46 +229,44 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
         </div>
 
         {!isAdding && (entries?.length ?? 0) > 0 && (
-          <div className="flex flex-col sm:flex-row gap-3 mb-8">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <div className="relative min-w-0 grow basis-64">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input 
                 type="text"
-                placeholder="Cari entri Codex berdasarkan nama, alias, tag, atau deskripsi..."
+                aria-label="Cari entri Codex"
+                placeholder="Cari nama, alias, tag, atau deskripsi…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow dark:text-slate-200 placeholder:text-slate-400"
               />
             </div>
-            <select
-               value={filterCategory}
-               onChange={(e) => setFilterCategory(e.target.value as any)}
-               title="Filter berdasarkan kategori"
-               className="w-full sm:w-44 py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
-            >
-              <option value="all">Semua Kategori</option>
-              {categories.map(cat => (
-                <option key={cat.slug} value={cat.slug}>{cat.label}</option>
-              ))}
-            </select>
+            <CodexFilterSelect
+              label="Filter berdasarkan kategori"
+              allLabel="Semua Kategori"
+              value={filterCategory}
+              options={categories.map(cat => ({ value: cat.slug, label: cat.label }))}
+              onChange={setFilterCategory}
+            />
             {allTags.length > 0 && (
-              <select
-                 value={filterTag}
-                 onChange={(e) => setFilterTag(e.target.value)}
-                 title="Filter berdasarkan tag"
-                 className="w-full sm:w-40 py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
-              >
-                <option value="all">Semua Tag</option>
-                {allTags.map(t => (
-                  <option key={t} value={t}>#{t}</option>
-                ))}
-              </select>
+              <CodexFilterSelect
+                label="Filter berdasarkan tag"
+                allLabel="Semua Tag"
+                value={filterTag}
+                options={allTags.map(tag => ({ value: tag, label: `#${tag}` }))}
+                onChange={setFilterTag}
+              />
             )}
             <select
                value={sortBy}
-               onChange={(e) => setSortBy(e.target.value as any)}
+               onChange={(e) => {
+                 const value = e.target.value;
+                 if (value === 'name-asc' || value === 'name-desc' || value === 'category' || value === 'recent' || value === 'oldest') {
+                   setSortBy(value);
+                 }
+               }}
                title="Urutkan entri"
-               className="w-full sm:w-44 py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
+               className="min-w-0 grow basis-32 xl:grow-0 py-2 px-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
             >
               <option value="name-asc">Nama (A–Z)</option>
               <option value="name-desc">Nama (Z–A)</option>
@@ -218,12 +285,12 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
             onResolve={handleResolveDangling}
           />
         )}
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-hidden relative">
+      <div>
         <AnimatePresence>
           {isAdding && (
-            <div className="w-full pb-10 overflow-y-auto h-full px-2" data-codex-form>
+            <div className="pb-4">
               <CodexForm
                 initialData={initialData}
                 editingId={editingId}
@@ -237,36 +304,6 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
             </div>
           )}
         </AnimatePresence>
-
-        {!isAdding && filteredEntries.length > 0 && (
-           <VirtuosoGrid
-             style={{ height: '100%' }}
-             totalCount={filteredEntries.length}
-             data={filteredEntries}
-             components={{
-               List: React.forwardRef((props, ref) => (
-                 <div {...props} ref={ref as React.Ref<HTMLDivElement>} className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-6 pb-24" />
-               )),
-               Item: ({ children, ...props }) => (
-                 <div {...props}>
-                   {children}
-                 </div>
-               )
-             }}
-             itemContent={(index, entry) => (
-               <CodexCard
-                 key={entry.id}
-                 entry={entry}
-                 relationships={relationships || []}
-                 projectId={projectId}
-                 categories={categories}
-                 onEdit={startEditing}
-                 onDelete={deleteEntry}
-                 onSelect={setSelectedEntry}
-               />
-             )}
-           />
-        )}
 
         {entries?.length === 0 && !isAdding && (
           <div className="py-24 px-6 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-900/30">
@@ -299,28 +336,48 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
           </div>
         )}
       </div>
+    </div>
+  );
 
-      {/* Floating AI Button & Panel */}
-      <AnimatePresence>
-        {!isAssistantOpen && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => setIsAssistantOpen(true)}
-            className="fixed bottom-6 right-6 z-[60] p-4 bg-indigo-600 text-white rounded-full shadow-2xl hover:bg-indigo-700 hover:scale-105 transition-all"
-            title="Buka Studio Asisten AI"
+  return (
+    <div className="mx-auto h-full max-w-7xl">
+      <Virtuoso
+        aria-label="Daftar entri Codex"
+        className="h-full custom-scrollbar"
+        data={rows}
+        components={codexListComponents}
+        context={listHeader}
+        defaultItemHeight={220}
+        increaseViewportBy={200}
+        itemContent={(_index, row) => (
+          <div
+            className="grid gap-4 px-4 pb-4 sm:px-6"
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
-            <MessageSquareText size={24} />
-          </motion.button>
+            {row.map(entry => (
+              <CodexCard
+                key={entry.id}
+                entry={entry}
+                relationships={relationships || []}
+                projectId={projectId}
+                categories={categories}
+                onEdit={startEditing}
+                onDelete={deleteEntry}
+                onSelect={setSelectedEntry}
+              />
+            ))}
+          </div>
         )}
-        
+      />
+
+      {/* Panel Asisten AI */}
+      <AnimatePresence>
         {isAssistantOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed bottom-6 right-6 z-[60] w-[340px] h-[600px] max-h-[85vh] rounded-2xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] border border-slate-200 dark:border-slate-800"
+            className="fixed bottom-4 right-4 z-[60] w-[340px] max-w-[calc(100%-2rem)] h-[600px] max-h-[85vh] rounded-2xl overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] border border-slate-200 dark:border-slate-800"
           >
             <ScribbleAssistantPanel 
               projectId={projectId} 

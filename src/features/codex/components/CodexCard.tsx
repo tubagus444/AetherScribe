@@ -18,7 +18,7 @@ interface CodexCardProps {
   onSelect: (entry: CodexEntry) => void;
 }
 
-// Dimemo-kan: di VirtuosoGrid, kartu terus mount/unmount saat scroll — memo
+// Dimemo-kan: di daftar virtual, kartu terus mount/unmount saat scroll — memo
 // mencegah render ulang kartu yang props-nya tak berubah (mis. saat mengetik di
 // kotak cari). Deskripsi sengaja dirender sebagai teks polos, BUKAN
 // LinkifiedDescription: linkifikasi membangun RegExp per nama+alias atas SELURUH
@@ -41,7 +41,7 @@ function CodexCardImpl({
   const status = effectiveStatus(entry);
 
   return (
-    <div
+    <article
       onClick={() => onSelect(entry)}
       className="group h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 pl-7 hover:shadow-xl hover:border-indigo-200 dark:hover:border-indigo-800 transition-all relative flex flex-col col-span-1 cursor-pointer overflow-hidden"
     >
@@ -63,15 +63,15 @@ function CodexCardImpl({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                <span className="min-w-0 break-words text-[10px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
                   {getCategoryLabel(entry.category, categories)}
                 </span>
                 <WorldStatusBadge status={status.status} suggested={status.suggested} size="sm" />
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="flex items-center gap-1 shrink-0 transition-opacity pointer-fine:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(entry); }}
               className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-lg transition-all"
@@ -90,7 +90,7 @@ function CodexCardImpl({
         </div>
 
         <div className="flex-1 border-t border-slate-100 dark:border-slate-800/60 pt-4">
-          <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed font-serif whitespace-pre-wrap">
+          <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed font-serif whitespace-pre-wrap break-words">
             {entry.description ? (
               entry.description
             ) : (
@@ -116,7 +116,7 @@ function CodexCardImpl({
               <Tag size={12} /> Alias:
             </span>
             {entry.aliases!.map(a => (
-              <span key={a} className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+              <span key={a} className="min-w-0 break-words text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
                 {a}
               </span>
             ))}
@@ -127,7 +127,7 @@ function CodexCardImpl({
           {(entry.tags?.length ?? 0) > 0 ? (
             <div className="flex flex-wrap gap-1.5 min-w-0">
               {entry.tags!.map(t => (
-                <span key={t} className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400">
+                <span key={t} className="min-w-0 break-words text-[10px] font-semibold text-indigo-500 dark:text-indigo-400">
                   #{t}
                 </span>
               ))}
@@ -142,7 +142,7 @@ function CodexCardImpl({
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
