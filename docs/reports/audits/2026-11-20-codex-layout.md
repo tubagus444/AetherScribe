@@ -45,3 +45,15 @@ kemunculan, serta pembukaan entri yang menyebut entri asal.
 | `npm run test:run` | 824 lulus dalam 93 berkas |
 | `npm run lint`, `npm run lint:strict`, `npm run lint:maintenance` | Lulus |
 | `npm run build` | Lulus |
+
+## Gulir tab Kelengkapan Dunia
+
+Pada Chromium dengan viewport 1280 × 500 piksel, uji regresi merekam selisih
+100 piksel antara pergeseran judul dan tombol sebelum perbaikan. Setelah
+perbaikan, deretan tombol bergulir sejajar dengan judul. Pada 390 × 560
+piksel, perpindahan ke Saran Entitas (Yatim) dan kembali ke Kelengkapan
+Dunia menampilkan judul panel di area pandang.
+
+Kedua skenario Playwright terpilih di `e2e/critical.spec.ts` lulus, termasuk
+pemulihan rute lama `orphans`. Seluruh 15 tes `worldCompleteness.test.ts`
+dan ketiga pemeriksaan lint lulus dengan Node 24.15.0.

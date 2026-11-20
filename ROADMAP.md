@@ -37,6 +37,7 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ## Pekerjaan selesai
 
+- [Perbaikan gulir tab Kelengkapan Dunia](docs/reports/audits/2026-11-20-codex-layout.md#gulir-tab-kelengkapan-dunia)
 - [Gambar sampul Codex dan cadangan aset](docs/reports/audits/2026-11-20-codex-cover.md)
 - [Detail tambahan Codex, riwayat per bab, dan konteks AI](docs/reports/audits/2026-11-20-codex-details.md)
 - [Audit F01–F29](docs/archive/2026-11-15-roadmap-audit-completed.md)

@@ -18,7 +18,7 @@ export function CodexHealthDashboard({ projectId }: CodexHealthDashboardProps) {
 
   return (
     <div className="flex flex-col w-full">
-      <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4 sticky top-0 bg-background z-10 pt-2 -mt-2">
+      <div className="mx-auto mb-6 flex w-full max-w-[1200px] flex-wrap gap-2 border-b border-slate-200 pb-4 dark:border-slate-800">
         <button
           onClick={() => setActiveTab('completeness')}
           className={cn(

@@ -6,6 +6,10 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-20
 
+### [UI] Perbaikan gulir panel Kelengkapan Dunia
+
+- Tab Kelengkapan Dunia dan Saran Entitas (Yatim) ikut bergulir bersama isi panel sehingga judul dan ringkasan tidak tertutup.
+
 ### [Fitur] Gambar sampul Codex
 
 - Tambahkan satu sampul opsional per entri, kompresi lokal, thumbnail daftar,

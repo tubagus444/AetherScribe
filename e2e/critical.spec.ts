@@ -343,6 +343,44 @@ for (const [legacy, current] of [['arc', 'continuity'], ['orphans', 'completenes
   });
 }
 
+test('Codex health tabs scroll with the panel content', async ({ page }) => {
+  await page.evaluate(async () => {
+    const modulePath = '/src/db.ts';
+    const { db } = await import(modulePath);
+    await db.codex.add({ projectId: 1, name: 'Penjaga Arsip', category: 'character', description: '', aliases: [], tags: [] });
+    localStorage.setItem('aether_view_mode', 'completeness');
+  });
+  await page.setViewportSize({ width: 1280, height: 500 });
+  await page.reload();
+
+  const panel = page.locator('main');
+  const completenessTab = panel.getByRole('button', { name: 'Kelengkapan Dunia', exact: true });
+  const orphansTab = panel.getByRole('button', { name: 'Saran Entitas (Yatim)', exact: true });
+  const completenessHeading = panel.getByRole('heading', { name: 'Kelengkapan Dunia', exact: true });
+  await expect(completenessHeading).toBeVisible();
+  const top = (locator: typeof completenessTab) => locator.evaluate(element => element.getBoundingClientRect().top);
+  const initialTabTop = await top(completenessTab);
+  const initialHeadingTop = await top(completenessHeading);
+  await completenessTab.hover();
+  await page.mouse.wheel(0, 100);
+  await expect.poll(async () => initialHeadingTop - await top(completenessHeading)).toBeGreaterThan(50);
+  await expect.poll(async () => {
+    const tabShift = initialTabTop - await top(completenessTab);
+    const headingShift = initialHeadingTop - await top(completenessHeading);
+    return Math.abs(tabShift - headingShift);
+  }).toBeLessThan(2);
+
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 560 });
+  await orphansTab.click();
+  const orphansHeading = panel.getByRole('heading', { name: 'Entitas Yatim', exact: true });
+  await expect(orphansHeading).toBeInViewport();
+  const orphanTabBottom = await orphansTab.evaluate(element => element.getBoundingClientRect().bottom);
+  expect(await top(orphansHeading)).toBeGreaterThan(orphanTabBottom);
+  await completenessTab.click();
+  await expect(completenessHeading).toBeInViewport();
+});
+
 test('F25 native modal contains keyboard focus, handles nesting and restores triggers', async ({ page }) => {
   await page.evaluate(async () => {
     const modulePath = '/e2e/dialogFixture.tsx';

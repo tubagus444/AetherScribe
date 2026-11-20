@@ -301,6 +301,7 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 
 ## Pelacak Kelengkapan Worldbuilding
 - **Deskripsi:** Dasbor manajemen mutu worldbuilding yang menampilkan tingkat kematangan setiap entri lore (Rangka, Sebagian, Lengkap) dan daftar gap/TODO penulis.
+- Tab Kelengkapan Dunia dan Saran Entitas (Yatim) berada di atas konten dan ikut bergulir bersama panel.
 - **File terkait:** `src/features/codex/components/CodexHealthDashboard.tsx`, `src/lib/worldCompleteness.ts`
 - **Tabel DB:** `codex` (`worldStatus`, `todo`)
 - **Endpoint:** Tidak ada (lokal)
