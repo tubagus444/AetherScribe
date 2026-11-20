@@ -14,6 +14,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 | Penguatan database 18–19 November 2026 | [Hasil lokal DB01–DB08](audits/2026-11-19-db01-db08.md) |
 | Tata letak Codex 20 November 2026 | [Verifikasi gulir dan kartu Codex](audits/2026-11-20-codex-layout.md) |
 | Detail Codex 20 November 2026 | [Verifikasi riwayat, konteks AI, dan cadangan](audits/2026-11-20-codex-details.md) |
+| Sampul Codex 20 November 2026 | [Verifikasi unggahan, pemulihan, dan kapasitas](audits/2026-11-20-codex-cover.md) |
 
 ## Benchmark
 

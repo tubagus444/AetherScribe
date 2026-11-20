@@ -10,6 +10,7 @@ import { DanglingRef } from '@/src/lib/loreGraph';
 import { invalidateContextCache } from '@/src/services/contextEngine';
 import { useCodexCategories } from '@/src/features/codex/hooks/useCodexCategories';
 import { useToast } from '@/src/hooks/useToast';
+import type { CodexCoverPair } from '@/src/lib/codexCoverLimits';
 
 export type CodexSort = 'name-asc' | 'name-desc' | 'category' | 'recent' | 'oldest';
 
@@ -138,7 +139,7 @@ export function useCodexPanel(projectId: number) {
     }, 100);
   };
 
-  const handleSaveEntry = async (data: Partial<CodexEntry>) => {
+  const handleSaveEntry = async (data: Partial<CodexEntry>, cover?: CodexCoverPair | null) => {
     if (!data.name) return;
     
     // Lapis "Kebenaran Tersembunyi" (#1): flag rahasia penulis dari form harus ikut
@@ -162,7 +163,7 @@ export function useCodexPanel(projectId: number) {
         // Template field per kategori (#17). Denormalisasi label sudah dilakukan CodexForm.
         customFields: data.customFields || [],
         details: data.details,
-      });
+      }, cover);
     } else {
       await addCodexEntry({
         projectId,
@@ -178,7 +179,7 @@ export function useCodexPanel(projectId: number) {
         factionTag: data.factionTag?.trim() || undefined,
         customFields: data.customFields || [],
         details: data.details,
-      } as CodexEntry);
+      } as CodexEntry, cover);
     }
     
     setIsAdding(false);

@@ -11,7 +11,7 @@ import type {
   MapMarker, ContinuityTriage,
 } from '@/src/types';
 import type { ChapterExportRecord } from './chapterContracts';
-import type { BackupMapRecord } from './backupFormat';
+import type { BackupCoverRecord, BackupMapRecord } from './backupFormat';
 
 /**
  * Logika MURNI untuk impor per-novel (#4B). Tanpa akses IndexedDB — id baru
@@ -52,6 +52,7 @@ export interface ProjectBackupData {
   maps?: BackupMapRecord[];
   mapMarkers?: MapMarker[];
   continuityTriage?: ContinuityTriage[];
+  codexCovers?: BackupCoverRecord[];
 }
 
 export interface RemapMaps {

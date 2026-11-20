@@ -63,6 +63,7 @@ async function removeMapReferences(mapIds: number[]) {
 
 async function removeCodexReferences(codexIds: number[]) {
   if (!codexIds.length) return;
+  await db.codexCovers.where('codexId').anyOf(codexIds).delete();
   const targets = new Set(codexIds);
   const embeddingKeys = new Set(codexIds.map(String));
   const pointsToTarget = (id?: number) => id !== undefined && targets.has(id);

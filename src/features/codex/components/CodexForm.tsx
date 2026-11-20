@@ -15,6 +15,9 @@ import { useProject } from '@/src/contexts/ProjectContext';
 import { formatDate, daysInMonth } from '@/src/lib/worldCalendar';
 import { CodexDetailsEditor } from '@/src/features/codex/components/CodexDetailsEditor';
 import type { DetailChapterIndex } from '@/src/lib/codexDetails';
+import { CODEX_COVER_TYPES, type CodexCoverPair } from '@/src/lib/codexCoverLimits';
+import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
+import { prepareCodexCover } from '@/src/features/codex/lib/prepareCodexCover';
 
 interface CodexFormProps {
   initialData?: Partial<CodexEntry>;
@@ -23,7 +26,7 @@ interface CodexFormProps {
   existingEntries?: CodexEntry[];
   categories?: CategoryDef[];
   detailChapters: DetailChapterIndex;
-  onSave: (data: Partial<CodexEntry>) => Promise<void>;
+  onSave: (data: Partial<CodexEntry>, cover?: CodexCoverPair | null) => Promise<void>;
   /** Buat banyak entri sekaligus dari paste multi-blok (importer #7). Kembalikan jumlah yang dibuat. */
   onBulkCreate?: (entries: Partial<CodexEntry>[]) => Promise<number>;
   onCancel: () => void;
@@ -44,6 +47,10 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
   });
   const [isExpanding, setIsExpanding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [coverDraft, setCoverDraft] = useState<CodexCoverPair | null>();
+  const [isProcessingCover, setIsProcessingCover] = useState(false);
+  const storedThumbnail = useCodexCover(editingId, 'thumbnail');
+  const coverPreview = useCoverUrl(coverDraft === undefined ? storedThumbnail : coverDraft?.thumbnail);
   // Deskripsi sebelum di-overwrite AI; menyimpannya memungkinkan "Urungkan"
   // tanpa risiko kehilangan tulisan pengguna. null = tidak ada yang bisa diurungkan.
   const [prevDescription, setPrevDescription] = useState<string | null>(null);
@@ -65,6 +72,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
     });
     setFieldValues(fieldValueMap(initialData));
     setPrevDescription(null);
+    setCoverDraft(undefined);
   }, [initialData]);
 
   // Definisi field untuk kategori aktif (hanya kategori kustom yang punya).
@@ -95,11 +103,26 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
     }
     setIsSaving(true);
     try {
-      await onSave({ ...formData, details, customFields: buildFieldValues(fieldDefs, fieldValues) });
+      await onSave({ ...formData, details, customFields: buildFieldValues(fieldDefs, fieldValues) }, coverDraft);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan entri Codex.');
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        toast.error('Penyimpanan browser penuh. Entri dan sampul sebelumnya tetap tersimpan.');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Gagal menyimpan entri Codex.');
+      }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCoverFile = async (file: File) => {
+    setIsProcessingCover(true);
+    try {
+      setCoverDraft(await prepareCodexCover(file));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal memproses gambar sampul.');
+    } finally {
+      setIsProcessingCover(false);
     }
   };
 
@@ -471,6 +494,33 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
         </div>
 
         {/* Template field per kategori (#17) — muncul bila kategori punya skema field */}
+        <section className="space-y-3" aria-label="Sampul Codex">
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Sampul</h4>
+          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            {coverPreview && <img src={coverPreview} alt="Pratinjau sampul" className="size-20 shrink-0 rounded-lg object-cover" />}
+            <div className="min-w-0 flex-1 basis-52 space-y-2">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Pilih gambar sampul (opsional)
+                <input
+                  type="file"
+                  accept={CODEX_COVER_TYPES.join(',')}
+                  disabled={isSaving || isProcessingCover}
+                  className="mt-1 block w-full min-w-0 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-2 file:py-1.5 file:text-indigo-700 dark:file:bg-indigo-950 dark:file:text-indigo-300"
+                  onChange={event => {
+                    const file = event.currentTarget.files?.[0];
+                    event.currentTarget.value = '';
+                    if (file) void handleCoverFile(file);
+                  }}
+                />
+              </label>
+              {isProcessingCover && <p role="status" className="text-xs text-slate-500">Memperkecil gambar…</p>}
+              {coverPreview && (
+                <button type="button" disabled={isSaving || isProcessingCover} onClick={() => setCoverDraft(null)} className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400">Hapus sampul</button>
+              )}
+            </div>
+          </div>
+        </section>
+
         <CodexDetailsEditor details={formData.details ?? []} chapters={detailChapters} onChange={details => setFormData(prev => ({ ...prev, details }))} />
 
         {fieldDefs.length > 0 && (
@@ -663,7 +713,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
           </button>
           <button
             onClick={handleSave}
-            disabled={isSaving || !formData.name?.trim() || !formData.description?.trim()}
+            disabled={isSaving || isProcessingCover || !formData.name?.trim() || !formData.description?.trim()}
             className="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
           >
             <Check size={16} /> {editingId ? 'Simpan Perubahan' : 'Buat Entri'}

@@ -19,6 +19,8 @@ import { getCategoryLabel, getCategoryAccent, type CategoryDef } from '@/src/lib
 import { resolveFieldValues } from '@/src/lib/codexFields';
 import { formatDate } from '@/src/lib/worldCalendar';
 import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
+import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
+import { CodexCoverViewer } from '@/src/features/codex/components/CodexCoverViewer';
 
 const fieldScroll = 'no-scrollbar max-h-[min(12rem,30dvh)] overflow-y-auto focus-visible:outline-2 focus-visible:outline-indigo-500';
 const detailTabs = [
@@ -61,6 +63,8 @@ export function CodexDetailModal({
   const tabsId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const detailsTabRef = useRef<HTMLButtonElement>(null);
+  const thumbnail = useCoverUrl(useCodexCover(entry.id, 'thumbnail'));
+  const [showCover, setShowCover] = useState(false);
   const [linksEntryId, setLinksEntryId] = useState<number | null | undefined>(null);
   const isLinksTab = linksEntryId !== null && linksEntryId === entry.id;
   const activeTab = isLinksTab ? 'links' : 'details';
@@ -118,13 +122,13 @@ export function CodexDetailModal({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || showPromise) return;
+      if (e.key !== 'Escape' || showPromise || showCover) return;
       if (showForge) setShowForge(false);
       else onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose, showPromise, showForge]);
+  }, [onClose, showPromise, showForge, showCover]);
 
   useLayoutEffect(() => {
     const trigger = document.activeElement;
@@ -164,9 +168,15 @@ export function CodexDetailModal({
       >
         <header className="relative z-10 grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1 border-b border-slate-100 bg-slate-50/50 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-6 dark:border-slate-800/60 dark:bg-slate-900/50">
           <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-3">
-            <div className={`shrink-0 rounded-xl border border-slate-100 p-2.5 shadow-sm dark:border-slate-700 ${accent.iconBg}`}>
-              <CategoryIcon category={entry.category} categories={categories} />
-            </div>
+            {thumbnail ? (
+              <button type="button" title="Lihat sampul" aria-label="Lihat sampul" onClick={() => setShowCover(true)} className="size-12 shrink-0 overflow-hidden rounded-xl ring-indigo-500 hover:ring-2">
+                <img src={thumbnail} alt="" className="size-full object-cover" />
+              </button>
+            ) : (
+              <div className={`shrink-0 rounded-xl border border-slate-100 p-2.5 shadow-sm dark:border-slate-700 ${accent.iconBg}`}>
+                <CategoryIcon category={entry.category} categories={categories} />
+              </div>
+            )}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 id={titleId} title={entry.name} className="line-clamp-2 min-w-0 break-words text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">{entry.name}</h2>
@@ -577,6 +587,7 @@ export function CodexDetailModal({
       {showForge && (
         <NameForgeModal entry={entry} onClose={() => setShowForge(false)} />
       )}
+      {showCover && <CodexCoverViewer codexId={entry.id} name={entry.name} onClose={() => setShowCover(false)} />}
     </div>,
     document.body,
   );

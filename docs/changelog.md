@@ -6,6 +6,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-20
 
+### [Fitur] Gambar sampul Codex
+
+- Tambahkan satu sampul opsional per entri, kompresi lokal, thumbnail daftar,
+  dan pratinjau besar di dialog. Simpan pasangan gambar di skema Dexie v35.
+- Gunakan cadangan v9 untuk menyimpan sampul dan thumbnail. Impor novel
+  memasangkan gambar dengan ID entri baru. Arsip v3 hingga v8 tetap didukung.
+
 ### [Fitur] Detail tambahan Codex dan riwayat per bab
 
 - Tambahkan detail opsional per entri, nilai awal, dan catatan per bab.

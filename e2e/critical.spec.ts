@@ -421,7 +421,7 @@ test('F23 native v33 upgrade backfills metadata while preserving manuscript', as
     const modulePath = '/e2e/dataPathsFixture.ts';
     return (await import(modulePath)).migrateV33();
   });
-  expect(result.version).toBe(34);
+  expect(result.version).toBe(35);
   expect(result.rows[0]).toMatchObject({ id: 7, title: 'Legacy', _computedWordCount: 3, lastModified: 9 });
   expect(result.chapter.content).toBe('<p>legacy native browser</p>');
 });

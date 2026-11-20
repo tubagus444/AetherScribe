@@ -8,11 +8,13 @@ import type { ChapterRecord } from '@/src/lib/chapterRecord';
 import Dexie, { Table } from 'dexie';
 import { Chapter, Project, CodexEntry, StoryBibleRule, AIAction, Snapshot, TimelineEvent, Relationship, AppError, BackupRecord, ChatSession, VectorEmbedding, AIUsageLog, CustomCategory, SceneEmbedding, PlotPromise, GlossaryEntry, AtlasMap, MapMarker, ContinuityTriage } from '@/src/types';
 import { flushActiveEditor } from '@/src/features/editor/editorBridge';
+import type { CodexCoverImage } from '@/src/types';
 
 export class AetherScribeDB extends Dexie {
   projects!: Table<Project>;
   chapters!: Table<ChapterRecord, number, Chapter>;
   codex!: Table<CodexEntry>;
+  codexCovers!: Table<CodexCoverImage, number>;
   bible!: Table<StoryBibleRule>;
   aiActions!: Table<AIAction>;
   snapshots!: Table<Snapshot>;
@@ -236,6 +238,8 @@ export class AetherScribeDB extends Dexie {
     }).upgrade(tx => tx.table('chapters').toCollection().modify(chapter => {
       chapter.listMetadata = chapterListKey(chapter);
     }));
+
+    this.version(35).stores({ codexCovers: '++id, projectId, codexId, &[codexId+kind]' });
 
     this.chapters.hook('creating', (_key, chapter) => {
       chapter.listMetadata = chapterListKey(chapter);

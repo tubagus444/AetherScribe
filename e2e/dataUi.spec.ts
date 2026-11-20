@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { gunzipSync } from 'node:zlib';
 
 // Browser imports use Vite's URL. The type comes from the source module.
 type DbModule = typeof import('../src/db');
@@ -269,11 +270,12 @@ test('L03 full restore can be cancelled then restores file data and retains safe
   await dialog.getByRole('button', { name: 'Batal', exact: true }).click();
   expect(await state(page)).toEqual(before);
   await choose(page, false, file);
-  await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
-  await expect.poll(async () => (await state(page)).chapters[0].content).toBe('<p>Keep manuscript 1</p>');
+  await Promise.all([
+    page.waitForEvent('framenavigated', { predicate: frame => frame === page.mainFrame() }),
+    dialog.getByRole('button', { name: 'Ya, pulihkan' }).click(),
+  ]);
   expect(await state(page)).toEqual(original);
   expect(await page.evaluate(async () => { const path = '/src/db.ts'; const { db }: DbModule = await import(path); return (await db.backups.toArray()).filter(b => b.kind === 'pre-restore').length; })).toBeGreaterThan(0);
-  await page.reload();
   await page.getByRole('button', { name: 'Menulis', exact: true }).click();
   await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Keep manuscript 1');
 });
@@ -686,6 +688,138 @@ test('Codex keeps the detail header visible while a long entry scrolls on deskto
     }
     await expect(dialog).toBeHidden();
   }
+});
+
+test('Codex uploads, previews, replaces and removes a local cover', async ({ page }) => {
+  const makeImage = async (color: string) => {
+    const dataUrl = await page.evaluate(fill => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1500;
+      canvas.height = 900;
+      const context = canvas.getContext('2d')!;
+      context.fillStyle = fill;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/png');
+    }, color);
+    return { name: 'sampul.png', mimeType: 'image/png', buffer: Buffer.from(dataUrl.split(',')[1], 'base64') };
+  };
+  const readImages = () => page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    const rows = await db.codexCovers.toArray();
+    return Promise.all(rows.map(async row => {
+      const bitmap = await createImageBitmap(row.imageBlob);
+      const result = { kind: row.kind, width: bitmap.width, size: row.imageBlob.size, id: row.id };
+      bitmap.close();
+      return result;
+    }));
+  });
+
+  await page.evaluate(() => localStorage.setItem('aether_view_mode', 'codex'));
+  await page.reload();
+  await page.getByRole('button', { name: 'Entri Baru', exact: true }).click();
+  await page.getByPlaceholder('misal: Kota Angin', { exact: true }).fill('Raka');
+  await page.getByPlaceholder('Deskripsikan sejarah atau sifat unik untuk memberi konteks pada AI...').fill('Ksatria yang menjaga kota.');
+  const upload = page.getByLabel('Pilih gambar sampul (opsional)');
+  const preview = page.getByRole('img', { name: 'Pratinjau sampul' });
+  await upload.setInputFiles(await makeImage('indigo'));
+  await expect(preview).toBeVisible();
+  await page.getByRole('button', { name: 'Buat Entri', exact: true }).click();
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Raka', exact: true }) });
+  await expect(card.getByRole('img', { name: 'Sampul Raka' })).toBeVisible();
+  const before = await readImages();
+  expect(before).toHaveLength(2);
+  expect(before[0]).toMatchObject({ kind: 'cover', width: 1200 });
+  expect(before[1]).toMatchObject({ kind: 'thumbnail', width: 192 });
+  expect(before[0].size).toBeLessThanOrEqual(96 * 1024);
+  expect(before[1].size).toBeLessThanOrEqual(12 * 1024);
+
+  await card.click();
+  const entry = page.getByRole('dialog', { name: 'Raka', exact: true });
+  await entry.getByRole('button', { name: 'Lihat sampul' }).click();
+  const viewer = page.getByRole('dialog', { name: 'Sampul Raka' });
+  await expect(viewer.getByRole('img', { name: 'Sampul Raka' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(viewer).toBeHidden();
+  await expect(entry).toBeVisible();
+  await entry.getByRole('button', { name: 'Tutup', exact: true }).click();
+
+  await card.getByTitle('Ubah Entri', { exact: true }).click();
+  await expect(preview).toBeVisible();
+  await upload.setInputFiles(await makeImage('tomato'));
+  await page.getByRole('button', { name: 'Simpan Perubahan' }).click();
+  await expect(preview).toBeHidden();
+  const after = await readImages();
+  expect(after).toHaveLength(2);
+  expect(after.map(row => row.id)).not.toEqual(before.map(row => row.id));
+
+  await settings(page);
+  for (const project of [false, true]) {
+    const file = await exported(page, project);
+    expect(file.name).toMatch(/\.json\.gz$/);
+    const { data } = JSON.parse(gunzipSync(file.buffer).toString('utf8'));
+    expect(data.codexCovers).toHaveLength(2);
+    expect(data.codexCovers.every((row: { imageDataUrl?: string }) => row.imageDataUrl?.startsWith('data:image/'))).toBe(true);
+  }
+  await page.evaluate(() => localStorage.setItem('aether_view_mode', 'codex'));
+  await page.reload();
+
+  await card.getByTitle('Ubah Entri', { exact: true }).click();
+  await page.getByRole('button', { name: 'Hapus sampul' }).click();
+  await page.getByRole('button', { name: 'Simpan Perubahan' }).click();
+  await expect.poll(readImages).toEqual([]);
+  await expect(card.getByRole('img', { name: 'Sampul Raka' })).toHaveCount(0);
+});
+
+test('Codex cover capacity exports and restores 500 covers in a standalone file', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const result = await page.evaluate(async () => {
+    const dbPath = '/src/db.ts';
+    const coverPath = '/src/features/codex/lib/prepareCodexCover.ts';
+    const backupPath = '/src/services/backupService.ts';
+    const portablePath = '/src/lib/portableBackup.ts';
+    const { db }: DbModule = await import(dbPath);
+    const { prepareCodexCover }: typeof import('../src/features/codex/lib/prepareCodexCover') = await import(coverPath);
+    const { backupService }: BackupServiceModule = await import(backupPath);
+    const { readPortableBackup }: PortableBackupModule = await import(portablePath);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 800;
+    const context = canvas.getContext('2d')!;
+    const noise = context.createImageData(canvas.width, canvas.height);
+    let seed = 42;
+    for (let index = 0; index < noise.data.length; index += 4) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      noise.data[index] = seed >>> 24;
+      noise.data[index + 1] = (seed >>> 16) & 255;
+      noise.data[index + 2] = (seed >>> 8) & 255;
+      noise.data[index + 3] = 255;
+    }
+    context.putImageData(noise, 0, 0);
+    const source = await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal membuat gambar uji.')), 'image/png'));
+    const pair = await prepareCodexCover(new File([source], 'noise.png', { type: 'image/png' }));
+    const ids = await db.codex.bulkAdd(Array.from({ length: 500 }, (_, index) => ({
+      projectId: 1, name: `Entri sampul ${index + 1}`, category: 'character', description: '', aliases: [], tags: [],
+    })), { allKeys: true });
+    await db.codexCovers.bulkAdd(ids.flatMap(codexId => ([
+      { codexId, projectId: 1, kind: 'cover', imageBlob: pair.cover },
+      { codexId, projectId: 1, kind: 'thumbnail', imageBlob: pair.thumbnail },
+    ] as const)));
+
+    const full = await backupService.prepareBackupDownload(await backupService.collectAllData());
+    await db.codexCovers.clear();
+    await backupService.restoreData(await readPortableBackup(full.blob, 'all'));
+    const restored = await db.codexCovers.get({ codexId: ids.at(-1), kind: 'cover' });
+    return {
+      coverBytes: pair.cover.size, thumbnailBytes: pair.thumbnail.size, fileBytes: full.blob.size,
+      restoredImages: await db.codexCovers.count(), lastCoverBytes: restored?.imageBlob.size,
+    };
+  });
+  await testInfo.attach('ukuran-sampul-codex', { body: JSON.stringify(result), contentType: 'application/json' });
+  expect(result.coverBytes).toBeGreaterThan(32768);
+  expect(result.fileBytes).toBeLessThan(64 * 1024 * 1024);
+  expect(result.restoredImages).toBe(1000);
+  expect(result.lastCoverBytes).toBe(result.coverBytes);
 });
 
 test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {

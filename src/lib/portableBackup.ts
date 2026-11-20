@@ -38,12 +38,15 @@ function requireFullBackup(backup: VerifiedBackup) {
   requireEmbeddedImages(backup.data.maps);
 }
 
-/** Validate a standalone v3–v8 file, including any embedded asset hashes. */
+/** Validate a standalone export, including any embedded asset hashes. */
 export async function validatePortableBackup(input: unknown, scope?: BackupScope): Promise<VerifiedBackup> {
   const backup = await verifyBackup(input, scope);
   requireFullBackup(backup);
   for (const map of backup.data.maps ?? []) {
     if (map.imageDataUrl) await verifyEmbeddedImage(map.imageDataUrl, map.imageAssetId);
+  }
+  for (const cover of backup.data.codexCovers ?? []) {
+    if (cover.imageDataUrl) await verifyEmbeddedImage(cover.imageDataUrl, cover.imageAssetId);
   }
   return backup;
 }
@@ -70,10 +73,14 @@ export function normalizeBackupData(backup: VerifiedBackup): BackupData['data'] 
   return data;
 }
 
-/** Convert a self-contained legacy export to standard v8 without opening a database. */
+/** Convert a self-contained legacy export to the current format without opening a database. */
 export async function convertPortableBackup(input: unknown): Promise<PortableBackup> {
   const backup = await verifyBackup(input);
   requireEmbeddedImages(backup.data.maps);
+  for (const cover of backup.data.codexCovers ?? []) {
+    if (!cover.imageDataUrl) throw new Error('Konversi portabel membutuhkan gambar sampul lengkap.');
+    await verifyEmbeddedImage(cover.imageDataUrl, cover.imageAssetId);
+  }
   const data = normalizeBackupData(backup);
   for (const map of data.maps ?? []) {
     if (!map.imageDataUrl) continue;

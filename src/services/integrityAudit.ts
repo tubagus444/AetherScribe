@@ -38,6 +38,9 @@ export async function auditProjectIntegrity(): Promise<IntegrityIssue[]> {
           else if (requestId(row.projectId) && index.get(value) !== row.projectId) report(field, 'cross-project');
         };
         switch (table.name) {
+          case 'codexCovers':
+            reference('codexId', codex, true);
+            break;
           case 'snapshots':
             if (row.orphaned === true) report('chapterId', 'detached');
             else reference('chapterId', chapters, true);

@@ -1,5 +1,4 @@
 import { assembleBackupJson, backupChecksum } from './backupEnvelope';
-import { BACKUP_FORMAT_VERSION } from './backupFormat';
 import { validateBackup } from './backupValidation';
 
 export interface PreparedInternalBackup {
@@ -35,12 +34,15 @@ export async function prepareInternalBackup(input: unknown, kind: 'auto' | 'pre-
     }));
     data = { ...data, maps };
   }
+  if (kind === 'auto' && data.codexCovers?.length) {
+    data = { ...data, codexCovers: data.codexCovers.map(({ imageDataUrl: _image, ...cover }) => cover) };
+  }
   const text = JSON.stringify(data);
   const checksum = await backupChecksum(text);
   const meta: Record<string, unknown> = { version: input.version, timestamp: input.timestamp };
   if (input.scope) meta.scope = input.scope;
   if (input.projectName) meta.projectName = input.projectName;
-  if (input.version === BACKUP_FORMAT_VERSION) meta.imageMode = kind === 'auto' ? 'references' : 'full';
+  if (input.version >= 8) meta.imageMode = kind === 'auto' ? 'references' : 'full';
   if (checksum) meta.checksum = checksum;
   const json = assembleBackupJson(meta, text);
   const { blob, compressed } = await compressBackup(json);

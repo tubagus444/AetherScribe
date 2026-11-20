@@ -4,7 +4,7 @@ import type { Chapter, ChatSession, Project, Snapshot } from '../src/types';
 const dbName = 'AetherScribeDB';
 
 // Historical schemas are explicit: never import/open the current db before seeding.
-export async function seedLegacy(version: 17 | 33, extraChapter = false) {
+export async function seedLegacy(version: 17 | 33 | 34, extraChapter = false) {
   const stores = {
     projects: '++id, name, lastOpened', chapters: '++id, projectId, order',
     codex: '++id, projectId, name, category, *aliases', bible: '++id, projectId, key, &[projectId+key]',
@@ -21,16 +21,22 @@ export async function seedLegacy(version: 17 | 33, extraChapter = false) {
     plotPromises: '++id, projectId, codexId', glossary: '++id, projectId',
     maps: '++id, projectId', mapMarkers: '++id, projectId, mapId, codexId',
     continuityTriage: '++id, projectId, findingId',
+    ...(version === 34 ? {
+      chapters: '++id, projectId, order, [projectId+listMetadata], [projectId+lastModified]',
+      sceneEmbeddings: 'id, projectId, chapterId, [projectId+chapterId], [projectId+id]',
+    } : {}),
   });
   try {
     await old.table('projects').add({ id: 7, name: 'Legacy L02', description: 'Keep', createdAt: 1, lastOpened: 1 });
-    await old.table('chapters').add({ id: 9, projectId: 7, title: 'Legacy chapter', content: '<p>Legacy manuscript survives</p>', order: 0, lastModified: 1 });
+    await old.table('chapters').add({ id: 9, projectId: 7, title: 'Legacy chapter', content: '<p>Legacy manuscript survives</p>', order: 0, lastModified: 1,
+      ...(version === 34 ? { listMetadata: [0, 'Legacy chapter', 'outline', 3, 1] } : {}),
+    });
     if (extraChapter) await old.table('chapters').add({
       id: 10, projectId: 7, title: 'Legacy second chapter', content: '<p>Second manuscript</p>',
       order: 1, lastModified: 2, status: 'draft',
     });
     await old.table('snapshots').add({ id: 4, chapterId: 9, content: '<p>Original manuscript</p>', label: 'Original', timestamp: 1 });
-    await old.table('chatSessions').add({ id: 3, projectId: 7, title: 'Global Scribble', messages: [], lastMessageAt: 1, ...(version === 33 ? { kind: 'studio' } : {}) });
+    await old.table('chatSessions').add({ id: 3, projectId: 7, title: 'Global Scribble', messages: [], lastMessageAt: 1, ...(version >= 33 ? { kind: 'studio' } : {}) });
     return old.backendDB().version;
   } finally { old.close(); }
 }

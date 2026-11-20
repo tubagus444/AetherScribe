@@ -1,6 +1,6 @@
 # Dokumentasi Database — AetherScribe
 
-> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v34** di `src/db.ts`).
+> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v35** di `src/db.ts`).
 > Aplikasi tidak menggunakan database SQL server. Seluruh data tersimpan secara lokal di browser pengguna.
 
 ---
@@ -120,6 +120,17 @@ relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
 - **Relasi:** FK `projectId` -> `projects.id`. `details[].revisions[].chapterId` menunjuk ke bab di proyek yang sama jika ada. Hapus bab melepaskan tautan dan menyimpan judul serta teks catatan. Catatan lepas tetap terbaca di Codex dan dikecualikan dari nilai aktif dan konteks AI.
 - **Index penting:** `++id`, `projectId`, `name`, `category`, `*aliases` (multi-entry index). Detail opsional memakai record yang tersedia tanpa perubahan versi skema.
 - **File migration terkait:** `src/db.ts`
+
+### codexCovers
+
+- **Fungsi tabel:** Menyimpan `imageBlob` untuk varian `cover` dan `thumbnail`.
+- **Relasi:** `projectId` menunjuk ke proyek pemilik dan `codexId` menunjuk
+  ke entri di proyek yang sama. Indeks unik `[codexId+kind]` membatasi satu
+  record per varian. Penulisan kedua varian dan entri berlangsung atomik.
+- **Retensi:** Mengganti sampul menimpa pasangan sebelumnya. Penghapusan
+  entri atau proyek membersihkan gambar terkait. Backup penuh membawa kedua
+  varian. Impor novel memetakan `codexId` ke entri salinan.
+- **Skema:** Ditambahkan pada v35. Tabel awal kosong untuk entri yang sudah ada.
 
 ---
 
@@ -469,7 +480,7 @@ di proyek yang sama. Pemeriksaan dan penulisan berbagi transaksi IndexedDB.
 | --- | --- | --- |
 | Proyek | Record milik proyek, termasuk snapshot yang babnya teridentifikasi | Tautan lama dari proyek lain ke bab, Codex, dan peta yang ikut terhapus |
 | Bab | Snapshot dan embedding adegan | Tautan bab pada timeline, sesi AI, janji plot, dan riwayat detail Codex. Teks catatan Codex dan judul bab lama dipertahankan |
-| Entri Codex | Relasi dengan ujung pada entri tersebut dan embedding entri | Peserta timeline, penanda, janji plot, dan target lokakarya. Percakapan lokakarya yang masih ada menjadi sesi Studio |
+| Entri Codex | Relasi dengan ujung pada entri tersebut, embedding entri, sampul, dan thumbnail | Peserta timeline, penanda, janji plot, dan target lokakarya. Percakapan lokakarya yang masih ada menjadi sesi Studio |
 | Peta | Penanda yang memakai peta tersebut sebagai induk | Portal dari penanda yang masih ada |
 | Kategori Codex kustom | Definisi kategori | Entri dengan slug itu di proyek yang sama pindah ke kategori `other`. Field dan deskripsi entri dipertahankan |
 
@@ -488,7 +499,7 @@ dihapus dipertahankan. Pemeriksaan ini tidak memodifikasi data atau skema.
 
 ## Katalog tabel dan kebijakan data (DB04)
 
-[Katalog tabel Dexie](../src/lib/tableCatalog.ts) mencatat 20 tabel beserta
+[Katalog tabel Dexie](../src/lib/tableCatalog.ts) mencatat 21 tabel beserta
 jenis, cakupan, relasi, retensi, ekspor, impor proyek, pemulihan, dan penghapusan
 proyek. Tes mencocokkan katalog dengan tabel Dexie dan memeriksa indeks
 `projectId` untuk tabel yang disaring melalui indeks tersebut.
@@ -497,11 +508,12 @@ proyek. Tes mencocokkan katalog dengan tabel Dexie dan memeriksa indeks
 | --- | --- | --- |
 | 14 tabel data utama | Masuk ekspor. Impor menetapkan ID baru dan memetakan ulang relasi. | Diganti saat pemulihan. Record proyek dihapus sesuai aturan relasi. |
 | `maps` | File dan Drive memuat gambar lengkap. Cadangan otomatis internal menyimpan referensi hash. | Blob disiapkan sebelum transaksi pemulihan. Penghapusan peta menangani penanda dan portal. |
+| `codexCovers` | File dan Drive memuat sampul dan thumbnail. Cadangan otomatis internal menyimpan referensi hash. | Pasangan gambar dipulihkan dalam transaksi yang sama dengan entri. Impor novel memetakan `codexId`. |
 | `embeddings`, `sceneEmbeddings` | Dikecualikan dan dibangun ulang sesuai kebutuhan. | Dibersihkan saat pemulihan atau bersama proyek pemilik. |
 | `backups`, `errors`, `aiUsageLogs` | Dikecualikan dari ekspor dan impor. | Riwayat lokal dipertahankan saat pemulihan dan penghapusan proyek. |
 
-Urutan tabel pada cadangan v8 tetap sama untuk menjaga serialisasi dan
-checksum. Remap ID, pengolahan aset, deduplikasi Bible, dan penanganan relasi
+Urutan tabel yang sudah ada dipertahankan. Cadangan v9 menambahkan
+`codexCovers` setelah tabel v8. Remap ID, pengolahan aset, deduplikasi Bible, dan penanganan relasi
 saat penghapusan tetap berada di layanan yang menangani operasi tersebut.
 Simpan kebijakan tabel baru di katalog bersama perubahan skemanya dan lengkapi
 jalur remap jika tabel ikut impor proyek.

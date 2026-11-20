@@ -45,11 +45,11 @@ export function ManualBackupSection() {
       // Satu sumber kebenaran: termasuk chatSessions & versi terbaru.
       const backup = await backupService.collectAllData();
 
-      const blob = new Blob([backupService.serializeExternalBackup(backup, 2)], { type: 'application/json' });
+      const { blob, compressed } = await backupService.prepareBackupDownload(backup);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `aetherscribe-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `aetherscribe-backup-${new Date().toISOString().split('T')[0]}.json${compressed ? '.gz' : ''}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -74,11 +74,11 @@ export function ManualBackupSection() {
       const backup = await backupService.collectProjectData(effectiveProjectId);
       const safeName = (backup.projectName || 'proyek')
         .replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'proyek';
-      const blob = new Blob([backupService.serializeExternalBackup(backup, 2)], { type: 'application/json' });
+      const { blob, compressed } = await backupService.prepareBackupDownload(backup);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `aetherscribe-${safeName}-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `aetherscribe-${safeName}-${new Date().toISOString().split('T')[0]}.json${compressed ? '.gz' : ''}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

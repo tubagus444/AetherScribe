@@ -27,7 +27,7 @@ test('L02 empty database bootstraps exactly one usable project and survives edit
   const editor = page.locator('.tiptap[contenteditable="true"]');
   await expect(editor).toBeVisible();
   const initial = await records(page);
-  expect(initial.version).toBe(34);
+  expect(initial.version).toBe(35);
   expect(initial.projects).toHaveLength(1);
   expect(initial.chapters).toHaveLength(1);
   expect(initial.bible).toHaveLength(1);
@@ -42,7 +42,7 @@ test('L02 empty database bootstraps exactly one usable project and survives edit
   expect(reopened.chapters.map(c => c.id)).toEqual(initial.chapters.map(c => c.id));
 });
 
-for (const version of [17, 33] as const) {
+for (const version of [17, 33, 34] as const) {
   test(`L02 v${version} upgrades before React and preserves an editable manuscript`, async ({ page }) => {
     const nativeVersion = await page.evaluate(async version => {
       const path = '/e2e/installationFixture.ts';
@@ -54,7 +54,7 @@ for (const version of [17, 33] as const) {
     const editor = page.locator('.tiptap[contenteditable="true"]');
     await expect(editor).toHaveText('Legacy manuscript survives');
     const migrated = await records(page);
-    expect(migrated.version).toBe(34);
+    expect(migrated.version).toBe(35);
     expect(migrated.projects).toHaveLength(1);
     expect(migrated.projects[0]).toMatchObject({ id: 7, name: 'Legacy L02' });
     expect(migrated.chapters).toHaveLength(1);
@@ -94,7 +94,7 @@ test('DB06 abort rolls back v17 upgrade and preserves the manuscript for retry',
   await page.goto('/');
   await expect(page.locator('.tiptap[contenteditable="true"]')).toHaveText('Legacy manuscript survives');
   const retried = await records(page);
-  expect(retried.version).toBe(34);
+  expect(retried.version).toBe(35);
   expect(retried.chapters.map(chapter => chapter.listMetadata)).toEqual([
     [0, 'Legacy chapter', 'outline', 3, 1],
     [1, 'Legacy second chapter', 'draft', 2, 2],

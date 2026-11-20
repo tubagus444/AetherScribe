@@ -341,6 +341,14 @@ export interface CodexEntry {
   factionBoard?: { x: number; y: number };
 }
 
+export interface CodexCoverImage {
+  id?: number;
+  projectId: number;
+  codexId: number;
+  kind: 'cover' | 'thumbnail';
+  imageBlob: Blob;
+}
+
 // Template field per kategori (#17). Skema (definisi) hidup di CustomCategory.fields;
 // nilainya di CodexEntry.customFields. Semua inert (bukan FK, tak diindeks).
 export type CodexFieldType = 'text' | 'textarea' | 'number' | 'select';

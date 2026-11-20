@@ -1,7 +1,7 @@
 # Format Backup dan Pemulihan
 
-Ekspor menggunakan **format v8**. Versi ini independen dari skema IndexedDB
-**v34**. Konstanta versi berada di `src/lib/backupFormat.ts`.
+Ekspor menggunakan **format v9**. Versi ini independen dari skema IndexedDB
+**v35**. Konstanta versi berada di `src/lib/backupFormat.ts`.
 
 ## Membaca dan mengonversi arsip portabel
 
@@ -13,10 +13,10 @@ pemeriksaan yang sama pada objek yang sudah dibaca. Jika `scope` tidak
 diberikan, pembaca menggunakan nilai di envelope atau `all` untuk arsip lama
 tanpa scope.
 
-`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v8.
+`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v9.
 Konverter memeriksa checksum asli, mengisi tabel legacy yang absen dengan
 array kosong, menormalkan record seperti saat restore, dan membuat envelope
-v8 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
+v9 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
 dipertahankan. Gambar inline legacy diberi hash jika belum memilikinya.
 Konverter menolak gambar yang hanya bisa diambil dari database asal. Untuk
 sumber semacam itu, gunakan ekspor lengkap dari workspace yang memiliki aset.
@@ -41,7 +41,17 @@ menggunakan gzip.
 
 Schema memeriksa envelope, tipe field inti dan metadata yang dikenal, array, enum, ID positif/unik, kunci unik Bible/kategori/triage, serta referensi proyek, bab, Codex, dan peta. Referensi lintas-proyek ditolak. Metadata JSON tambahan pada record dipertahankan, tetapi tabel yang tidak dikenal, objek non-JSON, siklus, dan kunci prototype berbahaya ditolak. Validasi backup tidak menghapus markup pada teks sumber. Atlas memperlakukan judul marker/nama Codex sebagai teks saat render DOM, termasuk setelah impor (F01; lihat [katalog fitur](features.md)). Konten HTML modul lain mengikuti kebijakan modul masing-masing.
 
-Versi 3–7 diterima sebagai legacy. Scope yang tidak ditulis pada legacy diperlakukan sebagai seluruh workspace, sesuai format lama. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–8 ditolak. Pada v8, scope dan `imageMode` wajib; restore penuh juga mewajibkan seluruh tabel backup. Ekspor per-proyek tetap memiliki tabel opsional sesuai cakupannya.
+Versi 3–8 tetap dapat dibaca. Scope yang tidak ditulis pada v3–v7 diperlakukan sebagai seluruh workspace. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–9 ditolak. Pada v8 dan v9, scope dan `imageMode` wajib. Cadangan penuh mewajibkan tabel sesuai versi. Ekspor per proyek memiliki tabel opsional sesuai cakupannya.
+
+### Sampul Codex di v9
+
+Cadangan lengkap dan ekspor per novel membawa pasangan sampul dan thumbnail
+beserta hash. Unduhan dengan sampul memakai gzip jika tersedia. Saat
+mengimpor novel, pasangan mengikuti ID entri salinan.
+Cadangan otomatis internal memakai referensi hash untuk menghindari duplikasi
+gambar. Jika versi gambar yang dirujuk sudah diganti atau dihapus, pemulihan
+otomatis itu memerlukan cadangan lengkap. Pemulihan berhenti sebelum mengubah
+workspace jika aset yang dibutuhkan tidak tersedia.
 
 Ekspor v8 sejak DB06 menyertakan ID sumber, naskah, dan metadata penulis untuk
 bab. `listMetadata` disimpan di IndexedDB sebagai tuple indeks turunan.
@@ -91,6 +101,7 @@ Teks naskah, isi pesan, judul, dan slug kategori dipertahankan sebagai string.
 | `projects` dan `chapters` | Proyek, naskah HTML, metadata penulis, dan urutan bab. Bab merujuk ke proyek lewat `projectId`. |
 | `snapshots` | Isi historis dan `chapterId`. Pada cadangan penuh, `orphaned:true` menjadikan ID tersebut identitas historis. |
 | `codex`, `codexCategories` | Entri dan definisi kategori kustom. `category` memakai slug bawaan atau slug kustom dalam proyek. |
+| `codexCovers` | Satu pasangan sampul dan thumbnail per `codexId` di proyek yang sama. Cadangan lengkap menyimpan data URL dan hash untuk kedua varian. |
 | `bible`, `aiActions`, `glossary` | Aturan cerita, prompt, dan istilah milik proyek. `bible.key` dan `codexCategories.slug` unik dalam proyek masing-masing. |
 | `timeline`, `relationships` | Peristiwa dapat merujuk ke bab dan daftar ID Codex. Relasi merujuk ke dua ID Codex melalui `sourceId` dan `targetId`. |
 | `chatSessions`, `plotPromises` | Pesan dan tautan bab aktif, target Workshop `entry:<id>`, serta janji plot dengan referensi bab/Codex opsional. |
@@ -136,7 +147,7 @@ checksum dan kompresi di luar transaksi IndexedDB.
 
 Cadangan otomatis internal besar memakai worker saat Worker, Web Crypto dan
 gzip tersedia. `internalBackupPreparation.ts` menyusun data ramping, checksum,
-envelope v8 dan gzip. Gunakan hasil serialisasi data untuk checksum dan envelope
+envelope sesuai versi cadangan dan gzip. Gunakan hasil serialisasi data untuk checksum dan envelope
 agar data yang sama cukup diserialisasi sekali pada tahap persiapan. Jika worker
 gagal mulai, mengirim respons invalid, crash, atau melewati batas waktu,
 persiapan beralih ke main thread dengan algoritme yang sama. Jika kompresi

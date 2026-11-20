@@ -8,7 +8,7 @@ interface TablePolicy {
   scope: 'project-root' | 'project' | 'chapter' | 'workspace';
   relations: readonly string[];
   retention: string;
-  backup: 'records' | 'map-assets' | 'exclude';
+  backup: 'records' | 'map-assets' | 'cover-assets' | 'exclude';
   projectImport: 'remap' | 'regenerate' | 'skip';
   restore: 'replace' | 'clear' | 'preserve';
   projectDeletion: 'delete' | 'preserve';
@@ -41,7 +41,7 @@ const workspaceLocal = {
   projectDeletion: 'preserve',
 } as const;
 
-/** Urutan tabel ekspor v8 dipertahankan untuk serialisasi dan checksum. */
+/** Nama tabel baru ditambahkan setelah tabel ekspor lama untuk menjaga urutan serialisasi. */
 export const TABLE_CATALOG = {
   projects: { ...projectData, scope: 'project-root', relations: [] },
   chapters: { ...projectData, relations: ['projectId → projects'] },
@@ -71,6 +71,7 @@ export const TABLE_CATALOG = {
     relations: ['projectId → projects', 'findingId memuat identitas codex, relationships, atau timeline'],
     retention: 'Sampai status dilepas, data diganti, atau penghapusan bab/Codex membatalkan triase proyek.',
   },
+  codexCovers: { ...projectData, kind: 'asset', backup: 'cover-assets', relations: ['projectId → projects', 'codexId → codex', '[codexId+kind] unik'] },
   embeddings: {
     ...derivedCache,
     relations: ['projectId → projects', 'codexId → codex'],

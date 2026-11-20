@@ -4,9 +4,9 @@ import { flushActiveEditor } from '@/src/features/editor/editorBridge';
 import { detachWorkshopEntry, parseWorkshopEntryKey } from '@/src/lib/workshopReference';
 import { chapterFromRecord } from '@/src/lib/chapterRecord';
 import type { ChapterExportRecord } from '@/src/lib/chapterContracts';
-import type { ChatSession } from '@/src/types';
+import type { ChatSession, CodexCoverImage } from '@/src/types';
 
-type BackupSnapshot = Record<string, any[]> & { chapters: ChapterExportRecord[] };
+type BackupSnapshot = Record<string, any[]> & { chapters: ChapterExportRecord[]; codexCovers: CodexCoverImage[] };
 
 async function preserveLegacyWorkshopMessages(data: Record<string, any[]>, projectId?: number) {
   const sessions: ChatSession[] = data.chatSessions;
@@ -38,6 +38,8 @@ export async function readBackupSnapshot(projectId?: number): Promise<BackupSnap
       if (name === 'chapters') {
         const rows = await (projectId === undefined ? db.chapters.toArray() : db.chapters.where('projectId').equals(projectId).toArray());
         data.chapters = rows.map(chapterFromRecord);
+      } else if (name === 'codexCovers') {
+        data.codexCovers = await (projectId === undefined ? db.codexCovers.toArray() : db.codexCovers.where('projectId').equals(projectId).toArray());
       } else if (projectId === undefined) data[name] = await table.toArray();
       else if (scope === 'project-root') data[name] = await table.where('id').equals(projectId).toArray();
       else if (scope === 'chapter') {

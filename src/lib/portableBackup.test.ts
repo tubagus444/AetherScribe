@@ -42,7 +42,7 @@ describe('portable backup without database dependencies', () => {
 
   it('rejects source-dependent assets, forged hashes, and unsupported versions', async () => {
     const input = { version: 7, timestamp: 1, data: { projects: [project], chapters: [chapter], codex: [], maps: [map] } };
-    await expect(convertPortableBackup({ ...input, version: 9 })).rejects.toThrow(/versi 9 belum didukung/);
+    await expect(convertPortableBackup({ ...input, version: BACKUP_FORMAT_VERSION + 1 })).rejects.toThrow(/belum didukung/);
     await expect(validatePortableBackup(input)).rejects.toThrow(/Gambar peta.*tidak disertakan/);
     await expect(convertPortableBackup(input)).rejects.toThrow(/Gambar peta.*tidak disertakan/);
 

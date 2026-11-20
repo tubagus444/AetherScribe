@@ -79,6 +79,13 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 
 ## Kontrak Codex dan graf lore
 
+- Entri dapat memuat satu sampul gambar JPG, PNG, atau WebP. Gambar lokal
+  diperkecil hingga 1200 piksel pada sisi terpanjang dan 96 KiB. Daftar hanya
+  membaca thumbnail hingga 192 piksel dan 12 KiB. Sampul yang lebih besar
+  baru dibaca saat tombol **Lihat sampul** dibuka di dialog. Formulir entri
+  mengunggah, mengganti, atau menghapus sampul. Gambar digunakan sebagai
+  referensi visual lokal.
+
 - Judul, aksi, filter, formulir, dan daftar entri berbagi area gulir di
   bawah navigasi studio. Jumlah kolom mengikuti lebar panel. Virtualisasi
   mengukur tinggi per baris sehingga kartu dengan isi berbeda dapat

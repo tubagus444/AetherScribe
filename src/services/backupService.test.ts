@@ -9,9 +9,59 @@ import { BACKUP_TABLES, TABLE_CATALOG, type BackupTableName } from '@/src/lib/ta
 import { dexieChapterStorage } from '@/src/adapters/dexieChapterStorage';
 import { changeChapters, restoreChapterSnapshot } from './chapterOperations';
 import { addCodexEntry, updateCodexEntry } from './codexOperations';
+import { deleteCodexEntry, deleteProjectData } from './entityDeletion';
+import { readPortableBackup } from '@/src/lib/portableBackup';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
+
+it('replaces and removes both Codex images atomically with the entry', async () => {
+  const cover = await dataUrlToBlob(image);
+  const thumbnail = await dataUrlToBlob(otherImage);
+  const id = await addCodexEntry({ projectId: 1, name: 'Raka', category: 'character', description: '', aliases: [], tags: [] }, { cover, thumbnail });
+  const list = () => db.codexCovers.where('codexId').equals(id).toArray();
+  const before = await list();
+  const failure = Object.assign(new Error('full'), { name: 'QuotaExceededError' });
+  vi.spyOn(db.codexCovers, 'bulkAdd').mockRejectedValueOnce(failure);
+  await expect(updateCodexEntry(id, { name: 'Nama baru' }, { cover: thumbnail, thumbnail: cover })).rejects.toThrow('full');
+  expect(await list()).toEqual(before);
+  expect((await db.codex.get(id))?.name).toBe('Raka');
+  await updateCodexEntry(id, {}, { cover: thumbnail, thumbnail: cover });
+  expect(await list()).toHaveLength(2);
+  expect(await (await db.codexCovers.get({ codexId: id, kind: 'cover' }))?.imageBlob.text()).toBe(await thumbnail.text());
+  await updateCodexEntry(id, {}, null);
+  expect(await list()).toEqual([]);
+  await updateCodexEntry(id, {}, { cover, thumbnail });
+  await deleteCodexEntry(id);
+  expect(await list()).toEqual([]);
+});
+
+it('round-trips Codex covers in full and project files and guards references in automatic backups', async () => {
+  const cover = await dataUrlToBlob(image);
+  const thumbnail = await dataUrlToBlob(otherImage);
+  const id = await addCodexEntry({ projectId: 1, name: 'Raka', category: 'character', description: '', aliases: [], tags: [] }, { cover, thumbnail });
+  const full = await backupService.collectAllData();
+  const projectFile = await backupService.prepareExternalBackup(await backupService.collectProjectData(1));
+  const imported = await backupService.importProjectData(await readPortableBackup(projectFile.blob, 'project'));
+  const copy = await db.codex.where('projectId').equals(imported.projectId).first();
+  const copiedCovers = await db.codexCovers.where('projectId').equals(imported.projectId).toArray();
+  expect(copiedCovers.map(row => row.codexId)).toEqual([copy?.id, copy?.id]);
+  expect(copy?.id).not.toBe(id);
+  await deleteProjectData(imported.projectId);
+  expect(await db.codexCovers.count()).toBe(2);
+
+  const auto = await backupService.collectAllData('references');
+  expect(auto.data.codexCovers?.every(row => !row.imageDataUrl)).toBe(true);
+  await backupService.saveToInternalDB(auto);
+  await backupService.restoreFromBackup((await latest('auto')).id!);
+  await updateCodexEntry(id, {}, null);
+  await expect(backupService.restoreFromBackup((await latest('auto')).id!)).rejects.toThrow(/sampul Codex/);
+  expect(await db.codexCovers.count()).toBe(0);
+  const fullFile = await backupService.prepareExternalBackup(full);
+  await backupService.restoreData(await readPortableBackup(fullFile.blob, 'all'));
+  const images = await db.codexCovers.where('codexId').equals(id).toArray();
+  expect(await Promise.all(images.map(row => row.imageBlob.text()))).toEqual([await cover.text(), await thumbnail.text()]);
+});
 function legacy(version = 7): BackupData {
   return {
     version, timestamp: 1,
@@ -59,7 +109,7 @@ it('DB04 requires exactly one catalog policy for every Dexie table', () => {
   }
 });
 
-it('DB04 preserves the v8 export order and imports all exported table records', async () => {
+it('DB04 preserves the export order and imports all exported table records', async () => {
   await db.codex.add({ id: 1, projectId: 1, name: 'Tokoh', category: 'character', aliases: [], tags: [], description: '' });
   await db.bible.add({ projectId: 1, key: 'Nada', instruction: 'Tenang' });
   await db.aiActions.add({ projectId: 1, label: 'Periksa', prompt: 'Periksa bab.' });
@@ -76,15 +126,16 @@ it('DB04 preserves the v8 export order and imports all exported table records', 
   // JSON order is part of the checksum produced by existing clients.
   const exportOrder = [
     'projects', 'chapters', 'codex', 'bible', 'aiActions', 'snapshots', 'timeline', 'relationships',
-    'chatSessions', 'codexCategories', 'plotPromises', 'glossary', 'maps', 'mapMarkers', 'continuityTriage',
+    'chatSessions', 'codexCategories', 'plotPromises', 'glossary', 'maps', 'mapMarkers', 'continuityTriage', 'codexCovers',
   ] as const satisfies readonly BackupTableName[];
   const source = await backupService.collectProjectData(1);
   expect(Object.keys(source.data)).toEqual(exportOrder);
   const { projectId } = await backupService.importProjectData(source);
   const imported = await backupService.collectProjectData(projectId);
   for (const name of BACKUP_TABLES) {
-    expect(source.data[name], name).toHaveLength(1);
-    expect(imported.data[name], name).toHaveLength(1);
+    const count = name === 'codexCovers' ? 0 : 1;
+    expect(source.data[name], name).toHaveLength(count);
+    expect(imported.data[name], name).toHaveLength(count);
   }
   expect(imported.data.maps?.[0].imageDataUrl).toBe(image);
   expect(imported.data.snapshots[0].chapterId).toBe(imported.data.chapters[0].id);
@@ -139,7 +190,7 @@ describe('F03 Atlas recovery', () => {
   });
   it('internal auto preserves matching live images and pre-restore includes complete images', async () => {
     const full = await backupService.collectAllData();
-    expect(full.version).toBe(8);
+    expect(full.version).toBe(9);
     await backupService.saveToInternalDB(full);
     const auto = await latest('auto');
     const parsed = JSON.parse(await backupService.decodeInternalBackup(auto));

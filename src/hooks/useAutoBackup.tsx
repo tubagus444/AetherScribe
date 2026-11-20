@@ -102,7 +102,7 @@ export function BackupProvider({ children }: { children: React.ReactNode }) {
     isBackingUpRef.current = true;
     setIsBackingUp(true);
     try {
-      const data = await backupService.collectAllData();
+      const data = await backupService.collectAllData(directoryHandleRef.current ? 'full' : 'references');
 
       // Layer 1: Internal DB
       try {

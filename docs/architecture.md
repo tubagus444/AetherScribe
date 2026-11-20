@@ -44,7 +44,7 @@ Aplikasi-Pembuatan-Novel/
 ## 2. Alur Data & State Management
 
 AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reaktif dan lokal:
-- **Penyimpanan Primer:** Browser IndexedDB via wrapper **Dexie.js** (`AetherScribeDB`, skema v34 di `src/db.ts`).
+- **Penyimpanan Primer:** Browser IndexedDB via wrapper **Dexie.js** (`AetherScribeDB`, skema v35 di `src/db.ts`).
 - **Reaktivitas UI:** Menggunakan `dexie-react-hooks` (`useLiveQuery`), dibungkus secara teroptimasi di `src/hooks/useOptimizedLiveQuery.ts` dan `src/hooks/useProjectData.ts`. Setiap perubahan tabel IndexedDB otomatis memicu re-render hanya pada komponen yang berlangganan.
 - **State Sesi & Navigasi:** Menggunakan kombinasi React Contexts terisolasi:
   - `ProjectContext`: Proyek aktif, pemilihan proyek, operasi hapus proyek terkoordinasi.

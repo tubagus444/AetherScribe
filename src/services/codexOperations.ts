@@ -3,6 +3,7 @@ import { addOwned, patchOwned, requireRow } from './writeIntegrity';
 import { validateWriteFields } from '@/src/lib/backupValidation';
 import { slugifyFieldKey } from '@/src/lib/codexFields';
 import type { CategoryFieldDef, CodexEntry, CustomCategory } from '@/src/types';
+import { CODEX_COVER_BYTES, isCodexCoverType, type CodexCoverPair } from '@/src/lib/codexCoverLimits';
 
 async function validateDetailChapters({ details }: Pick<CodexEntry, 'details'>, projectId: number) {
   const ids = new Set<number>();
@@ -16,12 +17,39 @@ async function validateDetailChapters({ details }: Pick<CodexEntry, 'details'>, 
   }
 }
 
-export function addCodexEntry(entry: Omit<CodexEntry, 'id'>) {
-  return addOwned(db.codex, entry, entry.details ? [db.chapters] : [], validateDetailChapters);
+async function saveCover(projectId: number, codexId: number, pair: CodexCoverPair | null) {
+  await db.codexCovers.where('codexId').equals(codexId).delete();
+  if (!pair) return;
+  await db.codexCovers.bulkAdd((['cover', 'thumbnail'] as const).map(kind => {
+    const imageBlob = pair[kind];
+    if (!(imageBlob instanceof Blob) || !imageBlob.size || imageBlob.size > CODEX_COVER_BYTES[kind] || !isCodexCoverType(imageBlob.type)) {
+      throw new Error('Gambar sampul tidak valid atau melebihi batas penyimpanan.');
+    }
+    return { projectId, codexId, kind, imageBlob };
+  }));
 }
 
-export function updateCodexEntry(id: number, changes: Partial<Omit<CodexEntry, 'id' | 'projectId'>>) {
-  return patchOwned(db.codex, id, changes, changes.details ? [db.chapters] : [], validateDetailChapters);
+export function addCodexEntry(entry: Omit<CodexEntry, 'id'>, cover?: CodexCoverPair | null) {
+  const dependencies = entry.details ? [db.chapters] : [];
+  const add = () => addOwned(db.codex, entry, dependencies, validateDetailChapters);
+  if (!cover) return add();
+  return db.transaction('rw', [db.codex, db.projects, db.codexCovers, ...dependencies], async () => {
+    const id = await add();
+    await saveCover(entry.projectId, id, cover);
+    return id;
+  });
+}
+
+export function updateCodexEntry(id: number, changes: Partial<Omit<CodexEntry, 'id' | 'projectId'>>, cover?: CodexCoverPair | null) {
+  const dependencies = changes.details ? [db.chapters] : [];
+  const patch = () => patchOwned(db.codex, id, changes, dependencies, validateDetailChapters);
+  if (cover === undefined) return patch();
+  return db.transaction('rw', [db.codex, db.codexCovers, ...dependencies], async () => {
+    const entry = await requireRow(db.codex, id);
+    const updated = await patch();
+    await saveCover(entry.projectId, id, cover);
+    return updated;
+  });
 }
 
 export function addCodexEntries(entries: Omit<CodexEntry, 'id'>[]) {

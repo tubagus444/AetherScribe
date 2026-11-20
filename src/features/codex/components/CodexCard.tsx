@@ -8,6 +8,7 @@ import { resolveFieldValues } from '@/src/lib/codexFields';
 import { effectiveStatus } from '@/src/lib/worldCompleteness';
 import { WorldStatusBadge } from '@/src/features/codex/components/WorldStatusBadge';
 import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
+import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
 
 interface CodexCardProps {
   entry: CodexEntry;
@@ -38,6 +39,7 @@ function CodexCardImpl({
   onDelete,
   onSelect,
 }: CodexCardProps) {
+  const thumbnail = useCoverUrl(useCodexCover(entry.id, 'thumbnail'));
   const accent = getCategoryAccent(entry.category, categories);
   const relCount = relationships.filter(r => r.sourceId === entry.id || r.targetId === entry.id).length;
   // Template field per kategori (#17): tampilkan ringkas maksimal 2 field kunci.
@@ -62,8 +64,8 @@ function CodexCardImpl({
       <div className="flex flex-col h-full">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`p-2.5 rounded-xl shrink-0 ${accent.iconBg}`}>
-              <CategoryIcon category={entry.category} categories={categories} />
+            <div className={`grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl ${accent.iconBg}`}>
+              {thumbnail ? <img src={thumbnail} alt={`Sampul ${entry.name}`} className="size-full object-cover" /> : <CategoryIcon category={entry.category} categories={categories} />}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">

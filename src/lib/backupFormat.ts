@@ -1,8 +1,8 @@
-import type { AtlasMap, Snapshot } from '@/src/types';
+import type { AtlasMap, CodexCoverImage, Snapshot } from '@/src/types';
 import type { ChapterExportRecord, PersistedChapter } from './chapterContracts';
 
 export const MIN_BACKUP_VERSION = 3;
-export const BACKUP_FORMAT_VERSION = 8;
+export const BACKUP_FORMAT_VERSION = 9;
 export type BackupScope = 'all' | 'project';
 
 export interface BackupMapRecord extends Omit<AtlasMap, 'id' | 'imageBlob'> {
@@ -10,6 +10,12 @@ export interface BackupMapRecord extends Omit<AtlasMap, 'id' | 'imageBlob'> {
   imageDataUrl?: string;
   imageAssetId?: string;
   imageMissing?: boolean;
+}
+
+export interface BackupCoverRecord extends Omit<CodexCoverImage, 'id' | 'imageBlob'> {
+  id: number;
+  imageAssetId: string;
+  imageDataUrl?: string;
 }
 
 export interface BackupData<ChapterRow extends PersistedChapter = ChapterExportRecord> {
@@ -48,6 +54,7 @@ export interface BackupData<ChapterRow extends PersistedChapter = ChapterExportR
     maps?: BackupMapRecord[];
     mapMarkers?: any[];
     continuityTriage?: any[];
+    codexCovers?: BackupCoverRecord[];
   };
 }
 

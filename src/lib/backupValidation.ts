@@ -4,6 +4,7 @@ import { validateImageDataUrl } from './blobCodec';
 import { record } from './dataContracts';
 import { BACKUP_TABLES, type BackupTableName } from './tableCatalog';
 import { detachWorkshopEntry, parseWorkshopEntryKey } from './workshopReference';
+import { CODEX_COVER_BYTES, isCodexCoverType } from '@/src/lib/codexCoverLimits';
 
 type Row = Record<string, any>;
 type Check = (value: any, path: string) => void;
@@ -13,6 +14,7 @@ const number: Check = (v, p) => { if (typeof v !== 'number' || !Number.isFinite(
 const nonnegative: Check = (v, p) => { number(v, p); if (v < 0) fail(p); };
 const id: Check = (v, p) => { if (!Number.isSafeInteger(v) || v <= 0) fail(p); };
 const bool: Check = (v, p) => { if (typeof v !== 'boolean') fail(p); };
+const assetHash: Check = (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); };
 const choice = (...values: unknown[]): Check => (v, p) => { if (!values.includes(v)) fail(p); };
 const array = (check: Check): Check => (v, p) => {
   if (!Array.isArray(v) || v.length > BACKUP_LIMITS.recordsPerTable) fail(p);
@@ -104,7 +106,7 @@ const backupSchemas = {
     definition: text, variants: array(text), category: text, strictMatch: bool,
   }),
   maps: object({ id, projectId: id, name: text, width: id, height: id, createdAt: nonnegative }, {
-    imageDataUrl: (v) => validateImageDataUrl(v), imageAssetId: (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); },
+    imageDataUrl: (v) => validateImageDataUrl(v), imageAssetId: assetHash,
     imageMissing: bool, scale: object({ distanceUnit: text, ratioToRelative: number }),
   }),
   mapMarkers: Object.assign((v: Row, p: string) => {
@@ -112,6 +114,7 @@ const backupSchemas = {
     markerGeometry(v, `${p}.geometry`);
   }, markerFields),
   continuityTriage: object({ id, projectId: id, findingId: text, status: choice('dismissed', 'acknowledged'), timestamp: nonnegative }),
+  codexCovers: object({ id, projectId: id, codexId: id, kind: choice('cover', 'thumbnail'), imageAssetId: assetHash }, { imageDataUrl: text }),
 } satisfies Record<BackupTableName, ReturnType<typeof object>>;
 const schemas: Record<string, ReturnType<typeof object>> = backupSchemas;
 const jsonStringEncoder = new TextEncoder();
@@ -192,7 +195,7 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
     throw new Error('File ekspor per-novel tidak dapat mengganti workspace. Gunakan “Impor Novel”.');
   }
   if (scope === 'project' && b.scope !== 'project') throw new Error('Ini bukan file ekspor per-novel. Gunakan pemulihan cadangan penuh.');
-  if (b.version === BACKUP_FORMAT_VERSION && (!b.imageMode || !b.scope)) fail(`scope dan imageMode wajib pada v${BACKUP_FORMAT_VERSION}`);
+  if (b.version >= 8 && (!b.imageMode || !b.scope)) fail(`scope dan imageMode wajib pada v${b.version}`);
   if (scope === 'project' && b.imageMode === 'references') fail('impor novel membutuhkan gambar lengkap');
   const d = b.data as Record<string, Row[]>;
   if (scope === 'project' && Array.isArray(d.projects) && d.projects.length !== 1) throw new Error('File ini bukan ekspor satu novel.');
@@ -200,7 +203,9 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
   let count = 0;
   for (const table of BACKUP_TABLES) {
     const rows = d[table];
-    if (rows === undefined && (b.version < BACKUP_FORMAT_VERSION || scope === 'project') && !['projects', 'chapters', 'codex'].includes(table)) continue;
+    if (rows === undefined && !['projects', 'chapters', 'codex'].includes(table) && (
+      b.version < 8 || scope === 'project' || (table === 'codexCovers' && b.version < 9)
+    )) continue;
     array(backupSchemas[table])(rows, table);
     count += rows.length;
     if (count > BACKUP_LIMITS.recordsTotal) fail('jumlah record total');
@@ -239,11 +244,27 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
     if (table === 'maps') {
       if ('imageBlob' in row) fail('maps.imageBlob tidak dapat diimpor dari JSON');
       if (row.imageMissing && (row.imageDataUrl || row.imageAssetId)) fail('status gambar ambigu');
-      if (b.version === BACKUP_FORMAT_VERSION && !row.imageMissing) {
+      if (b.version >= 8 && !row.imageMissing) {
         if (!row.imageAssetId || (b.imageMode === 'full' && !row.imageDataUrl) || (b.imageMode === 'references' && row.imageDataUrl)) fail('gambar tidak sesuai imageMode');
       }
     }
   }
+  const coverPairs = new Map<number, Set<'cover' | 'thumbnail'>>();
+  for (const row of d.codexCovers ?? []) {
+    const hasImage = row.imageDataUrl !== undefined;
+    const needsImage = b.imageMode !== 'references';
+    if ('imageBlob' in row || hasImage !== needsImage) fail('codexCovers: gambar tidak sesuai imageMode');
+    if (row.imageDataUrl !== undefined) {
+      const limit = row.kind === 'cover' ? CODEX_COVER_BYTES.cover : CODEX_COVER_BYTES.thumbnail;
+      validateImageDataUrl(row.imageDataUrl, limit);
+      if (!isCodexCoverType(row.imageDataUrl.slice(5, row.imageDataUrl.indexOf(';')))) fail('codexCovers.imageDataUrl');
+    }
+    const kinds = coverPairs.get(row.codexId) ?? new Set();
+    if (kinds.has(row.kind)) fail('codexCovers: varian duplikat');
+    kinds.add(row.kind);
+    coverPairs.set(row.codexId, kinds);
+  }
+  if ([...coverPairs.values()].some(kinds => kinds.size !== 2)) fail('codexCovers: pasangan sampul dan thumbnail tidak lengkap');
   for (const [table, key] of [['bible', 'key'], ['codexCategories', 'slug'], ['continuityTriage', 'findingId']]) {
     const seen = new Set<string>();
     for (const row of d[table] ?? []) {

@@ -1,4 +1,5 @@
 import { readBackupSnapshot } from './backupSnapshot';
+import { deserializeCoverImages, serializeCoverImages } from '@/src/services/backupCoverImages';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -50,14 +51,14 @@ function isQuotaError(err: any): boolean {
 
 export const backupService = {
   /** Ganti `imageBlob` (Blob) → `imageDataUrl` (base64) agar aman di JSON. */
-  async serializeMaps(maps: any[]): Promise<BackupMapRecord[]> {
+  async serializeMaps(maps: any[], references = false): Promise<BackupMapRecord[]> {
     return Promise.all(maps.map(async (m) => {
       const { imageBlob, imageDataUrl: _url, imageAssetId: _id, imageMissing: _missing, ...rest } = m;
       if (!(imageBlob instanceof Blob)) return { ...rest, imageMissing: true };
       const imageDataUrl = await blobToDataUrl(imageBlob);
       const imageAssetId = await this.computeChecksum(imageDataUrl);
       if (!imageAssetId) throw new Error('Tidak dapat menghitung identitas gambar cadangan. Gunakan browser dengan Web Crypto.');
-      return { ...rest, imageDataUrl, imageAssetId };
+      return references ? { ...rest, imageAssetId } : { ...rest, imageDataUrl, imageAssetId };
     }));
   },
 
@@ -100,15 +101,17 @@ export const backupService = {
    * Note: projectId is optional; if provided, technically we could filter,
    * but manual backup collects everything to ensure full redundancy.
    */
-  async collectAllData(): Promise<BackupData> {
-    const data = await readBackupSnapshot() as BackupData['data'];
+  async collectAllData(imageMode: 'full' | 'references' = 'full'): Promise<BackupData> {
+    const { codexCovers, ...rows } = await readBackupSnapshot();
+    const data = rows as BackupData['data'];
     preserveOrphanedSnapshots(data);
-    data.maps = await this.serializeMaps(data.maps ?? []);
+    data.maps = await this.serializeMaps(data.maps ?? [], imageMode === 'references');
+    data.codexCovers = await serializeCoverImages(codexCovers, imageMode === 'references');
     return {
       version: BACKUP_FORMAT_VERSION,
       timestamp: Date.now(),
       scope: 'all',
-      imageMode: 'full',
+      imageMode,
       checksum: await this.computeChecksum(JSON.stringify(data)),
       data
     };
@@ -123,9 +126,11 @@ export const backupService = {
    * agar jalur restore-penuh bisa menolaknya (lihat catatan di BackupData.scope).
    */
   async collectProjectData(projectId: number): Promise<BackupData> {
-    const data = await readBackupSnapshot(projectId) as BackupData['data'];
+    const { codexCovers, ...rows } = await readBackupSnapshot(projectId);
+    const data = rows as BackupData['data'];
     const project = data.projects[0];
     data.maps = await this.serializeMaps(data.maps ?? []);
+    data.codexCovers = await serializeCoverImages(codexCovers);
     return {
       version: BACKUP_FORMAT_VERSION,
       timestamp: Date.now(),
@@ -252,6 +257,11 @@ export const backupService = {
     return encoded;
   },
 
+  async prepareBackupDownload(data: BackupData) {
+    if (data.data.codexCovers?.length) return this.prepareExternalBackup(data);
+    return { blob: new Blob([this.serializeExternalBackup(data, 2)], { type: 'application/json' }), compressed: false };
+  },
+
   /**
    * Writes the backup JSON to a file via File System Access API.
    */
@@ -314,6 +324,7 @@ export const backupService = {
     const data = normalizeBackupData(parsedData);
     // Dekode/resolusi aset sebelum snapshot atau mutasi database.
     const mapRows = await this.deserializeMaps(data.maps, true);
+    const coverRows = await deserializeCoverImages(data.codexCovers, true);
 
     // Jaring undo (#2): potret state saat ini ke tabel `backups` (tak ikut di-clear
     // oleh transaksi restore) SEBELUM menimpa. Melindungi SEMUA jalur restore
@@ -332,7 +343,7 @@ export const backupService = {
       for (const name of RESTORE_TABLES) await db[name].clear();
 
       for (const name of RESTORE_RECORD_TABLES) {
-        const rows = name === 'maps' ? mapRows : data[name];
+        const rows = name === 'maps' ? mapRows : name === 'codexCovers' ? coverRows : data[name];
         if (!rows?.length) continue;
         if (name === 'bible') {
           // Jaga indeks unik [projectId+key] pada jalur pemulihan.
@@ -386,6 +397,7 @@ export const backupService = {
     // Dekode gambar peta di LUAR transaksi; id lama dipertahankan untuk
     // membangun mapIdMap saat insert.
     const decodedMaps = await this.deserializeMaps(data.maps);
+    const decodedCovers = await deserializeCoverImages(data.codexCovers);
 
     // Salin baris tanpa id, set projectId. (id dilepas → Dexie menetapkan id baru.)
     const prep = (row: any, projectId: number) => {
@@ -430,6 +442,14 @@ export const backupService = {
         });
         const keys = await db.codex.bulkAdd(rows, { allKeys: true });
         data.codex.forEach((c, i) => { if (c.id != null) codexIdMap.set(c.id, keys[i] as number); });
+      }
+
+      if (decodedCovers.length) {
+        await db.codexCovers.bulkAdd(decodedCovers.map(({ id: _id, ...cover }) => {
+          const codexId = codexIdMap.get(cover.codexId);
+          if (codexId === undefined) throw new Error('Entri untuk gambar sampul tidak ditemukan saat impor.');
+          return { ...cover, projectId: newProjectId, codexId };
+        }));
       }
 
       // 2b) Peta Atlas di-insert dulu (seperti bab/codex) untuk membangun mapIdMap
