@@ -6,6 +6,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-20
 
+### [Fitur] Detail tambahan Codex dan riwayat per bab
+
+- Tambahkan detail opsional per entri, nilai awal, dan catatan per bab.
+  Ringkasan mengikuti urutan naskah. AI menerima detail yang diizinkan
+  sesuai bab target atau sebagai riwayat dalam audit lintas bab.
+- Validasi tautan bab di proyek yang sama dan remap saat impor novel.
+  Catatan dari bab yang dihapus tetap tersimpan di riwayat penulis.
+
 ### [UI] Perluas ruang kartu di panel Codex
 
 - Satukan gulir judul, filter, formulir, dan kartu dalam ruang panel yang

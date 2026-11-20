@@ -4,18 +4,31 @@ import { validateWriteFields } from '@/src/lib/backupValidation';
 import { slugifyFieldKey } from '@/src/lib/codexFields';
 import type { CategoryFieldDef, CodexEntry, CustomCategory } from '@/src/types';
 
+async function validateDetailChapters({ details }: Pick<CodexEntry, 'details'>, projectId: number) {
+  const ids = new Set<number>();
+  for (const detail of details ?? []) for (const revision of detail.revisions ?? []) {
+    if (revision.chapterId !== undefined) ids.add(revision.chapterId);
+  }
+  if (!ids.size) return;
+  const chapters = await db.chapters.bulkGet([...ids]);
+  if (chapters.some(chapter => chapter?.projectId !== projectId)) {
+    throw new Error('Bab pada riwayat detail harus tersedia di novel ini. Periksa kembali pilihan bab.');
+  }
+}
+
 export function addCodexEntry(entry: Omit<CodexEntry, 'id'>) {
-  return addOwned(db.codex, entry);
+  return addOwned(db.codex, entry, entry.details ? [db.chapters] : [], validateDetailChapters);
 }
 
 export function updateCodexEntry(id: number, changes: Partial<Omit<CodexEntry, 'id' | 'projectId'>>) {
-  return patchOwned(db.codex, id, changes);
+  return patchOwned(db.codex, id, changes, changes.details ? [db.chapters] : [], validateDetailChapters);
 }
 
 export function addCodexEntries(entries: Omit<CodexEntry, 'id'>[]) {
-  return db.transaction('rw', db.projects, db.codex, async () => {
+  return db.transaction('rw', db.projects, db.codex, db.chapters, async () => {
     for (const entry of entries) validateWriteFields('codex', entry, 'create');
     for (const projectId of new Set(entries.map(entry => entry.projectId))) await requireRow(db.projects, projectId);
+    for (const entry of entries) await validateDetailChapters(entry, entry.projectId);
     return db.codex.bulkAdd(entries);
   });
 }

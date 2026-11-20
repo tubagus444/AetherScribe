@@ -29,7 +29,7 @@ export async function processRewrite(params: GenerateParams): Promise<string> {
   // tak terpengaruh karena entri terhapus saat selesai, jadi "regenerate" tetap memberi
   // variasi baru. Catatan: peserta kedua berbagi stream peserta pertama sehingga onChunk-nya
   // tak terpanggil — ia tetap menerima hasil final via promise. Cukup untuk kasus double-fire.
-  const dedupKey = rewriteDedupKey(provider, params.action, params.prompt, params.selection);
+  const dedupKey = rewriteDedupKey(provider, params.action, params.prompt, params.selection, params.chapterId);
   const existing = inFlightRewrites.get(dedupKey);
   if (existing) return existing;
 
@@ -54,7 +54,7 @@ export async function processRewrite(params: GenerateParams): Promise<string> {
         }
 
         const { cachedContext, contextBlock } = await resolveContextBuilder(
-          useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], textForRAG
+          useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], textForRAG, { chapterId: params.chapterId }
         );
         const systemInstruction = AI_PROMPTS.REWRITE.SYSTEM(contextBlock);
 
@@ -116,7 +116,7 @@ export async function processChat(params: ChatParams): Promise<string> {
       }
 
       const { cachedContext, contextBlock } = await resolveContextBuilder(
-        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], textForRAG
+        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], textForRAG, { chapterId: params.chapterId }
       );
       
       let systemInstruction = AI_PROMPTS.CHAT.SYSTEM(contextBlock, params.sessionMode);
@@ -155,14 +155,18 @@ export async function checkConsistency(params: ConsistencyParams): Promise<{ fin
     providerOverride: params.provider,
     buildPrompts: async ({ useCaching, settings }) => {
       const { cachedContext, contextBlock } = await resolveContextBuilder(
-        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || []
+        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], undefined,
+        { chapterId: params.chapterId, history: params.includeDetailHistory },
       );
       
       const timelineBlock = params.timelineSummary && params.timelineSummary.trim()
         ? `\n\nSTORY TIMELINE (urutan kronologis peristiwa cerita):\n${params.timelineSummary.trim()}`
         : '';
         
-      const systemInstruction = AI_PROMPTS.CONSISTENCY.SYSTEM(contextBlock ? contextBlock + timelineBlock : undefined) + (contextBlock ? '' : timelineBlock);
+      const historyGuide = params.includeDetailHistory
+        ? '\n\nWhen Codex details include a chapter history, compare the passage with the value valid in its chapter. Later changes do not contradict earlier states.'
+        : '';
+      const systemInstruction = AI_PROMPTS.CONSISTENCY.SYSTEM(contextBlock ? contextBlock + timelineBlock : undefined) + (contextBlock ? '' : timelineBlock) + historyGuide;
       const userPrompt = AI_PROMPTS.CONSISTENCY.USER(params.chapterTitle || '', chapterText);
       
       return { systemInstruction, cachedContext, userPrompt };
@@ -212,7 +216,7 @@ export async function auditCodexEntry(params: CodexAuditParams): Promise<CodexAu
     providerOverride: params.provider,
     buildPrompts: async ({ useCaching, settings }) => {
       const { cachedContext, contextBlock } = await resolveContextBuilder(
-        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || []
+        useCaching, settings.contextDepth, params.bibleRules, params.codexEntries, params.relationships || [], undefined, { history: deep }
       );
       
       const systemInstruction = useCaching ? prompt.SYSTEM() : prompt.SYSTEM(contextBlock);

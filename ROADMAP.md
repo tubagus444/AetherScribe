@@ -37,6 +37,7 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ## Pekerjaan selesai
 
+- [Detail tambahan Codex, riwayat per bab, dan konteks AI](docs/reports/audits/2026-11-20-codex-details.md)
 - [Audit F01–F29](docs/archive/2026-11-15-roadmap-audit-completed.md)
 - [Penguatan L01–L06](docs/archive/2026-11-15-roadmap-l01-l06-completed.md)
 - [Penguatan database DB01–DB08](docs/reports/audits/2026-11-19-db01-db08.md)

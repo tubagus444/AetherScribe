@@ -273,10 +273,10 @@ export async function estimateContextTokens(text: string, codexText: string, rul
   return sendToWorker('ESTIMATE_CONTEXT_TOKENS', { text, codexText, rulesText, model });
 }
 
-export async function previewContextTokens(text: string, projectId: number, model?: string, fullContext?: boolean): Promise<{textTokens: number, codexTokens: number, rulesTokens: number, totalTokens: number}> {
+export async function previewContextTokens(text: string, projectId: number, model?: string, fullContext?: boolean, chapterId?: number): Promise<{textTokens: number, codexTokens: number, rulesTokens: number, totalTokens: number}> {
   // Mode caching menyertakan graf relasi di KB (buildCachedContextSegments).
   // Karena worker kini mengambil data langsung dari IndexedDB, kita cukup mengirim
   // projectId dan membiarkan worker yang melakukan fetch & konstruksi teks, sehingga
   // terhindar dari overhead clone/serialize array besar di setiap ketikan (O(n)).
-  return sendToWorker('PREVIEW_CONTEXT_TOKENS', { text, projectId, model, fullContext, maxCachedLoreChars: getMaxCachedLoreChars() });
+  return sendToWorker('PREVIEW_CONTEXT_TOKENS', { text, projectId, model, fullContext, chapterId, maxCachedLoreChars: getMaxCachedLoreChars() });
 }

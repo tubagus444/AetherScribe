@@ -7,12 +7,14 @@ import { getCategoryLabel, getCategoryAccent, type CategoryDef } from '@/src/lib
 import { resolveFieldValues } from '@/src/lib/codexFields';
 import { effectiveStatus } from '@/src/lib/worldCompleteness';
 import { WorldStatusBadge } from '@/src/features/codex/components/WorldStatusBadge';
+import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
 
 interface CodexCardProps {
   entry: CodexEntry;
   relationships: Relationship[];
   projectId: number;
   categories?: CategoryDef[];
+  detailChapters: DetailChapterIndex;
   onEdit: (entry: CodexEntry) => void;
   onDelete: (id: number) => void;
   onSelect: (entry: CodexEntry) => void;
@@ -29,6 +31,7 @@ function CodexCardImpl({
   relationships,
   projectId,
   categories,
+  detailChapters,
   onEdit,
   onDelete,
   onSelect,
@@ -37,6 +40,10 @@ function CodexCardImpl({
   const relCount = relationships.filter(r => r.sourceId === entry.id || r.targetId === entry.id).length;
   // Template field per kategori (#17): tampilkan ringkas maksimal 2 field kunci.
   const keyFields = resolveFieldValues(entry).slice(0, 2);
+  const previewDetails = (entry.details ?? []).flatMap(detail => {
+    const current = readCurrentDetail(detail, readDetailHistory(detail, detailChapters));
+    return current.value.trim() ? [{ key: detail.id, label: detail.label, value: current.value }] : [];
+  }).slice(0, 2);
   // Kelengkapan worldbuilding (#11): status kematangan (badge kecil).
   const status = effectiveStatus(entry);
 
@@ -97,11 +104,11 @@ function CodexCardImpl({
               <span className="italic opacity-60">Deskripsi belum diisi.</span>
             )}
           </div>
-          {keyFields.length > 0 && (
+          {(keyFields.length > 0 || previewDetails.length > 0) && (
             <div className="mt-3 flex flex-col gap-1">
-              {keyFields.map(f => (
+              {[...previewDetails, ...keyFields].map(f => (
                 <div key={f.key} className="flex items-baseline gap-1.5 text-[11px] min-w-0">
-                  <span className="font-semibold text-slate-500 dark:text-slate-400 shrink-0">{f.label}:</span>
+                  <span className="max-w-[45%] shrink-0 truncate font-semibold text-slate-500 dark:text-slate-400">{f.label}:</span>
                   <span className="text-slate-600 dark:text-slate-300 truncate">{f.value}</span>
                 </div>
               ))}

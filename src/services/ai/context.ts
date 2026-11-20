@@ -4,6 +4,10 @@ import { formatBibleBlock } from '@/src/lib/storyBible';
 import { formatFieldsForAI } from '@/src/lib/codexFields';
 import { buildCodexLoreString, buildRelationshipGraph } from '@/src/lib/loreFormat';
 import { getMaxCachedLoreChars } from '@/src/lib/aiTuning';
+import { createCodexDetailFormatter, hasSharedDetailHistory, type CodexDetailScope } from '@/src/lib/codexDetails';
+import { readChapterList } from '@/src/services/chapterQueries';
+
+type FormatDetails = ReturnType<typeof createCodexDetailFormatter>;
 
 const CACHE_SUPPORTED_PROVIDERS = ['google', 'claude', 'openrouter'];
 
@@ -34,9 +38,9 @@ export function getContextWindow(provider: string): number {
  * (jarang berubah), segmen 1 = Codex lore + relationship graph (sering diedit). Proxy
  * memberi tiap segmen cache breakpoint sendiri sehingga edit satu entri Codex hanya
  * membatalkan segmen volatil; prefix Bible tetap hit (#P3). Join('\n\n') memulihkan blok
- * tunggal lama (dipakai jalur non-caching). Segmen byte-identik antar-aksi & antar-panggilan.
+ * tunggal lama (dipakai jalur non-caching). Segmen stabil untuk cakupan detail yang sama.
  */
-export function buildCachedContextSegments(bibleRules: StoryBibleRule[], codexEntries: CodexEntry[], relationships: Relationship[] = []): string[] {
+export function buildCachedContextSegments(bibleRules: StoryBibleRule[], codexEntries: CodexEntry[], relationships: Relationship[] = [], formatDetails?: FormatDetails): string[] {
   const sortedRules = [...bibleRules].sort((a, b) => a.key.localeCompare(b.key));
   const sortedCodex = [...codexEntries].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -44,7 +48,7 @@ export function buildCachedContextSegments(bibleRules: StoryBibleRule[], codexEn
   // Format lore (entri `hidden` & `secret` TETAP diumpankan agar AI menangkap
   // kontradiksi/kebocoran) lewat SUMBER TUNGGAL `buildCodexLoreString` — dibagi dengan
   // meter token di contextWorker agar tak drift. Cap dipotong pada BATAS ENTRI.
-  const lore = buildCodexLoreString(sortedCodex, getMaxCachedLoreChars());
+  const lore = buildCodexLoreString(sortedCodex, getMaxCachedLoreChars(), formatDetails);
   if (lore.truncated) {
     // Dulu `.substring()` memangkas senyap di tengah entri → entri huruf-akhir & blok
     // [RAHASIA…] hilang tanpa jejak. Kini potong di batas entri + peringatkan.
@@ -62,7 +66,7 @@ export function buildCachedContextSegments(bibleRules: StoryBibleRule[], codexEn
   ];
 }
 
-export function buildContextBlock(rules: StoryBibleRule[], codex: CodexEntry[], relationships: Relationship[] = [], depth: ContextDepth = 'balanced'): string {
+export function buildContextBlock(rules: StoryBibleRule[], codex: CodexEntry[], relationships: Relationship[] = [], depth: ContextDepth = 'balanced', formatDetails?: FormatDetails): string {
   // If depth is minimal, we only include the most core rules and no lore
   if (depth === 'minimal') {
     // Premis + Tema mengarahkan AI jauh lebih kuat daripada Judul; Judul sengaja
@@ -102,6 +106,8 @@ export function buildContextBlock(rules: StoryBibleRule[], codex: CodexEntry[], 
       // Template field per kategori (#17) — ringkas (satu baris) dalam anggaran karakter.
       const fields = formatFieldsForAI(e);
       if (fields) formattedEntry += ` {${fields.replace(/\n/g, '; ').substring(0, subLimit)}}`;
+      const details = formatDetails?.(e);
+      if (details) formattedEntry += ` {${details.replace(/\n/g, '; ').substring(0, subLimit)}}`;
       // Kebenaran penulis (lihat buildCachedContextSegments) — ikut di jalur RAG legacy.
       if (e.secret?.trim()) formattedEntry += ` [RAHASIA PENULIS: ${e.secret.trim().substring(0, subLimit)}]`;
 
@@ -134,17 +140,27 @@ export async function resolveContextBuilder(
   rules: StoryBibleRule[],
   codex: CodexEntry[],
   rels: Relationship[],
-  ragTargetText?: string
+  ragTargetText?: string,
+  detailScope?: CodexDetailScope,
 ): Promise<{ cachedContext?: string[]; contextBlock?: string }> {
+  const projects = new Set(codex.filter(hasSharedDetailHistory).map(entry => entry.projectId));
+  const chapters = (await Promise.all([...projects].map(projectId => readChapterList(projectId)))).flat();
+  const formatDetails = createCodexDetailFormatter(chapters, detailScope);
   if (useCaching) {
-    return { cachedContext: buildCachedContextSegments(rules, codex, rels) };
+    return { cachedContext: buildCachedContextSegments(rules, codex, rels, formatDetails) };
   } else {
     if (ragTargetText) {
-      const relevantCodex = await getRelevantContext(ragTargetText, codex);
+      const matches = await getRelevantContext(ragTargetText, codex);
+      const currentEntries = new Map(codex.map(entry => [entry.id, entry]));
+      // Worker and search matches can lag edits. Format current values and AI permissions.
+      const relevantCodex = matches.flatMap(match => {
+        const current = currentEntries.get(match.id);
+        return current?.projectId === match.projectId ? [current] : [];
+      });
       const relevantRules = await getRelevantBibleRules(ragTargetText, rules);
-      return { contextBlock: buildContextBlock(relevantRules, relevantCodex, rels, depth) };
+      return { contextBlock: buildContextBlock(relevantRules, relevantCodex, rels, depth, formatDetails) };
     } else {
-      const kbSegments = buildCachedContextSegments(rules, codex, rels);
+      const kbSegments = buildCachedContextSegments(rules, codex, rels, formatDetails);
       return { contextBlock: kbSegments.join('\n\n') };
     }
   }

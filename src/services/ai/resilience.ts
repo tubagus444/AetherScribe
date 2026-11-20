@@ -44,7 +44,9 @@ export function rewriteDedupKey(
   action: string,
   prompt: string | undefined,
   selection: string | undefined,
+  chapterId?: number,
 ): string {
+  if (chapterId !== undefined) return JSON.stringify([provider, action, prompt ?? '', selection ?? '', chapterId]);
   return `${provider}|${action}|${prompt ?? ''}|${selection ?? ''}`;
 }
 

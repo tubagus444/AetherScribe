@@ -167,6 +167,7 @@ export function ConsistencyPanel({ projectId }: ConsistencyPanelProps) {
 
     try {
       const { findings, truncated } = await checkConsistency({
+        chapterId: chapter.id,
         chapterText: plain,
         chapterTitle: chapter.title,
         bibleRules,
@@ -244,6 +245,8 @@ export function ConsistencyPanel({ projectId }: ConsistencyPanelProps) {
 
       try {
         const { findings: chFindings, truncated: chTruncated } = await checkConsistency({
+          chapterId: ch.id,
+          includeDetailHistory: true,
           chapterText: plain,
           chapterTitle: ch.title,
           bibleRules,

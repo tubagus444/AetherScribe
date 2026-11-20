@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { previewContextTokens } from '@/src/services/contextEngine';
-import { db } from '@/src/db';
 
 export function useContextMeter(
   projectId: number,
@@ -23,7 +22,7 @@ export function useContextMeter(
     setIsCalculating(true);
     timeoutRef.current = setTimeout(async () => {
       try {
-        const result = await previewContextTokens(text, projectId, model);
+        const result = await previewContextTokens(text, projectId, model, undefined, chapterId);
         setTokens(result);
       } catch (err) {
         console.error('Failed to preview context tokens', err);

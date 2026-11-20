@@ -186,3 +186,11 @@ memiliki rujukan ke entri yang sudah dihapus, ekspor menyimpan salinan sesi seba
 chat Studio dengan pesan lengkap. Pemulihan workspace dari cadangan penuh lama
 menerapkan aturan yang sama setelah memeriksa checksum asli. Kunci `new:<seed>`
 dan teks pesan tetap literal.
+
+## Detail tambahan Codex
+
+Detail tambahan Codex ikut dalam cadangan penuh dan ekspor per novel bersama
+izin AI dan catatan per bab. Pemulihan penuh mempertahankan ID. Impor novel
+memetakan `codex.details[].revisions[].chapterId` ke ID bab di salinan proyek.
+Catatan dengan `detachedChapterTitle` disimpan tanpa tautan bab. Arsip lama
+dapat tidak memuat `details`. Ekspor Markdown Codex tidak memuat detail ini.

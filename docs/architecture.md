@@ -130,7 +130,13 @@ Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI
 - Pada mode caching, `buildCachedContextSegments` menyusun segmen stabil
   Story Bible lalu Codex dan graf. Teruskan segmen lewat `cachedContext` secara
   terpisah dari `systemInstruction`. Jaga urutan deterministik dan kesamaan
-  byte segmen lintas aksi. Mode lain memakai konteks relevan melalui worker.
+  byte segmen lintas aksi dengan cakupan bab dan riwayat yang sama. Mode lain
+  memakai konteks relevan melalui worker.
+- `codexDetails.ts` membentuk konteks detail yang diizinkan penulis. Gunakan
+  metadata bab untuk memilih revisi hingga bab target. Tanpa bab target,
+  aksi biasa memakai nilai terbaru. Audit lintas bab dapat meminta riwayat.
+  Nilai yang bergantung pada bab masuk segmen Codex. Prefiks Story Bible
+  tetap stabil. Worker meter menerima ID bab dan memakai fungsi format yang sama.
 - Jalur AI dan pratinjau token berbagi `loreFormat.ts`. Potong lore pada batas
   entri dan kirim batas dari `getMaxCachedLoreChars()` lewat payload worker.
 - Gunakan kontrak dari `contextProtocol.ts`, `rag/oramaProtocol.ts`, dan

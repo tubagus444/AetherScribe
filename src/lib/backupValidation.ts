@@ -30,6 +30,26 @@ const date = object({ era: nonnegative, year: id, month: id, day: id });
 const point = object({ x: number, y: number });
 const relativePoint: Check = (v, p) => { point(v, p); if (v.x < 0 || v.x > 1 || v.y < 0 || v.y > 1) fail(p); };
 const fields = array(object({ key: text, label: text, type: choice('text', 'textarea', 'number', 'select') }, { options: array(text) }));
+const nonblank: Check = (v, p) => { text(v, p); if (!v.trim()) fail(p); };
+const detailRevisions: Check = (v, p) => {
+  array(object({ id: nonblank, value: nonblank }, { chapterId: id, detachedChapterTitle: text }))(v, p);
+  const ids = new Set<string>();
+  const chapters = new Set<number>();
+  for (const revision of v) {
+    if (ids.has(revision.id)) fail(p);
+    ids.add(revision.id);
+    if (revision.chapterId === undefined) {
+      if (revision.detachedChapterTitle === undefined) fail(p);
+    } else {
+      if (chapters.has(revision.chapterId) || revision.detachedChapterTitle !== undefined) fail(p);
+      chapters.add(revision.chapterId);
+    }
+  }
+};
+const codexDetails: Check = (v, p) => {
+  array(object({ id: nonblank, label: nonblank, value: text, includeInAI: bool }, { revisions: detailRevisions }))(v, p);
+  if (new Set(v.map((detail: { id: string }) => detail.id)).size !== v.length) fail(p);
+};
 const calendar = object({
   eras: array(object({ name: text }, { abbr: text })), weekdays: array(text),
   months: array(object({ name: text, days: id })),
@@ -58,7 +78,7 @@ const backupSchemas = {
   }),
   codex: object({ id, projectId: id, name: text, category: text, description: text, aliases: array(text), tags: array(text) }, {
     hidden: bool, secret: text, birthDate: date, worldStatus: choice('stub', 'partial', 'solid'), todo: text,
-    customFields: array(object({ key: text, label: text, value: text })), factionTag: text, factionBoard: point,
+    customFields: array(object({ key: text, label: text, value: text })), details: codexDetails, factionTag: text, factionBoard: point,
     namePalette: object({ patterns: array(text), onsets: array(text), nuclei: array(text), codas: array(text) }, {
       minSyllables: id, maxSyllables: id, morphemes: array(object({ root: text, meaning: text })),
     }),
@@ -200,6 +220,11 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
     if (detachedSnapshot && scope === 'project') fail('snapshots.chapterId referensi tidak valid');
     if (!detachedSnapshot) ref(row, 'chapterId', chapters, table);
     for (const key of ['activeChapterId', 'plantedChapterId']) ref(row, key, chapters, table);
+    if (table === 'codex') {
+      for (const detail of row.details ?? []) for (const revision of detail.revisions ?? []) {
+        ref({ projectId: row.projectId, chapterId: revision.chapterId }, 'chapterId', chapters, 'codex.details.revisions');
+      }
+    }
     for (const key of ['sourceId', 'targetId', 'codexId', 'payoffCodexId']) ref(row, key, codex, table);
     if (table === 'chatSessions') {
       const entryId = parseWorkshopEntryKey(row.workshopKey);

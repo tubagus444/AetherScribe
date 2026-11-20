@@ -8,6 +8,7 @@ import { SessionMode, CodexEntry, StoryBibleRule, ChatMessage } from '@/src/type
 export function useAssistantSession({
   projectId,
   activeChapterId,
+  sessionChapterId,
   activeSessionId,
   setActiveSessionId,
   activeSession,
@@ -21,6 +22,7 @@ export function useAssistantSession({
 }: {
   projectId: number | null;
   activeChapterId: number | null;
+  sessionChapterId: number | null;
   activeSessionId: number | null;
   setActiveSessionId: (id: number | null) => void;
   activeSession: any;
@@ -52,7 +54,7 @@ export function useAssistantSession({
     regenerate
   } = useChatSession({
     projectId: projectId || 0,
-    chapterId: activeChapterId || undefined,
+    chapterId: sessionChapterId ?? undefined,
     codexEntries: codexEntries || [],
     bibleRules: bibleRules || [],
     relationships: relationships || [],

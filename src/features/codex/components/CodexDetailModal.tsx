@@ -17,6 +17,7 @@ import { getRelationshipLabel, RELATIONSHIP_TYPES } from '@/src/features/codex/r
 import { getCategoryLabel, getCategoryAccent, type CategoryDef } from '@/src/lib/codexCategories';
 import { resolveFieldValues } from '@/src/lib/codexFields';
 import { formatDate } from '@/src/lib/worldCalendar';
+import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
 
 interface CodexDetailModalProps {
   entry: CodexEntry;
@@ -25,6 +26,7 @@ interface CodexDetailModalProps {
   promises?: PlotPromise[];
   projectId: number;
   categories?: CategoryDef[];
+  detailChapters: DetailChapterIndex;
   onClose: () => void;
   onEdit: (entry: CodexEntry) => void;
   onDelete: (id: number) => void;
@@ -40,6 +42,7 @@ export function CodexDetailModal({
   promises,
   projectId,
   categories,
+  detailChapters,
   onClose,
   onEdit,
   onDelete,
@@ -271,6 +274,41 @@ export function CodexDetailModal({
               <span className="italic opacity-60">Deskripsi belum diisi.</span>
             )}
           </div>
+
+          {!!entry.details?.length && (
+            <section className="mb-8 space-y-3" aria-label="Detail tambahan">
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Detail tambahan</h4>
+              {entry.details.map(detail => {
+                const history = readDetailHistory(detail, detailChapters);
+                const current = readCurrentDetail(detail, history);
+                return (
+                  <div key={detail.id} className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h5 className="min-w-0 break-words text-sm font-semibold text-slate-800 dark:text-slate-200">{detail.label}</h5>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{detail.includeInAI ? 'Disertakan ke AI' : 'Hanya di Codex'}</span>
+                    </div>
+                    {current.chapter && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">Bab {current.chapter.position + 1} · {current.chapter.title}</p>}
+                    <p className="whitespace-pre-wrap break-words text-sm text-slate-700 dark:text-slate-200">{current.value || 'Belum diisi.'}</p>
+                    {detail.revisions && (
+                      <details className="border-t border-slate-200 pt-2 text-sm dark:border-slate-800">
+                        <summary className="cursor-pointer font-medium text-indigo-600 dark:text-indigo-400">Riwayat per bab</summary>
+                        <ol className="mt-2 space-y-2">
+                          {detail.value && <li><div className="text-xs font-medium">Nilai awal</div><p className="whitespace-pre-wrap break-words">{detail.value}</p></li>}
+                          {history.map(revision => (
+                            <li key={revision.id}>
+                              <div className="break-words text-xs font-medium">{revision.chapter ? `Bab ${revision.chapter.position + 1} · ${revision.chapter.title}` : `${revision.detachedChapterTitle || 'Bab'} (terhapus)`}</div>
+                              <p className="whitespace-pre-wrap break-words">{revision.value}</p>
+                            </li>
+                          ))}
+                        </ol>
+                        {!history.length && <p className="mt-2 text-xs text-slate-500">Belum ada catatan yang ditautkan ke bab.</p>}
+                      </details>
+                    )}
+                  </div>
+                );
+              })}
+            </section>
+          )}
 
           {/* Template field per kategori (#17) — detail terstruktur khas kategori */}
           {fieldValues.length > 0 && (

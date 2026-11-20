@@ -16,6 +16,8 @@ import { getCategoryLabel } from '@/src/lib/codexCategories';
 import { codexToMarkdown } from '@/src/lib/codexExport';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
+import { useChapterList } from '@/src/hooks/useChapterQueries';
+import { indexDetailChapters } from '@/src/lib/codexDetails';
 
 interface CodexPanelProps {
   projectId: number;
@@ -64,6 +66,8 @@ function CodexFilterSelect({ label, allLabel, value, options, onChange }: CodexF
 export function CodexPanel({ projectId }: CodexPanelProps) {
   const { openWorkshop, pendingCodexEntryId, clearPendingCodexEntry } = useNavigation();
   const { toast } = useToast();
+  const chapters = useChapterList(projectId);
+  const detailChapters = useMemo(() => indexDetailChapters(chapters ?? []), [chapters]);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(1);
@@ -297,6 +301,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
                 bibleRules={bibleRules || []}
                 existingEntries={entries || []}
                 categories={categories}
+                detailChapters={detailChapters}
                 onSave={handleSaveEntry}
                 onBulkCreate={handleBulkCreateEntries}
                 onCancel={cancelEdit}
@@ -361,6 +366,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
                 relationships={relationships || []}
                 projectId={projectId}
                 categories={categories}
+                detailChapters={detailChapters}
                 onEdit={startEditing}
                 onDelete={deleteEntry}
                 onSelect={setSelectedEntry}
@@ -436,6 +442,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
             promises={plotPromises || []}
             projectId={projectId}
             categories={categories}
+            detailChapters={detailChapters}
             onClose={() => setSelectedEntry(null)}
             onOpenEntry={setSelectedEntry}
             onEdit={(entry) => {

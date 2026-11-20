@@ -45,7 +45,7 @@ const workspaceLocal = {
 export const TABLE_CATALOG = {
   projects: { ...projectData, scope: 'project-root', relations: [] },
   chapters: { ...projectData, relations: ['projectId → projects'] },
-  codex: { ...projectData, relations: ['projectId → projects', 'category → slug kategori dalam proyek atau kategori bawaan'] },
+  codex: { ...projectData, relations: ['projectId → projects', 'category → slug kategori dalam proyek atau kategori bawaan', 'details[].revisions[].chapterId → chapters'] },
   bible: { ...projectData, relations: ['projectId → projects', 'key unik dalam proyek'] },
   aiActions: { ...projectData, relations: ['projectId → projects'] },
   snapshots: {

@@ -28,11 +28,12 @@ import { formatFieldsForAI } from '@/src/lib/codexFields';
  * Satu baris lore KB untuk satu entri Codex (mode caching). Deterministik
  * (self-contained, membaca entri saja) → cache prompt provider aman.
  */
-export function formatCodexLoreLine(e: CodexEntry): string {
+export function formatCodexLoreLine(e: CodexEntry, details = ''): string {
   let line = `[${e.name}] (${e.category}): ${e.description}`;
   // Template field per kategori (#17): nilai self-contained (label ter-denormalisasi).
   const fields = formatFieldsForAI(e);
   if (fields) line += `\n${fields}`;
+  if (details) line += `\n${details}`;
   // Lapis "Kebenaran Tersembunyi": `secret` = kebenaran penulis, TETAP diumpankan
   // agar AI menangkap kontradiksi/kebocoran, ditandai agar tak bocor ke prosa.
   if (e.secret?.trim()) line += `\n[RAHASIA PENULIS — jangan bocorkan ke prosa/pembaca] ${e.secret.trim()}`;
@@ -69,14 +70,16 @@ export interface CodexLoreResult {
  * Pemanggil bertanggung jawab mengurutkan `sortedCodex` deterministik (mis. by name)
  * agar cache prompt & meter byte-identik antar-panggilan.
  */
-export function buildCodexLoreString(sortedCodex: CodexEntry[], maxChars: number): CodexLoreResult {
+export function buildCodexLoreString(sortedCodex: CodexEntry[], maxChars: number, formatDetails?: (entry: CodexEntry) => string): CodexLoreResult {
   const totalCount = sortedCodex.length;
   const parts: string[] = [];
   let chars = 0;
   let truncated = false;
+  let firstLine = '';
 
   for (const e of sortedCodex) {
-    const line = formatCodexLoreLine(e);
+    const line = formatCodexLoreLine(e, formatDetails?.(e));
+    if (!parts.length) firstLine = line;
     const add = (parts.length === 0 ? 0 : LORE_SEPARATOR.length) + line.length;
     if (chars + add > maxChars) {
       truncated = true;
@@ -89,8 +92,8 @@ export function buildCodexLoreString(sortedCodex: CodexEntry[], maxChars: number
   // Jaminan: bila bahkan entri pertama melebihi cap, tetap sertakan satu entri
   // (dipotong keras) agar lore tak kosong total — lebih baik dari mengirim "No lore".
   if (parts.length === 0 && totalCount > 0) {
-    parts.push(formatCodexLoreLine(sortedCodex[0]).substring(0, maxChars));
-    truncated = totalCount > 1 || parts[0].length < formatCodexLoreLine(sortedCodex[0]).length;
+    parts.push(firstLine.substring(0, maxChars));
+    truncated = totalCount > 1 || parts[0].length < firstLine.length;
   }
 
   return {

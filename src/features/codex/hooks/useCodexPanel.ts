@@ -9,10 +9,12 @@ import { CodexEntry, CodexCategory } from '@/src/types';
 import { DanglingRef } from '@/src/lib/loreGraph';
 import { invalidateContextCache } from '@/src/services/contextEngine';
 import { useCodexCategories } from '@/src/features/codex/hooks/useCodexCategories';
+import { useToast } from '@/src/hooks/useToast';
 
 export type CodexSort = 'name-asc' | 'name-desc' | 'category' | 'recent' | 'oldest';
 
 export function useCodexPanel(projectId: number) {
+  const { toast } = useToast();
   const entries = useOptimizedLiveQuery(() => 
     db.codex.where('projectId').equals(projectId).toArray()
   , [projectId]);
@@ -126,7 +128,8 @@ export function useCodexPanel(projectId: number) {
       worldStatus: entry.worldStatus,
       todo: entry.todo,
       factionTag: entry.factionTag,
-      customFields: entry.customFields || []
+      customFields: entry.customFields || [],
+      details: entry.details,
     });
     setEditingId(entry.id!);
     setIsAdding(true);
@@ -157,7 +160,8 @@ export function useCodexPanel(projectId: number) {
         // Panel Faksi (#15): tag keanggotaan; undefined = bukan faksi.
         factionTag: data.factionTag?.trim() || undefined,
         // Template field per kategori (#17). Denormalisasi label sudah dilakukan CodexForm.
-        customFields: data.customFields || []
+        customFields: data.customFields || [],
+        details: data.details,
       });
     } else {
       await addCodexEntry({
@@ -172,14 +176,17 @@ export function useCodexPanel(projectId: number) {
         worldStatus: data.worldStatus,
         todo: data.todo?.trim() || '',
         factionTag: data.factionTag?.trim() || undefined,
-        customFields: data.customFields || []
+        customFields: data.customFields || [],
+        details: data.details,
       } as CodexEntry);
     }
     
-    await invalidateContextCache();
     setIsAdding(false);
     setEditingId(null);
     setInitialData({});
+    void invalidateContextCache().catch(() => {
+      toast.warning('Entri tersimpan. Indeks konteks AI belum dapat disegarkan.');
+    });
   };
 
   // Buat banyak entri sekaligus dari paste-quick-add multi-blok (importer #7).

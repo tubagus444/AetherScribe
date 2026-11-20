@@ -13,6 +13,8 @@ import { AhoCorasick } from '@/src/lib/ahoCorasick';
 import { extractCodexAcKeywords } from '@/src/lib/codexKeywords';
 import { formatBibleBlock } from '@/src/lib/storyBible';
 import { buildCodexLoreString, buildRelationshipGraph } from '@/src/lib/loreFormat';
+import { createCodexDetailFormatter, hasSharedDetailHistory } from '@/src/lib/codexDetails';
+import { readChapterList } from '@/src/services/chapterQueries';
 import { buildPresenceIndex } from '@/src/lib/continuity';
 import { buildProseReport } from '@/src/lib/proseAnalysis';
 import { buildPacingReport } from '@/src/lib/pacingHeatmap';
@@ -679,7 +681,7 @@ self.onmessage = async (e: MessageEvent) => {
         };
         break;
       case 'PREVIEW_CONTEXT_TOKENS': {
-        const { text, projectId, model, fullContext, maxCachedLoreChars } = payload;
+        const { text, projectId, model, fullContext, maxCachedLoreChars, chapterId } = payload;
 
         let codexText: string;
         let rulesText: string;
@@ -688,6 +690,8 @@ self.onmessage = async (e: MessageEvent) => {
         const allCodex = await db.codex.where('projectId').equals(projectId).toArray();
         checkCancelled(id);
         const allRules = await db.bible.where('projectId').equals(projectId).toArray();
+        const chapters = allCodex.some(hasSharedDetailHistory) ? await readChapterList(projectId) : [];
+        const formatDetails = createCodexDetailFormatter(chapters, { chapterId });
 
         checkCancelled(id);
         // (reqId diteruskan ke getRelevantContext di cabang non-fullContext di bawah)
@@ -702,14 +706,17 @@ self.onmessage = async (e: MessageEvent) => {
           const sortedRules = [...allRules].sort((a: StoryBibleRule, b: StoryBibleRule) => a.key.localeCompare(b.key));
           const sortedCodex = [...allCodex].sort((a: CodexEntry, b: CodexEntry) => a.name.localeCompare(b.name));
           rulesText = formatBibleBlock(sortedRules);
-          const loreString = buildCodexLoreString(sortedCodex, MAX_CACHED_LORE_CHARS).text;
+          const loreString = buildCodexLoreString(sortedCodex, MAX_CACHED_LORE_CHARS, formatDetails).text;
           const graphString = buildRelationshipGraph(allRelationships || [], allCodex);
           codexText = `${loreString}${graphString}`;
         } else {
           // Mode RAG legacy: hanya lore/aturan relevan yang dikirim.
           const relevantCodex = await getRelevantContext(text, allCodex, id);
           const relevantRules = getRelevantBibleRules(text, allRules, 2500); // Example depth
-          codexText = relevantCodex.map(e => `[${e.name}]: ${e.description}`).join(' ');
+          codexText = relevantCodex.map(e => {
+            const details = formatDetails(e).replace(/\n/g, '; ').substring(0, 150);
+            return `[${e.name}]: ${e.description}${details ? ` {${details}}` : ''}`;
+          }).join(' ');
           rulesText = formatBibleBlock(relevantRules);
         }
 

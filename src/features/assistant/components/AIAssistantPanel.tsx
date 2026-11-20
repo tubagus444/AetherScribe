@@ -90,6 +90,7 @@ export function AIAssistantPanel() {
   } = useAssistantSession({
     projectId,
     activeChapterId,
+    sessionChapterId,
     activeSessionId,
     setActiveSessionId,
     activeSession,

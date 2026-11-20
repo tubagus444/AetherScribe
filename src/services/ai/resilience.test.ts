@@ -46,6 +46,9 @@ describe('selectFallbackProviders', () => {
 });
 
 describe('rewriteDedupKey', () => {
+  it('membedakan permintaan dengan teks sama pada dua bab berbeda', () => {
+    expect(rewriteDedupKey('google', 'expand', '', 'teks', 1)).not.toBe(rewriteDedupKey('google', 'expand', '', 'teks', 2));
+  });
   it('menggabungkan provider|aksi|prompt|seleksi', () => {
     expect(rewriteDedupKey('google', 'expand', 'buat panjang', 'teks')).toBe('google|expand|buat panjang|teks');
   });

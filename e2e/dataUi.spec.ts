@@ -527,6 +527,57 @@ test('Codex category manager stays above the app header and scrolls a long list'
   await expect(dialog).toBeHidden();
 });
 
+test('Codex saves optional details and shows the current value and chapter history', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.chapters.add({ id: 5, projectId: 1, title: 'Setelah duel', content: '<p>Adegan duel</p>', order: 1, lastModified: 2 });
+    localStorage.setItem('aether_view_mode', 'codex');
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Entri Baru', exact: true }).click();
+  await page.getByPlaceholder('misal: Kota Angin', { exact: true }).fill('Raka');
+  await page.getByPlaceholder('Deskripsikan sejarah atau sifat unik untuk memberi konteks pada AI...').fill('Ksatria yang menjaga kota.');
+
+  const editor = page.getByRole('region', { name: 'Detail tambahan' });
+  const add = editor.getByRole('button', { name: 'Tambah detail' });
+  await add.click();
+  const ability = editor.getByRole('group', { name: 'Detail 1' });
+  await ability.getByRole('textbox', { name: 'Nama detail' }).fill('Kemampuan');
+  await ability.getByRole('textbox', { name: 'Nilai detail' }).fill('Membaca ingatan');
+  await expect(ability.getByRole('checkbox', { name: 'Sertakan dalam konteks AI' })).not.toBeChecked();
+
+  await add.click();
+  const condition = editor.getByRole('group', { name: 'Detail 2' });
+  await condition.getByRole('textbox', { name: 'Nama detail' }).fill('Kondisi');
+  await condition.getByRole('checkbox', { name: 'Sertakan dalam konteks AI' }).check();
+  await condition.getByRole('checkbox', { name: 'Aktifkan riwayat per bab' }).check();
+  await condition.getByRole('textbox', { name: 'Nilai awal' }).fill('Sehat');
+  await condition.getByRole('combobox', { name: 'Tambah catatan bab' }).selectOption('5');
+  await condition.getByRole('textbox', { name: 'Catatan Setelah duel' }).fill('Pulih setelah duel');
+  await condition.getByRole('combobox', { name: 'Tambah catatan bab' }).selectOption('1');
+  await condition.getByRole('textbox', { name: 'Catatan L03 Chapter 1' }).fill('Luka di tangan');
+  await page.getByRole('button', { name: 'Buat Entri', exact: true }).click();
+
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Raka', exact: true }) });
+  await expect(card.getByText('Pulih setelah duel', { exact: true })).toBeVisible();
+  await card.click();
+  const details = page.getByRole('region', { name: 'Detail tambahan' });
+  await expect(details.getByText('Hanya di Codex')).toBeVisible();
+  await expect(details.getByText('Disertakan ke AI')).toBeVisible();
+  await details.getByText('Riwayat per bab', { exact: true }).click();
+  await expect(details.locator('li')).toHaveText([
+    /Nilai awal.*Sehat/,
+    /Bab 1.*L03 Chapter 1.*Luka di tangan/,
+    /Bab 2.*Setelah duel.*Pulih setelah duel/,
+  ]);
+  await page.getByTitle('Tutup', { exact: true }).click();
+  await card.getByTitle('Ubah Entri', { exact: true }).click();
+  await editor.getByRole('textbox', { name: 'Catatan Setelah duel' }).fill('Kembali berlatih');
+  await page.getByRole('button', { name: 'Simpan Perubahan', exact: true }).click();
+  await expect(card.getByText('Kembali berlatih', { exact: true })).toBeVisible();
+});
+
 test('DB03 deleting a relationship keeps its Codex endpoints', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';

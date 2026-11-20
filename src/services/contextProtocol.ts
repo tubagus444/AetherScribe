@@ -21,7 +21,7 @@ export interface ContextPayloads {
   BUILD_PROSE_REPORT: { chapters: ProseChapter[]; language: ProseLanguage; excludeWords?: Set<string> };
   BUILD_PACING_REPORT: { chapters: ChapterTensionInput[] };
   ESTIMATE_CONTEXT_TOKENS: { text: string; codexText: string; rulesText: string; model?: string };
-  PREVIEW_CONTEXT_TOKENS: { text: string; projectId: number; model?: string; fullContext?: boolean; maxCachedLoreChars?: number };
+  PREVIEW_CONTEXT_TOKENS: { text: string; projectId: number; model?: string; fullContext?: boolean; maxCachedLoreChars?: number; chapterId?: number };
 }
 export interface ContextResults {
   SEARCH_MANUSCRIPT: SceneSearchHit[];
@@ -76,7 +76,7 @@ export function isContextRequest(value: unknown): value is ContextWorkerMessage 
     case 'BUILD_PROSE_REPORT': return list(p.chapters, titledChapter) && (p.language === 'en' || p.language === 'id') && optional(p.excludeWords, item => item instanceof Set && [...item].every(text));
     case 'BUILD_PACING_REPORT': return list(p.chapters, item => titledChapter(item) && record(item) && optional(item.tension, level => finite(level) && Number.isInteger(level) && level >= 1 && level <= 5));
     case 'ESTIMATE_CONTEXT_TOKENS': return text(p.text) && text(p.codexText) && text(p.rulesText) && optional(p.model, text);
-    case 'PREVIEW_CONTEXT_TOKENS': return text(p.text) && requestId(p.projectId) && optional(p.model, text) && optional(p.fullContext, boolean) && optional(p.maxCachedLoreChars, finite);
+    case 'PREVIEW_CONTEXT_TOKENS': return text(p.text) && requestId(p.projectId) && optional(p.model, text) && optional(p.fullContext, boolean) && optional(p.maxCachedLoreChars, finite) && optional(p.chapterId, requestId);
     default: return false;
   }
 }

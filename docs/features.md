@@ -86,6 +86,13 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
   Indikator pengindeksan aktif mendapat ruang di bawah panel.
 - Label kategori dan tag yang dipilih pada filter dapat tampil dalam beberapa
   baris. Kontrol memakai pilihan bawaan browser dan bisa digunakan lewat papan ketik.
+- Di formulir entri, **Tambah detail** menambahkan kolom dengan nama dan
+  nilai pilihan penulis. Detail dapat menyimpan satu nilai atau nilai awal
+  beserta satu catatan per bab. Ringkasan mengambil nilai terakhir menurut
+  urutan naskah, dan tampilan detail menyediakan riwayat yang bisa dibuka.
+  **Sertakan dalam konteks AI** dinonaktifkan saat detail dibuat. Jika
+  diaktifkan, AI memakai nilai yang berlaku di bab aktif. Audit batch dan
+  audit Codex mendalam dapat memakai riwayat sesuai anggaran konteks.
 - Gunakan `useCodexCategories`, `getCategoryDef`, dan `CategoryIcon` untuk
   kategori per proyek. Nilai field kustom menyimpan label saat entri
   disimpan agar format AI dan ekspor dapat membaca entri secara mandiri.

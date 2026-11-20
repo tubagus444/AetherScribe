@@ -114,7 +114,7 @@ export function AssistantInputArea({
 
       setIsCalculatingTokens(true);
       const projectId = codexEntries?.[0]?.projectId || sessionChapter?.projectId || chapters?.[0]?.projectId || 0;
-      previewContextTokens(combinedText, projectId, model, isCachingMode).then(stats => {
+      previewContextTokens(combinedText, projectId, model, isCachingMode, sessionChapterId).then(stats => {
         setTokenStats({
           total: stats.totalTokens,
           text: stats.textTokens,
@@ -129,7 +129,7 @@ export function AssistantInputArea({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [input, chapterContext, codexEntries, bibleRules, model, isCachingMode, messages]);
+  }, [input, chapterContext, codexEntries, bibleRules, model, isCachingMode, messages, sessionChapterId, sessionChapter?.projectId, chapters]);
 
   // Jendela konteks provider sebagai denominator headroom (mis. Gemini ~1jt, Claude 200rb).
   const MAX_TOKENS = getContextWindow(provider);

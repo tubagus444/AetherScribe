@@ -415,7 +415,19 @@ export const backupService = {
 
       const codexIdMap = new Map<number, number>();
       if (data.codex?.length) {
-        const rows = data.codex.map((c) => prep(c, newProjectId));
+        const rows = data.codex.map(c => {
+          const row = prep(c, newProjectId);
+          if (c.details) row.details = c.details.map(detail => ({
+            ...detail,
+            revisions: detail.revisions?.map(revision => {
+              if (revision.chapterId === undefined) return revision;
+              const chapterId = chapterIdMap.get(revision.chapterId);
+              if (chapterId === undefined) throw new Error('Bab pada riwayat detail Codex tidak ditemukan saat impor.');
+              return { ...revision, chapterId };
+            }),
+          }));
+          return row;
+        });
         const keys = await db.codex.bulkAdd(rows, { allKeys: true });
         data.codex.forEach((c, i) => { if (c.id != null) codexIdMap.set(c.id, keys[i] as number); });
       }

@@ -114,10 +114,11 @@ relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
   - `worldStatus` | `'stub'|'partial'|'solid'` | Ya | `undefined` | Status kelengkapan entitas
   - `todo` | `string` | Ya | `undefined` | Catatan gap/TODO penulis untuk entitas ini
   - `customFields` | `CustomFieldValue[]` | Ya | `undefined` | Nilai field kustom terstruktur per kategori
+  - `details` | `CodexDetail[]` | Ya | `undefined` | Detail per entri dengan izin AI dan riwayat opsional per bab
   - `factionTag` | `string` | Ya | `undefined` | Tag identitas faksi (bila entri ini adalah faksi)
   - `factionBoard` | `{x: number, y: number}` | Ya | `undefined` | Posisi koordinat kartu faksi di kanvas React Flow
-- **Relasi:** FK `projectId` -> `projects.id`
-- **Index penting:** `++id`, `projectId`, `name`, `category`, `*aliases` (multi-entry index)
+- **Relasi:** FK `projectId` -> `projects.id`. `details[].revisions[].chapterId` menunjuk ke bab di proyek yang sama jika ada. Hapus bab melepaskan tautan dan menyimpan judul serta teks catatan. Catatan lepas tetap terbaca di Codex dan dikecualikan dari nilai aktif dan konteks AI.
+- **Index penting:** `++id`, `projectId`, `name`, `category`, `*aliases` (multi-entry index). Detail opsional memakai record yang tersedia tanpa perubahan versi skema.
 - **File migration terkait:** `src/db.ts`
 
 ---
@@ -467,7 +468,7 @@ di proyek yang sama. Pemeriksaan dan penulisan berbagi transaksi IndexedDB.
 | Induk yang dihapus | Anak yang dihapus | Referensi yang dilepas |
 | --- | --- | --- |
 | Proyek | Record milik proyek, termasuk snapshot yang babnya teridentifikasi | Tautan lama dari proyek lain ke bab, Codex, dan peta yang ikut terhapus |
-| Bab | Snapshot dan embedding adegan | Tautan bab pada timeline, sesi AI, dan janji plot |
+| Bab | Snapshot dan embedding adegan | Tautan bab pada timeline, sesi AI, janji plot, dan riwayat detail Codex. Teks catatan Codex dan judul bab lama dipertahankan |
 | Entri Codex | Relasi dengan ujung pada entri tersebut dan embedding entri | Peserta timeline, penanda, janji plot, dan target lokakarya. Percakapan lokakarya yang masih ada menjadi sesi Studio |
 | Peta | Penanda yang memakai peta tersebut sebagai induk | Portal dari penanda yang masih ada |
 | Kategori Codex kustom | Definisi kategori | Entri dengan slug itu di proyek yang sama pindah ke kategori `other`. Field dan deskripsi entri dipertahankan |

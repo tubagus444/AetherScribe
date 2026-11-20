@@ -13,8 +13,8 @@ export interface AIRenderParams {
    * systemInstruction, sebagai SEGMEN ber-tier terurut stabil→volatil (mis.
    * [Story Bible, Codex+graph]). Bila ada, proxy menempatkan tiap segmen sebagai blok
    * system di DEPAN instruksi, masing-masing dengan cache_control sendiri (saat cacheable).
-   * Karena segmen identik lintas-aksi (rewrite/chat/consistency memakai output
-   * buildCachedContextSegments yang sama), cache prefix-nya dibagi → aksi berikutnya
+   * Untuk cakupan detail yang sama, rewrite/chat/consistency berbagi segmen.
+   * Cache prefix-nya dibagi sehingga aksi berikutnya
    * MEMBACA cache alih-alih menulis ulang ~14k token (#P0). Tier per-segmen membuat edit
    * satu entri Codex hanya membatalkan segmen volatil; prefix Bible tetap hit (#P3).
    * Hanya diisi di caching mode. Lihat RENCANA-OPTIMASI-AI.md (#9).
@@ -59,6 +59,8 @@ export interface ConsistencyParams {
   /** Teks bab (plain text, sudah di-strip HTML) yang akan diperiksa. */
   chapterText: string;
   chapterTitle?: string;
+  chapterId?: number;
+  includeDetailHistory?: boolean;
   bibleRules: StoryBibleRule[];
   codexEntries: CodexEntry[];
   relationships?: import('@/src/types').Relationship[];

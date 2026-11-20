@@ -8,6 +8,7 @@ import { dataUrlToBlob } from '@/src/lib/blobCodec';
 import { BACKUP_TABLES, TABLE_CATALOG, type BackupTableName } from '@/src/lib/tableCatalog';
 import { dexieChapterStorage } from '@/src/adapters/dexieChapterStorage';
 import { changeChapters, restoreChapterSnapshot } from './chapterOperations';
+import { addCodexEntry, updateCodexEntry } from './codexOperations';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
@@ -108,6 +109,26 @@ it('DB04 clears derived indexes on restore and preserves workspace logs and back
   expect(await db.errors.get(1)).toMatchObject({ message: 'Existing log' });
   expect(await db.aiUsageLogs.get(1)).toMatchObject({ totalTokens: 2 });
   expect(await db.backups.get(existingBackup)).toBeDefined();
+});
+
+it('remaps Codex detail chapters on import and preserves detached history after chapter deletion', async () => {
+  const revisions = [{ id: 'duel', chapterId: 1, value: 'Luka di tangan' }];
+  const details = [{ id: 'state', label: 'Kondisi', value: 'Sehat', includeInAI: false, revisions }];
+  const codexId = await addCodexEntry({ projectId: 1, name: 'Raka', category: 'character', aliases: [], tags: [], description: '', details });
+  const backup = await backupService.collectProjectData(1);
+  const { projectId } = await backupService.importProjectData(backup);
+  const imported = await backupService.collectProjectData(projectId);
+  const chapterId = imported.data.chapters[0].id;
+  expect(chapterId).not.toBe(1);
+  expect(imported.data.codex[0].details).toEqual([{ ...details[0], revisions: [{ ...revisions[0], chapterId }] }]);
+  await expect(updateCodexEntry(codexId, { details: [{ ...details[0], revisions: [{ ...revisions[0], chapterId }] }] })).rejects.toThrow(/novel ini/);
+
+  await changeChapters(1, 'delete', 1);
+  const retained = (await db.codex.get(codexId))?.details?.[0].revisions;
+  expect(retained).toEqual([{ id: 'duel', detachedChapterTitle: 'Bab aktif', value: 'Luka di tangan' }]);
+  const detachedArchive = await backupService.collectProjectData(1);
+  const detachedCopy = await backupService.importProjectData(detachedArchive);
+  expect((await backupService.collectProjectData(detachedCopy.projectId)).data.codex[0].details?.[0].revisions).toEqual(retained);
 });
 
 describe('F03 Atlas recovery', () => {

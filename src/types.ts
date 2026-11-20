@@ -321,6 +321,7 @@ export interface CodexEntry {
    * otomatis sebagai bagian objek codex. Logika di `src/lib/codexFields.ts`.
    */
   customFields?: CustomFieldValue[];
+  details?: CodexDetail[];
   /**
    * Panel Faksi & Kelompok (#15): menandai entri ini sebagai FAKSI/kelompok. Nilai =
    * tag keanggotaan; anggota faksi = entri Codex yang `tags`-nya memuat string ini.
@@ -358,6 +359,22 @@ export interface CustomFieldValue {
   key: string;    // = CategoryFieldDef.key
   label: string;  // snapshot label saat simpan (self-contained untuk KB/ekspor)
   value: string;  // selalu string (number pun string) demi determinisme
+}
+
+export interface CodexDetailRevision {
+  id: string;
+  value: string;
+  chapterId?: number;
+  detachedChapterTitle?: string;
+}
+
+export interface CodexDetail {
+  id: string;
+  label: string;
+  value: string;
+  includeInAI: boolean;
+  /** Jika ada, value adalah nilai awal dan revisi mengikuti urutan bab. */
+  revisions?: CodexDetailRevision[];
 }
 
 // Kategori Codex kustom per-proyek. `slug` dipakai sebagai nilai `CodexEntry.category`

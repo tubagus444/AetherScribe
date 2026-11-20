@@ -221,6 +221,7 @@ export function useEditorAIConsistency(
     setChecking(true);
     try {
       const { findings } = await checkConsistency({
+        chapterId: chapterIdRef.current,
         chapterText: text,
         chapterTitle: d.chapterTitle,
         bibleRules: d.bibleRules,
