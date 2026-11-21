@@ -1,8 +1,8 @@
-import type { AtlasMap, CodexCoverImage, Snapshot } from '@/src/types';
+import type { AtlasMap, CodexCoverImage, NovelNote, Snapshot } from '@/src/types';
 import type { ChapterExportRecord, PersistedChapter } from './chapterContracts';
 
 export const MIN_BACKUP_VERSION = 3;
-export const BACKUP_FORMAT_VERSION = 11;
+export const BACKUP_FORMAT_VERSION = 12;
 export type BackupScope = 'all' | 'project';
 
 export interface BackupMapRecord extends Omit<AtlasMap, 'id' | 'imageBlob'> {
@@ -38,6 +38,7 @@ export interface BackupData<ChapterRow extends PersistedChapter = ChapterExportR
   data: {
     projects: any[];
     chapters: ChapterRow[];
+    novelNotes?: (NovelNote & { id: number })[];
     codex: any[];
     bible: any[];
     aiActions: any[];

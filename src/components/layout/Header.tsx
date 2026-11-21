@@ -16,7 +16,7 @@ import { cn } from '@/src/lib/utils';
 // Label breadcrumb per-viewMode (Indonesia), selaras dengan Sidebar. Fallback ke
 // nilai mentah agar mode baru tak pernah kehilangan label.
 const VIEW_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard', write: 'Editor', outline: 'Papan Rencana',
+  dashboard: 'Dashboard', write: 'Editor', notes: 'Catatan Novel', outline: 'Papan Rencana',
   codex: 'Kamus Data', glossary: 'Glosarium', bible: 'Buku Cerita',
   relationships: 'Relasi Karakter', timeline: 'Timeline Cerita', worldcalendar: 'Kalender Dunia', orphans: 'Saran Entitas',
   factions: 'Faksi & Kelompok', completeness: 'Kesehatan Codex', graph: 'Graf Lore',

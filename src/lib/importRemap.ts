@@ -8,7 +8,7 @@ import { parseWorkshopEntryKey, workshopEntryKey } from './workshopReference';
 import type {
   Project, CodexEntry, StoryBibleRule, AIAction,
   Snapshot, TimelineEvent, Relationship, ChatSession, CustomCategory, PlotPromise, GlossaryEntry,
-  MapMarker, ContinuityTriage,
+  MapMarker, ContinuityTriage, NovelNote,
 } from '@/src/types';
 import type { ChapterExportRecord } from './chapterContracts';
 import type { BackupCoverRecord, BackupMapRecord } from './backupFormat';
@@ -38,6 +38,7 @@ import type { BackupCoverRecord, BackupMapRecord } from './backupFormat';
 export interface ProjectBackupData {
   projects: Project[];
   chapters: ChapterExportRecord[];
+  novelNotes?: (NovelNote & { id: number })[];
   codex: CodexEntry[];
   bible: StoryBibleRule[];
   aiActions: AIAction[];

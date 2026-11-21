@@ -425,6 +425,18 @@ export const backupService = {
         data.chapters.forEach((c, i) => { if (c.id != null) chapterIdMap.set(c.id, keys[i] as number); });
       }
 
+      if (data.novelNotes?.length) {
+        await db.novelNotes.bulkAdd(data.novelNotes.map(({ id: _id, ...note }) => ({
+          ...note,
+          projectId: newProjectId,
+          chapterIds: note.chapterIds.map(oldId => {
+            const chapterId = chapterIdMap.get(oldId);
+            if (chapterId === undefined) throw new Error('Bab pada catatan tidak ditemukan saat impor.');
+            return chapterId;
+          }),
+        })));
+      }
+
       const codexIdMap = new Map<number, number>();
       if (data.codex?.length) {
         const rows = data.codex.map(c => {

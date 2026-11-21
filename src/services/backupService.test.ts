@@ -13,9 +13,36 @@ import { addCodexEntry, updateCodexEntry } from './codexOperations';
 import { deleteCodexEntry, deleteProjectData } from './entityDeletion';
 import { readPortableBackup } from '@/src/lib/portableBackup';
 import { routePoints } from '@/src/lib/atlasRoutePoints';
+import { saveNovelNote } from './novelNotes';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
+
+it('preserves shared notes through backup, remaps their chapters, and detaches deleted chapters', async () => {
+  const second = (await changeChapters(1, 'add'))!;
+  await saveNovelNote({
+    projectId: 1, title: 'Revisi', body: 'Periksa surat', tags: ['Alur'], color: '#f59e0b',
+    chapterIds: [1, second], archived: false, updatedAt: 0,
+  });
+  const later = (await changeChapters(1, 'add'))!;
+  const full = await backupService.collectAllData();
+  expect(full.data.novelNotes?.[0].chapterIds).toEqual([1, second]);
+  const imported = await backupService.importProjectData(await backupService.collectProjectData(1));
+  const importedChapters = await db.chapters.where('projectId').equals(imported.projectId).sortBy('order');
+  const copy = await db.novelNotes.where('projectId').equals(imported.projectId).first();
+  expect(copy).toMatchObject({ body: 'Periksa surat', tags: ['Alur'], chapterIds: importedChapters.slice(0, 2).map(chapter => chapter.id) });
+
+  await changeChapters(1, 'delete', 1);
+  await changeChapters(1, 'delete', second);
+  expect(await db.novelNotes.where('projectId').equals(1).first()).toMatchObject({ chapterIds: [] });
+  expect(await db.chapters.get(later)).toBeDefined();
+  await backupService.restoreData(full);
+  expect(await db.novelNotes.toArray()).toEqual(full.data.novelNotes);
+  const oldBackup = { ...full, version: 11, checksum: undefined, data: { ...full.data } };
+  delete oldBackup.data.novelNotes;
+  await backupService.restoreData(oldBackup);
+  expect(await db.novelNotes.count()).toBe(0);
+});
 
 it('replaces and removes both Codex images atomically with the entry', async () => {
   const cover = await dataUrlToBlob(image);
@@ -124,11 +151,15 @@ it('DB04 preserves the export order and imports all exported table records', asy
   await db.glossary.add({ projectId: 1, term: 'Istilah', createdAt: 1, updatedAt: 1 });
   await db.mapMarkers.add({ projectId: 1, mapId: 1, codexId: 1, kind: 'pin', geometry: { x: .5, y: .5 }, createdAt: 1 });
   await db.continuityTriage.add({ projectId: 1, findingId: 'gap-1', status: 'acknowledged', timestamp: 1 });
+  await saveNovelNote({
+    projectId: 1, title: '', body: 'Pengingat', tags: [], color: '',
+    chapterIds: [1], archived: false, updatedAt: 0,
+  });
 
   // JSON order is part of the checksum produced by existing clients.
   const exportOrder = [
     'projects', 'chapters', 'codex', 'bible', 'aiActions', 'snapshots', 'timeline', 'relationships',
-    'chatSessions', 'codexCategories', 'plotPromises', 'glossary', 'maps', 'mapMarkers', 'continuityTriage', 'codexCovers',
+    'chatSessions', 'codexCategories', 'plotPromises', 'glossary', 'maps', 'mapMarkers', 'continuityTriage', 'novelNotes', 'codexCovers',
   ] as const satisfies readonly BackupTableName[];
   const source = await backupService.collectProjectData(1);
   expect(Object.keys(source.data)).toEqual(exportOrder);

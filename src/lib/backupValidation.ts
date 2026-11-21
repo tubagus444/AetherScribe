@@ -98,6 +98,7 @@ const backupSchemas = {
     dailyLog: (v, p) => { object({})(v, p); Object.entries(v).forEach(([k, n]) => nonnegative(n, `${p}.${k}`)); },
     calendar, travelSpeeds: array(object({ id: text, name: text, speedPerDay: number, unit: text })),
   }),
+  novelNotes: object({ id, projectId: id, title: text, body: nonblank, tags: array(nonblank), color: text, chapterIds: array(id), archived: bool, updatedAt: nonnegative }),
   chapters: object({ id, projectId: id, title: text, content: text, order: nonnegative, lastModified: nonnegative }, {
     summary: text, summaryUpdatedAt: nonnegative, summarySourceHash: (v, p) => { if (typeof v !== 'string' || !/^[a-f0-9]{64}$/.test(v)) fail(p); }, status: choice('outline', 'draft', 'edit', 'polish', 'done'),
     pov: text, wordGoal: nonnegative, tension: choice(1, 2, 3, 4, 5), act: choice('act-1', 'act-2a', 'act-2b', 'act-3', 'unassigned'),
@@ -228,7 +229,7 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
   for (const table of BACKUP_TABLES) {
     const rows = d[table];
     if (rows === undefined && !['projects', 'chapters', 'codex'].includes(table) && (
-      b.version < 8 || scope === 'project' || (table === 'codexCovers' && b.version < 9)
+      b.version < 8 || scope === 'project' || (table === 'codexCovers' && b.version < 9) || (table === 'novelNotes' && b.version < 12)
     )) continue;
     array(backupSchemas[table])(rows, table);
     count += rows.length;
@@ -250,6 +251,9 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
     if (detachedSnapshot && scope === 'project') fail('snapshots.chapterId referensi tidak valid');
     if (!detachedSnapshot) ref(row, 'chapterId', chapters, table);
     for (const key of ['activeChapterId', 'plantedChapterId']) ref(row, key, chapters, table);
+    if (table === 'novelNotes') {
+      for (const chapterId of row.chapterIds) ref({ projectId: row.projectId, chapterId }, 'chapterId', chapters, table);
+    }
     if (table === 'codex') {
       for (const detail of row.details ?? []) for (const revision of detail.revisions ?? []) {
         ref({ projectId: row.projectId, chapterId: revision.chapterId }, 'chapterId', chapters, 'codex.details.revisions');

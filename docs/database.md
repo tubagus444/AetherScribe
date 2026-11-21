@@ -1,6 +1,6 @@
 # Dokumentasi Database — AetherScribe
 
-> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v38** di `src/db.ts`).
+> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v39** di `src/db.ts`).
 > Aplikasi tidak menggunakan database SQL server. Seluruh data tersimpan secara lokal di browser pengguna.
 
 ---
@@ -120,6 +120,13 @@ relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
 - **Relasi:** FK `projectId` -> `projects.id`. `details[].revisions[].chapterId` menunjuk ke bab di proyek yang sama jika ada. Hapus bab melepaskan tautan dan menyimpan judul serta teks catatan. Catatan lepas tetap terbaca di Codex dan dikecualikan dari nilai aktif dan konteks AI.
 - **Index penting:** `++id`, `projectId`, `name`, `category`, `*aliases` (multi-entry index). Detail opsional memakai record yang tersedia tanpa perubahan versi skema.
 - **File migration terkait:** `src/db.ts`
+
+### novelNotes
+
+Dexie v39 menambahkan tabel `novelNotes` dengan indeks `projectId`. Catatan
+menyimpan tautan ke bab sebagai `chapterIds`. Menghapus bab melepaskan tautan
+secara atomik. Menghapus proyek juga menghapus catatannya. Backup v12 menyimpan
+catatan dan impor proyek memetakan ulang setiap tautan bab.
 
 ### codexCovers
 

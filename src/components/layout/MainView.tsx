@@ -4,6 +4,7 @@ import { normalizeViewMode } from '@/src/lib/studioNavigation';
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { NovelNotesPanel } from '@/src/features/editor/components/NovelNotesPanel';
 import React, { Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScrollText, Plus, Loader2 } from 'lucide-react';
@@ -99,6 +100,14 @@ export function MainView() {
         )}
 
         <AnimatePresence mode="wait">
+          {viewMode === 'notes' && projectId && (
+            <ViewContainer key="notes" className="z-20 !p-0 !overflow-hidden">
+              <div className="h-full flex flex-col">
+                <NovelNotesPanel key={projectId} projectId={projectId} />
+              </div>
+            </ViewContainer>
+          )}
+
           {viewMode === 'outline' && projectId && (
             <ViewContainer key="outline" className="z-20">
               <Suspense fallback={<LoadingFallback />}>

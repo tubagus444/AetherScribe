@@ -78,6 +78,7 @@ export const TABLE_CATALOG = {
     retention: 'Sampai status dilepas, data diganti, atau penghapusan bab/Codex membatalkan triase proyek.',
   },
   codexCovers: { ...projectData, kind: 'asset', backup: 'cover-assets', relations: ['projectId → projects', 'codexId → codex', '[codexId+kind] unik'] },
+  novelNotes: { ...projectData, relations: ['projectId → projects', 'chapterIds[] → chapters'] },
   embeddings: {
     ...derivedCache,
     relations: ['projectId → projects', 'codexId → codex'],

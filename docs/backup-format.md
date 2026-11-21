@@ -1,7 +1,11 @@
 # Format Backup dan Pemulihan
 
-Ekspor menggunakan **format v11**. Versi ini independen dari skema IndexedDB
-**v38**. Konstanta versi berada di `src/lib/backupFormat.ts`.
+Ekspor menggunakan **format v12**. Versi ini independen dari skema IndexedDB
+**v39**. Konstanta versi berada di `src/lib/backupFormat.ts`.
+
+Versi 12 menyimpan `novelNotes` pada backup workspace dan ekspor proyek.
+Impor proyek memetakan ulang `projectId` dan setiap ID dalam `chapterIds`.
+Cadangan sebelum v12 tanpa tabel ini dipulihkan dengan daftar catatan kosong.
 
 ## Membaca dan mengonversi arsip portabel
 
@@ -13,10 +17,10 @@ pemeriksaan yang sama pada objek yang sudah dibaca. Jika `scope` tidak
 diberikan, pembaca menggunakan nilai di envelope atau `all` untuk arsip lama
 tanpa scope.
 
-`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v11.
+`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v12.
 Konverter memeriksa checksum asli, mengisi tabel legacy yang absen dengan
 array kosong, menormalkan record seperti saat restore, dan membuat envelope
-v11 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
+v12 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
 dipertahankan. Gambar inline legacy diberi hash jika belum memilikinya.
 Konverter menolak gambar yang hanya bisa diambil dari database asal. Untuk
 sumber semacam itu, gunakan ekspor lengkap dari workspace yang memiliki aset.

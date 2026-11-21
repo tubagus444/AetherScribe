@@ -4,15 +4,16 @@
  */
 
 import React from 'react';
-import { MessageSquareText, History, Gauge, ListTree, StickyNote } from 'lucide-react';
+import { MessageSquareText, History, Gauge, ListTree, StickyNote, BookOpen } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 
-type PanelId = 'outline' | 'comments' | 'assistant' | 'snapshots' | 'insights';
+type PanelId = 'outline' | 'comments' | 'chapterCodex' | 'assistant' | 'snapshots' | 'insights';
 
 const ITEMS: { id: PanelId; icon: React.ElementType; label: string }[] = [
   { id: 'outline', icon: ListTree, label: 'Kerangka Bab' },
   { id: 'comments', icon: StickyNote, label: 'Catatan Revisi' },
+  { id: 'chapterCodex', icon: BookOpen, label: 'Codex di Bab Ini' },
   { id: 'assistant', icon: MessageSquareText, label: 'Asisten AI' },
   { id: 'snapshots', icon: History, label: 'Riwayat Versi' },
   { id: 'insights', icon: Gauge, label: 'Analisis Prosa' },

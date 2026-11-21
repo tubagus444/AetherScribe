@@ -8,10 +8,11 @@ import type { ChapterRecord } from '@/src/lib/chapterRecord';
 import Dexie, { Table } from 'dexie';
 import { Chapter, Project, CodexEntry, StoryBibleRule, AIAction, Snapshot, TimelineEvent, Relationship, AppError, BackupRecord, ChatSession, VectorEmbedding, AIUsageLog, CustomCategory, SceneEmbedding, PlotPromise, GlossaryEntry, AtlasMap, MapMarker, ContinuityTriage } from '@/src/types';
 import { flushActiveEditor } from '@/src/features/editor/editorBridge';
-import type { CodexCoverImage } from '@/src/types';
+import type { CodexCoverImage, NovelNote } from '@/src/types';
 
 export class AetherScribeDB extends Dexie {
   projects!: Table<Project>;
+  novelNotes!: Table<NovelNote, number>;
   chapters!: Table<ChapterRecord, number, Chapter>;
   codex!: Table<CodexEntry>;
   codexCovers!: Table<CodexCoverImage, number>;
@@ -247,6 +248,8 @@ export class AetherScribeDB extends Dexie {
     this.version(37).stores({ mapMarkers: STORES_V32.mapMarkers });
     // v38: relasi pin lokasi penting di metadata area, dengan indeks Atlas yang sama.
     this.version(38).stores({ mapMarkers: STORES_V32.mapMarkers });
+
+    this.version(39).stores({ novelNotes: '++id, projectId' });
 
     this.chapters.hook('creating', (_key, chapter) => {
       chapter.listMetadata = chapterListKey(chapter);

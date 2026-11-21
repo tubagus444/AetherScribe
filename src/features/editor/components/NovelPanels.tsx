@@ -4,9 +4,12 @@
  */
 
 import React from 'react';
+import { NovelNotesPanel } from '@/src/features/editor/components/NovelNotesPanel';
+import { ChapterCodexPanel } from '@/src/features/editor/components/ChapterCodexPanel';
+import type { CodexEntry } from '@/src/types';
 import { Editor } from '@tiptap/core';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { PANEL_WIDTH } from '@/src/lib/constants';
 import { restoreChapterSnapshot } from '@/src/services/chapterOperations';
@@ -22,11 +25,34 @@ interface NovelPanelsProps {
   projectId: number;
   chapterId: number;
   editor: Editor | null;
-  codexEntries: any[];
+  codexEntries: CodexEntry[];
   bibleRules: any[];
   relationships?: any[];
   focusCommentId?: string | null;
   onFocusCommentConsumed?: () => void;
+}
+
+function EditorNotes({ projectId, chapterId, editor, focusCommentId, onFocusCommentConsumed }:
+  Omit<NovelPanelsProps, 'codexEntries' | 'bibleRules' | 'relationships'>) {
+  const [tab, setTab] = React.useState<'chapter' | 'text'>('chapter');
+  const showText = Boolean(focusCommentId) || tab === 'text';
+
+  return (
+    <>
+      <div className="flex border-b border-slate-200 dark:border-slate-700">
+        <button type="button" className="flex-1 p-2 text-sm aria-pressed:font-bold" aria-pressed={!showText} onClick={() => setTab('chapter')}>Catatan Bab</button>
+        <button type="button" className="flex-1 p-2 text-sm aria-pressed:font-bold" aria-pressed={showText} onClick={() => setTab('text')}>Catatan Teks</button>
+      </div>
+      {showText ? (
+        <div className="min-h-0 flex-1">
+          <RevisionNotesPanel editor={editor} focusCommentId={focusCommentId} onFocusConsumed={() => {
+            setTab('text');
+            onFocusCommentConsumed?.();
+          }} />
+        </div>
+      ) : <NovelNotesPanel projectId={projectId} chapterId={chapterId} />}
+    </>
+  );
 }
 
 export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleRules, relationships, focusCommentId, onFocusCommentConsumed }: NovelPanelsProps) {
@@ -47,16 +73,24 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleR
             className="h-full absolute lg:relative right-0 top-0 z-50 lg:z-auto border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl lg:shadow-none"
           >
             <div className="h-full flex flex-col" style={{ width: window.innerWidth < 1024 && window.innerWidth < 400 ? '100%' : PANEL_WIDTH }}>
+              {(activePanel === 'comments' || activePanel === 'chapterCodex') && (
+                <button type="button" aria-label="Tutup panel editor" className="self-end p-2 lg:hidden" onClick={() => setActivePanel('none')}>
+                  <X size={18} />
+                </button>
+              )}
               {activePanel === 'outline' && (
                 <ChapterOutline editor={editor} />
               )}
 
               {activePanel === 'comments' && (
-                <RevisionNotesPanel
-                  editor={editor}
-                  focusCommentId={focusCommentId}
-                  onFocusConsumed={onFocusCommentConsumed}
-                />
+                <EditorNotes key={chapterId} projectId={projectId} chapterId={chapterId} editor={editor}
+                  focusCommentId={focusCommentId} onFocusCommentConsumed={onFocusCommentConsumed} />
+              )}
+
+              {activePanel === 'chapterCodex' && editor && (
+                <ChapterCodexPanel key={chapterId} editor={editor} entries={codexEntries} onJump={() => {
+                  if (window.innerWidth < 1024) setActivePanel('none');
+                }} />
               )}
 
               {activePanel === 'assistant' && (

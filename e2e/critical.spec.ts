@@ -32,6 +32,64 @@ test('F05 editor persists a draft across reload', async ({ page }) => {
   await expect(editor).toHaveText('Draft browser F24');
 });
 
+test('novel notes share chapter links, colors and archive state with the editor', async ({ page }) => {
+  const tabs = page.getByRole('navigation', { name: /Sub-navigasi/ });
+  await page.getByRole('button', { name: 'Catatan Revisi' }).click();
+  await page.getByRole('button', { name: '+ Catatan Bab', exact: true }).click();
+  await expect(page.getByRole('checkbox', { name: 'F24 Chapter' })).toBeChecked();
+  await page.getByLabel('Judul (opsional)').fill('Pengingat');
+  await page.getByLabel('Isi catatan').fill('Cek urutan surat');
+  await page.getByLabel('Tag (pisahkan dengan koma)').fill('Revisi');
+  await page.getByLabel('Warna').selectOption({ label: 'Kuning' });
+  await page.getByRole('button', { name: 'Pilih semua bab saat ini' }).click();
+  await page.getByRole('button', { name: 'Simpan', exact: true }).click();
+  await expect(page.getByText('Cek urutan surat')).toBeVisible();
+  await tabs.getByRole('button', { name: 'Catatan', exact: true }).click();
+  await page.getByRole('button', { name: '+ Catatan', exact: true }).click();
+  await page.getByLabel('Tag (pisahkan dengan koma)').fill('Ide');
+  await page.getByLabel('Tambahkan tag yang sudah ada').selectOption('Revisi');
+  await expect(page.getByLabel('Tag (pisahkan dengan koma)')).toHaveValue('Ide, Revisi');
+  await expect(page.getByLabel('Tambahkan tag yang sudah ada')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Batal', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Cari catatan' }).fill('surat');
+  await page.getByLabel('Filter tag').selectOption({ label: 'Revisi' });
+  const card = page.getByText('Cek urutan surat').locator('..');
+  await expect(card).toHaveCSS('border-left-color', 'rgb(245, 158, 11)');
+  await card.getByRole('button', { name: 'Arsipkan' }).click();
+  await expect(card).toHaveCount(0);
+  await page.getByRole('button', { name: 'Lihat arsip' }).click();
+  await card.getByRole('button', { name: 'Pulihkan' }).click();
+  await expect(card).toHaveCount(0);
+  await tabs.getByRole('button', { name: 'Editor', exact: true }).click();
+  await page.getByRole('button', { name: 'Catatan Revisi' }).click();
+  await expect(page.getByText('Cek urutan surat')).toBeVisible();
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Tutup panel editor' }).click();
+  await expect(page.getByText('Cek urutan surat')).toBeHidden();
+});
+
+test('chapter Codex follows live text and distinguishes ambiguous aliases', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    const entry = { projectId: 1, category: 'character', description: '', aliases: ['Kapten'], tags: [] };
+    await db.codex.bulkAdd([{ ...entry, name: 'Raka' }, { ...entry, name: 'Mira' }]);
+  });
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  await page.getByRole('button', { name: 'Codex di Bab Ini' }).click();
+  await editor.fill('Raka bertemu Kapten.');
+  await expect(page.getByRole('heading', { name: 'Penyebutan ambigu' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mira', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Raka.*1 penyebutan/ }).click();
+  await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('Raka');
+  await editor.fill('Teks baru.');
+  await expect(page.getByText('Belum ada entitas Codex yang terdeteksi di bab ini.')).toBeVisible();
+  await editor.fill('Mira tiba.');
+  await page.getByRole('button', { name: 'Mira', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Mira' })).toBeVisible();
+});
+
 test('DB01 failed autosave keeps the editor open until navigation can save the draft', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
@@ -459,7 +517,7 @@ test('F23 native v33 upgrade backfills metadata while preserving manuscript', as
     const modulePath = '/e2e/dataPathsFixture.ts';
     return (await import(modulePath)).migrateV33();
   });
-  expect(result.version).toBe(35);
+  expect(result.version).toBe(39);
   expect(result.rows[0]).toMatchObject({ id: 7, title: 'Legacy', _computedWordCount: 3, lastModified: 9 });
   expect(result.chapter.content).toBe('<p>legacy native browser</p>');
 });

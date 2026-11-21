@@ -55,6 +55,22 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 
 ---
 
+## Catatan Novel dan sidebar editor
+
+Panel **Menulis → Catatan** menampilkan catatan proyek dengan pencarian judul
+atau isi, filter bab dan tag, serta arsip. Formulir menyediakan pilihan tag
+yang sudah ada dalam novel dan kolom untuk mengetik tag baru. Catatan boleh
+tanpa tautan bab.
+Di sidebar editor, **Catatan Bab** menampilkan catatan aktif yang terkait
+bab saat ini. **Pilih semua bab saat ini** menyimpan pilihan bab pada saat
+aksi dilakukan. **Catatan Teks** masih dibuat melalui seleksi di naskah.
+Catatan Novel disimpan di luar konten naskah.
+
+Panel **Codex di Bab Ini** memindai isi editor melalui worker menggunakan
+nama dan alias entri Codex yang terlihat. Nama entitas membuka detail Codex,
+cuplikan memilih teks sumber, dan alias yang cocok dengan beberapa entri
+ditandai sebagai ambigu.
+
 ## Codex & Ensiklopedia Lore
 - **Deskripsi:** Ensiklopedia komprehensif untuk mencatat karakter, tempat, item, sihir, dan lore dengan dukungan alias multi-kata untuk deteksi teks instan.
 - **File terkait:** `src/features/codex/components/CodexPanel.tsx`, `src/features/codex/components/CodexDetailModal.tsx`, `src/features/codex/components/CodexForm.tsx`, `src/lib/codexKeywords.ts`

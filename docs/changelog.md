@@ -6,6 +6,11 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-21
 
+- Formulir Catatan Novel dan Catatan Bab bisa memilih tag yang sudah ada di novel dari dropdown.
+
+- Catatan Novel menyediakan pencarian, tag, warna, arsip, dan tautan ke bab yang tampil di sidebar editor. Backup v12 menyertakan catatan dan tautannya.
+- Panel Codex di Bab Ini menampilkan penyebutan nama dan alias, termasuk kecocokan ambigu, dengan akses langsung ke teks atau detail entitas.
+
 - Nova Assistant menyimpan pilihan panjang jawaban per sesi dan dapat menyambung balasan yang mencapai batas.
 
 - Nova Assistant memuat kembali riwayat per bab saat panel editor dibuka ulang.

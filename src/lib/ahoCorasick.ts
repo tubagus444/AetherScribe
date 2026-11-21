@@ -61,7 +61,7 @@ export class AhoCorasick {
     }
   }
 
-  public search(text: string): MatchResult[] {
+  public search(text: string, includeTiedMatches = false): MatchResult[] {
     const results: MatchResult[] = [];
     let node = this.root;
     const lowerText = text.toLowerCase();
@@ -109,9 +109,11 @@ export class AhoCorasick {
     });
 
     const finalResults: MatchResult[] = [];
+    let lastStart = -1;
     let lastEnd = -1;
     for (const res of results) {
-        if (res.start >= lastEnd) {
+        if (res.start >= lastEnd || (includeTiedMatches && res.start === lastStart && res.end === lastEnd)) {
+            lastStart = res.start;
             finalResults.push(res);
             lastEnd = res.end;
         }

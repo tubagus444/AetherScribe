@@ -23,6 +23,9 @@ async function removeChapterReferences(chapterIds: number[]) {
 /** Dipanggil di transaksi penghapusan bab. */
 export async function removeChapterRelations(projectId: number, chapterId: number) {
   await removeChapterReferences([chapterId]);
+  await db.novelNotes.where('projectId').equals(projectId)
+    .filter(note => note.chapterIds.includes(chapterId))
+    .modify(note => { note.chapterIds = note.chapterIds.filter(id => id !== chapterId); });
   const chapter = await db.chapters.get(chapterId);
   await db.codex.where('projectId').equals(projectId)
     .filter(entry => entry.details?.some(detail => detail.revisions?.some(revision => revision.chapterId === chapterId)) === true)

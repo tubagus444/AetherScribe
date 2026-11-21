@@ -116,7 +116,7 @@ it('upgrades a real v33 database with a cursor migration and preserves source te
   const old = new Dexie(db.name); old.version(33).stores(stores);
   await old.table('chapters').add({ ...chapter(), id: 7 }); old.close();
   await db.open();
-  expect(db.verno).toBe(38);
+  expect(db.verno).toBe(39);
   expect((await readChapterList(1))[0]).toMatchObject({ id: 7, _computedWordCount: 2 });
   expect((await db.chapters.get(7))!.content).toBe('<p>one two</p>');
 });

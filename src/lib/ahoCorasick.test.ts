@@ -2,6 +2,16 @@ import { describe, it, expect } from "vitest";
 import { AhoCorasick } from "./ahoCorasick";
 
 describe("AhoCorasick", () => {
+  it('can return every candidate tied at an ambiguous name without changing default matching', () => {
+    const ac = new AhoCorasick([
+      { word: 'Kapten Raka', data: 1 },
+      { word: 'Kapten Raka', data: 2 },
+      { word: 'Raka', data: 1 },
+    ]);
+    expect(ac.search('Kapten Raka').map(match => match.data)).toEqual([1]);
+    expect(ac.search('Kapten Raka', true).map(match => match.data)).toEqual([1, 2]);
+  });
+
   it("should match basic keywords with simple boundaries", () => {
     const ac = new AhoCorasick([
       { word: "Budi", data: { id: 1 } },

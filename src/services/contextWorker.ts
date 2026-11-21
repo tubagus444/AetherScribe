@@ -604,14 +604,14 @@ self.onmessage = async (e: MessageEvent) => {
         result = await getRelevantContext(payload.text, payload.allCodex, id);
         break;
       case 'GET_CODEX_MATCHES': {
-        const { chunks, allCodex } = payload;
+        const { chunks, allCodex, includeTiedMatches } = payload;
         const ac = getAcInstance(allCodex);
         const matches: Array<{start: number, end: number, codexId: number}> = [];
         let processed = 0;
         for (const chunk of chunks) {
           if (processed++ % 16 === 0) await new Promise(resolve => setTimeout(resolve, 0));
           checkCancelled(id);
-          const acMatches = ac.search(chunk.text);
+          const acMatches = ac.search(chunk.text, includeTiedMatches);
           acMatches.forEach(m => {
             // Lewati entri tanpa id — codexId yang undefined merusak highlight downstream. (C5)
             if (m.data && m.data.entry && m.data.entry.id !== undefined) {

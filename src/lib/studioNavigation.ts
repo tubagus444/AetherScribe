@@ -33,6 +33,7 @@ export const STUDIOS: StudioDef[] = [
     description: 'Editor naskah, perencanaan bab, dan progres penulisan harian.',
     tabs: [
       { mode: 'write', label: 'Editor Naskah', shortLabel: 'Editor', icon: 'FileText' },
+      { mode: 'notes', label: 'Catatan Novel', shortLabel: 'Catatan', icon: 'BookMarked' },
       { mode: 'outline', label: 'Papan Rencana', shortLabel: 'Outline', icon: 'LayoutList' },
       { mode: 'dashboard', label: 'Statistik & Progres', shortLabel: 'Statistik', icon: 'BarChart2' },
     ],
@@ -110,6 +111,7 @@ export const STUDIOS: StudioDef[] = [
 const VIEW_MODE_TO_STUDIO: Record<ViewMode, StudioId> = {
   // Writing
   write: 'writing',
+  notes: 'writing',
   outline: 'writing',
   dashboard: 'writing',
   // World

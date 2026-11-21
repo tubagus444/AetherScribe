@@ -118,7 +118,19 @@ export type ChapterStatus = 'outline' | 'draft' | 'edit' | 'polish' | 'done';
 
 export type ChapterAct = 'act-1' | 'act-2a' | 'act-2b' | 'act-3' | 'unassigned';
 
-export type ViewMode = 'write' | 'outline' | 'codex' | 'bible' | 'settings' | 'actions' | 'relationships' | 'guide' | 'errors' | 'brainstorm' | 'dashboard' | 'consistency' | 'timeline' | 'orphans' | 'continuity' | 'arc' | 'prose' | 'workshop' | 'search' | 'promises' | 'glossary' | 'completeness' | 'heatmap' | 'graph' | 'factions' | 'worldcalendar' | 'atlas';
+export interface NovelNote {
+  id?: number;
+  projectId: number;
+  title: string;
+  body: string;
+  tags: string[];
+  color: string;
+  chapterIds: number[];
+  archived: boolean;
+  updatedAt: number;
+}
+
+export type ViewMode = 'notes' | 'write' | 'outline' | 'codex' | 'bible' | 'settings' | 'actions' | 'relationships' | 'guide' | 'errors' | 'brainstorm' | 'dashboard' | 'consistency' | 'timeline' | 'orphans' | 'continuity' | 'arc' | 'prose' | 'workshop' | 'search' | 'promises' | 'glossary' | 'completeness' | 'heatmap' | 'graph' | 'factions' | 'worldcalendar' | 'atlas';
 
 /**
  * Sasaran sesi Lokakarya Codex (viewMode 'workshop'): diskusi terfokus dengan AI

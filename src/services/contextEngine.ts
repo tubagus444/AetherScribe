@@ -159,9 +159,9 @@ export async function getRelevantContext(text: string, allCodex: CodexEntry[]): 
 /**
  * Searches the given text chunks for codex entries utilizing the context worker
  */
-export async function getCodexMatches(chunks: {pos: number; text: string}[], allCodex: CodexEntry[]): Promise<{start: number; end: number; codexId: number}[]> {
+export async function getCodexMatches(chunks: {pos: number; text: string}[], allCodex: CodexEntry[], includeTiedMatches = false): Promise<{start: number; end: number; codexId: number}[]> {
   if (!chunks || chunks.length === 0 || !allCodex || allCodex.length === 0) return [];
-  return sendToWorker('GET_CODEX_MATCHES', { chunks, allCodex });
+  return sendToWorker('GET_CODEX_MATCHES', { chunks, allCodex, includeTiedMatches });
 }
 
 export async function invalidateContextCache(deep: boolean = false) {

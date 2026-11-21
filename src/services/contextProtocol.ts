@@ -12,7 +12,7 @@ export interface TokenEstimate { textTokens: number; codexTokens: number; rulesT
 export interface ContextPayloads {
   SEARCH_MANUSCRIPT: { projectId: number; query: string; topK?: number };
   GET_RELEVANT_CONTEXT: { text: string; allCodex: CodexEntry[] };
-  GET_CODEX_MATCHES: { chunks: { pos: number; text: string }[]; allCodex: CodexEntry[] };
+  GET_CODEX_MATCHES: { chunks: { pos: number; text: string }[]; allCodex: CodexEntry[]; includeTiedMatches?: boolean };
   GET_RELEVANT_BIBLE_RULES: { text: string; allRules: StoryBibleRule[]; maxChars: number };
   INVALIDATE_CACHE: { deep?: boolean };
   SCAN_APPEARANCES: { entry: CodexEntry; chapters: Pick<ContinuityChapter, 'id' | 'content'>[] };
@@ -68,7 +68,7 @@ export function isContextRequest(value: unknown): value is ContextWorkerMessage 
     case 'COUNT_TOKENS': return text(p.text) && optional(p.model, text);
     case 'SEARCH_MANUSCRIPT': return requestId(p.projectId) && text(p.query) && optional(p.topK, finite);
     case 'GET_RELEVANT_CONTEXT': return text(p.text) && list(p.allCodex, codex);
-    case 'GET_CODEX_MATCHES': return list(p.allCodex, codex) && list(p.chunks, item => record(item) && finite(item.pos) && text(item.text));
+    case 'GET_CODEX_MATCHES': return (p.includeTiedMatches === undefined || typeof p.includeTiedMatches === 'boolean') && list(p.allCodex, codex) && list(p.chunks, item => record(item) && finite(item.pos) && text(item.text));
     case 'GET_RELEVANT_BIBLE_RULES': return text(p.text) && list(p.allRules, rule) && finite(p.maxChars);
     case 'INVALIDATE_CACHE': return optional(p.deep, boolean);
     case 'SCAN_APPEARANCES': return codex(p.entry) && list(p.chapters, chapter);
