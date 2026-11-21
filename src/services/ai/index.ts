@@ -132,8 +132,9 @@ export async function processChat(params: ChatParams): Promise<string> {
     },
     callOptions: {
       history: params.history,
+      onFinish: params.onFinish,
       temperature: 0.7,
-      maxTokens: 2048,
+      maxTokens: params.maxTokens ?? 2048,
       stream: params.stream,
       onChunk: params.onChunk,
         onRetry: params.onRetry

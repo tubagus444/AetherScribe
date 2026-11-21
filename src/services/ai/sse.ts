@@ -1,7 +1,21 @@
 import { object, array, string, parseUsage, extractProviderError, type AIUsage } from './responseContracts';
+import type { StreamFinishStatus } from './types';
+
+function streamStatus(reason: string): StreamFinishStatus {
+  switch (reason.toLowerCase()) {
+    case 'length':
+    case 'max_tokens': return 'length';
+    case 'end_turn':
+    case 'stop_sequence':
+    case 'stop': return 'complete';
+    default: return 'provider-stop';
+  }
+}
+
 /** Provider-aware SSE reader. Framing/parsing errors must not become empty success. */
-export async function readAIStream(provider: string, reader: ReadableStreamDefaultReader<Uint8Array>, onChunk: (text: string) => void, onData?: () => void): Promise<{ text: string; usage: AIUsage }> {
+export async function readAIStream(provider: string, reader: ReadableStreamDefaultReader<Uint8Array>, onChunk: (text: string) => void, onData?: () => void): Promise<{ text: string; usage: AIUsage; status: StreamFinishStatus }> {
   let buffer = '', text = '', usage: AIUsage = {}, ended = false;
+  let status: StreamFinishStatus = 'complete';
   const decoder = new TextDecoder();
   const frame = (raw: string) => {
     const lines = raw.split('\n');
@@ -20,14 +34,18 @@ export async function readAIStream(provider: string, reader: ReadableStreamDefau
     let chunk = '';
     if (provider === 'claude') {
       if (data.type === 'content_block_delta') chunk = string(object(data.delta).text);
+      const reason = string(object(data.delta).stop_reason);
+      if (reason) status = streamStatus(reason);
       if (data.type === 'message_stop') ended = true;
     } else if (provider === 'google') {
       chunk = array(object(object(array(data.candidates)[0]).content).parts).map(part => string(object(part).text)).join('');
-      if (object(array(data.candidates)[0]).finishReason) ended = true;
+      const reason = string(object(array(data.candidates)[0]).finishReason);
+      if (reason) { status = streamStatus(reason); ended = true; }
       if (object(data.promptFeedback).blockReason) throw new Error('AI response blocked.');
     } else {
       chunk = string(object(object(array(data.choices)[0]).delta).content);
-      if (object(array(data.choices)[0]).finish_reason) ended = true;
+      const reason = string(object(array(data.choices)[0]).finish_reason);
+      if (reason) { status = streamStatus(reason); ended = true; }
     }
     if (typeof chunk !== 'string') throw new Error('Invalid SSE text chunk.');
     if (chunk) { text += chunk; onChunk(chunk); }
@@ -49,7 +67,7 @@ export async function readAIStream(provider: string, reader: ReadableStreamDefau
     buffer += decoder.decode(); drain(true);
     if (!text.trim()) throw Object.assign(new Error('AI stream returned no text.'), { code: 'EMPTY_RESPONSE' });
     if (!ended) throw Object.assign(new Error('AI stream ended before completion.'), { code: 'API_ERROR' });
-    return { text, usage };
+    return { text, usage, status };
   } finally {
     await reader.cancel().catch(() => {});
     reader.releaseLock();

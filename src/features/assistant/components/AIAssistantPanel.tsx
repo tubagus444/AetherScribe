@@ -60,7 +60,7 @@ export function AIAssistantPanel() {
   , [activeSessionId]);
 
   const isSmartAuto = activeSession?.smartAutoEnabled;
-  const sessionChapterId = activeSession?.activeChapterId || activeChapterId;
+  const sessionChapterId = activeSession?.id === activeSessionId ? activeSession?.activeChapterId : undefined;
   const sessionChapter = chapters?.find(c => c.id === sessionChapterId);
 
   const {
@@ -85,7 +85,9 @@ export function AIAssistantPanel() {
     messages,
     isLoading,
     retryStatus,
+    waitingForReply,
     stop,
+    handleContinue,
     handleRegenerate
   } = useAssistantSession({
     projectId,
@@ -145,10 +147,13 @@ export function AIAssistantPanel() {
             />
 
             <AssistantMessageList
+              key={activeSessionId}
               messages={messages}
               isLoading={isLoading}
               retryStatus={retryStatus}
+              waitingForReply={waitingForReply}
               onSelectPrompt={(prompt) => setInput(prompt)}
+              onContinue={handleContinue}
               onRegenerate={handleRegenerate}
               onRetry={handleRegenerate}
               codexEntries={codexEntries}

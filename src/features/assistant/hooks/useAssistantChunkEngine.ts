@@ -42,7 +42,11 @@ export function useAssistantChunkEngine({
 
   // Run chunk engine on input change
   useEffect(() => {
-    if (isSmartAuto === undefined && activeSessionId) return; // wait for session loaded unless null
+    if (!sessionChapter) {
+      setChapterContext('');
+      setSceneMetadata(null);
+      return;
+    }
     
     const hasManualExcerpt = input.includes('@chapter-excerpt');
     const hasManualSummary = input.includes('@chapter-summary');
@@ -72,6 +76,7 @@ export function useAssistantChunkEngine({
     }
 
     if (isSmartAuto && sessionChapter?.id && scenesRef.current.length > 0) {
+      let cancelled = false;
       const runEngine = setTimeout(async () => {
         // Fetch past chapter summaries
         let pastSummariesText = '';
@@ -91,6 +96,7 @@ export function useAssistantChunkEngine({
           }
         }
 
+        if (cancelled) return;
         const relevant = getRelevantScenes(input, scenesRef.current, codexRef.current || []);
         let chosenData: Scene[] = [];
         let name = '';
@@ -117,7 +123,10 @@ export function useAssistantChunkEngine({
         }
       }, 500); // 500ms debounce
       
-      return () => clearTimeout(runEngine);
+      return () => {
+        cancelled = true;
+        clearTimeout(runEngine);
+      };
     } else if (!hasManualExcerpt && !hasManualSummary) {
       setChapterContext('');
       setSceneMetadata(null);

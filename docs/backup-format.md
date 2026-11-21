@@ -120,7 +120,7 @@ Teks naskah, isi pesan, judul, dan slug kategori dipertahankan sebagai string.
 | `codexCovers` | Satu pasangan sampul dan thumbnail per `codexId` di proyek yang sama. Cadangan lengkap menyimpan data URL dan hash untuk kedua varian. |
 | `bible`, `aiActions`, `glossary` | Aturan cerita, prompt, dan istilah milik proyek. `bible.key` dan `codexCategories.slug` unik dalam proyek masing-masing. |
 | `timeline`, `relationships` | Peristiwa dapat merujuk ke bab dan daftar ID Codex. Relasi merujuk ke dua ID Codex melalui `sourceId` dan `targetId`. |
-| `chatSessions`, `plotPromises` | Pesan dan tautan bab aktif, target Workshop `entry:<id>`, serta janji plot dengan referensi bab/Codex opsional. |
+| `chatSessions`, `plotPromises` | Pesan, batas keluaran per sesi opsional (`maxOutputTokens`, bilangan bulat positif), tautan bab aktif, target Workshop `entry:<id>`, serta janji plot dengan referensi bab/Codex opsional. |
 | `maps`, `mapMarkers` | Dimensi peta dalam piksel dan gambar inline untuk ekspor lengkap. Penanda memakai koordinat relatif 0–1 dengan `mapId`, `linkedMapId`, dan `codexId` sesuai jenis relasinya. Bentuk rute opsional disimpan di `meta.routeStyle` (`straight` atau `curved`), dengan lurus sebagai bawaan untuk data lama. Pilihan tampilkan titik antara disimpan di `meta.showIntermediatePoints` (boolean opsional). |
 | `continuityTriage` | Status temuan kontinuitas. `findingId` unik dalam proyek dan ID yang termuat di dalamnya diremap ketika mengimpor. |
 

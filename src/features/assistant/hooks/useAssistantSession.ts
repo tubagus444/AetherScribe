@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { addChatSession, updateChatSession } from '@/src/services/chatSessionOperations';
+import { sessionOutput } from '@/src/lib/chatOutputLimit';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { useChatSession } from '@/src/hooks/useChatSession';
-import { SessionMode, CodexEntry, StoryBibleRule, ChatMessage } from '@/src/types';
+import { SessionMode, CodexEntry, StoryBibleRule } from '@/src/types';
 
 export function useAssistantSession({
   projectId,
@@ -37,20 +38,26 @@ export function useAssistantSession({
   const { toast } = useToast();
   
   const [showModeSelector, setShowModeSelector] = useState(false);
-  const pendingInputRef = useRef<string | null>(null);
-  const activeSessionIdRef = useRef(activeSessionId);
-  
   useEffect(() => {
-    activeSessionIdRef.current = activeSessionId;
-  }, [activeSessionId]);
+    const notify = (event: Event) => {
+      const { provider: source, limit } = (event as CustomEvent<{ provider: string; limit: number }>).detail;
+      toast.info(`Permintaan ke ${source} disesuaikan menjadi ${limit.toLocaleString('id-ID')} token.`);
+    };
+    window.addEventListener('chat-output-adjusted', notify);
+    return () => window.removeEventListener('chat-output-adjusted', notify);
+  }, [toast]);
+  const pendingInputRef = useRef<string | null>(null);
+
 
   const {
     messages,
     setMessages,
     isLoading,
     retryStatus,
+    waitingForReply,
     sendMessage,
     stop,
+    continueReply,
     regenerate
   } = useChatSession({
     projectId: projectId || 0,
@@ -62,6 +69,8 @@ export function useAssistantSession({
     provider,
     initialMessages: activeSession?.messages || [],
     sessionId: activeSessionId,
+    showInlineErrors: true,
+    maxTokens: sessionOutput(activeSession?.maxOutputTokens),
     onMessageAdded: async (newMessages, targetSessionId) => {
       // Gunakan targetSessionId yang presisi dari useChatSession, 
       // jangan mengandalkan ref yang bisa berubah saat user ganti sesi.
@@ -104,7 +113,6 @@ export function useAssistantSession({
       kind: 'studio'
     });
     setActiveSessionId(newId);
-    activeSessionIdRef.current = newId; // Update ref immediately
     setShowModeSelector(false);
 
     if (pendingInputRef.current) {
@@ -154,24 +162,15 @@ export function useAssistantSession({
         toast.error(errorMessage);
       }
 
-      // Bubble error inline (sejajar perilaku Scribble) supaya kegagalan terlihat &
-      // bisa dipulihkan via tombol "Coba Lagi", bukan sekadar toast yang lekas hilang.
-      const errorBubble: ChatMessage = {
-        id: Date.now().toString() + '_error',
-        role: 'model',
-        content: `**Error:** ${errorMessage}`,
-        isError: true,
-        timestamp: Date.now()
-      };
-      setMessages(prev => {
-        const updated = [...prev, errorBubble];
-        const activeId = activeSessionIdRef.current;
-        if (activeId) {
-          updateChatSession(activeId, { messages: updated, lastMessageAt: Date.now() })
-            .catch(e => console.error('Failed to persist error message:', e));
-        }
-        return updated;
-      });
+    }
+  };
+
+  const handleContinue = async (index: number) => {
+    if (!activeSessionId || isLoading) return;
+    try {
+      await continueReply(index, chapterContext);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal melanjutkan jawaban.');
     }
   };
 
@@ -194,7 +193,9 @@ export function useAssistantSession({
     messages,
     isLoading,
     retryStatus,
+    waitingForReply,
     stop,
+    handleContinue,
     handleRegenerate
   };
 }

@@ -6,6 +6,14 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-21
 
+- Kolom pesan Diskusi AI membesar mengikuti teks dan pengaturan panjang jawaban pindah ke menu sesi.
+
+- Diskusi AI mempertahankan pilihan Umum (Seluruh Cerita) saat editor sedang membuka bab.
+
+- Panjang jawaban Diskusi AI dapat diatur dan disimpan per sesi, termasuk batas token khusus.
+- Diskusi AI meminta hingga 4.096 token per balasan. Tombol **Lanjutkan jawaban** menyambung pesan yang mencapai batas, termasuk setelah sesi dibuka kembali.
+- Diskusi AI menandai balasan yang terpotong atau terhenti, mempertahankan posisi baca saat streaming, dan menjaga jawaban sebelumnya bila regenerasi gagal. Riwayat mengirim pertanyaan aktif satu kali.
+
 - Codex dapat menyarankan petunjuk untuk menumbuhkan kecurigaan pembaca berdasarkan rahasia dan petunjuk terkait. Penulis memilih dan menyunting ide sebelum mencatatnya di Janji Plot.
 
 ### [UI] Seleksi dan detail penanda Atlas

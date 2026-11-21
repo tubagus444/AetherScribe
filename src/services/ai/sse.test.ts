@@ -31,3 +31,12 @@ it('does not swallow consumer errors and cancels reader', async () => {
   const reader = new ReadableStream<Uint8Array>({ start(c) { c.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n')); }, cancel }).getReader();
   await expect(readAIStream('openai', reader, () => { throw new Error('consumer failed'); })).rejects.toThrow('consumer failed'); expect(cancel).toHaveBeenCalled();
 });
+
+it.each([
+  ['google', [{ candidates: [{ content: { parts: [{ text: 'teks' }] }, finishReason: 'MAX_TOKENS' }] }]],
+  ['openai', [{ choices: [{ delta: { content: 'teks' }, finish_reason: 'length' }] }]],
+  ['claude', [{ type: 'content_block_delta', delta: { text: 'teks' } }, { type: 'message_delta', delta: { stop_reason: 'max_tokens' } }, { type: 'message_stop' }]],
+] as const)('retains %s output limit as a distinct terminal status', async (provider, frames) => {
+  const result = await parse(provider, frames.map(frame => 'data: ' + JSON.stringify(frame) + '\n\n'));
+  expect(result).toMatchObject({ text: 'teks', status: 'length' });
+});

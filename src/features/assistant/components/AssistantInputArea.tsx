@@ -151,9 +151,9 @@ export function AssistantInputArea({
   );
 
   return (
-    <div className="p-6 bg-transparent">
+    <div className="shrink-0 px-3 pb-3 pt-2 sm:px-6 bg-transparent">
       <div className="max-w-3xl mx-auto relative group" ref={loreMenuRef}>
-        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-10 group-focus-within:opacity-25 transition-all duration-500" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-5 group-focus-within:opacity-15 transition-all duration-500" />
         
         {isMentionOpen && mentionSuggestions.length > 0 && (
           <MentionDropdown 
@@ -251,12 +251,33 @@ export function AssistantInputArea({
           </div>
         )}
 
-        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col focus-within:border-indigo-300 dark:focus-within:border-indigo-700">
           {/* Persistent Context Header */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 px-4 py-2 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
+          <textarea
+            ref={inputRef}
+            rows={2}
+            value={input}
+            onChange={e => {
+              const val = e.target.value;
+              setInput(val);
+              handleMentionInputChange(val, e.target.selectionStart ?? val.length);
+            }}
+            onKeyDown={e => {
+              if (handleMentionKeyDown(e, input, (val) => setInput(val))) {
+                return;
+              }
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Sampaikan ide liar Anda di sini..."
+            className="w-full rounded-t-2xl bg-transparent px-3 py-2 text-[15px] leading-6 focus:outline-none resize-none overflow-y-auto min-h-16 max-h-40 [field-sizing:content] dark:text-slate-200"
+          />
+          <div className="rounded-b-2xl px-2 py-1.5 bg-slate-50 dark:bg-slate-800/50 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-slate-400">
                 <div 
-                  className="relative group max-w-[200px]"
+                  className="relative group min-w-0 max-w-[170px] sm:max-w-[200px]"
                   ref={chapterMenuRef}
                 >
                   <button
@@ -275,7 +296,7 @@ export function AssistantInputArea({
                   </button>
 
                   {showChapterMenu && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-black/5 dark:ring-white/10">
+                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-black/5 dark:ring-white/10">
                       <div className="max-h-56 overflow-y-auto custom-scrollbar p-1.5 flex flex-col gap-0.5">
                         <button
                           onClick={() => {
@@ -320,8 +341,8 @@ export function AssistantInputArea({
                 </div>
 
                 {sceneMetadata && chapterContext && (
-                    <div className="flex items-center gap-2 ml-2 text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-1 rounded-md zoom-in-95 animate-in duration-200">
-                      <span className="font-bold truncate max-w-[150px]">{sceneMetadata.name}</span>
+                    <div className="flex items-center gap-2 min-w-0 text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-1 rounded-md zoom-in-95 animate-in duration-200">
+                      <span className="font-bold truncate max-w-24 sm:max-w-[150px]">{sceneMetadata.name}</span>
                       <span className="opacity-70 whitespace-nowrap">· {sceneMetadata.wordCount} kata</span>
                       <button 
                           onClick={() => {
@@ -344,30 +365,6 @@ export function AssistantInputArea({
                       </button>
                     </div>
                 )}
-              </div>
-          </div>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={e => {
-              const val = e.target.value;
-              setInput(val);
-              handleMentionInputChange(val, e.target.selectionStart ?? val.length);
-            }}
-            onKeyDown={e => {
-              if (handleMentionKeyDown(e, input, (val) => setInput(val))) {
-                return;
-              }
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Sampaikan ide liar Anda di sini..."
-            className="w-full bg-transparent p-5 text-[15px] focus:outline-none resize-none min-h-[120px] dark:text-slate-200"
-          />
-          <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-4 text-slate-400">
                 <div className="relative">
                   <button 
                     onClick={() => setShowLoreMenu(!showLoreMenu)}
@@ -448,7 +445,7 @@ export function AssistantInputArea({
             {isLoading ? (
               <button
                 onClick={onStop}
-                className="px-5 py-2 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all flex items-center gap-2"
+                className="ml-auto shrink-0 px-3 py-1.5 text-sm bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all flex items-center gap-2"
                 title="Hentikan generasi"
               >
                 Hentikan <Square size={14} fill="currentColor" />
@@ -457,7 +454,7 @@ export function AssistantInputArea({
               <button
                 onClick={handleSend}
                 disabled={!input.trim()}
-                className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:bg-slate-400 transition-all flex items-center gap-2"
+                className="ml-auto shrink-0 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:bg-slate-400 transition-all flex items-center gap-2"
               >
                 Kirim Ide <Send size={16} />
               </button>

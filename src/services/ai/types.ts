@@ -1,5 +1,7 @@
 import { StoryBibleRule, CodexEntry, SessionMode } from '@/src/types';
 
+export type StreamFinishStatus = 'complete' | 'length' | 'provider-stop';
+
 export interface AIProviderConfig {
   apiKey: string;
   baseUrl?: string;
@@ -35,6 +37,7 @@ export interface AIRenderParams {
    * prompt cache. Hanya diset pada "caching mode" untuk provider yang mendukung.
    */
   cacheable?: boolean;
+  onFinish?: (status: StreamFinishStatus) => void;
   onChunk?: (chunk: string) => void;
   onRetry?: (attempt: number, error: unknown, provider: string) => void;
 }
@@ -79,6 +82,7 @@ export interface ConsistencyParams {
 }
 
 export interface ChatParams {
+  maxTokens?: number;
   message: string;
   history: { role: 'user' | 'model', parts: { text: string }[] }[];
   bibleRules: StoryBibleRule[];
@@ -88,6 +92,7 @@ export interface ChatParams {
   chapterId?: number; // Added/verified for chapter-specific AI context
   provider?: string;
   sessionMode?: SessionMode;
+  onFinish?: (status: StreamFinishStatus) => void;
   stream?: boolean;
   onChunk?: (chunk: string) => void;
   onRetry?: (attempt: number, error: unknown, provider: string) => void;

@@ -251,6 +251,7 @@ relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
   - `chapterId` | `number` | Ya | `undefined` | FK ke `chapters.id` (sesi terikat bab)
   - `activeChapterId` | `number` | Ya | `undefined` | Bab yang sedang dibuka saat chat berlangsung
   - `title` | `string` | Tidak | - | Judul sesi percakapan
+  - `maxOutputTokens` | `number` | Opsional | 4096 | Batas keluaran per permintaan Diskusi AI, termasuk kelanjutan.
   - `messages` | `ChatMessage[]` | Tidak | `[]` | Riwayat pesan (`role`, `content`, `timestamp`)
   - `lastMessageAt` | `number` | Tidak | `Date.now()` | Timestamp pesan terakhir
   - `mode` | `SessionMode` | Ya | `'brainstorm'` | Mode: `'prose-review'|'plot-check'|'brainstorm'`

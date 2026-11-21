@@ -162,10 +162,12 @@ export interface ChatMessage {
   id?: string;
   isActionable?: boolean;
   isWelcome?: boolean;
+  finishStatus?: 'complete' | 'length' | 'provider-stop' | 'interrupted' | 'stopped';
   isError?: boolean;
 }
 
 export interface ChatSession {
+  maxOutputTokens?: number;
   id?: number;
   projectId: number;
   chapterId?: number;

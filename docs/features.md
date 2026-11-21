@@ -371,6 +371,9 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 - **Tabel DB:** `chatSessions`, `aiUsageLogs`
 - **Endpoint:** `POST /api/ai/proxy`
 - **Catatan:** Mendukung pembatalan inferensi in-flight secara bersih saat pengguna berganti sesi dengan cepat tanpa kebocoran data.
+- Pilih panjang jawaban per sesi melalui menu di header. Ringkas (2.048), Standar (4.096), Panjang (8.192), atau nilai khusus berlaku untuk pengiriman, regenerasi, dan kelanjutan berikutnya.
+- Secara bawaan Diskusi AI meminta hingga 4.096 token per balasan. Tombol **Lanjutkan jawaban** menyambung pesan yang mencapai batas, termasuk setelah sesi dibuka kembali.
+- Diskusi menyimpan alasan akhir balasan dan teks parsial bersama pesan. Balasan lama tanpa status tetap dapat dibaca. Posisi baca dipertahankan saat penulis menggulir ke atas. Buat Ulang mempertahankan jawaban sebelumnya sampai pengganti selesai, dan Coba Lagi tersedia pada kesalahan terakhir.
 
 ---
 

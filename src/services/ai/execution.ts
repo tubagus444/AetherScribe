@@ -56,14 +56,14 @@ export async function executeAIAction(config: AIExecutionParams): Promise<string
   const provider = config.providerOverride || settings.provider;
   const useCaching = isCacheSupported(provider) && settings.contextDepth !== 'minimal';
 
-  const { systemInstruction, cachedContext, userPrompt } = await config.buildPrompts({
-    useCaching, settings, provider
-  });
-
   const controller = new AbortController();
   registerAbort(config.abortKey, controller);
 
   try {
+    const { systemInstruction, cachedContext, userPrompt } = await config.buildPrompts({
+      useCaching, settings, provider
+    });
+    controller.signal.throwIfAborted();
     return await callAI({
       ...(config.callOptions || {}),
       systemInstruction,

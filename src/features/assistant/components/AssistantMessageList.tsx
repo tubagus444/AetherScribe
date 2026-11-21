@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState, useMemo } from 'react';
 import { Loader2, Sparkles, Hash, RefreshCw, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage, CodexEntry } from '@/src/types';
@@ -8,18 +8,28 @@ import { scanNewEntities } from '@/src/lib/chatEntityScan';
 import { EntitySuggestionChips } from '@/src/features/codex-workshop/components/EntitySuggestionChips';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 
+const finishNotes = {
+  complete: '',
+  length: 'Jawaban mencapai batas panjang.',
+  interrupted: 'Respons terputus. Teks yang sudah diterima tersimpan.',
+  stopped: 'Jawaban dihentikan.',
+  'provider-stop': 'Penyedia AI menghentikan jawaban.',
+};
+
 interface AssistantMessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
+  waitingForReply: boolean;
   retryStatus?: string | null;
   onSelectPrompt?: (prompt: string) => void;
+  onContinue: (index: number) => void;
   onRegenerate?: () => void;
   onRetry?: () => void;
   /** Untuk mendeteksi nama-diri baru (belum di Codex) di balasan AI → chip Lokakarya. */
   codexEntries?: CodexEntry[];
 }
 
-export function AssistantMessageList({ messages, isLoading, retryStatus, onSelectPrompt, onRegenerate, onRetry, codexEntries }: AssistantMessageListProps) {
+export function AssistantMessageList({ messages, isLoading, waitingForReply, retryStatus, onSelectPrompt, onContinue, onRegenerate, onRetry, codexEntries }: AssistantMessageListProps) {
   const { openWorkshop } = useNavigation();
   // Peta id-pesan → nama entitas baru yang terdeteksi (dihitung sekali per perubahan).
   const detections = useMemo(() => {
@@ -33,8 +43,10 @@ export function AssistantMessageList({ messages, isLoading, retryStatus, onSelec
     return map;
   }, [messages, codexEntries]);
   const lastMessage = messages[messages.length - 1];
-  const canRegenerate = !isLoading && !!onRegenerate && lastMessage?.role === 'model' && !lastMessage.isError;
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const canRetry = lastMessage?.isError || lastMessage?.finishStatus === 'interrupted';
+  const canRegenerate = !isLoading && !!onRegenerate && lastMessage?.role === 'model' && !canRetry && !lastMessage.isWelcome;
+  const followLatest = useRef(true);
+  const scrollBox = useRef<HTMLDivElement>(null);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,12 +64,17 @@ export function AssistantMessageList({ messages, isLoading, retryStatus, onSelec
 
   useEffect(() => () => { if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current); }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+  useLayoutEffect(() => {
+    const box = scrollBox.current;
+    if (followLatest.current && box) box.scrollTop = box.scrollHeight;
+  }, [messages, isLoading, retryStatus]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar scroll-smooth">
+    <div ref={scrollBox} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar"
+      onScroll={event => {
+        const box = event.currentTarget;
+        followLatest.current = box.scrollHeight - box.clientHeight - box.scrollTop < 32;
+      }}>
       <div className="max-w-4xl mx-auto space-y-8">
         {messages.length === 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center animate-in fade-in slide-in-from-bottom-4">
@@ -141,7 +158,18 @@ export function AssistantMessageList({ messages, isLoading, retryStatus, onSelec
                 )}
               </div>
 
-              {m.role === 'model' && m.isError && onRetry && (
+              {m.finishStatus && finishNotes[m.finishStatus] && (
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">{finishNotes[m.finishStatus]}</p>
+              )}
+
+              {m.role === 'model' && m.finishStatus === 'length' && (
+                <button type="button" disabled={isLoading} onClick={() => onContinue(i)}
+                  className="mt-2 rounded-lg border px-3 py-1.5 text-xs font-semibold text-indigo-600 disabled:opacity-50 dark:text-indigo-300">
+                  Lanjutkan jawaban
+                </button>
+              )}
+
+              {m.role === 'model' && canRetry && i === messages.length - 1 && !isLoading && onRetry && (
                 <button
                   type="button"
                   onClick={onRetry}
@@ -176,7 +204,7 @@ export function AssistantMessageList({ messages, isLoading, retryStatus, onSelec
           </div>
         ))}
         
-        {isLoading && messages[messages.length - 1]?.role !== 'model' && (
+        {waitingForReply && (
           <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2">
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-sm mt-1">
               <Sparkles size={18} />
@@ -210,7 +238,7 @@ export function AssistantMessageList({ messages, isLoading, retryStatus, onSelec
             </button>
           </div>
         )}
-        <div ref={messagesEndRef} className="h-6" />
+        <div className="h-6" />
       </div>
     </div>
   );

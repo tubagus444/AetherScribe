@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { ChatMessage, CodexEntry, StoryBibleRule } from '@/src/types';
 import { processChat, cancelAI } from '@/src/services/ai';
-import { getRelevantContext, getRelevantBibleRules } from '@/src/services/contextEngine';
+import type { StreamFinishStatus } from '@/src/services/ai/types';
 import { resolveLoreTags, stripLoreTags } from '@/src/lib/loreUtils';
 
 import { SessionMode } from '@/src/types';
@@ -20,8 +20,10 @@ interface UseChatSessionProps {
   initialMessages?: ChatMessage[];
   /** Session ID (opsional). Digunakan untuk mencegah kebocoran state/persisten saat ganti sesi. */
   sessionId?: number | null;
-  onMessageAdded?: (messages: ChatMessage[], targetSessionId?: number | null) => void;
+  onMessageAdded?: (messages: ChatMessage[], targetSessionId?: number | null) => void | Promise<void>;
   onResponseReceived?: (response: string) => void;
+  maxTokens?: number;
+  showInlineErrors?: boolean;
   onError?: (error: string) => void;
 }
 
@@ -39,20 +41,20 @@ export function useChatSession({
   sessionId,
   onMessageAdded,
   onResponseReceived,
-  onError
+  onError,
+  maxTokens,
+  showInlineErrors = false
 }: UseChatSessionProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [retryStatus, setRetryStatus] = useState<string | null>(null);
   const messagesRef = useRef(messages);
   const isLoadingRef = useRef(false);
+  const activeReplyId = useRef<string | null>(null);
   const manualStopRef = useRef(false);
   
   // Track sesi aktif untuk mencegah update silang antar-sesi
   const sessionIdRef = useRef(sessionId);
-
-  const streamBufferRef = useRef<string>('');
-  const isStreamingRef = useRef<boolean>(false);
 
   // Keep refs in sync for sendMessage accessibility
   useEffect(() => {
@@ -76,157 +78,131 @@ export function useChatSession({
 
   useEffect(() => {
     return () => {
+      manualStopRef.current = true;
       cancelAI('chat');
     };
   }, []);
 
-  const sendMessage = useCallback(async (text: string, customContext?: string) => {
+  const runTurn = useCallback(async (
+    text: string,
+    customContext?: string,
+    retryMessages?: ChatMessage[],
+    continuationIndex?: number,
+  ) => {
     if (!text.trim() || isLoadingRef.current) return;
-
-    // Tangkap ID sesi saat pesan ini mulai dikirim
     const targetSessionId = sessionIdRef.current;
-
-    const userMsg: ChatMessage = { 
-      id: Date.now().toString(),
-      role: 'user', 
-      content: text, 
-      timestamp: Date.now() 
+    const previous = messagesRef.current;
+    const original = continuationIndex === undefined ? undefined : previous[continuationIndex];
+    if (continuationIndex !== undefined && (original?.role !== 'model' || original.finishStatus !== 'length')) return;
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
+    const turn = original ? previous.slice(0, continuationIndex! + 1) : retryMessages ?? [...previous, userMsg];
+    const assistantId = Date.now().toString() + '_assistant';
+    activeReplyId.current = assistantId;
+    const keepPreviousAnswer = !!retryMessages && previous.slice(turn.length).some(m => m.role === 'model' && !m.isError && m.content);
+    let buffer = '';
+    let lastPartial = '';
+    let finishStatus: StreamFinishStatus = 'complete';
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const display = (updated: ChatMessage[]) => {
+      if (sessionIdRef.current !== targetSessionId) return;
+      messagesRef.current = updated;
+      setMessages(updated);
     };
-    
-    const currentMessages = messagesRef.current;
-    const newMessages = [...currentMessages, userMsg];
-    setMessages(newMessages);
-    messagesRef.current = newMessages; // Immediate update for rapid fire messages
-    onMessageAdded?.(newMessages, targetSessionId);
+    const withReply = (content: string, metadata: Partial<ChatMessage> = {}): ChatMessage[] => [
+      ...turn, { id: assistantId, role: 'model', content, timestamp: Date.now(), ...metadata },
+    ];
+
+    manualStopRef.current = false;
+    isLoadingRef.current = true;
     setIsLoading(true);
     setRetryStatus(null);
-    isLoadingRef.current = true;
-
-    // Diangkat ke luar try agar catch/finally bisa memfinalisasi teks parsial saat dihentikan manual.
-    const assistantMsgId = Date.now().toString() + "_assistant";
-    let flushInterval: ReturnType<typeof setInterval> | null = null;
-
     try {
-      // 0. Resolve lore tags for AI consumption
-      const resolvedText = resolveLoreTags(text, codexEntries, bibleRules);
-
-      // 1. Prepare history for AI. Tag lore di-strip jadi nama polos (lore lengkap
-      // sudah ada di system prompt) agar model tak melihat token "@codex:..." mentah,
-      // tanpa membengkakkan token seperti ekspansi penuh.
-      const history = newMessages
-        .slice(-10) // Limit history to last 10 messages for performance
-        .map(m => ({
-          role: m.role,
-          parts: [{ text: stripLoreTags(m.content) }]
-        }));
-
-      // 2. Process chat (RAG logic handled inside processChat)
-      streamBufferRef.current = "";
-      isStreamingRef.current = true;
-
-      const flushBuffer = () => {
-        if (!isStreamingRef.current) return;
-        // Jangan timpa state UI jika sesi sudah berpindah
-        if (sessionIdRef.current !== targetSessionId) return;
-
-        const streamMsg: ChatMessage = {
-           id: assistantMsgId,
-           role: 'model',
-           content: streamBufferRef.current,
-           timestamp: Date.now()
-        };
-        const streamMessages = [...newMessages, streamMsg];
-        setMessages(streamMessages);
-        messagesRef.current = streamMessages;
-      };
-
-      flushInterval = setInterval(flushBuffer, 50);
-
-      const reply = await processChat({
-        message: resolvedText,
-        history,
-        bibleRules: bibleRules,
-        codexEntries: codexEntries,
-        relationships: relationships,
-        contextText: customContext || contextText,
-        chapterId,
-        provider,
-        sessionMode,
-        extraSystem,
-        stream: true,
-        onRetry: (attempt, error, currentProvider) => {
-          if (sessionIdRef.current !== targetSessionId) return;
-          streamBufferRef.current = "";
-          setRetryStatus(`Koneksi melambat (${currentProvider}). Percobaan ulang ke-${attempt}...`);
-        },
-        onChunk: (chunk) => {
-          if (sessionIdRef.current === targetSessionId) streamBufferRef.current += chunk;
-        }
-      });
-
-      isStreamingRef.current = false;
-
-      // Final flush to ensure no text is truncated at the end
-      const finalReply = reply;
-      const assistantMsg: ChatMessage = {
-        id: assistantMsgId,
-        role: 'model',
-        content: finalReply,
-        timestamp: Date.now()
-      };
-
-      const finalMessages = [...newMessages, assistantMsg];
-      
-      // Update UI state hanya jika sesi belum berubah
-      if (sessionIdRef.current === targetSessionId) {
-        setMessages(finalMessages);
-        messagesRef.current = finalMessages; // Update ref to latest state
+      if (!retryMessages && !original) {
+        display(turn);
+        const pendingSave = onMessageAdded?.(turn, targetSessionId);
+        if (pendingSave) await pendingSave;
       }
-      // Tapi SELALU panggil onMessageAdded agar tersimpan ke DB sesi asal
-      onMessageAdded?.(finalMessages, targetSessionId);
+      if (manualStopRef.current) return;
+      const history = (original ? turn : turn.slice(0, -1)).filter(m => !m.isError).slice(-10).map(m => ({
+        role: m.role, parts: [{ text: stripLoreTags(m.content) }],
+      }));
+      let reply: string;
+      try {
+        reply = await processChat({
+          message: resolveLoreTags(text, codexEntries, bibleRules),
+          history, bibleRules, codexEntries, relationships, chapterId, provider, sessionMode, extraSystem,
+          contextText: customContext || contextText,
+          stream: true, maxTokens,
+          onFinish: status => { finishStatus = status; },
+          onRetry: (attempt, _error, currentProvider) => {
+            if (buffer) lastPartial = buffer;
+            buffer = '';
+            if (sessionIdRef.current !== targetSessionId) return;
+            display(retryMessages || original ? previous : turn);
+            setRetryStatus(`Koneksi melambat (${currentProvider}). Percobaan ulang ke-${attempt}...`);
+          },
+          onChunk: chunk => {
+            if (!chunk) return;
+            buffer += chunk;
+            if (flushTimer !== undefined || sessionIdRef.current !== targetSessionId) return;
+            flushTimer = setTimeout(() => {
+              flushTimer = undefined;
+              if (!buffer || sessionIdRef.current !== targetSessionId) return;
+              setRetryStatus(null);
+              if (!retryMessages && !original) display(withReply(buffer));
+            }, 50);
+          },
+        });
+      } catch (error) {
+        clearTimeout(flushTimer);
+        const partial = buffer || lastPartial;
+        const message = error instanceof Error ? error.message : 'Gagal mengirim pesan ke AI.';
+        if (!original && !keepPreviousAnswer && (manualStopRef.current || showInlineErrors)) {
+          const updated = partial
+            ? withReply(partial, { finishStatus: manualStopRef.current ? 'stopped' : 'interrupted' })
+            : manualStopRef.current ? (retryMessages ? previous : turn) : withReply(message, { isError: true });
+          display(updated);
+          await onMessageAdded?.(updated, targetSessionId);
+        }
+        if (manualStopRef.current) return partial;
+        onError?.(message);
+        throw error;
+      }
+
+      clearTimeout(flushTimer);
+      // Pengganti yang terpotong tidak boleh menghapus jawaban yang masih dapat dibaca.
+      if (keepPreviousAnswer && finishStatus !== 'complete') {
+        throw new Error('Jawaban pengganti belum selesai. Jawaban sebelumnya tetap tersimpan.');
+      }
+      let finalMessages: ChatMessage[];
+      if (original) {
+        const separator = /\s$/.test(original.content) || /^[\s.,;:!?)]/.test(reply) ? '' : ' ';
+        finalMessages = previous.map((m, i) => i === continuationIndex
+          ? { ...m, content: original.content + separator + reply, finishStatus }
+          : m);
+      } else {
+        finalMessages = withReply(reply, { finishStatus });
+      }
+      await onMessageAdded?.(finalMessages, targetSessionId);
+      display(finalMessages);
       onResponseReceived?.(reply);
-
       return reply;
-    } catch (err: any) {
-      isStreamingRef.current = false;
-      // Pembatalan manual (tombol Hentikan) ATAU saat ganti sesi: simpan teks parsial
-      if (manualStopRef.current) {
-        const partial = streamBufferRef.current.trim();
-        const stoppedMessages = partial
-          ? [...newMessages, { id: assistantMsgId, role: 'model' as const, content: partial, timestamp: Date.now() }]
-          : newMessages;
-          
-        if (sessionIdRef.current === targetSessionId) {
-          setMessages(stoppedMessages);
-          messagesRef.current = stoppedMessages;
-        }
-        onMessageAdded?.(stoppedMessages, targetSessionId);
-        return partial;
-      }
-      console.error('Chat error; sensitive details omitted.');
-      const errorMessage = err.message || 'Maaf, terjadi kesalahan pada layanan AI.';
-      onError?.(errorMessage);
-      throw err;
     } finally {
-      if (flushInterval) clearInterval(flushInterval);
-      isStreamingRef.current = false;
+      clearTimeout(flushTimer);
       setIsLoading(false);
       setRetryStatus(null);
       isLoadingRef.current = false;
       manualStopRef.current = false;
     }
-  }, [
-    projectId, 
-    chapterId, 
-    codexEntries, 
-    bibleRules,
-    contextText,
-    provider,
-    extraSystem,
-    onMessageAdded,
-    onResponseReceived, 
-    onError
-  ]);
+  }, [bibleRules, chapterId, codexEntries, contextText, extraSystem, onError, onMessageAdded,
+    onResponseReceived, maxTokens, provider, relationships, sessionMode, showInlineErrors]);
+
+  const sendMessage = useCallback((text: string, customContext?: string) =>
+    runTurn(text, customContext), [runTurn]);
+
+  const continueReply = useCallback((index: number, context?: string) =>
+    runTurn('Lanjutkan persis dari akhir jawaban sebelumnya. Tulis hanya sambungannya tanpa mengulang pembukaan atau isi sebelumnya.',
+      context, undefined, index), [runTurn]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -241,7 +217,7 @@ export function useChatSession({
     cancelAI('chat');
   }, []);
 
-  /** Membuang balasan terakhir lalu mengirim ulang pesan pengguna terakhir. */
+  /** Kirim ulang giliran terakhir dan terapkan pengganti setelah selesai. */
   const regenerate = useCallback(async (customContext?: string) => {
     if (isLoadingRef.current) return;
     const msgs = messagesRef.current;
@@ -250,20 +226,17 @@ export function useChatSession({
       if (msgs[i].role === 'user') { lastUserIdx = i; break; }
     }
     if (lastUserIdx === -1) return;
-    const userText = msgs[lastUserIdx].content;
-    // Buang pesan user terakhir + balasan setelahnya; sendMessage akan menambah ulang pesan user-nya.
-    const trimmed = msgs.slice(0, lastUserIdx);
-    setMessages(trimmed);
-    messagesRef.current = trimmed;
-    await sendMessage(userText, customContext);
-  }, [sendMessage]);
+    await runTurn(msgs[lastUserIdx].content, customContext, msgs.slice(0, lastUserIdx + 1));
+  }, [runTurn]);
 
   return {
     messages,
     setMessages,
     isLoading,
     retryStatus,
+    waitingForReply: isLoading && messages.at(-1)?.id !== activeReplyId.current,
     sendMessage,
+    continueReply,
     clearMessages,
     stop,
     regenerate

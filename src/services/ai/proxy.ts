@@ -1,3 +1,4 @@
+import { knownOutputLimit, reportedOutputLimit, rememberOutputLimit } from '@/src/lib/chatOutputLimit';
 import { assertAIProvider } from './providerTypes';
 import { object, parseUsage, extractCompleteText, extractProviderError, type AIUsage } from './responseContracts';
 import { enforceProviderPolicy } from './providerPolicy';
@@ -23,6 +24,11 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
   const body: any = {
     model: params.model || getModelForProvider(provider),
   };
+
+  const capacity = params.actionType === 'chat' ? knownOutputLimit(provider, body.model) : undefined;
+  if (capacity && params.maxTokens && capacity < params.maxTokens) {
+    params = { ...params, maxTokens: capacity };
+  }
 
   let ollamaBaseUrl: string | undefined = undefined;
   if (provider === 'ollama') {
@@ -207,6 +213,21 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
     cleanup();
     const errorText = await response.text();
     const rawMessage = extractErrorMessage(errorText);
+    // Beberapa model menolak batas output melebihi kapasitasnya sebelum mulai menghasilkan teks.
+    const reported = reportedOutputLimit(rawMessage);
+    if (params.actionType === 'chat' && params.maxTokens && params.maxTokens > 1 &&
+        (response.status === 400 || response.status === 422) &&
+        (reported || (/max[_ ]?(?:output[_ ]?|completion[_ ]?)?tokens|maximum context length/i.test(rawMessage) &&
+        /exceed|maximum|at most|too (?:large|high)|less than|range|<=/i.test(rawMessage)))) {
+      const adjusted = reported ?? 2048;
+      if (adjusted < params.maxTokens) {
+        if (reported) rememberOutputLimit(provider, body.model, reported);
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('chat-output-adjusted', {
+          detail: { provider, limit: adjusted }
+        }));
+        return callProxy(provider, { ...params, maxTokens: adjusted }, apiKey);
+      }
+    }
     const code = classifyError(response.status, rawMessage);
     const friendlyMessage = getErrorMessage(code, provider);
 
@@ -232,6 +253,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
         streamed = await readAIStream(provider, reader, params.onChunk ?? (() => {}), armTimeout);
         if (composite.signal.aborted) throw new DOMException('Aborted', 'AbortError');
       } finally { composite.signal.removeEventListener('abort', cancelReader); }
+      params.onFinish?.(streamed.status);
       const completeText = streamed.text;
       usageData = streamed.usage;
 
@@ -369,7 +391,7 @@ export function getLightModelForProvider(provider: string): string | undefined {
   return LIGHT_MODELS[key];
 }
 
-function getModelForProvider(provider: string) {
+export function getModelForProvider(provider: string) {
   switch (provider) {
     case 'groq': return 'llama-3.3-70b-versatile';
     case 'openrouter': return 'meta-llama/llama-3.3-70b-instruct:free';

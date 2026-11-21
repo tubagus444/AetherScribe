@@ -21,3 +21,11 @@ it('F12 abort cancels a stalled body and remains AbortError', async () => {
   await Promise.resolve(); controller.abort();
   await expect(pending).rejects.toMatchObject({ name: 'AbortError' }); expect(cancel).toHaveBeenCalled();
 });
+
+it('falls back to the previous chat limit when the model rejects 4096 output tokens', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'max_tokens must be at most 2048' }), { status: 400 }))
+    .mockResolvedValueOnce(new Response('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]'));
+  expect(await callProxy('openai', { ...params, actionType: 'chat', maxTokens: 4096 })).toBe('OK');
+  expect(fetch.mock.calls.map(([, options]) => JSON.parse(String(options?.body)).body.max_tokens)).toEqual([4096, 2048]);
+});

@@ -15,3 +15,6 @@ coverage/
 # Browser test artifacts (may include traces/screenshots).
 playwright-report/
 test-results/
+
+# Folder contoh proyek (tidak di-commit, hanya untuk referensi).
+/contoh-proyek/

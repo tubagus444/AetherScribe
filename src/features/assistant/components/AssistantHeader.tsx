@@ -1,3 +1,5 @@
+import { ChatOutputControl } from './ChatOutputControl';
+import { getModelForProvider } from '@/src/services/ai/proxy';
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Edit2, Check, X, MoreVertical, Trash2, Cpu, ChevronDown, Settings } from 'lucide-react';
 import { updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
@@ -236,12 +238,17 @@ export function AssistantHeader({
             showMoreMenu ? "bg-slate-100 dark:bg-slate-800 text-indigo-600" : "text-slate-400"
           )}
           title="Menu"
+          aria-expanded={showMoreMenu}
         >
           <MoreVertical size={20} />
         </button>
 
         {showMoreMenu && (
-          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
+          <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
+            {activeSession?.id === activeSessionId && (
+              <ChatOutputControl key={activeSessionId} id={activeSessionId} value={activeSession.maxOutputTokens}
+                provider={selectedProvider} model={activeModel || getModelForProvider(selectedProvider)} />
+            )}
             <button
               onClick={() => {
                 setEditTitleValue(activeSession?.title || '');
