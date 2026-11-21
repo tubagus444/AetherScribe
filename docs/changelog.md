@@ -6,6 +6,10 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-21
 
+- Nova Assistant menyimpan pilihan panjang jawaban per sesi dan dapat menyambung balasan yang mencapai batas.
+
+- Nova Assistant memuat kembali riwayat per bab saat panel editor dibuka ulang.
+
 - Kolom pesan Diskusi AI membesar mengikuti teks dan pengaturan panjang jawaban pindah ke menu sesi.
 
 - Diskusi AI mempertahankan pilihan Umum (Seluruh Cerita) saat editor sedang membuka bab.

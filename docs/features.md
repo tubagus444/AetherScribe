@@ -378,6 +378,8 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 ---
 
 ## Scribble & Aksi Rewrite Prosa
+
+Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di IndexedDB. Saat panel dibuka kembali, pesan dimuat dari sesi Scribble bab tersebut. Gunakan tombol Atur panjang jawaban di header Nova untuk memilih batas per sesi. Balasan yang mencapai batas dapat disambung di pesan yang sama.
 - **Deskripsi:** Fitur penyuntingan dan penulisan ulang teks langsung dari seleksi editor (Tulis Ulang, Perpanjang, Cek Dialog, dll) dengan opsi preview perbandingan.
 - **File terkait:** `src/features/editor/components/ActionsPanel.tsx`, `src/services/ai/index.ts`, `src/lib/cleanRewriteOutput.ts`
 - **Tabel DB:** `aiActions`, `chapters`, `snapshots`

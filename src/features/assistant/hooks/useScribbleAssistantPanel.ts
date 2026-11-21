@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { addChatSession, updateChatSession } from '@/src/services/chatSessionOperations';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { sessionOutput } from '@/src/lib/chatOutputLimit';
 import { db } from '@/src/db';
 import { getActiveWindowText } from '@/src/lib/editorUtils';
 import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
@@ -22,7 +24,7 @@ interface UseScribbleAssistantPanelProps {
 }
 
 // Memory cache lock registry to prevent double-inserting scribble sessions when React 19's StrictMode double-mounts effects concurrently.
-const scribbleLocks = new Map<string, Promise<{ id: number; messages: ChatMessage[] }>>();
+const scribbleLocks = new Map<string, Promise<number>>();
 
 export function useScribbleAssistantPanel({
   projectId,
@@ -40,19 +42,18 @@ export function useScribbleAssistantPanel({
     setSelectedProvider 
   } = useAvailableProviders();
 
-  const [sessionId, setSessionId] = useState<number | null>(null);
-  const sessionIdRef = useRef<number | null>(null);
+  const sessionKey = JSON.stringify([projectId, chapterId]);
+  const [loadedSession, setLoadedSession] = useState<{ key: string; id: number }>();
+  const sessionId = loadedSession?.key === sessionKey ? loadedSession.id : null;
 
-  // Sync state to ref for stable access in callbacks (avoiding stale closures in useChatSession)
-  useEffect(() => {
-    sessionIdRef.current = sessionId;
-  }, [sessionId]);
+  const outputLimit = useLiveQuery(async () => sessionId ? (await db.chatSessions.get(sessionId))?.maxOutputTokens : undefined, [sessionId]);
 
   const {
     messages,
     setMessages,
     isLoading,
     sendMessage,
+    continueReply,
     stop,
     regenerate
   } = useChatSession({
@@ -62,8 +63,10 @@ export function useScribbleAssistantPanel({
     bibleRules,
     relationships,
     provider: selectedProvider,
-    onMessageAdded: async (newMessages) => {
-      const activeId = sessionIdRef.current;
+    sessionId,
+    showInlineErrors: true,
+    maxTokens: sessionOutput(outputLimit),
+    onMessageAdded: async (newMessages, activeId) => {
       if (activeId) {
         await updateChatSession(activeId, {
           messages: newMessages,
@@ -79,18 +82,19 @@ export function useScribbleAssistantPanel({
     if (!projectId) return;
 
     const loadSession = async () => {
-      const key = `${projectId}_${chapterId ?? 'global'}`;
+      const key = sessionKey;
       
       let sessionPromise = scribbleLocks.get(key);
       if (!sessionPromise) {
         sessionPromise = (async () => {
           const session = await db.chatSessions
             .where('projectId').equals(projectId)
-            .and(s => s.chapterId === chapterId)
+            .and(s => s.chapterId === chapterId &&
+              (s.kind === 'scribble' || (s.kind === undefined && /Scribble$/.test(s.title))))
             .first();
 
           if (session && session.id) {
-            return { id: session.id, messages: session.messages };
+            return session.id;
           } else {
             const welcomeMsg: ChatMessage = { 
               id: '1', 
@@ -109,23 +113,21 @@ export function useScribbleAssistantPanel({
               kind: 'scribble'
             });
             
-            return { id: newId, messages: [welcomeMsg] };
+            return newId;
           }
-        })();
+        })().finally(() => { scribbleLocks.delete(key); });
         scribbleLocks.set(key, sessionPromise);
       }
 
       try {
-        const result = await sessionPromise;
-        if (isSubscribed) {
-          sessionIdRef.current = result.id;
-          setSessionId(result.id);
-          setMessages(result.messages);
+        const id = await sessionPromise;
+        const session = await db.chatSessions.get(id);
+        if (isSubscribed && session) {
+          setMessages(session.messages);
+          setLoadedSession({ key, id });
         }
       } catch (err) {
         console.error('Failed to load/create scribble session:', err);
-        // Clear lock if failed so we can retry on next effect trigger
-        scribbleLocks.delete(key);
       }
     };
 
@@ -134,7 +136,7 @@ export function useScribbleAssistantPanel({
     return () => {
       isSubscribed = false;
     };
-  }, [projectId, chapterId, setMessages]);
+  }, [projectId, chapterId, sessionKey, setMessages]);
 
   const [input, setInput] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -205,6 +207,7 @@ export function useScribbleAssistantPanel({
   const { setViewMode } = useNavigation();
 
   const handleClear = async () => {
+    if (!sessionId || isLoading) return;
     const welcomeMsg: ChatMessage = { 
       id: Date.now().toString(), 
       role: 'model', 
@@ -213,13 +216,14 @@ export function useScribbleAssistantPanel({
       timestamp: Date.now()
     };
     
-    setMessages([welcomeMsg]);
-    const activeId = sessionIdRef.current;
-    if (activeId) {
-      await updateChatSession(activeId, {
+    try {
+      await updateChatSession(sessionId, {
         messages: [welcomeMsg],
         lastMessageAt: Date.now()
       });
+      setMessages([welcomeMsg]);
+    } catch {
+      toast.error('Riwayat Nova Assistant gagal dihapus.');
     }
   };
 
@@ -231,26 +235,6 @@ export function useScribbleAssistantPanel({
     return editor
       ? getActiveWindowText(currentText, cursorPosition, 1500)
       : currentText.substring(0, 1500);
-  };
-
-  // Tandai balasan model terakhir sebagai actionable (Salin/Sisipkan) lalu persist —
-  // setMessages langsung tidak memicu onMessageAdded.
-  const markLastMessageActionable = () => {
-    const activeId = sessionIdRef.current;
-    if (!activeId) return;
-    setMessages(prev => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === 'model') {
-        const updated = [...prev];
-        updated[updated.length - 1] = { ...last, isActionable: true, id: Date.now().toString() };
-        updateChatSession(activeId, {
-          messages: updated,
-          lastMessageAt: Date.now()
-        }).catch(err => console.error('Failed to update actionable state in DB:', err));
-        return updated;
-      }
-      return prev;
-    });
   };
 
   const reportError = (err: any) => {
@@ -267,46 +251,35 @@ export function useScribbleAssistantPanel({
       toast.error(errorMessage);
     }
 
-    setMessages(prev => {
-      const updated: ChatMessage[] = [...prev, {
-        id: Date.now().toString(),
-        role: 'model' as const,
-        content: `**Error:** ${errorMessage}`,
-        isError: true,
-        timestamp: Date.now()
-      }];
 
-      const activeId = sessionIdRef.current;
-      if (activeId) {
-        updateChatSession(activeId, {
-          messages: updated,
-          lastMessageAt: Date.now()
-        }).catch(e => console.error('Failed to update error log in DB:', e));
-      }
-
-      return updated;
-    });
   };
 
   const handleSend = async (textToProcess?: string) => {
     const textToSend = textToProcess || input;
-    if (!textToSend.trim() || isLoading) return;
+    if (!sessionId || !textToSend.trim() || isLoading) return;
 
     if (!textToProcess) setInput('');
 
     try {
       await sendMessage(textToSend, computeFocusedContext());
-      markLastMessageActionable();
     } catch (err: any) {
       reportError(err);
     }
   };
 
+  const handleContinue = async (index: number) => {
+    if (!sessionId || isLoading) return;
+    try {
+      await continueReply(index, computeFocusedContext());
+    } catch (error) {
+      reportError(error);
+    }
+  };
+
   const handleRegenerate = async () => {
-    if (isLoading) return;
+    if (!sessionId || isLoading) return;
     try {
       await regenerate(computeFocusedContext());
-      markLastMessageActionable();
     } catch (err: any) {
       reportError(err);
     }
@@ -315,10 +288,12 @@ export function useScribbleAssistantPanel({
   const handleStop = () => stop();
 
   return {
+    sessionId,
+    outputLimit,
     availableProviders,
     selectedProvider,
     setSelectedProvider,
-    messages,
+    messages: sessionId ? messages : [],
     isLoading,
     input,
     setInput,
@@ -332,6 +307,7 @@ export function useScribbleAssistantPanel({
     handleCopy,
     handleClear,
     handleSend,
+    handleContinue,
     handleRegenerate,
     handleStop,
   };

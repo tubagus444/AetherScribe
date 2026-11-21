@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from 'react';
-import { Send, Bot, User, Loader2, Sparkles, X, Copy, Check, Hash, Trash2, Square, RefreshCw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Send, Bot, User, Loader2, Sparkles, X, Copy, Check, Hash, Trash2, Square, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { ChatOutputControl } from '@/src/features/assistant/components/ChatOutputControl';
+import { getModelForProvider } from '@/src/services/ai/proxy';
 import ReactMarkdown from 'react-markdown';
 import { PANEL_WIDTH } from '@/src/lib/constants';
 import { cn } from '@/src/lib/utils';
@@ -41,7 +43,10 @@ export function ScribbleAssistantPanel({
   bibleRules = [],
   editor
 }: ScribbleAssistantPanelProps) {
+  const [showOutputSettings, setShowOutputSettings] = useState(false);
   const {
+    sessionId,
+    outputLimit,
     availableProviders,
     selectedProvider,
     setSelectedProvider,
@@ -59,6 +64,7 @@ export function ScribbleAssistantPanel({
     handleCopy,
     handleClear,
     handleSend,
+    handleContinue,
     handleRegenerate,
     handleStop,
   } = useScribbleAssistantPanel({
@@ -124,6 +130,11 @@ export function ScribbleAssistantPanel({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button type="button" disabled={!sessionId} aria-label="Atur panjang jawaban" aria-expanded={showOutputSettings}
+            onClick={() => setShowOutputSettings(open => !open)}
+            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700">
+            <SlidersHorizontal size={16} />
+          </button>
           <button 
             onClick={handleClear}
             title="Hapus riwayat chat"
@@ -137,8 +148,13 @@ export function ScribbleAssistantPanel({
         </div>
       </div>
 
+      {showOutputSettings && sessionId && (
+        <ChatOutputControl key={sessionId} id={sessionId} value={outputLimit} provider={selectedProvider}
+          model={localStorage.getItem(`ai_model_${selectedProvider}`) || getModelForProvider(selectedProvider)} />
+      )}
+
       <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-slate-50 dark:bg-slate-800/50 custom-scrollbar">
-        {messages.map(m => (
+        {messages.map((m, index) => (
           <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
              <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm ${m.role === 'user' ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400' : 'bg-indigo-600 text-white'}`}>
                {m.role === 'user' ? <User size={14} /> : <Bot size={14} />}
@@ -176,7 +192,16 @@ export function ScribbleAssistantPanel({
                    <div className="markdown-body">
                      <ReactMarkdown>{m.content}</ReactMarkdown>
                    </div>
-                   {m.isActionable && (
+                   {m.finishStatus === 'length' && (
+                     <div className="mt-2 space-y-1 text-xs">
+                       <p>Jawaban mencapai batas panjang.</p>
+                       <button type="button" disabled={isLoading} onClick={() => void handleContinue(index)}
+                         className="rounded-md border px-2 py-1 font-semibold text-indigo-600 disabled:opacity-50 dark:text-indigo-300">
+                         Lanjutkan jawaban
+                       </button>
+                     </div>
+                   )}
+                   {!m.isError && !m.isWelcome && (m.isActionable || m.finishStatus) && (
                       <div className="mt-3 flex flex-wrap gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                         <button 
                           onClick={() => handleCopy(m.id || '', m.content)}
