@@ -577,8 +577,28 @@ export interface AtlasMap {
  *  resolusi/render engine. Lihat `src/lib/mapGeometry.ts` untuk konversi. */
 export interface MapPoint { x: number; y: number }
 
+export interface MapVertex extends MapPoint {
+  pointId?: string;
+  /** Membuat sudut tegas pada batas area melengkung. */
+  sharp?: boolean;
+}
+
+export interface RoutePoint extends MapVertex {
+  visible?: boolean;
+  name?: string;
+  pinId?: number;
+  codexId?: number;
+}
+
+export type RouteStyle = 'straight' | 'curved';
+
+export interface ImportantAreaLocation {
+  pinId: number;
+  role: string;
+}
+
 /**
- * Penanda di atas sebuah peta: pin (titik), area (poligon), atau route (polyline).
+ * Penanda di atas sebuah peta: pin (titik), area (poligon), atau route.
  * `codexId` = sumber deskripsi utama; klik penanda → `openCodexEntry(codexId)`.
  * Faksi = TURUNAN dari `codexId` yang menunjuk entri ber-`factionTag` (bukan field
  * terpisah). `title`/`note` hanya fallback bila penanda tak tertaut Codex.
@@ -589,7 +609,7 @@ export interface MapMarker {
   mapId: number;
   kind: 'pin' | 'area' | 'route';
   /** pin: satu titik; area/route: daftar titik (poligon/polyline). Semua 0–1. */
-  geometry: MapPoint | MapPoint[];
+  geometry: MapPoint | RoutePoint[];
   codexId?: number;
   title?: string;
   note?: string;
@@ -601,6 +621,12 @@ export interface MapMarker {
   /** Data tambahan inert, mis. speedProfileId untuk kalkulator waktu tempuh rute. */
   meta?: {
     speedProfileId?: string;
+    /** Rute lama tanpa pilihan ini ditampilkan lurus. */
+    routeStyle?: RouteStyle;
+    areaStyle?: RouteStyle;
+    importantLocations?: ImportantAreaLocation[];
+    /** Bila kosong, titik antara ditampilkan pada rute lurus. */
+    showIntermediatePoints?: boolean;
     [key: string]: any;
   };
 }

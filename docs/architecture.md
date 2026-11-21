@@ -305,6 +305,14 @@ Operasi penghapusan peta tetap mendelegasikan cleanup relasi ke entityDeletion F
 Leaflet/propsRef, geometri relatif, ikon DOM teks, dan worker presence tetap
 memakai implementasi yang sama. Tidak ada perubahan skema atau dependency.
 
+Pratinjau area mengirim lintasan batas ke `areaBoundaryWorker.ts`.
+`useAreaBoundaryCrossing` mencocokkan ID permintaan terbaru dan menutup
+worker saat kanvas dilepas. Render dan analitik wilayah mengambil sampel
+batas dari fungsi murni `sampleAreaBoundary`.
+Detail area juga meminta daftar area tercakup lewat protokol yang sama.
+Worker memakai sampel lintasan yang terlihat dan memeriksa sisi kandidat
+pada batas cekung. Pergantian area membatalkan permintaan terdahulu.
+
 Pengaman F28.5: unit filter/selections dan CRUD/domain cleanup; fixture native
 `e2e/atlasFixture.tsx` menggunakan MapCanvas, hook dan service produksi dengan
 IndexedDB/Blob asli untuk menggambar pin/area/rute, drag pin, filter jenis,

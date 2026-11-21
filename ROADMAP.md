@@ -37,6 +37,11 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ## Pekerjaan selesai
 
+- [Seleksi, kamera, dan panel detail Atlas](docs/reports/audits/2026-11-21-atlas-sidebar.md)
+- [Isi wilayah dan peran lokasi penting Atlas](docs/reports/audits/2026-11-21-atlas-areas.md#isi-wilayah-dan-lokasi-penting)
+- [Pratinjau batas melengkung dan sudut tegas pada area Atlas](docs/reports/audits/2026-11-21-atlas-areas.md)
+- [Tempat singgah, visibilitas per titik, dan tautan pin Atlas](docs/reports/audits/2026-11-21-atlas-routes.md#tempat-singgah-dan-tautan-pin)
+- [Penanda titik dan kurva rute Atlas](docs/reports/audits/2026-11-21-atlas-routes.md)
 - [Perbaikan gulir tab Kelengkapan Dunia](docs/reports/audits/2026-11-20-codex-layout.md#gulir-tab-kelengkapan-dunia)
 - [Gambar sampul Codex dan cadangan aset](docs/reports/audits/2026-11-20-codex-cover.md)
 - [Detail tambahan Codex, riwayat per bab, dan konteks AI](docs/reports/audits/2026-11-20-codex-details.md)

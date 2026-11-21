@@ -413,7 +413,7 @@ export const FEATURES: Feature[] = [
     what: 'Kanvas peta multilayer offline: unggah gambar peta, tandai lokasi/wilayah/rute, kalibrasi skala nyata, hitung waktu tempuh rute, bangun hierarki sub-peta bertingkat, dan lacak kontinuitas kehadiran adegan. Sepenuhnya lokal, nol token.',
     steps: [
       'Unggah gambar peta (PNG/JPG/WEBP/GIF, maks 5 MB — otomatis dioptimalkan). Anda bisa memiliki banyak peta per proyek (dunia, benua, kota, denah kastil).',
-      'Tandai fitur geografis: gunakan alat "Pin" (klik 1×), "Area" (poligon batas kerajaan/hutan), atau "Rute" (polyline jalan/pelayaran). Dobel-klik atau Enter untuk menyelesaikan garis, Esc untuk batal.',
+      'Tandai fitur geografis dengan alat "Pin", "Area", atau "Rute". Untuk rute, pilih Lurus atau Melengkung, lalu klik titik-titik di peta. Hapus titik terakhir dengan tombol atau Backspace. Dobel-klik atau Enter untuk menyimpan, Esc untuk mengosongkan draf.',
       'Kalibrasi Skala (tombol "Skala"): tarik garis sepanjang mistar skala grafis di peta, lalu masukkan jarak nyata (mis. 100 km). Rute otomatis menampilkan jarak riil dan waktu tempuh berdasarkan metode perjalanan (Jalan Kaki, Kuda, Kapal, dll di tombol "Kecepatan").',
       'Katalog Wilayah & Direktori Semesta: Sidebar kanan otomatis menampilkan katalog seluruh wilayah (tab "Peta Ini" dan "Semua Peta"). Dilengkapi pencarian instan, filter jenis (Area/Pin/Rute), filter Yatim, dan tombol kembali "← Daftar Wilayah".',
       'Peta Bertingkat (Sub-Maps): pilih Pin atau Area → tautkan ke sub-peta di sidebar lewat Kartu Pratinjau Sub-Peta. Penanda portal berpendar terang di kanvas; dobel-klik penanda untuk langsung menjelajahi sub-peta.',

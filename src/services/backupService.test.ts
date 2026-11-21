@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '@/src/db';
+import { BACKUP_FORMAT_VERSION } from '@/src/lib/backupFormat';
 import { backupService, type BackupData } from './backupService';
 import { BACKUP_LIMITS } from '@/src/lib/backupLimits';
 import { readBackupFile, readBackupResponse, readBoundedStream } from '@/src/lib/backupIO';
@@ -11,6 +12,7 @@ import { changeChapters, restoreChapterSnapshot } from './chapterOperations';
 import { addCodexEntry, updateCodexEntry } from './codexOperations';
 import { deleteCodexEntry, deleteProjectData } from './entityDeletion';
 import { readPortableBackup } from '@/src/lib/portableBackup';
+import { routePoints } from '@/src/lib/atlasRoutePoints';
 
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const otherImage = 'data:image/png;base64,iVBORw0KGgox';
@@ -142,6 +144,43 @@ it('DB04 preserves the export order and imports all exported table records', asy
   expect(imported.data.mapMarkers?.[0].mapId).toBe(imported.data.maps?.[0].id);
 });
 
+it('remaps route point and important area links when importing a project copy', async () => {
+  await db.codex.add({ id: 11, projectId: 1, name: 'Kemah', category: 'location', aliases: [], tags: [], description: '' });
+  await db.mapMarkers.bulkAdd([
+    {
+      id: 4, mapId: 1, projectId: 1, kind: 'route', createdAt: 1,
+      geometry: [
+        { x: .2, y: .2, pointId: 'first', visible: false, name: 'Kemah', codexId: 11 },
+        { x: .8, y: .6, pointId: 'last', pinId: 5 },
+      ],
+    },
+    { id: 5, mapId: 1, projectId: 1, kind: 'pin', createdAt: 1, geometry: { x: .8, y: .6 } },
+    {
+      id: 6, mapId: 1, projectId: 1, kind: 'area', createdAt: 1,
+      geometry: [{ x: .1, y: .1 }, { x: .2, y: .1 }, { x: .2, y: .2 }],
+      meta: { areaStyle: 'curved', importantLocations: [{ pinId: 5, role: 'Ibu Kota' }] },
+    },
+  ]);
+  const source = await backupService.collectProjectData(1);
+  const { projectId } = await backupService.importProjectData(source);
+  const markers = await db.mapMarkers.where('projectId').equals(projectId).toArray();
+  const pin = markers.find(marker => marker.kind === 'pin');
+  const route = markers.find(marker => marker.kind === 'route');
+  const codex = await db.codex.where('projectId').equals(projectId).first();
+  if (!route || !pin || !codex) throw new Error('Missing imported data');
+  expect(pin.id).not.toBe(5);
+  expect(codex.id).not.toBe(11);
+  expect(routePoints(route)).toEqual([
+    { x: .2, y: .2, pointId: 'first', visible: false, name: 'Kemah', codexId: codex.id },
+    { x: .8, y: .6, pointId: 'last', pinId: pin.id },
+  ]);
+  const imported = await backupService.collectProjectData(projectId);
+  expect(imported.data.mapMarkers?.find(marker => marker.kind === 'route')?.geometry).toEqual(route.geometry);
+  expect(imported.data.mapMarkers?.find(marker => marker.kind === 'area')?.meta).toEqual({
+    areaStyle: 'curved', importantLocations: [{ pinId: pin.id, role: 'Ibu Kota' }],
+  });
+});
+
 it('DB04 clears derived indexes on restore and preserves workspace logs and backup history', async () => {
   await db.codex.add({ id: 1, projectId: 1, name: 'Tokoh', category: 'character', aliases: [], tags: [], description: '' });
   const cached = { id: 'old', projectId: 1, contentHash: 'old', embedding: new Float32Array([1]), lastUpdated: 1 };
@@ -190,7 +229,7 @@ describe('F03 Atlas recovery', () => {
   });
   it('internal auto preserves matching live images and pre-restore includes complete images', async () => {
     const full = await backupService.collectAllData();
-    expect(full.version).toBe(9);
+    expect(full.version).toBe(BACKUP_FORMAT_VERSION);
     await backupService.saveToInternalDB(full);
     const auto = await latest('auto');
     const parsed = JSON.parse(await backupService.decodeInternalBackup(auto));
@@ -312,7 +351,7 @@ describe('F04 restore boundary', () => {
   const invalid: [string, (b: any) => void][] = [
     ['scope project', b => b.scope = 'project'],
     ['scope unknown', b => b.scope = 'unexpected'],
-    ['future version', b => b.version = 9],
+    ['future version', b => b.version = BACKUP_FORMAT_VERSION + 1],
     ['old version', b => b.version = 2],
     ['fractional version', b => b.version = 3.5],
     ['malformed project', b => b.data.projects = [{ id: 2 }]],

@@ -19,7 +19,7 @@
  *    lng = width*rx. Tuple Leaflet selalu `[lat, lng]`.
  */
 
-import { MapPoint } from '@/src/types';
+import type { MapMarker, MapPoint, MapVertex, RouteStyle } from '@/src/types';
 
 /** Tuple koordinat Leaflet `[lat, lng]` — tanpa bergantung tipe Leaflet. */
 export type LatLngTuple = [number, number];
@@ -46,6 +46,71 @@ export function latLngToRel(latlng: LatLngTuple, width: number, height: number):
 /** Terjemahkan daftar titik relatif → daftar tuple Leaflet (area/route). */
 export function relPathToLatLngs(points: MapPoint[], width: number, height: number): LatLngTuple[] {
   return points.map((p) => relToLatLng(p, width, height));
+}
+
+export function showsIntermediateRoutePoints(meta?: MapMarker['meta']): boolean {
+  return meta?.showIntermediatePoints ?? (meta?.routeStyle !== 'curved');
+}
+
+const samplesPerSegment = 16;
+
+function appendCurveSegment(path: MapPoint[], prev: MapPoint, a: MapPoint, b: MapPoint, next: MapPoint) {
+  const length = Math.hypot(b.x - a.x, b.y - a.y);
+  // Pendekkan handle di segmen yang jauh lebih pendek daripada segmen tetangganya.
+  const startWeight = Math.min(1, length / (Math.hypot(a.x - prev.x, a.y - prev.y) || 1)) / 6;
+  const endWeight = Math.min(1, length / (Math.hypot(next.x - b.x, next.y - b.y) || 1)) / 6;
+  const c1 = {
+    x: clamp01(a.x + (b.x - prev.x) * startWeight),
+    y: clamp01(a.y + (b.y - prev.y) * startWeight),
+  };
+  const c2 = {
+    x: clamp01(b.x - (next.x - a.x) * endWeight),
+    y: clamp01(b.y - (next.y - a.y) * endWeight),
+  };
+
+  path.push(a);
+  for (let j = 1; j < samplesPerSegment; j++) {
+    const t = j / samplesPerSegment;
+    const u = 1 - t;
+    const w0 = u ** 3;
+    const w1 = 3 * u * u * t;
+    const w2 = 3 * u * t * t;
+    const w3 = t ** 3;
+    path.push({
+      x: w0 * a.x + w1 * c1.x + w2 * c2.x + w3 * b.x,
+      y: w0 * a.y + w1 * c1.y + w2 * c2.y + w3 * b.y,
+    });
+  }
+}
+
+/** Sampel spline Catmull–Rom yang dipakai bersama oleh kanvas dan kalkulator jarak. */
+export function sampleRoutePath(points: MapPoint[], style?: RouteStyle): MapPoint[] {
+  if (style !== 'curved' || points.length < 3) return points;
+
+  const path: MapPoint[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    appendCurveSegment(path, points[i - 1] ?? a, a, b, points[i + 2] ?? b);
+  }
+  path.push(points[points.length - 1]);
+  return path;
+}
+
+/** Cincin tertutup untuk Leaflet dan analitik, tanpa mengulang titik awal. */
+export function sampleAreaBoundary(points: MapVertex[], style?: RouteStyle): MapPoint[] {
+  if (style !== 'curved' || points.length < 3) return points;
+
+  const path: MapPoint[] = [];
+  const count = points.length;
+  for (let i = 0; i < count; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % count];
+    const prev = a.sharp ? a : points[(i + count - 1) % count];
+    const next = b.sharp ? b : points[(i + 2) % count];
+    appendCurveSegment(path, prev, a, b, next);
+  }
+  return path;
 }
 
 /** Titik relatif → piksel absolut pada gambar (mis. untuk ekspor/overlay non-Leaflet). */

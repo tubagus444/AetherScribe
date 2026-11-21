@@ -65,7 +65,13 @@ export const TABLE_CATALOG = {
   plotPromises: { ...projectData, relations: ['projectId → projects', 'plantedChapterId → chapters', 'codexId dan payoffCodexId → codex'] },
   glossary: { ...projectData, relations: ['projectId → projects'] },
   maps: { ...projectData, kind: 'asset', backup: 'map-assets', relations: ['projectId → projects', 'imageBlob tersimpan bersama record peta'] },
-  mapMarkers: { ...projectData, relations: ['projectId → projects', 'mapId dan linkedMapId → maps', 'codexId → codex'] },
+  mapMarkers: {
+    ...projectData,
+    relations: [
+      'projectId → projects', 'mapId dan linkedMapId → maps', 'codexId dan geometry[].codexId → codex',
+      'geometry[].pinId serta meta.importantLocations[].pinId → mapMarkers (pin pada peta yang sama)',
+    ],
+  },
   continuityTriage: {
     ...projectData,
     relations: ['projectId → projects', 'findingId memuat identitas codex, relationships, atau timeline'],

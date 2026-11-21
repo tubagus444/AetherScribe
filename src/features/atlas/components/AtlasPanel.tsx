@@ -27,10 +27,12 @@ import { stripHtml } from '@/src/lib/editorUtils';
 import { usePresenceIndex } from '@/src/hooks/usePresenceIndex';
 import { resolveMarkerColor } from '@/src/lib/atlasColors';
 import { cn } from '@/src/lib/utils';
-import { AtlasMap, MapMarker, MapPoint } from '@/src/types';
+import { AtlasMap, MapMarker, MapPoint, RoutePoint, RouteStyle } from '@/src/types';
+import type { AreaPointEdit, RoutePointEdit } from '@/src/lib/atlasRoutePoints';
+import { useToast } from '@/src/hooks/useToast';
 import { analyzeRegions, findOrphanMarkers, getMarkerFirstAppearanceChapter } from '@/src/lib/atlasAnalytics';
 import { findBreadcrumbChain, findParentMap } from '@/src/lib/atlasHierarchy';
-import { MapMiniThumbnail, FilterGroup, FilterChip } from './AtlasControls';
+import { MapMiniThumbnail, FilterGroup, FilterChip, PathStyleSelect } from './AtlasControls';
 import { useAtlasFilters } from '../hooks/useAtlasFilters';
 import { useAtlasSelection } from '../hooks/useAtlasSelection';
 import { useAtlas } from '../hooks/useAtlas';
@@ -40,6 +42,7 @@ import { TravelSpeedSettingsModal } from './TravelSpeedSettingsModal';
 import { ScaleCalibrationModal } from './ScaleCalibrationModal';
 import { MapHierarchyModal } from './MapHierarchyModal';
 import type { PresenceChapter } from './MarkerSidebar';
+import type { MapCanvasHandle } from './MapCanvas';
 
 const MapCanvas = lazy(() => import('./MapCanvas'));
 const MarkerSidebar = lazy(() => import('./MarkerSidebar'));
@@ -50,6 +53,7 @@ const KIND_BTN: { kind: 'pin' | 'area' | 'route'; icon: typeof MapPin; label: st
   { kind: 'area', icon: Hexagon, label: 'Area' },
   { kind: 'route', icon: RouteIcon, label: 'Rute' },
 ];
+const emptyPresenceIndex = { perChapterCounts: [], byEntity: new Map() };
 
 interface AtlasPanelProps {
   projectId: number;
@@ -63,7 +67,11 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const chapters = useProjectChapters(projectId, 'manuscript');
 
   const { selectedMapId, setSelectedMapId, drawMode, setDrawMode, selectedMarkerId, setSelectedMarkerId, editingGeometry, setEditingGeometry, draftCount, setDraftCount, sidebarView, setSidebarView } = useAtlasSelection();
-  const { maps, markers, mapsLoading, createMap, renameMap, setMapImage, deleteMap, addMarker, updateMarker, deleteMarker } = useAtlas(selectedMapId);
+  const {
+    maps, markers, mapsLoading, createMap, renameMap, setMapImage, deleteMap, addMarker, updateMarker,
+    editRoutePoint, editAreaPoint, setImportantLocation, deleteMarker,
+  } = useAtlas(selectedMapId);
+  const { toast } = useToast();
   const { process, processing, error: uploadError } = useMapImageUpload();
 
   // Seluruh penanda dalam proyek untuk relasi hierarki sub-peta
@@ -97,6 +105,11 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const [currentNameInput, setCurrentNameInput] = useState('');
   const [showLayersMenu, setShowLayersMenu] = useState(false);
   const [showScaleMenu, setShowScaleMenu] = useState(false);
+  const [draftRouteStyle, setDraftRouteStyle] = useState<RouteStyle>('straight');
+  const [draftAreaStyle, setDraftAreaStyle] = useState<RouteStyle>('straight');
+  const [draftLastSharp, setDraftLastSharp] = useState(false);
+  const [focusedVertex, setFocusedVertex] = useState<{ markerId: number; pointId: string }>();
+  const mapCanvasRef = useRef<MapCanvasHandle>(null);
   const mapMenuRef = useRef<HTMLDivElement>(null);
   const layersMenuRef = useRef<HTMLDivElement>(null);
   const scaleMenuRef = useRef<HTMLDivElement>(null);
@@ -217,11 +230,15 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   );
 
   const regionAnalytics = useMemo(() => {
-    if (!presenceIndex || !maps.length) return [];
-    return analyzeRegions(markers, presenceIndex.index, codexEntries);
+    if (!maps.length) return [];
+    return analyzeRegions(markers, presenceIndex?.index ?? emptyPresenceIndex, codexEntries);
   }, [markers, presenceIndex, codexEntries, maps.length]);
 
   const selectedMarker = markers.find((m) => m.id === selectedMarkerId);
+  const canvasMarkers = useMemo(() => selectedMarker && !visibleMarkers.includes(selectedMarker)
+    ? [...visibleMarkers, selectedMarker]
+    : visibleMarkers, [selectedMarker, visibleMarkers]);
+  const focusedVertexId = focusedVertex?.markerId === selectedMarkerId ? focusedVertex?.pointId : undefined;
   const selectedEntry = selectedMarker?.codexId != null ? entryById.get(selectedMarker.codexId) : undefined;
 
   const selectedRegionAnalytic = useMemo(() => {
@@ -294,6 +311,53 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
     [entryById, fogMode, isSecretEntry],
   );
 
+  const pinById = useMemo(() => new Map(markers.filter(marker => marker.kind === 'pin').map(pin => [pin.id, pin])), [markers]);
+  const titleForRoutePoint = useMemo(() => (point: RoutePoint) => {
+    const pin = point.pinId === undefined ? undefined : pinById.get(point.pinId);
+    const codexId = pin?.codexId ?? point.codexId;
+    if (fogMode && isSecretEntry(codexId)) return '??? (Lokasi Rahasia)';
+    return point.name || (pin ? titleFor(pin) : codexId === undefined ? undefined : entryById.get(codexId)?.name);
+  }, [entryById, fogMode, isSecretEntry, pinById, titleFor]);
+
+  const openMarker = (marker: MapMarker) => {
+    setFocusedVertex(undefined);
+    setSelectedMarkerId(marker.id);
+    setSidebarView('detail');
+    setDrawMode(null);
+    setShowSidebar(true);
+  };
+
+  const clearMarkerSelection = () => {
+    setFocusedVertex(undefined);
+    setEditingGeometry(false);
+    setSelectedMarkerId(undefined);
+    setSidebarView('list');
+  };
+
+  const escapeSelection = () => {
+    if (showHierarchyModal || showSpeedModal || pendingScaleDist !== null || showMapMenu || showLayersMenu || showScaleMenu) return false;
+    if (editingGeometry) {
+      setEditingGeometry(false);
+      setFocusedVertex(undefined);
+      return true;
+    }
+    if (selectedMarkerId === undefined) return false;
+    clearMarkerSelection();
+    return true;
+  };
+
+  const handleRoutePointEdit = (id: number, edit: RoutePointEdit) => {
+    void editRoutePoint(id, edit).catch((error: unknown) => {
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan titik rute.');
+    });
+  };
+
+  const handleAreaPointEdit = (id: number, edit: AreaPointEdit) => {
+    void editAreaPoint(id, edit).catch((error: unknown) => {
+      toast.error(error instanceof Error ? error.message : 'Gagal menyimpan titik batas.');
+    });
+  };
+
   // Informasi peta induk dari sub-peta aktif
   const parentInfo = useMemo(() => {
     if (!activeMap?.id || !allProjectMarkers) return null;
@@ -346,7 +410,8 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
   const handleCreateGeometry = async (geometry: MapPoint | MapPoint[]) => {
     if (!activeMap?.id || !drawMode) return;
 
-    if (drawMode === 'scale' && Array.isArray(geometry) && geometry.length === 2) {
+    if (drawMode === 'scale') {
+      if (!Array.isArray(geometry) || geometry.length !== 2) return;
       setDrawMode(null);
       // Hitung jarak relatif lalu buka modal
       const relDist = calculateRelativeDistance(geometry);
@@ -354,7 +419,12 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
       return;
     }
 
-    const id = await addMarker({ mapId: activeMap.id, kind: drawMode as 'pin' | 'area' | 'route', geometry });
+    const id = await addMarker({
+      mapId: activeMap.id,
+      kind: drawMode,
+      geometry,
+      meta: drawMode === 'route' ? { routeStyle: draftRouteStyle } : drawMode === 'area' ? { areaStyle: draftAreaStyle } : undefined,
+    });
     setDrawMode(null);
     if (id != null) {
       setSelectedMarkerId(id);
@@ -658,6 +728,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
             onClick={() => {
               setDrawMode(drawMode === kind ? null : kind);
               setSelectedMarkerId(undefined);
+              setEditingGeometry(false);
               setSidebarView('list');
             }}
             className={cn('inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm border',
@@ -976,12 +1047,39 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
 
       {/* Hint gambar + error */}
       {(drawMode || uploadError) && (
-        <div className="shrink-0 px-3 py-1.5 text-xs border-b border-slate-100 dark:border-slate-800 bg-indigo-50/60 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300">
+        <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 px-3 py-1.5 text-xs border-b border-slate-100 dark:border-slate-800 bg-indigo-50/60 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300">
           {uploadError ? <span className="text-rose-600 dark:text-rose-400">{uploadError}</span> : drawMode === 'pin'
             ? 'Klik di peta untuk menaruh pin.'
             : drawMode === 'scale'
             ? `Tarik garis lurus (klik awal dan klik akhir) untuk mengkalibrasi skala peta${draftCount ? ` (${draftCount}/2)` : ''}.`
             : `Klik menambah titik · dobel-klik atau Enter untuk selesai · Esc batal${draftCount ? ` (${draftCount} titik)` : ''}.`}
+          {(drawMode === 'route' || drawMode === 'area') && (
+            <>
+              {drawMode === 'route'
+                ? <PathStyleSelect label="Bentuk rute" value={draftRouteStyle} onChange={setDraftRouteStyle} />
+                : <PathStyleSelect label="Bentuk batas" value={draftAreaStyle} onChange={setDraftAreaStyle} />}
+              <button
+                type="button"
+                aria-keyshortcuts="Backspace Control+Z Meta+Z"
+                disabled={!draftCount}
+                onClick={() => mapCanvasRef.current?.undoDraftPoint()}
+                className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:hover:bg-indigo-900"
+              >
+                Hapus titik terakhir
+              </button>
+              {drawMode === 'area' && draftAreaStyle === 'curved' && (
+                <button
+                  type="button"
+                  aria-pressed={draftLastSharp}
+                  disabled={!draftCount}
+                  onClick={() => mapCanvasRef.current?.toggleLastDraftCorner()}
+                  className="rounded-md border border-indigo-300 px-2 py-1 font-medium hover:bg-indigo-100 aria-pressed:bg-indigo-200 disabled:opacity-50 dark:border-indigo-700 dark:hover:bg-indigo-900 dark:aria-pressed:bg-indigo-800"
+                >
+                  Sudut tegas di titik terakhir
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -1013,7 +1111,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
 
       {/* Peta + sidebar */}
       <div className="flex-1 flex min-h-0 relative z-0">
-        <div className="flex-1 min-w-0">
+        <div className="relative z-0 flex-1 min-w-0">
           {activeMap && !activeMap.imageBlob && (
             <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-center">
               <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
@@ -1033,23 +1131,28 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
           {activeMap && activeMap.imageBlob && (
             <Suspense fallback={<div className="h-full flex items-center justify-center text-slate-400"><Loader2 className="animate-spin" /></div>}>
               <MapCanvas
+                ref={mapCanvasRef}
                 key={activeMap.id}
                 map={activeMap}
-                markers={visibleMarkers}
+                markers={canvasMarkers}
                 drawMode={drawMode}
+                draftRouteStyle={draftRouteStyle}
+                draftAreaStyle={draftAreaStyle}
                 selectedMarkerId={selectedMarkerId}
                 editing={editingGeometry}
                 colorFor={colorFor}
                 titleFor={titleFor}
                 onCreateGeometry={handleCreateGeometry}
-                onMarkerClick={(m) => {
-                  setSelectedMarkerId(m.id);
-                  setSidebarView('detail');
-                  setDrawMode(null);
-                  setShowSidebar(true);
-                }}
+                onMarkerClick={openMarker}
+                onMapBackgroundClick={clearMarkerSelection}
+                onEscape={escapeSelection}
                 onGeometryChange={handleGeometryChange}
-                onDraftChange={setDraftCount}
+                focusedVertexId={focusedVertexId}
+                titleForRoutePoint={titleForRoutePoint}
+                onFocusVertex={(markerId, pointId) => setFocusedVertex({ markerId, pointId })}
+                onEditRoutePoint={handleRoutePointEdit}
+                onEditAreaPoint={handleAreaPointEdit}
+                onDraftChange={(count, lastSharp) => { setDraftCount(count); setDraftLastSharp(lastSharp === true); }}
                 orphanMarkerIds={orphanMarkerIds}
                 highlightOrphans={highlightOrphans}
                 fadedMarkerIds={fadedMarkerIds}
@@ -1069,6 +1172,7 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
           (sidebarView === 'detail' && selectedMarker) ? (
             <Suspense fallback={null}>
               <MarkerSidebar
+                key={selectedMarker.id}
                 marker={selectedMarker}
                 entry={selectedEntry}
                 categories={categories}
@@ -1085,18 +1189,41 @@ export function AtlasPanel({ projectId }: AtlasPanelProps) {
                 allMaps={maps}
                 allMarkers={allProjectMarkers ?? []}
                 onOpenSubMap={handleOpenSubMap}
-                onToggleEdit={() => { setDrawMode(null); setEditingGeometry((v) => !v); }}
+                onToggleEdit={() => {
+                  setDrawMode(null);
+                  if (editingGeometry) setFocusedVertex(undefined);
+                  setEditingGeometry(!editingGeometry);
+                }}
+                onCenterMarker={() => {
+                  if (selectedMarker.id !== undefined) mapCanvasRef.current?.centerMarker(selectedMarker.id);
+                }}
                 onSave={(patch) => selectedMarker.id && updateMarker(selectedMarker.id, patch)}
                 onDelete={() => {
                   if (selectedMarker.id) {
                     deleteMarker(selectedMarker.id);
-                    setSelectedMarkerId(undefined);
-                    setSidebarView('list');
+                    clearMarkerSelection();
                   }
                 }}
-                onClose={() => setSidebarView('list')}
+                onClose={clearMarkerSelection}
                 onOpenCodex={openCodexEntry}
                 onJumpChapter={(id) => { setActiveChapterId(id); setViewMode('write'); }}
+                mapMarkers={markers}
+                titleForMarker={titleFor}
+                titleForRoutePoint={titleForRoutePoint}
+                focusedVertexId={focusedVertexId}
+                onFocusVertex={(pointId) => {
+                  if (selectedMarker.id !== undefined) setFocusedVertex({ markerId: selectedMarker.id, pointId });
+                }}
+                onEditRoutePoint={(edit) => {
+                  if (selectedMarker.id !== undefined) handleRoutePointEdit(selectedMarker.id, edit);
+                }}
+                onEditAreaPoint={(edit) => {
+                  if (selectedMarker.id !== undefined) handleAreaPointEdit(selectedMarker.id, edit);
+                }}
+                onOpenMarker={openMarker}
+                onSetImportantLocation={async (pinId, role) => {
+                  if (selectedMarker.id !== undefined) await setImportantLocation(selectedMarker.id, pinId, role);
+                }}
               />
             </Suspense>
           ) : (

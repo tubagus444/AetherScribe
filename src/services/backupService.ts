@@ -478,7 +478,27 @@ export const backupService = {
       if (dep.chatSessions.length) await db.chatSessions.bulkAdd(dep.chatSessions);
       if (dep.plotPromises.length) await db.plotPromises.bulkAdd(dep.plotPromises);
       if (dep.glossary.length) await db.glossary.bulkAdd(dep.glossary);
-      if (dep.mapMarkers.length) await db.mapMarkers.bulkAdd(dep.mapMarkers);
+      if (dep.mapMarkers.length) {
+        const keys = await db.mapMarkers.bulkAdd(dep.mapMarkers, { allKeys: true });
+        const markerIdMap = new Map<number, number>();
+        dep.sourceMapMarkerIds.forEach((id, index) => {
+          if (id !== undefined) markerIdMap.set(id, keys[index]);
+        });
+        for (const [index, marker] of dep.mapMarkers.entries()) {
+          if (marker.kind === 'area' && marker.meta?.importantLocations?.length) {
+            const importantLocations = marker.meta.importantLocations.flatMap(location => {
+              const pinId = markerIdMap.get(location.pinId);
+              return pinId === undefined ? [] : [{ ...location, pinId }];
+            });
+            await db.mapMarkers.update(keys[index], { meta: { ...marker.meta, importantLocations } });
+          }
+          if (marker.kind !== 'route' || !Array.isArray(marker.geometry) || !marker.geometry.some(point => point.pinId !== undefined)) continue;
+          const geometry = marker.geometry.map(point => point.pinId === undefined
+            ? point
+            : { ...point, pinId: markerIdMap.get(point.pinId) });
+          await db.mapMarkers.update(keys[index], { geometry });
+        }
+      }
     });
 
     return { projectId: newProjectId, counts };

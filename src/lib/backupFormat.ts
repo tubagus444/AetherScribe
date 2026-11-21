@@ -2,7 +2,7 @@ import type { AtlasMap, CodexCoverImage, Snapshot } from '@/src/types';
 import type { ChapterExportRecord, PersistedChapter } from './chapterContracts';
 
 export const MIN_BACKUP_VERSION = 3;
-export const BACKUP_FORMAT_VERSION = 9;
+export const BACKUP_FORMAT_VERSION = 11;
 export type BackupScope = 'all' | 'project';
 
 export interface BackupMapRecord extends Omit<AtlasMap, 'id' | 'imageBlob'> {

@@ -366,6 +366,10 @@
   border-top-color: #f59e0b !important;
 }
 
+.atlas-drawing-path .leaflet-pane .leaflet-interactive {
+  pointer-events: none;
+}
+
 /* Atlas Area & Route Center Badges */
 .atlas-selected-area-badge > div,
 .atlas-selected-route-badge > div {

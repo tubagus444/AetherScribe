@@ -58,14 +58,38 @@ const calendar = object({
   seasons: array(object({ name: text, fromMonth: id, toMonth: id, color: text })),
 }, { holidays: array(object({ id: text, name: text, month: id, day: id }, { description: text, color: text })) });
 
+const importantLocations: Check = (value, path) => {
+  array(object({ pinId: id, role: nonblank }))(value, path);
+  const ids = new Set<number>();
+  for (const location of value) {
+    if (ids.has(location.pinId)) fail(path);
+    ids.add(location.pinId);
+  }
+};
 const markerFields = object({ id, projectId: id, mapId: id, kind: choice('pin', 'area', 'route'), createdAt: nonnegative }, {
-  codexId: id, title: text, note: text, color: text, linkedMapId: id, meta: object({}, { speedProfileId: text }),
+  codexId: id, title: text, note: text, color: text, linkedMapId: id,
+  meta: object({}, {
+    speedProfileId: text, routeStyle: choice('straight', 'curved'), showIntermediatePoints: bool,
+    areaStyle: choice('straight', 'curved'), importantLocations,
+  }),
 });
+const routePointFields = object({}, { pointId: nonblank, visible: bool, name: text, pinId: id, codexId: id });
+const areaPointFields = object({}, { pointId: nonblank, sharp: bool });
 const markerGeometry: Check = (v, p) => {
   if (v.kind === 'pin') relativePoint(v.geometry, p);
   else {
     array(relativePoint)(v.geometry, p);
     if (v.geometry.length < (v.kind === 'area' ? 3 : 2)) fail(p);
+    const check = v.kind === 'area' ? areaPointFields : routePointFields;
+    const pointIds = new Set<string>();
+    for (const [i, vertex] of v.geometry.entries()) {
+      check(vertex, `${p}[${i}]`);
+      if (v.kind === 'route' && vertex.pinId !== undefined && vertex.codexId !== undefined) fail(p);
+      if (vertex.pointId !== undefined) {
+        if (pointIds.has(vertex.pointId)) fail(p);
+        pointIds.add(vertex.pointId);
+      }
+    }
   }
 };
 const backupSchemas = {
@@ -214,6 +238,7 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
   }
   const index = (table: string) => new Map((d[table] ?? []).map(r => [r.id, r]));
   const projects = index('projects'), chapters = index('chapters'), codex = index('codex'), maps = index('maps');
+  const markers = index('mapMarkers');
   const ref = (row: Row, field: string, target: Map<number, Row>, path: string) => {
     if (row[field] === undefined) return;
     const parent = target.get(row[field]);
@@ -240,6 +265,25 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
       }
     }
     for (const key of ['mapId', 'linkedMapId']) ref(row, key, maps, table);
+    if (table === 'mapMarkers' && row.kind === 'route') {
+      for (const vertex of row.geometry) {
+        ref({ projectId: row.projectId, codexId: vertex.codexId }, 'codexId', codex, 'mapMarkers.geometry');
+        if (vertex.pinId === undefined) continue;
+        const pin = markers.get(vertex.pinId);
+        if (pin?.kind !== 'pin' || pin.mapId !== row.mapId || pin.projectId !== row.projectId) {
+          fail('mapMarkers.geometry.pinId referensi tidak valid');
+        }
+      }
+    }
+    if (table === 'mapMarkers' && row.meta?.importantLocations?.length) {
+      if (row.kind !== 'area') fail('mapMarkers.meta.importantLocations');
+      for (const location of row.meta.importantLocations) {
+        const pin = markers.get(location.pinId);
+        if (pin?.kind !== 'pin' || pin.mapId !== row.mapId || pin.projectId !== row.projectId) {
+          fail('mapMarkers.meta.importantLocations.pinId referensi tidak valid');
+        }
+      }
+    }
     for (const value of row.characterIds ?? []) ref({ ...row, characterId: value }, 'characterId', codex, table);
     if (table === 'maps') {
       if ('imageBlob' in row) fail('maps.imageBlob tidak dapat diimpor dari JSON');

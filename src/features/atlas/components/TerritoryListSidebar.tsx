@@ -215,7 +215,7 @@ export function TerritoryListSidebar({
   }, [markers]);
 
   return (
-    <aside className="w-80 shrink-0 h-full overflow-hidden border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col z-10 shadow-sm">
+    <aside className="z-10 flex h-full w-[70%] max-w-80 shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       {/* Header Utama Sidebar */}
       <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/30">
         <div className="flex items-center gap-2 min-w-0">

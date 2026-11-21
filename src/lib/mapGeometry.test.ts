@@ -17,7 +17,67 @@ import {
   calculateRelativeDistance,
   calculateRealDistance,
   calculateTravelTime,
+  sampleRoutePath,
+  sampleAreaBoundary,
 } from './mapGeometry';
+import { findAreaBoundaryCrossing } from '@/src/lib/areaBoundaryCrossing';
+import { analyzeRegions } from '@/src/lib/atlasAnalytics';
+import type { MapMarker } from '@/src/types';
+
+describe('sampleRoutePath', () => {
+  const points = [{ x: .1, y: .2 }, { x: .5, y: .8 }, { x: .9, y: .2 }];
+
+  it('mempertahankan rute lama, mode lurus, dan rute dua titik', () => {
+    expect(sampleRoutePath(points)).toEqual(points);
+    expect(sampleRoutePath(points, 'straight')).toEqual(points);
+    expect(sampleRoutePath(points.slice(0, 2), 'curved')).toEqual(points.slice(0, 2));
+  });
+
+  it('melewati titik asli sesuai urutan dan menambah panjang pada belokan', () => {
+    const path = sampleRoutePath(points, 'curved');
+    expect(path[0]).toEqual(points[0]);
+    expect(path[(path.length - 1) / 2]).toEqual(points[1]);
+    expect(path.at(-1)).toEqual(points[2]);
+    expect(calculateRelativeDistance(path)).toBeGreaterThan(calculateRelativeDistance(points));
+  });
+
+  it('menahan kurva dalam batas peta dan menangani titik berimpit', () => {
+    const edge = { x: 0, y: 1 };
+    const path = sampleRoutePath([edge, edge, { x: .01, y: .01 }, { x: 1, y: 0 }], 'curved');
+    expect(path.slice(0, 2)).toEqual([edge, edge]);
+    expect(path.flatMap(({ x, y }) => [x, y]).every(n => n >= 0 && n <= 1)).toBe(true);
+  });
+});
+
+describe('batas area Atlas', () => {
+  const square = [{ x: .25, y: .25 }, { x: .75, y: .25 }, { x: .75, y: .75 }, { x: .25, y: .75 }];
+
+  it('melengkungkan sisi penutup dan mempertahankan arah sisi di sudut tegas', () => {
+    expect(sampleAreaBoundary(square)).toBe(square);
+    const smooth = sampleAreaBoundary(square, 'curved');
+    const sharp = sampleAreaBoundary([{ ...square[0], sharp: true }, ...square.slice(1)], 'curved');
+    expect(smooth.filter(point => square.includes(point))).toEqual(square);
+    expect(smooth.at(-1)?.x).toBeLessThan(square[0].x);
+    expect(sharp[1].y).toBeGreaterThan(smooth[1].y);
+    expect(sharp.at(-1)?.x).toBeGreaterThan(smooth.at(-1)?.x ?? 0);
+  });
+
+  it('menandai persilangan sisi dan mengabaikan sambungan normal', () => {
+    const [a, b, c, d] = square;
+    expect(findAreaBoundaryCrossing([a, c, d, b])).toEqual({ x: .5, y: .5 });
+    expect(findAreaBoundaryCrossing(square)).toBeUndefined();
+    expect(findAreaBoundaryCrossing(sampleAreaBoundary(square, 'curved'))).toBeUndefined();
+  });
+
+  it('menggunakan batas yang digambar untuk menentukan pin di dalam wilayah', () => {
+    const base = { projectId: 1, mapId: 1, createdAt: 1 };
+    const area: MapMarker = { ...base, id: 1, kind: 'area', geometry: square };
+    const village: MapMarker = { ...base, id: 2, kind: 'pin', geometry: { x: .5, y: .21 } };
+    const presence = { byEntity: new Map(), perChapterCounts: [] };
+    expect(analyzeRegions([area, village], presence, [])[0].containedPins).toEqual([]);
+    expect(analyzeRegions([{ ...area, meta: { areaStyle: 'curved' } }, village], presence, [])[0].containedPins).toEqual([2]);
+  });
+});
 
 describe('clamp01', () => {
   it('menjepit ke [0,1]', () => {

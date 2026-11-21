@@ -1,7 +1,7 @@
 # Format Backup dan Pemulihan
 
-Ekspor menggunakan **format v9**. Versi ini independen dari skema IndexedDB
-**v35**. Konstanta versi berada di `src/lib/backupFormat.ts`.
+Ekspor menggunakan **format v11**. Versi ini independen dari skema IndexedDB
+**v38**. Konstanta versi berada di `src/lib/backupFormat.ts`.
 
 ## Membaca dan mengonversi arsip portabel
 
@@ -13,10 +13,10 @@ pemeriksaan yang sama pada objek yang sudah dibaca. Jika `scope` tidak
 diberikan, pembaca menggunakan nilai di envelope atau `all` untuk arsip lama
 tanpa scope.
 
-`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v9.
+`convertPortableBackup(input)` menerima objek dari ekspor mandiri v3–v11.
 Konverter memeriksa checksum asli, mengisi tabel legacy yang absen dengan
 array kosong, menormalkan record seperti saat restore, dan membuat envelope
-v9 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
+v11 dengan checksum baru. Scope, waktu, ID asal, dan metadata sumber
 dipertahankan. Gambar inline legacy diberi hash jika belum memilikinya.
 Konverter menolak gambar yang hanya bisa diambil dari database asal. Untuk
 sumber semacam itu, gunakan ekspor lengkap dari workspace yang memiliki aset.
@@ -41,7 +41,23 @@ menggunakan gzip.
 
 Schema memeriksa envelope, tipe field inti dan metadata yang dikenal, array, enum, ID positif/unik, kunci unik Bible/kategori/triage, serta referensi proyek, bab, Codex, dan peta. Referensi lintas-proyek ditolak. Metadata JSON tambahan pada record dipertahankan, tetapi tabel yang tidak dikenal, objek non-JSON, siklus, dan kunci prototype berbahaya ditolak. Validasi backup tidak menghapus markup pada teks sumber. Atlas memperlakukan judul marker/nama Codex sebagai teks saat render DOM, termasuk setelah impor (F01; lihat [katalog fitur](features.md)). Konten HTML modul lain mengikuti kebijakan modul masing-masing.
 
-Versi 3–8 tetap dapat dibaca. Scope yang tidak ditulis pada v3–v7 diperlakukan sebagai seluruh workspace. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–9 ditolak. Pada v8 dan v9, scope dan `imageMode` wajib. Cadangan penuh mewajibkan tabel sesuai versi. Ekspor per proyek memiliki tabel opsional sesuai cakupannya.
+Versi 3–10 tetap dapat dibaca. Scope yang tidak ditulis pada v3–v7 diperlakukan sebagai seluruh workspace. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–11 ditolak. Mulai v8, scope dan `imageMode` wajib. Cadangan penuh mewajibkan tabel sesuai versi. Ekspor per proyek memiliki tabel opsional sesuai cakupannya.
+
+### Lokasi penting Atlas di v11
+
+Peran lokasi penting tersimpan di `mapMarkers.meta.importantLocations`
+sebagai daftar `{ pinId, role }` pada area. Impor proyek memetakan setiap
+`pinId` ke pin salinan dan memvalidasi bahwa pin berada pada peta yang sama.
+
+### Tempat singgah Atlas di v10
+
+Atribut titik ada di `mapMarkers.geometry[]` untuk rute. Impor proyek
+memetakan `codexId` titik ke entri salinan, lalu `pinId` setelah semua
+penanda memperoleh ID baru. ID titik, nama, dan visibilitas ikut disalin.
+Referensi pin hanya sah untuk pin pada peta dan proyek yang sama.
+Area bisa menyimpan gaya batas di `meta.areaStyle` serta identitas dan
+sudut tegas di `geometry[].pointId` dan `geometry[].sharp`. Semua atribut
+ini opsional dan ikut tersalin saat impor.
 
 ### Sampul Codex di v9
 
@@ -105,7 +121,7 @@ Teks naskah, isi pesan, judul, dan slug kategori dipertahankan sebagai string.
 | `bible`, `aiActions`, `glossary` | Aturan cerita, prompt, dan istilah milik proyek. `bible.key` dan `codexCategories.slug` unik dalam proyek masing-masing. |
 | `timeline`, `relationships` | Peristiwa dapat merujuk ke bab dan daftar ID Codex. Relasi merujuk ke dua ID Codex melalui `sourceId` dan `targetId`. |
 | `chatSessions`, `plotPromises` | Pesan dan tautan bab aktif, target Workshop `entry:<id>`, serta janji plot dengan referensi bab/Codex opsional. |
-| `maps`, `mapMarkers` | Dimensi peta dalam piksel dan gambar inline untuk ekspor lengkap. Penanda memakai koordinat relatif 0–1 dengan `mapId`, `linkedMapId`, dan `codexId` sesuai jenis relasinya. |
+| `maps`, `mapMarkers` | Dimensi peta dalam piksel dan gambar inline untuk ekspor lengkap. Penanda memakai koordinat relatif 0–1 dengan `mapId`, `linkedMapId`, dan `codexId` sesuai jenis relasinya. Bentuk rute opsional disimpan di `meta.routeStyle` (`straight` atau `curved`), dengan lurus sebagai bawaan untuk data lama. Pilihan tampilkan titik antara disimpan di `meta.showIntermediatePoints` (boolean opsional). |
 | `continuityTriage` | Status temuan kontinuitas. `findingId` unik dalam proyek dan ID yang termuat di dalamnya diremap ketika mengimpor. |
 
 `timestamp`, `createdAt`, `updatedAt`, `lastOpened`, `lastModified`,

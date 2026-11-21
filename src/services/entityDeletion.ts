@@ -2,6 +2,7 @@ import { db } from '@/src/db';
 import { assertWriteId } from './writeIntegrity';
 import { PROJECT_DELETE_TABLES, TABLE_CATALOG } from '@/src/lib/tableCatalog';
 import { detachWorkshopEntry, parseWorkshopEntryKey } from '@/src/lib/workshopReference';
+import { routePoints } from '@/src/lib/atlasRoutePoints';
 
 export const domainTables = () => PROJECT_DELETE_TABLES.map(name => db[name]);
 
@@ -73,6 +74,10 @@ async function removeCodexReferences(codexIds: number[]) {
     r.characterIds = r.characterIds?.filter(id => !targets.has(id));
   });
   await db.mapMarkers.where('codexId').anyOf(codexIds).modify(r => { delete r.codexId; });
+  await db.mapMarkers.filter(route => routePoints(route).some(point => pointsToTarget(point.codexId)))
+    .modify(route => {
+      for (const point of routePoints(route)) if (pointsToTarget(point.codexId)) delete point.codexId;
+    });
   await db.plotPromises.filter(r => pointsToTarget(r.codexId) || pointsToTarget(r.payoffCodexId)).modify(r => {
     if (pointsToTarget(r.codexId)) delete r.codexId;
     if (pointsToTarget(r.payoffCodexId)) delete r.payoffCodexId;

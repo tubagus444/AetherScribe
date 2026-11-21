@@ -68,6 +68,11 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 | Navigasi F26 | studioNavigation/NavigationContext: normalisasi, riwayat, deep link dan target workshop | Chromium memulihkan arc/orphans/unknown/workshop dan memastikan record proyek/bab utuh |
 | Startup F21 | runtimeConfig dan test:production | Clean install production tanpa Vite/tsx, SPA/aset/deep-link, cwd/env/mode/port, invalid/busy port, missing build dan secret sintetis tidak masuk dist |
 | XSS Atlas F01 | MapCanvas jsdom memeriksa markup dan handler tidak dibentuk | Native F28.5 memeriksa label markup tetap inert; bukan bukti seluruh permukaan XSS |
+| Rute Atlas | Kurva melewati titik asli. Cadangan menyimpan bentuk, visibilitas, dan titik asli | Chromium menggambar, mengganti bentuk, membatalkan titik, menyembunyikan titik antara, mengedit, memeriksa jarak dan estimasi waktu, lalu memuat ulang rute. [Verifikasi rute Atlas](reports/audits/2026-11-21-atlas-routes.md) |
+| Tempat singgah Atlas | Identitas titik, edit bersamaan, validasi peta pin, dan remap pin/Codex saat impor | Chromium memilih 3 dari 10 titik, mengikuti hubungan dari kedua sisi, memindahkan pin, dan memeriksa pelepasan tautan. [Verifikasi tempat singgah](reports/audits/2026-11-21-atlas-routes.md#tempat-singgah-dan-tautan-pin) |
+| Batas area Atlas | Penutupan kurva, sudut tegas, persilangan, analitik pin, dan cadangan | Chromium menggambar batas, membatalkan titik, melihat tanda persilangan, mengatur sudut, dan memuat ulang. [Verifikasi batas area](reports/audits/2026-11-21-atlas-areas.md) |
+| Isi wilayah Atlas | Cakupan area cekung dan melengkung, relasi peran, dan remap cadangan | Chromium membuka pin dan area dari daftar, mengubah bentuk batas, memuat ulang, dan melepas peran pin. [Verifikasi isi wilayah](reports/audits/2026-11-21-atlas-areas.md#isi-wilayah-dan-lokasi-penting) |
+| Seleksi dan detail Atlas | React dan Leaflet menjaga pemisahan seleksi, mode edit, dan kamera | Chromium memeriksa pelepasan sorotan, aksi pusatkan, kepala panel saat digulir, dan akses pengaturan. [Verifikasi detail Atlas](reports/audits/2026-11-21-atlas-sidebar.md) |
 
 ## Laporan coverage
 

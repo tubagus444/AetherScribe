@@ -1,6 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Map as MapIcon } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import type { RouteStyle } from '@/src/types';
+
+export function PathStyleSelect({ label, value, onChange }: { label: string; value: RouteStyle; onChange: (value: RouteStyle) => void }) {
+  return (
+    <label className="inline-flex items-center gap-2 text-xs font-medium">
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value === 'curved' ? 'curved' : 'straight')}
+        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+      >
+        <option value="straight">Lurus</option>
+        <option value="curved">Melengkung</option>
+      </select>
+    </label>
+  );
+}
 
 export function MapMiniThumbnail({ blob }: { blob?: Blob }) {
   const [url, setUrl] = useState<string | null>(null);

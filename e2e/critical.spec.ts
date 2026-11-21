@@ -536,6 +536,7 @@ test('F28.5 Atlas panel restores its map and creates/deletes a pin through the r
   await expect(canvas).toBeVisible();
   await expect(page.locator('.leaflet-marker-icon').first()).toBeVisible();
   await page.locator('.leaflet-marker-icon').first().click();
+  await page.getByText('Pengaturan penanda', { exact: true }).click();
   await page.getByRole('button', { name: 'Hapus penanda' }).click();
   await expect.poll(count).toBe(0);
 });

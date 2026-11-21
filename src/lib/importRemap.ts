@@ -106,6 +106,7 @@ export interface RemappedDependents {
   plotPromises: PlotPromise[];
   glossary: GlossaryEntry[];
   mapMarkers: MapMarker[];
+  sourceMapMarkerIds: (number | undefined)[];
 }
 
 /** Salin baris tanpa `id` (agar Dexie menetapkan id baru). */
@@ -240,7 +241,8 @@ export function remapProjectDependents(
 
   // mapMarkers: remap mapId (WAJIB) → buang penanda bila petanya tak dikenal (yatim);
   // codexId opsional (buang key bila tak dikenal — penanda jadi berbasis title/note saja).
-  const mapMarkers = (data.mapMarkers ?? [])
+  const sourceMarkers = (data.mapMarkers ?? []).filter(marker => mapIdMap.has(marker.mapId));
+  const mapMarkers = sourceMarkers
     .map((mk) => {
       const newMapId = mapIdMap.get(mk.mapId);
       if (newMapId === undefined) return null;
@@ -255,11 +257,19 @@ export function remapProjectDependents(
         if (nlm !== undefined) remapped.linkedMapId = nlm;
         else delete remapped.linkedMapId;
       }
+      if (mk.kind === 'route' && Array.isArray(mk.geometry)) {
+        remapped.geometry = mk.geometry.map(point => point.codexId === undefined
+          ? point
+          : { ...point, codexId: codexIdMap.get(point.codexId) });
+      }
       return remapped as MapMarker;
     })
     .filter((mk): mk is MapMarker => mk !== null);
 
-  return { bible, aiActions, codexCategories, snapshots, timeline, relationships, chatSessions, plotPromises, glossary, mapMarkers };
+  return {
+    bible, aiActions, codexCategories, snapshots, timeline, relationships, chatSessions, plotPromises, glossary,
+    mapMarkers, sourceMapMarkerIds: sourceMarkers.map(marker => marker.id),
+  };
 }
 
 /**

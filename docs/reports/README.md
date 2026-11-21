@@ -8,6 +8,9 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Rute Atlas 21 November 2026 | [Verifikasi titik, kurva, dan kalkulator perjalanan](audits/2026-11-21-atlas-routes.md) |
+| Area Atlas 21 November 2026 | [Verifikasi pratinjau batas, sudut tegas, dan analitik pin](audits/2026-11-21-atlas-areas.md) |
+| Detail Atlas 21 November 2026 | [Verifikasi panel detail, seleksi, dan kamera](audits/2026-11-21-atlas-sidebar.md) |
 | Audit 9 November 2026 | [Analisis aplikasi](audits/2026-11-09-application-audit.md) dan [register F01–F29](audits/2026-11-09-findings.md) |
 | Penguatan tipe dan modul F28 | [Inventaris](audits/2026-11-15-f28-inventory.md), [kontrak](audits/2026-11-15-f28-contracts.md), [strict](audits/2026-11-15-f28-strict.md), dan [review akhir](audits/2026-11-15-f28-review.md) |
 | Verifikasi L01–L06 | [CI Windows/Ubuntu](audits/2026-11-15-l01-ci.md), [instalasi dan migrasi](audits/2026-11-15-l02-installation.md), [alur data UI](audits/2026-11-15-l03-data-ui.md), [Atlas](audits/2026-11-15-l04-atlas-ui.md), [strict](audits/2026-11-15-l05-strict.md), dan [integrasi worker backup](audits/2026-11-15-l06-backup-integration.md) |

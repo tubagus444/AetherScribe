@@ -1,6 +1,6 @@
 # Dokumentasi Database — AetherScribe
 
-> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v35** di `src/db.ts`).
+> **Penyimpanan Primer:** Browser IndexedDB via **Dexie.js** (`AetherScribeDB`, versi skema saat ini: **v38** di `src/db.ts`).
 > Aplikasi tidak menggunakan database SQL server. Seluruh data tersimpan secara lokal di browser pengguna.
 
 ---
@@ -388,23 +388,38 @@ relasi tetap perlu divalidasi dan dipetakan ulang bila ikut impor.
 ---
 
 ### mapMarkers
-- **Fungsi tabel:** Titik penanda (pin), batas wilayah (poligon area), dan rute (polyline) di atas peta Atlas.
+- **Fungsi tabel:** Titik penanda (pin), batas wilayah (poligon area), dan rute lurus atau melengkung di atas peta Atlas.
 - **Kolom:**
   - `id` | `number` | Ya (auto-increment) | auto | Primary key (`++id`)
   - `projectId` | `number` | Tidak | - | FK ke `projects.id`
   - `mapId` | `number` | Tidak | - | FK ke `maps.id` (peta pemilik)
   - `kind` | `'pin'|'area'|'route'` | Tidak | `'pin'` | Bentuk penanda
-  - `geometry` | `MapPoint | MapPoint[]` | Tidak | - | Koordinat relatif `0–1` (`{x, y}`)
+  - `geometry` | `MapPoint | RoutePoint[]` | Tidak | - | Koordinat relatif `0–1` (`{x, y}`). Titik area dan rute dapat menyimpan `pointId`. Titik area dapat menyimpan `sharp`, dan titik rute dapat menyimpan `visible`, `name`, serta satu referensi `pinId` atau `codexId`
   - `codexId` | `number` | Ya | `undefined` | FK ke `codex.id` (entitas yang ditautkan)
   - `title` | `string` | Ya | `undefined` | Judul bebas bila tidak ditautkan ke Codex
   - `note` | `string` | Ya | `undefined` | Catatan lokasi bebas
   - `color` | `string` | Ya | `undefined` | Kode hex warna penanda
   - `createdAt` | `number` | Tidak | `Date.now()` | Timestamp pembuatan
   - `linkedMapId` | `number` | Ya | `undefined` | FK ke `maps.id` untuk penanda portal sub-peta
-  - `meta` | `Record<string, any>` | Ya | `undefined` | Metadata inert (misal: ID profil kecepatan rute)
-- **Relasi:** FK `projectId` -> `projects.id`, FK `mapId` -> `maps.id`, FK opsional `codexId` -> `codex.id`, `linkedMapId` -> `maps.id`
+  - `meta` | `Record<string, any>` | Ya | `undefined` | Metadata area dan rute, termasuk `areaStyle`, `routeStyle`, `importantLocations` (`{ pinId, role }[]`), `speedProfileId`, dan `showIntermediatePoints`
+- **Relasi:** FK `projectId` -> `projects.id`, FK `mapId` -> `maps.id`, FK opsional `codexId` dan `geometry[].codexId` -> `codex.id`, `linkedMapId` -> `maps.id`, serta `geometry[].pinId` dan `meta.importantLocations[].pinId` -> pin pada peta dan proyek yang sama
 - **Index penting:** `++id`, `projectId`, `mapId`, `codexId`
-- **File migration terkait:** `src/db.ts` (v32)
+- **File migration terkait:** `src/db.ts` (v32, v36, v37, v38)
+
+Nilai `meta.routeStyle` opsional. Rute lama memakai `straight`.
+Jika `meta.showIntermediatePoints` kosong, rute lurus menampilkan titik
+antara dan rute melengkung menampilkan titik awal dan akhir.
+Operasi edit menerapkan perubahan metadata ke record terkini dalam transaksi.
+Pada v36, titik lama memperoleh ID stabil saat pertama kali geometri disimpan.
+Penyisipan, penghapusan, dan pemindahan memakai ID tersebut. Perpindahan pin
+menyimpan koordinat pin dan titik tertaut dalam satu transaksi. Penghapusan
+pin atau Codex melepas referensinya sambil mempertahankan koordinat titik.
+Pada v37, area lama memakai batas lurus. Edit titik area memberi ID
+stabil saat pertama kali geometri disimpan. Sudut tegas mengikuti ID titik
+ketika titik lain disisipkan atau dihapus.
+Pada v38, peran lokasi penting disimpan per area dan pin. Penulisan satu
+peran memakai metadata terkini dalam transaksi. Penghapusan atau pemindahan
+pin ke peta lain melepas relasinya.
 
 ---
 

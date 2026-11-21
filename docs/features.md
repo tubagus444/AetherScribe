@@ -242,6 +242,17 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 
 ## Kontrak Atlas
 
+- Klik penanda membuka detail. Klik ruang kosong, Esc dalam mode lihat,
+  atau Tutup Detail melepas seleksi dan membuka Daftar Wilayah. Esc saat
+  mengedit geometri mengakhiri mode edit; Esc saat menggambar mengosongkan draf.
+- Pusatkan di peta menggeser kamera ke penanda terpilih. Seleksi baru
+  menggeser kamera otomatis hanya jika penanda berada di luar tampilan.
+- Kepala panel detail tetap terlihat saat isi digulir. Wilayah
+  mengutamakan isi wilayah, rute menampilkan tempat singgah dan informasi
+  perjalanan, dan pin menampilkan ringkasan Codex serta rute terhubung.
+  Tautan Codex, sub-peta, judul, catatan, warna, dan aksi hapus tersedia
+  di Pengaturan penanda.
+
 - Pakai konversi `mapGeometry.ts` antara koordinat ternormalisasi 0–1
   dan Leaflet `CRS.Simple`. Sumbu Y gambar dan lintang bergerak berlawanan.
   Pertahankan callback/data terbaru pada listener imperatif melalui ref.
@@ -249,6 +260,40 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
   geometri memakai layer terpisah dan disimpan saat drag selesai atau
   struktur berubah. Pertahankan batas minimum tiga vertex area dan dua
   vertex rute.
+- Rute tersimpan menampilkan titik awal dan titik akhir. Titik antara tampil
+  secara bawaan pada rute lurus dan bisa diatur melalui detail rute.
+  Rute terpilih menomori titik yang terlihat sesuai urutan. Saat menggambar rute, opsi
+  Lurus dan Melengkung memperbarui pratinjau; Hapus titik terakhir atau
+  Backspace membatalkan satu titik. Kurva membutuhkan minimal tiga titik.
+- Simpan pilihan bentuk rute di `meta.routeStyle`. Rute lama menggunakan
+  bentuk lurus. Pratinjau, render, edit, dan kalkulator jarak/waktu memakai
+  sampel lintasan yang sama, sedangkan `geometry` menyimpan titik asli.
+  `meta.showIntermediatePoints` mengatur tampilan titik antara. Mode edit
+  tetap menampilkan semua titik pembentuk rute.
+- Di Ubah posisi/bentuk, pilih titik di peta atau di daftar untuk mengatur
+  visibilitas dan nama, lalu tautkan ke entri Codex atau pin pada peta yang
+  sama. Titik tertaut mengikuti pin dan memakai tautan Codex dari pin.
+  Detail rute menampilkan tempat singgah berurutan. Detail pin menampilkan
+  rute terhubung dan posisi pin pada rute tersebut.
+- Area memiliki pilihan Bentuk batas Lurus dan Melengkung. Pratinjau
+  menutup batas setelah tiga titik. Tombol Hapus titik terakhir atau
+  Backspace membatalkan satu titik draf. Pada batas melengkung, gunakan
+  Sudut tegas di titik terakhir saat menggambar, atau pilih titik batas
+  di mode Ubah posisi/bentuk dan aktifkan Sudut tegas.
+- Shift+klik pada titik batas mengubah sudutnya. Selama menggambar atau
+  mengedit area, Atlas memakai gestur Shift untuk penyuntingan titik.
+  Dobel-klik biasa menyelesaikan draf area.
+- Gunakan sampel batas tertutup dari `sampleAreaBoundary` pada pratinjau
+  draf, edit, render Leaflet, dan analitik pin di dalam wilayah. Worker
+  menandai persilangan pertama pada pratinjau. `meta.areaStyle` menyimpan
+  bentuk batas, dan `geometry[].sharp` menyimpan sudut tegas.
+- Detail area menampilkan nama pin di dalam batas dan kawasan yang seluruh
+  batasnya tercakup pada peta yang sama. Klik nama penanda untuk membuka
+  detailnya. Daftar wilayah memakai batas yang terlihat, termasuk area
+  cekung dan melengkung. Aktivitas di Wilayah Ini menampilkan bab terkait.
+- Lokasi penting menautkan pin pada peta yang sama dengan satu peran
+  buatan penulis. Peran juga muncul pada daftar pin di dalam wilayah.
+  Jika pin berada di luar batas, detail menandainya Di luar batas.
 - Bentuk label/tooltip Leaflet sebagai DOM dengan `textContent`. Validasi
   warna dengan allowlist Atlas pada resolusi dan render, termasuk handle
   edit. Gunakan pengolahan raster yang ada untuk upload dan backup gambar.

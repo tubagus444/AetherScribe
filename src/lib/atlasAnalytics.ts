@@ -9,7 +9,7 @@
 
 import { MapMarker, MapPoint, CodexEntry } from '@/src/types';
 import { PresenceIndex } from '@/src/lib/continuity';
-import { pointInPolygon, isPointGeometry } from '@/src/lib/mapGeometry';
+import { pointInPolygon, isPointGeometry, sampleAreaBoundary } from '@/src/lib/mapGeometry';
 
 export interface RegionAnalytic {
   /** ID dari penanda tipe 'area' */
@@ -48,9 +48,17 @@ export function analyzeRegions(
   }
 
   return areas.map(area => {
-    const poly = area.geometry as MapPoint[];
+    const poly = sampleAreaBoundary(Array.isArray(area.geometry) ? area.geometry : [], area.meta?.areaStyle);
+    const bounds = poly.reduce((box, point) => ({
+      left: Math.min(box.left, point.x), right: Math.max(box.right, point.x),
+      top: Math.min(box.top, point.y), bottom: Math.max(box.bottom, point.y),
+    }), { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity });
     // Hitung pin apa saja yang "jatuh" ke dalam perbatasan wilayah ini
-    const containedPins = pins.filter(pin => pointInPolygon(pin.geometry as MapPoint, poly));
+    const containedPins = pins.filter(pin => {
+      const point = pin.geometry as MapPoint;
+      return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom
+        && pointInPolygon(point, poly);
+    });
     
     const chapterSet = new Set<number>();
     let score = 0;

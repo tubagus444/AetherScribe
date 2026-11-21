@@ -17,7 +17,19 @@ describe('portable backup without database dependencies', () => {
       projects: [project], chapters: [{ ...chapter, listMetadata: ['derived'], futureField: 'keep' }], codex: [],
       snapshots: [{ id: 40, chapterId: 999, content: '<p>Draf historis</p>', label: 'Draf', timestamp: 5 }],
       maps: [{ ...map, imageDataUrl }, { ...map, id: 31, imageMissing: true }],
-      mapMarkers: [{ id: 50, projectId: 10, mapId: 30, linkedMapId: 31, kind: 'pin', geometry: { x: .2, y: .3 }, createdAt: 6 }],
+      mapMarkers: [
+        { id: 50, projectId: 10, mapId: 30, linkedMapId: 31, kind: 'pin', geometry: { x: .2, y: .3 }, createdAt: 6 },
+        {
+          id: 51, projectId: 10, mapId: 30, kind: 'route', createdAt: 7,
+          geometry: [{ x: .2, y: .3 }, { x: .4, y: .7 }, { x: .8, y: .3 }],
+          meta: { routeStyle: 'curved', speedProfileId: 'walk', showIntermediatePoints: false },
+        },
+        {
+          id: 52, projectId: 10, mapId: 30, kind: 'area', createdAt: 8,
+          geometry: [{ x: .2, y: .3, pointId: 'first', sharp: true }, { x: .4, y: .7 }, { x: .8, y: .3 }],
+          meta: { areaStyle: 'curved' },
+        },
+      ],
     };
     const legacy = { version: 7, timestamp: 1234, checksum: await backupChecksum(JSON.stringify(data)), data };
     const original = structuredClone(legacy);

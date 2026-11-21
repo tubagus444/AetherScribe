@@ -96,6 +96,33 @@ describe('F01 color and interaction boundaries', () => {
     expect(onOpenSubMap).toHaveBeenCalledWith(2);
   });
 
+  it('reserves Shift-click for area corners during editing and restores map zoom afterward', () => {
+    const { leaflet, marker, rerender } = mount('area', false, true, false, true);
+    const zoom = vi.spyOn(leaflet, 'setZoomAround');
+    const onEditAreaPoint = vi.fn();
+    const props = {
+      map, markers: [marker], drawMode: null, selectedMarkerId: marker.id,
+      colorFor: () => '#e11d48', onCreateGeometry: vi.fn(), onMarkerClick: vi.fn(), onEditAreaPoint,
+    };
+    rerender(<MapCanvas {...props} editing />);
+    const vertex = leaflet.getContainer().querySelector('.atlas-vertex');
+    if (!vertex) throw new Error('Missing area vertex');
+    const shifted = { bubbles: true, cancelable: true, shiftKey: true };
+    act(() => {
+      vertex.dispatchEvent(new MouseEvent('click', { ...shifted, detail: 1 }));
+      vertex.dispatchEvent(new MouseEvent('click', { ...shifted, detail: 2 }));
+      vertex.dispatchEvent(new MouseEvent('dblclick', { ...shifted, detail: 2 }));
+    });
+    expect(zoom).not.toHaveBeenCalled();
+    expect(leaflet.boxZoom.enabled()).toBe(false);
+    expect(onEditAreaPoint).toHaveBeenCalledExactlyOnceWith(1, { kind: 'corner', pointId: 'legacy-0', sharp: true });
+
+    rerender(<MapCanvas {...props} editing={false} />);
+    act(() => { leaflet.getContainer().dispatchEvent(new MouseEvent('dblclick', shifted)); });
+    expect(zoom).toHaveBeenCalledOnce();
+    expect(leaflet.boxZoom.enabled()).toBe(true);
+  });
+
   it('preserves the regular pin/portal decorations and valid marker colors', () => {
     const { container, rerender, marker } = mount('pin', true, false, false, false, '#12ab34');
     expect(container.querySelector('.atlas-portal-marker svg')).not.toBeNull();

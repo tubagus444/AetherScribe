@@ -4,6 +4,52 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-21
+
+### [UI] Seleksi dan detail penanda Atlas
+
+- Lepas sorotan lewat klik ruang kosong, Esc, atau Tutup Detail. Pisahkan
+  aksi Pusatkan di peta dari seleksi.
+- Pertahankan kepala panel saat menggulir, urutkan isi menurut jenis
+  penanda, dan kelompokkan aksi sekunder di Pengaturan penanda.
+
+### [Fitur] Isi wilayah dan lokasi penting Atlas
+
+- Tampilkan daftar pin dan area di dalam batas wilayah. Klik nama untuk
+  membuka detail penanda. Bagian aktivitas menampilkan bab terkait.
+- Tetapkan peran pin pada area, termasuk pin di luar batas. Skema Dexie
+  v38 dan cadangan v11 menyimpan tautan lokasi penting.
+
+### [Perbaikan] Shift+klik pada sudut area Atlas
+
+- Cegah zoom Leaflet saat Shift+klik pada titik batas. Klik cepat dengan
+  Shift mengubah sudut sekali dan draf tetap dapat dilanjutkan.
+
+### [Fitur] Batas melengkung dan sudut tegas pada area Atlas
+
+- Tambahkan pilihan Lurus dan Melengkung dengan pratinjau batas tertutup,
+  sudut tegas per titik, serta hapus titik terakhir saat menggambar.
+- Tandai persilangan batas pada pratinjau dan gunakan lintasan yang sama
+  untuk menentukan pin di dalam wilayah. Skema Dexie v37 menyimpan bentuk
+  batas dan sudut tegas. [Kontrak Atlas](features.md#kontrak-atlas)
+
+### [Fitur] Tempat singgah dan pin terhubung di Atlas
+
+- Atur tampilan tiap titik rute, beri nama, dan tautkan ke Codex atau pin
+  pada peta yang sama. Detail rute dan pin menampilkan hubungan dua arah.
+- Simpan identitas dan tautan titik di skema Dexie v36. Cadangan v10
+  memetakan tautan pin dan Codex saat impor novel.
+
+### [Fitur] Titik dan kurva rute Atlas
+
+- Tampilkan titik awal dan akhir pada rute tersimpan. Tambahkan opsi
+  Tampilkan titik antara di detail rute, dengan titik antara tersembunyi
+  secara bawaan pada rute melengkung. Nomori titik yang terlihat saat
+  rute dipilih.
+- Tambahkan mode Lurus dan Melengkung pada draf dan detail rute, serta aksi
+  untuk menghapus titik terakhir pada draf. Pratinjau, edit, jarak, dan
+  estimasi waktu mengikuti lintasan yang dipilih. [Kontrak Atlas](features.md#kontrak-atlas)
+
 ## 2026-11-20
 
 ### [UI] Perbaikan gulir panel Kelengkapan Dunia

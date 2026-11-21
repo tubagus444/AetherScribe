@@ -46,10 +46,22 @@ function portalSymbol(area = false): SVGSVGElement {
   return svg;
 }
 
-export function vertexIcon(color: string): L.DivIcon {
+export function vertexIcon(color: string, number?: number, sharp = false): L.DivIcon {
+  if (number !== undefined) return routePointIcon(color, 'handle', number, sharp);
   const root = element('div', 'width:14px;height:14px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35);cursor:grab');
   root.style.backgroundColor = safeAtlasColor(color);
   return icon('atlas-vertex', 14, root);
+}
+
+export function routePointIcon(color: string, kind: 'start' | 'middle' | 'end' | 'handle', number?: number, sharp = false): L.DivIcon {
+  const size = number !== undefined ? Math.max(18, 8 + String(number).length * 6) : kind === 'middle' ? 8 : 12;
+  const root = element('div', 'width:100%;height:100%;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px rgba(15,23,42,.55);color:#0f172a;font:700 10px/1 system-ui;text-shadow:0 0 2px #fff,0 0 2px #fff',
+    number?.toString());
+  root.style.backgroundColor = kind === 'end' ? '#fff' : safeAtlasColor(color);
+  if (kind === 'end') root.style.borderColor = safeAtlasColor(color);
+  if (sharp) root.style.borderRadius = '3px';
+  if (kind === 'handle') root.style.cursor = 'grab';
+  return icon(kind === 'handle' ? 'atlas-vertex' : 'atlas-route-point', size, root);
 }
 
 export function midIcon(): L.DivIcon {
@@ -115,7 +127,7 @@ export function selectedAreaBadgeIcon(title: string): L.DivIcon {
 }
 
 export function selectedRouteBadgeIcon(title: string): L.DivIcon {
-  const root = element('div');
+  const root = element('div', 'transform:translateY(-22px)');
   root.append(element('span', 'color:#f59e0b', '🛣️'), element('span', 'max-width:95px;overflow:hidden;text-overflow:ellipsis', title));
   return icon('atlas-selected-route-badge', [140, 28], root);
 }

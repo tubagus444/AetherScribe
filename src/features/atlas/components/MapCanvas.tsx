@@ -12,29 +12,43 @@
  * relatif 0–1 via `src/lib/mapGeometry.ts` — Leaflet hanya lapisan render.
  */
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useRef, type Ref } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ArrowLeft } from 'lucide-react';
-import { AtlasMap, MapMarker, MapPoint } from '@/src/types';
+import { AtlasMap, MapMarker, MapPoint, MapVertex, RoutePoint, RouteStyle } from '@/src/types';
 import {
   relToLatLng,
   relPathToLatLngs,
   latLngToRel,
   isPointGeometry,
+  sampleRoutePath,
+  sampleAreaBoundary,
+  showsIntermediateRoutePoints,
 } from '@/src/lib/mapGeometry';
 import { RegionAnalytic } from '@/src/lib/atlasAnalytics';
 import { PresenceIndex } from '@/src/lib/continuity';
 import { FOG_HEX, safeAtlasColor } from '@/src/lib/atlasColors';
-import { atlasText, vertexIcon, midIcon, regularPinIcon, portalPinIcon, portalAreaBadgeIcon, selectedPinIcon, selectedAreaBadgeIcon, selectedRouteBadgeIcon } from './atlasMarkerIcons';
+import { vertexId, routePointVisible, type AreaPointEdit, type RoutePointEdit, type VertexEdit } from '@/src/lib/atlasRoutePoints';
+import { useAreaBoundaryCrossing } from '@/src/features/atlas/hooks/useAreaBoundaryCrossing';
+import { atlasText, vertexIcon, midIcon, routePointIcon, regularPinIcon, portalPinIcon, portalAreaBadgeIcon, selectedPinIcon, selectedAreaBadgeIcon, selectedRouteBadgeIcon } from './atlasMarkerIcons';
 
 export type DrawMode = 'pin' | 'area' | 'route' | 'scale' | null;
 
+export interface MapCanvasHandle {
+  undoDraftPoint: () => void;
+  toggleLastDraftCorner: () => void;
+  centerMarker: (markerId: number) => void;
+}
+
 interface MapCanvasProps {
+  ref?: Ref<MapCanvasHandle>;
   map: AtlasMap;
   /** Penanda yang SUDAH difilter oleh pemanggil (data tetap penuh di store). */
   markers: MapMarker[];
   drawMode: DrawMode;
+  draftRouteStyle?: RouteStyle;
+  draftAreaStyle?: RouteStyle;
   selectedMarkerId?: number;
   /** Mode ubah geometri penanda terpilih (seret handle titik). */
   editing?: boolean;
@@ -45,10 +59,17 @@ interface MapCanvasProps {
   /** Dipanggil saat sebuah geometri baru selesai digambar. */
   onCreateGeometry: (geometry: MapPoint | MapPoint[]) => void;
   onMarkerClick: (m: MapMarker) => void;
+  onMapBackgroundClick?: () => void;
+  onEscape?: () => boolean;
   /** Dipanggil saat geometri penanda diubah lewat edit (persist di dragend/ubah struktur). */
   onGeometryChange?: (markerId: number, geometry: MapPoint | MapPoint[]) => void;
+  focusedVertexId?: string;
+  onFocusVertex?: (markerId: number, pointId: string) => void;
+  onEditRoutePoint?: (markerId: number, edit: RoutePointEdit) => void;
+  onEditAreaPoint?: (markerId: number, edit: AreaPointEdit) => void;
+  titleForRoutePoint?: (point: RoutePoint) => string | undefined;
   /** Progres gambar area/rute (jumlah titik draft) — untuk hint UI. */
-  onDraftChange?: (points: number) => void;
+  onDraftChange?: (points: number, lastSharp?: boolean) => void;
   // Fase 2 Props:
   orphanMarkerIds?: Set<number>;
   highlightOrphans?: boolean;
@@ -64,16 +85,26 @@ interface MapCanvasProps {
 }
 
 export default function MapCanvas({
+  ref,
   map,
   markers,
   drawMode,
+  draftRouteStyle,
+  draftAreaStyle,
   selectedMarkerId,
   editing,
   colorFor,
   titleFor,
   onCreateGeometry,
   onMarkerClick,
+  onMapBackgroundClick,
+  onEscape,
   onGeometryChange,
+  focusedVertexId,
+  onFocusVertex,
+  onEditRoutePoint,
+  onEditAreaPoint,
+  titleForRoutePoint,
   onDraftChange,
   orphanMarkerIds,
   highlightOrphans,
@@ -93,7 +124,8 @@ export default function MapCanvas({
   const markerLayerRef = useRef<L.LayerGroup | null>(null);
   const draftLayerRef = useRef<L.LayerGroup | null>(null);
   const editLayerRef = useRef<L.LayerGroup | null>(null);
-  const draftPointsRef = useRef<MapPoint[]>([]);
+  const draftPointsRef = useRef<MapVertex[]>([]);
+  const { crossing, check: checkAreaBoundary } = useAreaBoundaryCrossing();
 
   // Callback & data terbaru lewat ref → handler Leaflet imperatif tak jadi basi
   // tanpa memasang-ulang listener tiap render.
@@ -102,9 +134,16 @@ export default function MapCanvas({
     titleFor,
     onCreateGeometry,
     onMarkerClick,
+    onMapBackgroundClick,
+    onEscape,
     onGeometryChange,
+    onFocusVertex,
+    onEditRoutePoint,
+    onEditAreaPoint,
     onDraftChange,
     drawMode,
+    draftRouteStyle,
+    draftAreaStyle,
     selectedMarkerId,
     orphanMarkerIds,
     highlightOrphans,
@@ -120,9 +159,16 @@ export default function MapCanvas({
     titleFor,
     onCreateGeometry,
     onMarkerClick,
+    onMapBackgroundClick,
+    onEscape,
     onGeometryChange,
+    onFocusVertex,
+    onEditRoutePoint,
+    onEditAreaPoint,
     onDraftChange,
     drawMode,
+    draftRouteStyle,
+    draftAreaStyle,
     selectedMarkerId,
     orphanMarkerIds,
     highlightOrphans,
@@ -163,8 +209,13 @@ export default function MapCanvas({
     markerLayerRef.current = L.layerGroup().addTo(leaflet);
     draftLayerRef.current = L.layerGroup().addTo(leaflet);
     editLayerRef.current = L.layerGroup().addTo(leaflet);
+    const resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(() => leaflet.invalidateSize({ pan: false, debounceMoveend: true }))
+      : undefined;
+    resizeObserver?.observe(leaflet.getContainer());
 
     return () => {
+      resizeObserver?.disconnect();
       URL.revokeObjectURL(objectUrl);
       leaflet.remove();
       mapRef.current = null;
@@ -175,44 +226,6 @@ export default function MapCanvas({
       draftPointsRef.current = [];
     };
   }, [map.id, map.imageBlob, map.width, map.height]);
-
-  // --- Pan / pusatkan kamera saat penanda dipilih (mis. dari deep-link Codex atau katalog sidebar) ---
-  useEffect(() => {
-    if (!selectedMarkerId || !mapRef.current) return;
-    const m = markers.find((mk) => mk.id === selectedMarkerId);
-    if (!m) return;
-    const w = map.width || 1;
-    const h = map.height || 1;
-    let targetLatLng: L.LatLngTuple | null = null;
-    if (m.kind === 'pin' && isPointGeometry(m.geometry)) {
-      targetLatLng = relToLatLng(m.geometry, w, h);
-    } else if (Array.isArray(m.geometry) && m.geometry.length > 0) {
-      // Hitung titik pusat bounding box poligon/rute secara presisi
-      let minX = Infinity;
-      let maxX = -Infinity;
-      let minY = Infinity;
-      let maxY = -Infinity;
-      for (const pt of m.geometry) {
-        if (pt.x < minX) minX = pt.x;
-        if (pt.x > maxX) maxX = pt.x;
-        if (pt.y < minY) minY = pt.y;
-        if (pt.y > maxY) maxY = pt.y;
-      }
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
-      targetLatLng = relToLatLng({ x: centerX, y: centerY }, w, h);
-    }
-    if (targetLatLng) {
-      const leaflet = mapRef.current;
-      const currentZoom = leaflet.getZoom();
-      // Bila zoom terlalu jauh ke luar (kurang dari -0.5), zoom in agar objek langsung terlihat sangat jelas
-      if (currentZoom < -0.5) {
-        leaflet.flyTo(targetLatLng, -0.25, { animate: true, duration: 0.6 });
-      } else {
-        leaflet.panTo(targetLatLng, { animate: true, duration: 0.5 });
-      }
-    }
-  }, [selectedMarkerId, map.width, map.height]);
 
   // --- Render layer heatmap (intensitas aktivitas cerita) ---
   useEffect(() => {
@@ -286,6 +299,7 @@ export default function MapCanvas({
     layer.clearLayers();
     const w = map.width || 1;
     const h = map.height || 1;
+    const visiblePinIds = new Set(markers.filter(marker => marker.kind === 'pin').map(marker => marker.id));
 
     for (const m of markers) {
       // Penanda yang sedang diedit digambar di editLayer (dengan handle) — lewati di sini.
@@ -335,8 +349,10 @@ export default function MapCanvas({
           });
         }
       } else if (m.kind === 'area' && Array.isArray(m.geometry)) {
+        const latlngs = relPathToLatLngs(sampleAreaBoundary(m.geometry, m.meta?.areaStyle), w, h);
         if (ghosted) {
-          shape = L.polygon(relPathToLatLngs(m.geometry, w, h), {
+          shape = L.polygon(latlngs, {
+            smoothFactor: 0,
             color: '#94a3b8',
             weight: 1,
             fillColor: '#cbd5e1',
@@ -344,7 +360,8 @@ export default function MapCanvas({
             opacity: 0.2,
           });
         } else if (highlightOrphans && isOrphan) {
-          shape = L.polygon(relPathToLatLngs(m.geometry, w, h), {
+          shape = L.polygon(latlngs, {
+            smoothFactor: 0,
             color: '#f59e0b',
             weight: selected ? 4 : 2.5,
             dashArray: '6 4',
@@ -352,8 +369,8 @@ export default function MapCanvas({
             fillOpacity: selected ? 0.38 : 0.22,
           });
         } else {
-          const latlngs = relPathToLatLngs(m.geometry, w, h);
           shape = L.polygon(latlngs, {
+            smoothFactor: 0,
             color: selected ? '#f59e0b' : (hasSubMap ? '#6366f1' : color),
             weight: selected ? 4 : (hasSubMap ? 2.5 : 2),
             dashArray: selected ? '8 4' : (isSecret ? '5 5' : (hasSubMap ? '6 3' : undefined)),
@@ -398,41 +415,54 @@ export default function MapCanvas({
           }
         }
       } else if (m.kind === 'route' && Array.isArray(m.geometry)) {
-        if (ghosted) {
-          shape = L.polyline(relPathToLatLngs(m.geometry, w, h), {
-            color: '#94a3b8',
-            weight: 2,
-            opacity: 0.2,
-          });
-        } else if (highlightOrphans && isOrphan) {
-          shape = L.polyline(relPathToLatLngs(m.geometry, w, h), {
-            color: '#f59e0b',
-            weight: selected ? 6 : 4,
-            dashArray: '8 4',
-            opacity: 1,
-          });
-        } else {
-          shape = L.polyline(relPathToLatLngs(m.geometry, w, h), {
-            color: selected ? '#f59e0b' : color,
-            weight: selected ? 5.5 : 3.5,
-            dashArray: selected ? '8 4' : undefined,
-            opacity: 0.9,
-          });
+        const orphanHighlighted = highlightOrphans && isOrphan;
+        const routeColor = ghosted ? '#94a3b8' : selected || orphanHighlighted ? '#f59e0b' : color;
+        const path = sampleRoutePath(m.geometry, m.meta?.routeStyle);
+        const route = L.polyline(relPathToLatLngs(path, w, h), {
+          color: routeColor,
+          weight: ghosted ? 2 : orphanHighlighted ? (selected ? 6 : 4) : selected ? 5.5 : 3.5,
+          dashArray: !ghosted && (selected || orphanHighlighted) ? '8 4' : undefined,
+          opacity: ghosted ? 0.2 : orphanHighlighted ? 1 : 0.9,
+          smoothFactor: 0,
+        });
+        shape = route;
 
-          if (selected && Array.isArray(m.geometry) && m.geometry.length >= 2) {
-            const routeBounds = (shape as L.Polyline).getBounds();
-            const routeCenter = routeBounds.getCenter();
-            const badge = L.marker(routeCenter, {
-              icon: selectedRouteBadgeIcon(displayTitle),
-              zIndexOffset: 900,
-              keyboard: false,
-            });
-            badge.on('click', (e) => {
-              L.DomEvent.stopPropagation(e as unknown as Event);
+        const lastIndex = m.geometry.length - 1;
+        const showIntermediatePoints = showsIntermediateRoutePoints(m.meta);
+        let visibleNumber = 0;
+        m.geometry.forEach((point, index) => {
+          const kind = index === 0 ? 'start' : index === lastIndex ? 'end' : 'middle';
+          const visible = routePointVisible(point, index, lastIndex + 1, showIntermediatePoints);
+          if (!visible || (point.pinId !== undefined && visiblePinIds.has(point.pinId))) return;
+          visibleNumber++;
+          const title = !isSecret ? titleForRoutePoint?.(point) : undefined;
+          const vertex = L.marker(relToLatLng(point, w, h), {
+            icon: routePointIcon(routeColor, kind, selected ? visibleNumber : undefined),
+            interactive: title !== undefined,
+            keyboard: false,
+            opacity: ghosted ? 0.25 : 1,
+          });
+          if (title) {
+            vertex.bindTooltip(atlasText(title), { direction: 'top' });
+            vertex.on('click', () => {
               propsRef.current.onMarkerClick(m);
+              if (m.id !== undefined) propsRef.current.onFocusVertex?.(m.id, vertexId(point, index));
             });
-            badge.addTo(layer);
           }
+          vertex.addTo(layer);
+        });
+
+        if (selected && !ghosted && !orphanHighlighted && lastIndex >= 1) {
+          const badge = L.marker(route.getBounds().getCenter(), {
+            icon: selectedRouteBadgeIcon(displayTitle),
+            zIndexOffset: 900,
+            keyboard: false,
+          });
+          badge.on('click', (e) => {
+            L.DomEvent.stopPropagation(e as unknown as Event);
+            propsRef.current.onMarkerClick(m);
+          });
+          badge.addTo(layer);
         }
       }
 
@@ -462,7 +492,7 @@ export default function MapCanvas({
         shape.addTo(layer);
       }
     }
-  }, [markers, selectedMarkerId, editing, map.width, map.height, map.id, orphanMarkerIds, highlightOrphans, fadedMarkerIds, fogMode]);
+  }, [markers, selectedMarkerId, editing, map.width, map.height, map.id, orphanMarkerIds, highlightOrphans, fadedMarkerIds, fogMode, titleForRoutePoint]);
 
   // --- Mode edit geometri penanda terpilih ---
   useEffect(() => {
@@ -473,11 +503,12 @@ export default function MapCanvas({
 
     const marker = editing && selectedMarkerId != null ? markers.find((m) => m.id === selectedMarkerId) : undefined;
     if (!marker || marker.id == null) return;
+    const markerId = marker.id;
 
     const w = map.width || 1;
     const h = map.height || 1;
     const color = safeAtlasColor(propsRef.current.colorFor(marker));
-    const persist = (geom: MapPoint | MapPoint[]) => propsRef.current.onGeometryChange?.(marker.id!, geom);
+    const persist = (geom: MapPoint | MapPoint[]) => propsRef.current.onGeometryChange?.(markerId, geom);
 
     // Pin: satu handle yang bisa diseret.
     if (marker.kind === 'pin' && isPointGeometry(marker.geometry)) {
@@ -493,16 +524,24 @@ export default function MapCanvas({
     // Area/rute: handle per vertex (seret), handle titik-tengah (sisip), klik-kanan (hapus).
     if (Array.isArray(marker.geometry)) {
       const isArea = marker.kind === 'area';
+      const isRoute = marker.kind === 'route';
       const minPoints = isArea ? 3 : 2;
-      const points: MapPoint[] = marker.geometry.map((p) => ({ ...p }));
-      let shape: L.Polyline | L.Polygon;
+      const points = marker.geometry.map((p) => ({ ...p }));
+      const getPath = () => isArea ? sampleAreaBoundary(points, marker.meta?.areaStyle) : sampleRoutePath(points, marker.meta?.routeStyle);
+      const editVertex = (edit: VertexEdit) => {
+        const handler = isArea ? propsRef.current.onEditAreaPoint : propsRef.current.onEditRoutePoint;
+        handler?.(markerId, edit);
+        return handler !== undefined;
+      };
 
       const rebuild = () => {
         editLayer.clearLayers();
-        const latlngs = relPathToLatLngs(points, w, h);
-        shape = (isArea
-          ? L.polygon(latlngs, { color, weight: 3, fillColor: color, fillOpacity: 0.25 })
-          : L.polyline(latlngs, { color, weight: 4, opacity: 0.9 })
+        const path = getPath();
+        if (isArea) checkAreaBoundary(path);
+        const latlngs = relPathToLatLngs(path, w, h);
+        const shape = (isArea
+          ? L.polygon(latlngs, { color, weight: 3, fillColor: color, fillOpacity: 0.25, smoothFactor: 0 })
+          : L.polyline(latlngs, { color, weight: 4, opacity: 0.9, smoothFactor: 0 })
         ).addTo(editLayer);
 
         // Handle titik-tengah tiap segmen (poligon: termasuk segmen penutup).
@@ -510,10 +549,13 @@ export default function MapCanvas({
         for (let i = 0; i < segCount; i++) {
           const a = points[i];
           const b = points[(i + 1) % points.length];
-          const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+          const mid = path.length === points.length
+            ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+            : path[(i + 0.5) * (path.length - (isArea ? 0 : 1)) / segCount];
           const mh = L.marker(relToLatLng(mid, w, h), { icon: midIcon(), keyboard: false });
           mh.on('click', (e) => {
             L.DomEvent.stop(e as unknown as Event);
+            if (editVertex({ kind: 'insert', after: vertexId(a, i), position: mid })) return;
             points.splice(i + 1, 0, mid);
             persist([...points]);
             rebuild();
@@ -524,22 +566,39 @@ export default function MapCanvas({
 
         // Handle vertex (di atas titik-tengah agar mudah dipilih).
         points.forEach((p, i) => {
-          const vh = L.marker(relToLatLng(p, w, h), { draggable: true, icon: vertexIcon(color), keyboard: false });
+          const pointId = vertexId(p, i);
+          const linked = isRoute && p.pinId !== undefined;
+          const vh = L.marker(relToLatLng(p, w, h), {
+            draggable: !linked, icon: vertexIcon(color, i + 1, isArea && p.sharp), keyboard: false,
+          });
+          vh.on('click', (e: L.LeafletMouseEvent) => {
+            propsRef.current.onFocusVertex?.(markerId, pointId);
+            if (isArea && e.originalEvent?.shiftKey && e.originalEvent.detail <= 1) {
+              propsRef.current.onEditAreaPoint?.(markerId, { kind: 'corner', pointId, sharp: !p.sharp });
+            }
+          });
+          if (isArea) vh.on('dragstart', () => checkAreaBoundary([]));
           vh.on('drag', () => {
             const ll = vh.getLatLng();
-            points[i] = latLngToRel([ll.lat, ll.lng], w, h);
-            shape.setLatLngs(relPathToLatLngs(points, w, h));
+            points[i] = { ...points[i], ...latLngToRel([ll.lat, ll.lng], w, h) };
+            shape.setLatLngs(relPathToLatLngs(getPath(), w, h));
           });
-          vh.on('dragend', () => persist([...points]));
+          vh.on('dragend', () => {
+            if (!editVertex({ kind: 'move', pointId, position: points[i] })) {
+              if (isArea) checkAreaBoundary(getPath());
+              persist([...points]);
+            }
+          });
           vh.on('contextmenu', (e) => {
             L.DomEvent.stop(e as unknown as Event);
             if (points.length > minPoints) {
+              if (editVertex({ kind: 'remove', pointId })) return;
               points.splice(i, 1);
               persist([...points]);
               rebuild();
             }
           });
-          vh.bindTooltip('Seret memindah · klik-kanan menghapus', { direction: 'top' });
+          vh.bindTooltip(linked ? 'Klik untuk mengatur titik tertaut' : 'Seret memindah · klik-kanan menghapus', { direction: 'top' });
           vh.addTo(editLayer);
         });
       };
@@ -549,8 +608,163 @@ export default function MapCanvas({
 
     return () => {
       editLayer.clearLayers();
+      if (marker.kind === 'area') checkAreaBoundary([]);
     };
-  }, [editing, selectedMarkerId, markers, map.width, map.height, map.id]);
+  }, [editing, selectedMarkerId, markers, map.width, map.height, map.id, checkAreaBoundary]);
+
+  const focusedMarker = markers.find(marker => marker.id === selectedMarkerId);
+  const focusedPoint = focusedVertexId !== undefined && Array.isArray(focusedMarker?.geometry)
+    ? focusedMarker.geometry.find((point, index) => vertexId(point, index) === focusedVertexId)
+    : undefined;
+  const focusedX = focusedPoint?.x;
+  const focusedY = focusedPoint?.y;
+  useEffect(() => {
+    const leaflet = mapRef.current;
+    if (!leaflet || focusedX === undefined || focusedY === undefined) return;
+    const position = relToLatLng({ x: focusedX, y: focusedY }, map.width || 1, map.height || 1);
+    const ring = L.circleMarker(position, {
+      radius: 14, color: '#f59e0b', weight: 3, fill: false, interactive: false,
+    }).addTo(leaflet);
+    if (!leaflet.getBounds().pad(-0.15).contains(position)) leaflet.panTo(position);
+    return () => { ring.remove(); };
+  }, [focusedVertexId, focusedX, focusedY, map.width, map.height, map.id, map.imageBlob]);
+
+  const isDrawingOrEditingArea = drawMode === 'area' || (editing && focusedMarker?.kind === 'area');
+  useEffect(() => {
+    const leaflet = mapRef.current;
+    if (!leaflet || !isDrawingOrEditingArea) return;
+    const container = leaflet.getContainer();
+    const boxZoomWasEnabled = leaflet.boxZoom.enabled();
+    if (boxZoomWasEnabled) leaflet.boxZoom.disable();
+
+    const preventShiftDoubleClick = (event: MouseEvent) => {
+      if (event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    // Tangkap sebelum Leaflet menganggap klik cepat sebagai zoom out atau akhir draf.
+    container.addEventListener('dblclick', preventShiftDoubleClick, true);
+    return () => {
+      container.removeEventListener('dblclick', preventShiftDoubleClick, true);
+      if (boxZoomWasEnabled && mapRef.current === leaflet) leaflet.boxZoom.enable();
+    };
+  }, [isDrawingOrEditingArea, map.id, map.imageBlob, map.width, map.height]);
+
+  useEffect(() => {
+    const leaflet = mapRef.current;
+    if (!leaflet || !crossing || !isDrawingOrEditingArea) return;
+    const marker = L.circleMarker(relToLatLng(crossing, map.width || 1, map.height || 1), {
+      radius: 7, color: '#fff', fillColor: '#dc2626', fillOpacity: 1, weight: 2,
+      className: 'atlas-area-crossing', interactive: false,
+    }).addTo(leaflet);
+    return () => { marker.remove(); };
+  }, [crossing, isDrawingOrEditingArea, map.width, map.height, map.id, map.imageBlob]);
+
+  const redrawDraft = useCallback(() => {
+    const layer = draftLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+    const points = draftPointsRef.current;
+    if (!drawMode) return;
+
+    const w = map.width || 1;
+    const h = map.height || 1;
+    const path = drawMode === 'area'
+      ? sampleAreaBoundary(points, propsRef.current.draftAreaStyle)
+      : sampleRoutePath(points, drawMode === 'route' ? propsRef.current.draftRouteStyle : undefined);
+    if (drawMode === 'area') checkAreaBoundary(path);
+    if (!points.length) return;
+    const latlngs = relPathToLatLngs(path, w, h);
+    const color = drawMode === 'scale' ? '#f59e0b' : '#2563eb';
+    if (points.length >= 2) {
+      const options = { color, weight: drawMode === 'scale' ? 3 : 2, dashArray: '4 4', interactive: false };
+      if (drawMode === 'area' && points.length >= 3) {
+        L.polygon(latlngs, { ...options, fillOpacity: 0.15, smoothFactor: 0 }).addTo(layer);
+      } else {
+        L.polyline(latlngs, { ...options, smoothFactor: 0 }).addTo(layer);
+      }
+    }
+    for (const point of points) {
+      L.circleMarker(relToLatLng(point, w, h), {
+        radius: point.sharp ? 6 : 4,
+        color: '#fff', fillColor: point.sharp ? '#f59e0b' : color, fillOpacity: 1, weight: 1, interactive: false,
+      }).addTo(layer);
+    }
+  }, [drawMode, map.width, map.height, checkAreaBoundary]);
+
+  const updateDraft = useCallback(() => {
+    const points = draftPointsRef.current;
+    propsRef.current.onDraftChange?.(points.length, points.at(-1)?.sharp);
+    redrawDraft();
+  }, [redrawDraft]);
+
+  const undoDraftPoint = useCallback(() => {
+    if ((drawMode !== 'route' && drawMode !== 'area') || !draftPointsRef.current.length) return;
+    draftPointsRef.current.pop();
+    updateDraft();
+  }, [drawMode, updateDraft]);
+
+  const toggleLastDraftCorner = useCallback(() => {
+    const last = draftPointsRef.current.at(-1);
+    if (drawMode !== 'area' || !last) return;
+    last.sharp = !last.sharp;
+    updateDraft();
+  }, [drawMode, updateDraft]);
+
+  const centerMarker = useCallback((markerId: number, onlyIfOutside = false) => {
+    const leaflet = mapRef.current;
+    const marker = markers.find(candidate => candidate.id === markerId);
+    if (!leaflet || !marker) return;
+    const w = map.width || 1;
+    const h = map.height || 1;
+    if (!Array.isArray(marker.geometry)) {
+      const point = relToLatLng(marker.geometry, w, h);
+      if (!onlyIfOutside || !leaflet.getBounds().contains(point)) leaflet.panTo(point);
+      return;
+    }
+    const path = marker.kind === 'area'
+      ? sampleAreaBoundary(marker.geometry, marker.meta?.areaStyle)
+      : sampleRoutePath(marker.geometry, marker.meta?.routeStyle);
+    const bounds = L.latLngBounds(relPathToLatLngs(path, w, h));
+    if (bounds.isValid() && (!onlyIfOutside || !leaflet.getBounds().intersects(bounds))) {
+      leaflet.fitBounds(bounds, { padding: [24, 24], maxZoom: leaflet.getZoom() });
+    }
+  }, [markers, map.width, map.height]);
+
+  useImperativeHandle(ref, () => ({ undoDraftPoint, toggleLastDraftCorner, centerMarker }),
+    [undoDraftPoint, toggleLastDraftCorner, centerMarker]);
+
+  const revealedMarkerId = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (selectedMarkerId === undefined) {
+      revealedMarkerId.current = undefined;
+      return;
+    }
+    if (revealedMarkerId.current === selectedMarkerId || !focusedMarker) return;
+    revealedMarkerId.current = selectedMarkerId;
+    if (focusedVertexId === undefined) centerMarker(selectedMarkerId, true);
+  }, [selectedMarkerId, focusedMarker, focusedVertexId, centerMarker]);
+
+  useEffect(() => {
+    const leaflet = mapRef.current;
+    if (!leaflet || drawMode) return;
+    const onBackgroundClick = () => {
+      if (!editing && propsRef.current.selectedMarkerId !== undefined) propsRef.current.onMapBackgroundClick?.();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable], [role="dialog"]')) return;
+      if (document.querySelector('dialog[open], [aria-modal="true"]')) return;
+      if (propsRef.current.onEscape?.()) event.preventDefault();
+    };
+    leaflet.on('click', onBackgroundClick);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      leaflet.off('click', onBackgroundClick);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [drawMode, editing, map.id, map.imageBlob, map.width, map.height]);
 
   // --- Mode menggambar ---
   useEffect(() => {
@@ -572,34 +786,15 @@ export default function MapCanvas({
     // Dobel-klik menutup poligon/polyline → matikan zoom-nya selama menggambar.
     if (drawMode !== 'pin') leaflet.doubleClickZoom.disable();
 
-    const redrawDraft = () => {
-      draftLayer.clearLayers();
-      const pts = draftPointsRef.current;
-      if (!pts.length) return;
-      const latlngs = relPathToLatLngs(pts, w, h);
-      for (const ll of latlngs) {
-        L.circleMarker(ll, { radius: 4, color: '#2563eb', fillColor: '#2563eb', fillOpacity: 1, weight: 1 }).addTo(draftLayer);
-      }
-      if (pts.length >= 2) {
-        if (drawMode === 'area') {
-          L.polygon(latlngs, { color: '#2563eb', weight: 2, fillOpacity: 0.15, dashArray: '4 4' }).addTo(draftLayer);
-        } else if (drawMode === 'scale') {
-          L.polyline(latlngs, { color: '#f59e0b', weight: 3, dashArray: '4 4' }).addTo(draftLayer);
-        } else {
-          L.polyline(latlngs, { color: '#2563eb', weight: 2, dashArray: '4 4' }).addTo(draftLayer);
-        }
-      }
-    };
-
     const finishShape = () => {
       const pts = draftPointsRef.current;
       const min = drawMode === 'area' ? 3 : 2;
+      if (pts.length < min) return;
       if (pts.length >= min) {
         propsRef.current.onCreateGeometry([...pts]);
       }
       draftPointsRef.current = [];
-      draftLayer.clearLayers();
-      propsRef.current.onDraftChange?.(0);
+      updateDraft();
     };
 
     const onClick = (e: L.LeafletMouseEvent) => {
@@ -608,9 +803,23 @@ export default function MapCanvas({
         propsRef.current.onCreateGeometry(rel);
         return;
       }
+      if (drawMode === 'route' || drawMode === 'area') {
+        const last = draftPointsRef.current.at(-1);
+        if (e.originalEvent?.detail > 1) return;
+        if (drawMode === 'area' && e.originalEvent?.shiftKey) {
+          const clicked = draftPointsRef.current.find(point => leaflet
+            .latLngToContainerPoint(relToLatLng(point, w, h)).distanceTo(e.containerPoint) <= 10);
+          if (clicked) clicked.sharp = !clicked.sharp;
+          else draftPointsRef.current.push({ ...rel, sharp: true });
+          updateDraft();
+          return;
+        }
+        if (last?.x === rel.x && last.y === rel.y) return;
+        const first = draftPointsRef.current[0];
+        if (drawMode === 'area' && first?.x === rel.x && first.y === rel.y) return;
+      }
       draftPointsRef.current.push(rel);
-      propsRef.current.onDraftChange?.(draftPointsRef.current.length);
-      redrawDraft();
+      updateDraft();
       
       // Auto finish for scale when 2 points are reached
       if (drawMode === 'scale' && draftPointsRef.current.length === 2) {
@@ -625,11 +834,19 @@ export default function MapCanvas({
     };
 
     const onKey = (ev: KeyboardEvent) => {
+      if (ev.defaultPrevented) return;
+      const target = ev.target;
+      if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]')) return;
+      const undo = ev.key === 'Backspace' || ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && ev.key.toLowerCase() === 'z');
+      if ((drawMode === 'route' || drawMode === 'area') && undo && draftPointsRef.current.length) {
+        ev.preventDefault();
+        undoDraftPoint();
+        return;
+      }
       if (ev.key === 'Escape') {
         draftPointsRef.current = [];
-        draftLayer.clearLayers();
-        propsRef.current.onDraftChange?.(0);
-      } else if (ev.key === 'Enter') {
+        updateDraft();
+      } else if (ev.key === 'Enter' && !(target instanceof Element && target.closest('button, a'))) {
         finishShape();
       }
     };
@@ -646,45 +863,22 @@ export default function MapCanvas({
       leaflet.getContainer().style.cursor = '';
       draftLayer.clearLayers();
       draftPointsRef.current = [];
+      if (drawMode === 'area') checkAreaBoundary([]);
     };
-  }, [drawMode, map.width, map.height, map.id]);
+  }, [drawMode, map.width, map.height, map.id, map.imageBlob, updateDraft, undoDraftPoint, checkAreaBoundary]);
 
-  // Pan halus ke penanda saat selectedMarkerId berubah dari luar (mis. kembali lewat breadcrumb / Codex)
-  const lastSelectedMarkerIdRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (selectedMarkerId == null) {
-      lastSelectedMarkerIdRef.current = undefined;
-      return;
-    }
-    if (lastSelectedMarkerIdRef.current !== selectedMarkerId) {
-      lastSelectedMarkerIdRef.current = selectedMarkerId;
-      const marker = markers.find((m) => m.id === selectedMarkerId);
-      const leaflet = mapRef.current;
-      if (!marker || !leaflet) return;
-
-      const w = map.width || 1;
-      const h = map.height || 1;
-      let targetLatLng: L.LatLng | null = null;
-
-      if (marker.kind === 'pin' && isPointGeometry(marker.geometry)) {
-        const tuple = relToLatLng(marker.geometry, w, h);
-        targetLatLng = L.latLng(tuple[0], tuple[1]);
-      } else if (Array.isArray(marker.geometry) && marker.geometry.length > 0) {
-        const bounds = L.latLngBounds(relPathToLatLngs(marker.geometry, w, h));
-        targetLatLng = bounds.getCenter();
-      }
-
-      if (targetLatLng) {
-        if (!leaflet.getBounds().contains(targetLatLng)) {
-          leaflet.panTo(targetLatLng, { animate: true, duration: 0.5 });
-        }
-      }
-    }
-  }, [selectedMarkerId, markers, map.width, map.height]);
+    redrawDraft();
+  }, [draftRouteStyle, draftAreaStyle, redrawDraft]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden select-none">
+    <div className={`relative h-full w-full overflow-hidden select-none ${drawMode === 'route' || drawMode === 'area' ? 'atlas-drawing-path' : ''}`}>
       <div ref={containerRef} className="h-full w-full bg-neutral-100 dark:bg-neutral-900" />
+      {isDrawingOrEditingArea && crossing && (
+        <p role="status" className="pointer-events-none absolute bottom-3 left-3 right-3 z-[450] mx-auto w-fit rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-700 shadow dark:border-red-900 dark:bg-slate-900 dark:text-red-300">
+          Batas area bersilangan. Titik persilangan ditandai merah.
+        </p>
+      )}
       {/* Floating Return Pill ke Peta Induk */}
       {parentMap && onReturnToParent && (
         <div className="absolute top-3 left-14 z-[400] flex items-center pointer-events-auto">

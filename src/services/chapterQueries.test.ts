@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterAll, afterEach, expect, it, vi } from 'vitest';
 import { db } from '@/src/db';
+import { BACKUP_FORMAT_VERSION } from '@/src/lib/backupFormat';
 import { dexieChapterStorage } from '@/src/adapters/dexieChapterStorage';
 import { observeChapterQuery, readChapterList, readLatestChapterModified } from './chapterQueries';
 import { backupService } from './backupService';
@@ -62,7 +63,7 @@ it('DB06 keeps derived keys in storage and rebuilds them when reading old v8 bac
     undefined, await dexieChapterStorage.read.readFirstChapter(1),
   ]);
   const addLegacyMetadata = async (backup: Awaited<ReturnType<typeof backupService.collectAllData>>) => {
-    expect(backup.version).toBe(9);
+    expect(backup.version).toBe(BACKUP_FORMAT_VERSION);
     expect(backup.data.chapters[0]).not.toHaveProperty('listMetadata');
     const { codexCovers: _covers, ...legacy } = backup.data;
     const data = { ...legacy, chapters: backup.data.chapters.map(row => ({
@@ -115,7 +116,7 @@ it('upgrades a real v33 database with a cursor migration and preserves source te
   const old = new Dexie(db.name); old.version(33).stores(stores);
   await old.table('chapters').add({ ...chapter(), id: 7 }); old.close();
   await db.open();
-  expect(db.verno).toBe(35);
+  expect(db.verno).toBe(38);
   expect((await readChapterList(1))[0]).toMatchObject({ id: 7, _computedWordCount: 2 });
   expect((await db.chapters.get(7))!.content).toBe('<p>one two</p>');
 });

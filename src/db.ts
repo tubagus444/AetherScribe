@@ -241,6 +241,13 @@ export class AetherScribeDB extends Dexie {
 
     this.version(35).stores({ codexCovers: '++id, projectId, codexId, &[codexId+kind]' });
 
+    // v36: atribut titik rute opsional di dalam geometry, dengan indeks Atlas yang sama.
+    this.version(36).stores({ mapMarkers: STORES_V32.mapMarkers });
+    // v37: bentuk batas area dan sudut tegas opsional, dengan indeks Atlas yang sama.
+    this.version(37).stores({ mapMarkers: STORES_V32.mapMarkers });
+    // v38: relasi pin lokasi penting di metadata area, dengan indeks Atlas yang sama.
+    this.version(38).stores({ mapMarkers: STORES_V32.mapMarkers });
+
     this.chapters.hook('creating', (_key, chapter) => {
       chapter.listMetadata = chapterListKey(chapter);
     });
