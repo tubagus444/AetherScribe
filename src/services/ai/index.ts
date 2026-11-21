@@ -18,6 +18,8 @@ import { resolveContextBuilder } from './context';
 export { isCacheSupported, getContextWindow } from './context';
 const inFlightRewrites = new Map<string, Promise<string>>();
 
+export { suggestPlotClues } from './plotClues';
+
 // Facade Methods
 
 export async function processRewrite(params: GenerateParams): Promise<string> {

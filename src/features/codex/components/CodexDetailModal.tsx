@@ -9,7 +9,8 @@ import { buildLoreGraph } from '@/src/lib/loreGraph';
 import { effectiveStatus, parseTodos } from '@/src/lib/worldCompleteness';
 import { WorldStatusBadge } from '@/src/features/codex/components/WorldStatusBadge';
 import { useNavigation } from '@/src/contexts/NavigationContext';
-import { QuickPromiseModal } from '@/src/features/consistency/components/QuickPromiseModal';
+import { PlotClueIdeas } from '@/src/features/consistency/components/PlotClueIdeas';
+import { QuickPromiseModal, type QuickPromiseSeed } from '@/src/features/consistency/components/QuickPromiseModal';
 import { NameForgeModal } from '@/src/features/codex/components/NameForgeModal';
 import { CategoryIcon } from '@/src/features/codex/components/CategoryIcon';
 import { LinkifiedDescription } from '@/src/features/codex/components/LinkifiedDescription';
@@ -91,7 +92,7 @@ export function CodexDetailModal({
   const { openWorkshop, openAtlasMarker } = useNavigation();
   const [bondType, setBondType] = useState('Friend');
   const [bondTarget, setBondTarget] = useState<number | ''>('');
-  const [showPromise, setShowPromise] = useState(false);
+  const [showPromise, setShowPromise] = useState<QuickPromiseSeed | null>(null);
   const [showForge, setShowForge] = useState(false);
   const [showMapMenu, setShowMapMenu] = useState(false);
 
@@ -234,7 +235,7 @@ export function CodexDetailModal({
               </div>
             )}
             <button
-              onClick={() => setShowPromise(true)}
+              onClick={() => setShowPromise({ projectId, title: entry.name, codexId: entry.id, codexName: entry.name })}
               className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/40 rounded-xl transition-all"
               title="Tandai sebagai Janji Plot (Chekhov's Gun)"
             >
@@ -429,6 +430,10 @@ export function CodexDetailModal({
                   </div>
                 )}
 
+                {entry.id != null && (entry.secret?.trim() || (entry.hidden && entry.description?.trim())) && (
+                  <PlotClueIdeas key={entry.id} secret={entry.name + "\n" + (entry.secret?.trim() || entry.description)} entryId={entry.id} projectId={projectId} promises={promises ?? []} chapters={detailChapters} onChoose={setShowPromise} />
+                )}
+
                 {/* Catatan & TODO (#11) — pekerjaan worldbuilding yang tersisa untuk entri ini */}
                 {todos.length > 0 && (
                   <div className="rounded-2xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/15 p-5">
@@ -579,8 +584,8 @@ export function CodexDetailModal({
 
       {showPromise && (
         <QuickPromiseModal
-          seed={{ projectId, title: entry.name, codexId: entry.id!, codexName: entry.name }}
-          onClose={() => setShowPromise(false)}
+          seed={showPromise}
+          onClose={() => setShowPromise(null)}
         />
       )}
 

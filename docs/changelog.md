@@ -6,6 +6,8 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-21
 
+- Codex dapat menyarankan petunjuk untuk menumbuhkan kecurigaan pembaca berdasarkan rahasia dan petunjuk terkait. Penulis memilih dan menyunting ide sebelum mencatatnya di Janji Plot.
+
 ### [UI] Seleksi dan detail penanda Atlas
 
 - Lepas sorotan lewat klik ruang kosong, Esc, atau Tutup Detail. Pisahkan

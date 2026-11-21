@@ -160,6 +160,8 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 
 ---
 
+Dari detail rahasia Codex, penulis dapat meminta AI menyarankan petunjuk pertama atau berikutnya berdasarkan seluruh janji yang menunjuk rahasia itu. Bab penanaman mengikuti urutan baca. Pilihan membuka formulir yang bisa disunting, dan Catat menyimpan kait ke rahasia.
+
 ## Bengkel Nama (Name Forge)
 - **Deskripsi:** Generator nama karakter dan faksi berbasis fonotaktik (konsonan/vokal) dan morfem leksikal kustom per kelompok faksi.
 - **File terkait:** `src/features/codex/components/NameForgeModal.tsx`, `src/lib/nameForge.ts`

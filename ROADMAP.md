@@ -37,6 +37,8 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ## Pekerjaan selesai
 
+- Saran petunjuk bertahap dari rahasia Codex, dengan peninjauan penulis sebelum dicatat sebagai Janji Plot.
+
 - [Seleksi, kamera, dan panel detail Atlas](docs/reports/audits/2026-11-21-atlas-sidebar.md)
 - [Isi wilayah dan peran lokasi penting Atlas](docs/reports/audits/2026-11-21-atlas-areas.md#isi-wilayah-dan-lokasi-penting)
 - [Pratinjau batas melengkung dan sudut tegas pada area Atlas](docs/reports/audits/2026-11-21-atlas-areas.md)

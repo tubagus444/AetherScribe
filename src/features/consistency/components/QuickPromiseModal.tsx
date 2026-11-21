@@ -27,6 +27,7 @@ export interface QuickPromiseSeed {
   codexName?: string;
   /** Prefilled untuk janji berbasis kata kunci (non-entitas). */
   keywords?: string[];
+  payoffCodexId?: number;
   plantedChapterId?: number;
 }
 
@@ -63,6 +64,7 @@ export function QuickPromiseModal({ seed, onClose }: { seed: QuickPromiseSeed; o
         description: description.trim() || undefined,
         codexId: linked ? seed.codexId : undefined,
         keywords: !linked && kw.length ? kw : undefined,
+        payoffCodexId: seed.payoffCodexId,
         plantedChapterId: seed.plantedChapterId,
         importance,
         expectedBy: expectedBy.trim() || undefined,
