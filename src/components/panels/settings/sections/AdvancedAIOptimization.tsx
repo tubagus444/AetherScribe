@@ -133,7 +133,7 @@ export function AdvancedAIOptimization({
                 Cek Konsistensi Otomatis <span className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400 align-middle">Boros token</span>
               </label>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Bila aktif, AI memeriksa <strong>paragraf yang sedang kamu ketik</strong> terhadap Codex/Bible setelah jeda berhenti mengetik, lalu menggarisbawahi kalimat berpotensi kontradiktif (ungu). <strong>Memakai token tiap paragraf</strong> yang diperiksa. Kalau dimatikan, kamu tetap bisa memeriksa kapan saja lewat tombol <strong>"Cek Konsistensi"</strong> di menu seleksi teks (pilih teks → klik). Garis bawah deterministik (timeline) selalu aktif & gratis.
+                Bila aktif, AI memeriksa <strong>paragraf yang sedang kamu ketik</strong> terhadap Codex/Bible setelah jeda berhenti mengetik, lalu menggarisbawahi kalimat berpotensi kontradiktif (ungu). <strong>Memakai token tiap paragraf</strong> yang diperiksa. Kalau dimatikan, kamu tetap bisa memeriksa kapan saja lewat tombol <strong>"Cek Konsistensi"</strong> di menu seleksi teks (pilih teks → klik).
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 italic">
                 Tersimpan otomatis saat diklik (tak perlu tombol Simpan). Saat memeriksa, indikator muncul di editor.

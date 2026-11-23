@@ -138,9 +138,8 @@ export const FEATURES: Feature[] = [
     id: 'inline-consistency', group: 'write', Icon: SpellCheck, color: 'violet', view: 'write',
     title: 'Konsistensi Inline (garis bawah)',
     where: 'Di dalam Editor',
-    what: 'Menandai potensi kontradiksi & salah-eja langsung di bawah teks. Tiga warna, tiga sumber: amber (timeline deterministik), merah putus-putus (ejaan nama), & ungu (AI).',
+    what: 'Menandai potensi kontradiksi & salah-eja langsung di bawah teks. Merah menandai kandidat salah eja nama, teal menandai glosarium, dan ungu menandai kutipan dari pemeriksaan AI.',
     steps: [
-      'Garis bawah AMBER = cek deterministik gratis (mis. tokoh "muncul sebelum diperkenalkan" menurut Timeline). Selalu aktif, tanpa token.',
       'Garis bawah MERAH putus-putus = Buku Gaya: kata berhuruf kapital yang MIRIP tapi tak persis nama/alias Codex (kandidat salah-eja). Deterministik & nol token; arahkan mouse untuk melihat saran ejaan yang benar.',
       'Garis bawah UNGU = temuan AI. Pemicu utama: sorot teks → tombol "Cek Konsistensi" di menu mengambang (on-demand, pakai token).',
       'Arahkan mouse ke garis bawah untuk membaca penjelasan temuannya.',
@@ -498,11 +497,12 @@ export const FEATURES: Feature[] = [
     what: 'Kronologi peristiwa untuk mencegah plot hole dan urutan kejadian yang bertabrakan.',
     steps: [
       'Tambahkan peristiwa penting beserta urutan/waktunya.',
-      'Data ini jadi acuan bagi Cek Konsistensi, Peta Kontinuitas, dan Konsistensi Inline.',
+      'Data ini jadi acuan bagi Cek Konsistensi, dan Peta Kontinuitas.',
     ],
     detail: [
-      'Timeline adalah sumber untuk aturan deterministik "tokoh muncul sebelum diperkenalkan" (garis bawah amber di editor) — aturan ini memakai Bab terkait + karakter tertaut & urutan bab, jadi peristiwa dari Kalender Dunia (yang juga menautkan bab & karakter) ikut menyalakannya.',
-      '"Catatan waktu (bebas)" = label teks opsional (mis. "Hari 3, Pagi") untuk peristiwa yang tak ditempatkan di kalender. Peristiwa yang punya tanggal terstruktur dari Kalender Dunia menampilkan tanggal itu di sini (chip ungu).',
+      'Pilih Lihat seluruh linimasa untuk melihat seluruh rentang, lalu buka periode atau tanggal untuk melihat peristiwa.',
+      'Gunakan Catat ke Linimasa dari seleksi teks editor. Bab dan entitas Codex terkait bisa dikosongkan.',
+      'Peristiwa tanpa tanggal, termasuk catatan waktu bebas dari proyek lama, tetap tersedia di Belum bertanggal.',
       'Semakin lengkap Timeline, semakin tajam deteksi kontradiksi kronologi antar bab.',
     ],
     tip: 'Untuk penanggalan dunia sendiri (bulan/musim/era/festival), pelacak usia tokoh, dan kalkulator perjalanan, buka modul Kalender Dunia.',
@@ -659,7 +659,7 @@ export const FEATURES: Feature[] = [
       'Model Tugas Ringan: model murah untuk tugas mekanis (rangkum, ekstraksi entitas) pada penyedia terpilih; kosongkan = pakai default. Tugas berat (tulis ulang, chat) tetap memakai model utama.',
       'Masa Hidup Cache (Claude): 1 jam (default — jaga cache hangat untuk sesi menulis panjang) atau 5 menit (untuk pemakaian jarang / burst pendek). Hanya Claude langsung; OpenRouter & Google tak terpengaruh.',
       'Kreativitas Tulis Ulang: geser 0–1 khusus aksi "Tanya AI" di editor. Rendah = presisi & taat instruksi; tinggi = variatif/kreatif tapi rawan menyimpang. Tugas analitis (cek konsistensi, ekstraksi) tak terpengaruh.',
-      'Cek Konsistensi Otomatis (boros token): toggle mode idle-check yang menggarisbawahi paragraf (ungu) saat Anda berhenti mengetik. Default MATI; garis bawah deterministik timeline (amber) selalu gratis & aktif.',
+      'Cek Konsistensi Otomatis (boros token): toggle mode idle-check yang menggarisbawahi paragraf (ungu) saat Anda berhenti mengetik. Default MATI.',
     ],
     detail: [
       'Penyetel di sini tersimpan seketika saat diubah (kecuali kredensial yang butuh tombol "Simpan"). Pantau efeknya lewat cache hit rate di Dashboard dan pil Context Meter.',

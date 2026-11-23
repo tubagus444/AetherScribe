@@ -183,7 +183,7 @@ export function MainView() {
           {viewMode === 'timeline' && projectId && (
             <ViewContainer key="timeline" className="z-20">
               <Suspense fallback={<LoadingFallback />}>
-                <TimelinePanel projectId={projectId} />
+                <TimelinePanel key={projectId} projectId={projectId} />
               </Suspense>
             </ViewContainer>
           )}
@@ -191,7 +191,7 @@ export function MainView() {
           {viewMode === 'worldcalendar' && projectId && (
             <ViewContainer key="worldcalendar" className="z-20">
               <Suspense fallback={<LoadingFallback />}>
-                <WorldCalendarPanel projectId={projectId} />
+                <WorldCalendarPanel key={projectId} projectId={projectId} />
               </Suspense>
             </ViewContainer>
           )}

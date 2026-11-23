@@ -4,12 +4,13 @@
  */
 
 import { TimelineEvent, WorldCalendar } from '@/src/types';
+import { compareEvents } from '@/src/lib/timelinePeriods';
 import { formatDateRange } from '@/src/lib/worldCalendar';
 
 const MAX_SUMMARY_CHARS = 6000; // batasi agar tak membengkak token konteks
 
 /**
- * Membangun ringkasan kronologis timeline (urut berdasarkan `order`) sebagai teks
+ * Membangun ringkasan kronologis timeline (urut tanggal, lalu urutan manual) sebagai teks
  * untuk disuntikkan ke konteks pengecek konsistensi. Menautkan judul bab & nama
  * karakter agar AI bisa mendeteksi pelanggaran urutan waktu.
  */
@@ -26,7 +27,7 @@ export function buildTimelineSummary(
   const codexName = new Map<number, string>();
   codex.forEach(c => c.id != null && codexName.set(c.id, c.name));
 
-  const sorted = [...events].sort((a, b) => (a.order - b.order) || ((a.id || 0) - (b.id || 0)));
+  const sorted = [...events].sort(compareEvents);
 
   return sorted.map((e, i) => {
     const date = (e.startDate && calendar)
@@ -37,7 +38,7 @@ export function buildTimelineSummary(
     const chars = (e.characterIds || [])
       .map(id => codexName.get(id))
       .filter((n): n is string => !!n);
-    const who = chars.length ? ` [Tokoh: ${chars.join(', ')}]` : '';
+    const who = chars.length ? ` [Entitas Codex terkait: ${chars.join(', ')}]` : '';
     const desc = e.description ? ` — ${e.description}` : '';
     return `${i + 1}. ${date}${e.title}${chap}${who}${desc}`;
   }).join('\n').slice(0, MAX_SUMMARY_CHARS);

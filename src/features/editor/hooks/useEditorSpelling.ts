@@ -14,7 +14,7 @@ function isEnabled(): boolean {
 
 /**
  * Buku Gaya inline — menandai kandidat salah-eja NAMA kanonik (deterministik,
- * nol token). Meniru pola `useEditorConsistency`: hitung dari data (teks bab +
+ * nol token). Hitung dari data (teks bab +
  * nama/alias Codex) lalu dorong ke `findingsRef` + meta `forceUpdateConsistency`
  * agar `ConsistencyUnderline` menggambar garis bawah merah putus-putus.
  *

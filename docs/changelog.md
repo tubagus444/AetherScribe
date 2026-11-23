@@ -4,6 +4,20 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-23
+
+- Kronologi Cerita merapikan toolbar, kartu, dan bagian Belum Bertanggal. Garis penghubung sejajar dengan titik tanggal, kedua ujung garis waktu memiliki ruang, dan panah geser mengikuti batas gulir.
+
+## 2026-11-22
+
+- Bilah gulir horizontal Linimasa disembunyikan. Garis waktu bisa digeser dengan roda mouse, gestur, dan tombol panah.
+
+- Kartu Linimasa menampilkan judul hingga dua baris dan label bab tersendiri. Tanggal aktif ditandai, detail dapat ditutup tanpa menggeser garis waktu, dan filter bab di ponsel bisa dilipat.
+
+- Linimasa kini langsung membuka deretan tanggal yang bisa digulir horizontal melintasi bulan dan tahun pada desktop dan ponsel. Tombol Lihat seluruh linimasa membuka ringkasan satu layar.
+
+- Linimasa dan Kalender memakai formulir peristiwa yang sama. Penulis bisa mencatat dari teks terpilih, menautkan entitas Codex, melihat seluruh rentang waktu dan membuka kejadian per tanggal. Editor mengizinkan tokoh disebut sebelum bab peristiwa pertamanya di Linimasa.
+
 ## 2026-11-21
 
 - Formulir Catatan Novel dan Catatan Bab bisa memilih tag yang sudah ada di novel dari dropdown.

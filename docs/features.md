@@ -25,10 +25,7 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
   `PresenceIndex`. Gunakan `buildPresenceIndexAsync` untuk scan on-demand dan
   `usePresenceIndex` untuk hitung ulang otomatis. Fungsi murni `buildPresenceIndex`
   dipakai oleh worker dan tes.
-- `ConsistencyUnderline` menggabungkan temuan deterministik, kutipan AI,
-  Buku Gaya, dan Glosarium. Perluas `flagCharactersForChapter` untuk
-  aturan nama berbasis timeline serta `findGlossaryIssues` untuk istilah
-  non-nama. Temuan AI berasal dari cache per paragraf dan bab. Jaga
+- `ConsistencyUnderline` menggabungkan kutipan AI, Buku Gaya, dan Glosarium. Temuan AI berasal dari cache per paragraf dan bab. Jaga
   invalidasi saat teks berubah, batas cache, dan kunci pembatalan inline.
 - Metrik prosa berbagi `proseAnalysis.ts` dan `pacingHeatmap.ts`. Jika
   `Chapter.tension` kosong, tampilkan perkiraan tanpa menyimpannya. Janji
@@ -226,11 +223,9 @@ Dari detail rahasia Codex, penulis dapat meminta AI menyarankan petunjuk pertama
 ---
 
 ## Timeline Cerita
-- **Deskripsi:** Linimasa vertikal kronologi peristiwa cerita dengan filter tipe plot, penautan karakter, dan integrasi tanggal bebas maupun terstruktur.
-- **File terkait:** `src/features/timeline/components/TimelinePanel.tsx`, `src/lib/timelineSummary.ts`
-- **Tabel DB:** `timeline`, `chapters`, `codex`
-- **Endpoint:** Tidak ada (lokal)
-- **Catatan:** Event tanpa `startDate` tetap tampil di timeline teks bebas lama tanpa duplikasi data.
+Linimasa menampilkan peristiwa menurut tanggal dunia cerita. Gunakan **Lihat seluruh linimasa** untuk merangkum seluruh periode, lalu pilih periode atau tanggal untuk membaca detail. Saat panel dibuka, semua tanggal tersusun dari kiri ke kanan. Gunakan roda mouse di atas garis waktu, seret, tekan panah geser, atau usap di ponsel. Panah dinonaktifkan saat mencapai ujung. Filter bab dan periode berada dalam satu kelompok. Pilih **Telusuri linimasa** untuk kembali dari ringkasan ke deretan tanggal. Tanggal yang sama berbagi satu titik. Kartu dan titik terpilih ditandai saat detail terbuka. Tutup detail untuk melanjutkan dari posisi gulir yang sama. Gunakan Naik/Turun dalam detail hari untuk mengurutkan kejadian.
+
+**Tambah peristiwa** di Linimasa, aksi tanggal di Kalender, dan **Catat ke Linimasa** pada seleksi teks editor membuka formulir yang sama. Nama wajib; penjelasan, tanggal atau rentang, bab, dan entitas Codex lintas kategori opsional. Seleksi editor mengisi judul dan bab. Tanpa kalender, simpan dulu di **Belum bertanggal** atau atur kalender melalui formulir. Label waktu bebas dari data lama tetap tersedia. Tautan bab menunjukkan tempat peristiwa diceritakan dan tidak menentukan kemunculan pertama karakter.
 
 ---
 

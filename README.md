@@ -15,7 +15,7 @@ penulis **mengelola novel panjang, menjaga konteks, dan mempercepat revisi**.
   - Pencarian semantik lokal via embeddings `Xenova/all-MiniLM-L6-v2` (berjalan di browser, di-cache di IndexedDB).
   - Pencarian leksikal (BM25) via Orama sebagai fallback.
 - **Analisis & konsistensi** — sebagian **nol token** (deterministik, lokal):
-  - Cek Konsistensi per-bab (AI) & Konsistensi Inline (garis bawah: timeline amber, ejaan nama/"Buku Gaya" merah, temuan AI ungu).
+  - Cek Konsistensi per-bab (AI) & Konsistensi Inline (garis bawah: glosarium teal, ejaan nama/"Buku Gaya" merah, temuan AI ungu).
   - Peta Kontinuitas, Lensa Karakter, Wawasan Prosa, Timeline Cerita, Saran Entitas, dan Janji Plot (Chekhov's Gun).
   - **Kelengkapan Dunia**: status kematangan per entri lore (Solid/Parsial/Rangka, manual + saran otomatis) plus daftar TODO — peta bagian worldbuilding yang masih perlu digarap.
   - **Heatmap Tensi/Pacing**: kurva naik-turun tensi per bab (manual 1–5 + saran otomatis dari sinyal prosa) untuk evaluasi makro — deteksi bagian yang tegang terus (pembaca jenuh) atau melandai.

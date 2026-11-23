@@ -37,6 +37,8 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ## Pekerjaan selesai
 
+- [Linimasa, Kalender, dan pencatatan dari editor](docs/reports/audits/2026-11-22-linimasa.md)
+
 - [Catatan Novel dan Codex di sidebar editor](docs/reports/audits/2026-11-21-editor-notes-codex.md)
 - [Seleksi, kamera, dan panel detail Atlas](docs/reports/audits/2026-11-21-atlas-sidebar.md)
 - [Isi wilayah dan peran lokasi penting Atlas](docs/reports/audits/2026-11-21-atlas-areas.md#isi-wilayah-dan-lokasi-penting)

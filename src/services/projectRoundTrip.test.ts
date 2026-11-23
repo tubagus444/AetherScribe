@@ -134,3 +134,21 @@ it('remaps the legacy relation endpoint form and drops stale known finding IDs',
   ] } as any, { projectId: 2, codexIdMap: new Map([[10, 11]]), chapterIdMap: new Map(), mapIdMap: new Map() });
   expect(rows.map(r => r.findingId)).toEqual(['rel-11-11']);
 });
+
+it('retains a dated event and its character and location across restore and project import', async () => {
+  const locationId = await db.codex.add({ projectId: 1, category: 'location', name: 'Pasar', description: '', tags: [], aliases: [] });
+  const startDate = { era: 0, year: 2, month: 1, day: 7 };
+  const endDate = { ...startDate, day: 9 };
+  await db.timeline.update(30, { startDate, endDate, characterIds: [10, locationId] });
+  const full = await backupService.collectAllData();
+  await db.timeline.clear();
+  await backupService.restoreData(full);
+  expect(await db.timeline.get(30)).toMatchObject({ startDate, endDate, characterIds: [10, locationId] });
+  const { projectId } = await backupService.importProjectData(await backupService.collectProjectData(1));
+  const event = await db.timeline.where('projectId').equals(projectId).first();
+  expect(event).toMatchObject({ startDate, endDate });
+  const linked = await db.codex.bulkGet(event!.characterIds!);
+  expect(linked.map(e => [e?.projectId, e?.category])).toEqual([[projectId, 'character'], [projectId, 'location']]);
+  await deleteCodexEntry(linked[1]!.id!);
+  expect((await db.timeline.get(event!.id!))?.characterIds).toEqual([linked[0]!.id]);
+});

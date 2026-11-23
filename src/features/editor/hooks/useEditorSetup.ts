@@ -14,7 +14,7 @@ import { CustomAIKeymap } from '@/src/features/editor/hooks/useEditorAI';
 import tippy from 'tippy.js';
 import { cn } from '@/src/lib/utils';
 import { CodexEntry } from '@/src/types';
-import { InlineConsistencyFlag, InlineQuoteFinding, InlineSpellingFinding, InlineGlossaryFinding } from '@/src/lib/inlineConsistency';
+import { InlineQuoteFinding, InlineSpellingFinding, InlineGlossaryFinding } from '@/src/lib/inlineConsistency';
 import { useRef, useEffect } from 'react';
 
 interface UseEditorSetupProps {
@@ -23,8 +23,6 @@ interface UseEditorSetupProps {
   codexEntries: CodexEntry[];
   onCodexClick: (entryId: number, event: MouseEvent) => void;
   onUpdate: (props: { editor: Editor }) => void;
-  /** Akses peta tanda konsistensi inline (codexId → flag), stabil identitasnya. */
-  getConsistencyFlags?: () => Map<number, InlineConsistencyFlag>;
   /** Akses temuan kutipan dari lapisan AI inline (Fase 2), stabil identitasnya. */
   getConsistencyQuotes?: () => InlineQuoteFinding[];
   /** Akses temuan salah-eja nama (Buku Gaya), stabil identitasnya. */
@@ -46,27 +44,17 @@ const CustomMention = Mention.extend({
   },
 });
 
-export function useEditorSetup({ chapterId, initialContent, codexEntries, onCodexClick, onUpdate, getConsistencyFlags, getConsistencyQuotes, getConsistencySpelling, getConsistencyGlossary }: UseEditorSetupProps) {
-  const codexEntriesRef = useRef<CodexEntry[]>(codexEntries);
-  // Lapis "Kebenaran Tersembunyi": entri `hidden` disaring dari permukaan pembaca
-  // (highlight & saran mention). Konsistensi (ConsistencyUnderline) tetap pakai daftar
-  // penuh via codexEntriesRef agar bisa menandai kebocoran rahasia.
+export function useEditorSetup({ chapterId, initialContent, codexEntries, onCodexClick, onUpdate, getConsistencyQuotes, getConsistencySpelling, getConsistencyGlossary }: UseEditorSetupProps) {
   const visibleCodexEntriesRef = useRef<CodexEntry[]>(codexEntries.filter(e => !e.hidden));
   const onUpdateRef = useRef(onUpdate);
   // Akses flag/temuan konsistensi lewat ref agar closure extension selalu baca versi terkini.
-  const getFlagsRef = useRef(getConsistencyFlags);
   const getQuotesRef = useRef(getConsistencyQuotes);
   const getSpellingRef = useRef(getConsistencySpelling);
   const getGlossaryRef = useRef(getConsistencyGlossary);
 
   useEffect(() => {
-    codexEntriesRef.current = codexEntries;
     visibleCodexEntriesRef.current = codexEntries.filter(e => !e.hidden);
   }, [codexEntries]);
-
-  useEffect(() => {
-    getFlagsRef.current = getConsistencyFlags;
-  }, [getConsistencyFlags]);
 
   useEffect(() => {
     getQuotesRef.current = getConsistencyQuotes;
@@ -97,12 +85,9 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
       }),
       SemanticHighlight,
       ConsistencyUnderline.configure({
-        getEntries: () => codexEntriesRef.current,
-        getFlags: () => getFlagsRef.current?.() ?? new Map(),
         getQuoteFindings: () => getQuotesRef.current?.() ?? [],
         getSpellingFindings: () => getSpellingRef.current?.() ?? [],
         getGlossaryFindings: () => getGlossaryRef.current?.() ?? [],
-        onOpenCodex: (entryId, event) => onCodexClick(entryId, event),
       }),
       RevisionComment,
       PassiveCodexHighlight.configure({

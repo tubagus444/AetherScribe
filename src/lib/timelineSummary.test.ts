@@ -30,7 +30,7 @@ describe('buildTimelineSummary', () => {
       [{ id: 10, title: 'Bab 1' }],
       [{ id: 100, name: 'Kael' }, { id: 101, name: 'Mira' }]
     );
-    expect(out).toBe('1. [Hari 3] Kael menemukan pedang (Bab: Bab 1) [Tokoh: Kael, Mira] — Di reruntuhan');
+    expect(out).toBe('1. [Hari 3] Kael menemukan pedang (Bab: Bab 1) [Entitas Codex terkait: Kael, Mira] — Di reruntuhan');
   });
 
   it('uses calendar and startDate if available, falling back to eventDate if not', () => {

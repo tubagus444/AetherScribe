@@ -5,7 +5,7 @@
 
 import { readChapter } from '@/src/services/chapterQueries';
 import { useProjectChapters } from '@/src/hooks/useChapterQueries';
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { 
@@ -38,6 +38,9 @@ import { AiProcessingOverlay } from '@/src/features/editor/components/AiProcessi
 import { NovelPanels } from '@/src/features/editor/components/NovelPanels';
 import { EditorActivityRail } from '@/src/features/editor/components/EditorActivityRail';
 import { SearchReplaceBar } from '@/src/features/editor/components/SearchReplaceBar';
+
+const CalendarEventModal = React.lazy(() => import('@/src/features/timeline/components/CalendarEventModal')
+  .then(module => ({ default: module.CalendarEventModal })));
 
 interface NovelEditorProps {
   chapterId: number;
@@ -97,13 +100,9 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   const { codexEntries, aiActions, bibleRules, relationships, isLoading } = useProjectData(projectId);
   const { categories } = useCodexCategories(projectId);
 
-  // Data untuk konsistensi inline (Fase 1, deterministik): urutan bab + timeline.
-  const allChapters = useProjectChapters(projectId);
-  const timelineEvents = useLiveQuery(() => db.timeline.where('projectId').equals(projectId).toArray(), [projectId]);
-  const chapterRefs = useMemo(
-    () => (allChapters || []).filter(c => c.id != null).map(c => ({ id: c.id!, order: c.order, title: c.title })),
-    [allChapters]
-  );
+  const [eventDraft, setEventDraft] = useState<{ title: string; chapterId: number } | null>(null);
+  const project = useLiveQuery(() => eventDraft ? db.projects.get(projectId) : undefined, [projectId, !!eventDraft]);
+  const allChapters = useProjectChapters(eventDraft ? projectId : undefined, 'manuscript');
 
   const {
     editor,
@@ -148,9 +147,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
     relationships: relationships || [],
     aiActions: aiActions || [],
     isTypewriterMode,
-    containerRef,
-    chapters: chapterRefs,
-    timeline: timelineEvents || []
+    containerRef
   });
 
   // Tambah catatan revisi pada teks terpilih: bungkus selection dengan mark
@@ -321,10 +318,16 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
             onAddComment={handleAddComment}
             onCheckConsistency={handleCheckConsistency}
             isCheckingConsistency={aiInlineChecking}
+            onTimeline={text => setEventDraft({ title: text, chapterId })}
             onNotePromise={handleNotePromise}
           />
         )}
 
+        {eventDraft && eventDraft.chapterId === chapterId && project && <React.Suspense fallback={null}><CalendarEventModal projectId={projectId}
+          calendar={project.calendar} seed={eventDraft} chapters={allChapters ?? []} codex={codexEntries} onClose={() => {
+            setEventDraft(null);
+            if (editor && !editor.isDestroyed) editor.commands.focus(undefined, { scrollIntoView: false });
+          }} /></React.Suspense>}
         {promiseSeed && (
           <QuickPromiseModal seed={promiseSeed} onClose={() => setPromiseSeed(null)} />
         )}

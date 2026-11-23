@@ -38,6 +38,7 @@ interface SelectionFloatingMenuProps {
   /** true selagi cek konsistensi berjalan (untuk spinner pada tombol). */
   isCheckingConsistency?: boolean;
   /** Catat teks terpilih sebagai Janji Plot (Chekhov's Gun) — tanpa pindah panel. */
+  onTimeline?: (text: string) => void;
   onNotePromise?: (text: string) => void;
 }
 
@@ -53,6 +54,7 @@ export function SelectionFloatingMenu({
   onAddComment,
   onCheckConsistency,
   isCheckingConsistency = false,
+  onTimeline,
   onNotePromise
 }: SelectionFloatingMenuProps) {
   const [show, setShow] = useState(false);
@@ -151,7 +153,7 @@ export function SelectionFloatingMenu({
         
         setPosition({
           top: showAtBottom ? rect.bottom + 18 : rect.top - 18,
-          left: Math.max(220, Math.min(window.innerWidth - 220, rect.left + (rect.width / 2)))
+          left: window.innerWidth < 720 ? window.innerWidth / 2 : Math.max(325, Math.min(window.innerWidth - 325, rect.left + rect.width / 2))
         });
         setShow(true);
       } else {
@@ -375,7 +377,7 @@ export function SelectionFloatingMenu({
             /* --- DEFAULT MULTI-LAYERED MENU --- */
             <>
               {/* LAYER 1: Core Actions Pill */}
-              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 p-1.5 rounded-full flex items-center gap-1 shadow-xl">
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 p-1.5 rounded-2xl flex flex-wrap justify-center items-center gap-1 shadow-xl w-max max-w-[95vw]">
                 {/* AI Trigger */}
                 <button
                   type="button"
@@ -431,6 +433,9 @@ export function SelectionFloatingMenu({
                 )}
 
                 {/* Catat teks terpilih sebagai Janji Plot (nol token, tanpa pindah panel) */}
+                {onTimeline && <button type="button" aria-label="Catat ke Linimasa"
+                  className="shrink-0 rounded-full bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-200"
+                  onMouseDown={e => e.preventDefault()} onClick={() => onTimeline(selectedText)}>Catat ke Linimasa</button>}
                 {onNotePromise && (
                   <button
                     type="button"

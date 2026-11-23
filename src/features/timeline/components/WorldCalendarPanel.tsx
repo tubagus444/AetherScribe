@@ -29,6 +29,7 @@ import {
 import { auditChronology } from '@/src/lib/chronologyAudit';
 import { cn } from '@/src/lib/utils';
 import { CalendarEditorModal } from './CalendarEditorModal';
+import { compareEvents } from '@/src/lib/timelinePeriods';
 import { CalendarEventModal, CalendarEventSeed } from './CalendarEventModal';
 import { CalendarCalculatorModal } from './CalendarCalculatorModal';
 import { ChronologyAuditModal } from './ChronologyAuditModal';
@@ -196,7 +197,7 @@ function CalendarView({
   }, [codex]);
 
   // Hanya event ber-tanggal terstruktur yang muncul di kalender.
-  const dated = useMemo(() => events.filter(e => e.startDate), [events]);
+  const dated = useMemo(() => events.filter(e => e.startDate).sort(compareEvents), [events]);
 
   // Apakah event menutupi sebuah sel (era/year/month/day) — sadar rentang lintas-bulan.
   const coversCell = (ev: TimelineEvent, cell: WorldDate): boolean => {
