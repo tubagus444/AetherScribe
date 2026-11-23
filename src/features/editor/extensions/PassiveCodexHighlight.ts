@@ -1,4 +1,4 @@
-import { Extension } from '@tiptap/core';
+import { Extension, type Editor } from '@tiptap/core';
 import { Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import { Node as ProseMirrorNode } from 'prosemirror-model';
@@ -10,6 +10,18 @@ interface PassiveCodexHighlightOptions {
 }
 
 const PLUGIN_KEY = new PluginKey('passiveCodexHighlight');
+const CHAPTER_CODEX_KEY = new PluginKey<DecorationSet>('chapterCodexHighlight');
+
+export function setChapterCodexHighlights(editor: Editor, ranges: readonly { start: number; end: number; isMention: boolean }[]) {
+  if (editor.isDestroyed) return;
+  const { state, view } = editor;
+  if (ranges.length === 0 && CHAPTER_CODEX_KEY.getState(state) === DecorationSet.empty) return;
+  const decorations = ranges.map(({ start, end, isMention }) => {
+    const attrs = { class: 'chapter-codex-highlight', 'data-chapter-codex-start': String(start) };
+    return isMention ? Decoration.node(start, end, attrs) : Decoration.inline(start, end, attrs);
+  });
+  view.dispatch(state.tr.setMeta(CHAPTER_CODEX_KEY, DecorationSet.create(state.doc, decorations)));
+}
 
 export const PassiveCodexHighlight = Extension.create<PassiveCodexHighlightOptions>({
   name: 'passiveCodexHighlight',
@@ -30,6 +42,20 @@ export const PassiveCodexHighlight = Extension.create<PassiveCodexHighlightOptio
     let runGeneration = 0;
 
     return [
+      new Plugin<DecorationSet>({
+        key: CHAPTER_CODEX_KEY,
+        state: {
+          init: () => DecorationSet.empty,
+          apply(tr, decorations) {
+            const next = tr.getMeta(CHAPTER_CODEX_KEY);
+            if (next instanceof DecorationSet) return next;
+            return tr.docChanged ? DecorationSet.empty : decorations;
+          },
+        },
+        props: {
+          decorations: state => CHAPTER_CODEX_KEY.getState(state),
+        },
+      }),
       new Plugin({
         key: PLUGIN_KEY,
         state: {
@@ -73,24 +99,18 @@ export const PassiveCodexHighlight = Extension.create<PassiveCodexHighlightOptio
           },
           handleDOMEvents: {
             click(view, event) {
-              const target = event.target as HTMLElement;
-              if (target && target.classList.contains('codex-highlight')) {
-                const codexId = target.getAttribute('data-codex-id');
-                if (codexId && options.onCodexClick) {
-                  options.onCodexClick(Number(codexId), event);
-                  return true;
-                }
+              const target = event.target;
+              if (!(target instanceof Element) || !options.onCodexClick) return false;
+              const codexId = target.closest('.codex-highlight')?.getAttribute('data-codex-id');
+              if (codexId) {
+                options.onCodexClick(Number(codexId), event);
+                return true;
               }
-              if (target && target.classList.contains('mention')) {
-                const mentionId = target.getAttribute('data-id');
-                if (mentionId) {
-                  const entries = options.getCodexEntries();
-                  const foundEntry = entries.find(e => e.name.toLowerCase() === mentionId.toLowerCase());
-                  if (foundEntry && foundEntry.id && options.onCodexClick) {
-                    options.onCodexClick(Number(foundEntry.id), event);
-                    return true;
-                  }
-                }
+              const mentionId = target.closest('.mention')?.getAttribute('data-id')?.toLowerCase();
+              const entry = mentionId && options.getCodexEntries().find(e => e.name.toLowerCase() === mentionId);
+              if (entry && entry.id) {
+                options.onCodexClick(entry.id, event);
+                return true;
               }
               return false;
             }

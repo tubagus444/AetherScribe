@@ -32,6 +32,50 @@ test('F05 editor persists a draft across reload', async ({ page }) => {
   await expect(editor).toHaveText('Draft browser F24');
 });
 
+for (const width of [1280, 390]) {
+  test(`editor selection menu clears the highlighted text at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const text = 'Satu dentang terlambat. '.repeat(width === 390 ? 5 : 1).trim();
+    await page.evaluate(async (text) => {
+      const path = '/src/db.ts';
+      const { db } = await import(path);
+      const content = '<p>Dermaga sepi.</p>'.repeat(4) + `<p>${text}</p>` + '<p>Langkah kaki menjauh.</p>'.repeat(18);
+      await db.chapters.update(1, { content });
+    }, text);
+    await page.reload();
+    const editor = page.locator('.tiptap[contenteditable="true"]');
+    const paragraph = editor.getByText(text, { exact: true });
+    await editor.focus();
+    await paragraph.evaluate(element => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      const selection = window.getSelection()!;
+      selection.removeAllRanges();
+      selection.addRange(range);
+      element.scrollIntoView({ block: 'center', behavior: 'instant' });
+    });
+
+    const menu = page.locator('#selection-floating-menu');
+    await expect(menu.getByRole('button', { name: 'Buka menu Asisten AI' })).toBeVisible();
+    const clearOfSelection = (side: 'above' | 'below') => expect.poll(() => menu.evaluate((element, side) => {
+      const selection = window.getSelection()!.getRangeAt(0).getBoundingClientRect();
+      const bounds = element.getBoundingClientRect();
+      const gap = side === 'above' ? selection.top - bounds.bottom : bounds.top - selection.bottom;
+      return {
+        gap: Math.round(gap),
+        visible: getComputedStyle(element).visibility === 'visible',
+        inViewport: bounds.left >= 0 && bounds.right <= window.innerWidth,
+      };
+    }, side)).toEqual({ gap: 12, visible: true, inViewport: true });
+
+    await clearOfSelection('above');
+    await paragraph.evaluate(element => {
+      element.scrollIntoView({ block: 'start', behavior: 'instant' });
+    });
+    await clearOfSelection('below');
+  });
+}
+
 test('novel notes share chapter links, colors and archive state with the editor', async ({ page }) => {
   const tabs = page.getByRole('navigation', { name: /Sub-navigasi/ });
   await page.getByRole('button', { name: 'Catatan Revisi' }).click();
@@ -69,25 +113,84 @@ test('novel notes share chapter links, colors and archive state with the editor'
   await expect(page.getByText('Cek urutan surat')).toBeHidden();
 });
 
-test('chapter Codex follows live text and distinguishes ambiguous aliases', async ({ page }) => {
+test('chapter Codex reads details in the editor and highlights only confirmed mentions', async ({ page }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
     const { db } = await import(path);
     const entry = { projectId: 1, category: 'character', description: '', aliases: ['Kapten'], tags: [] };
-    await db.codex.bulkAdd([{ ...entry, name: 'Raka' }, { ...entry, name: 'Mira' }]);
+    await db.codex.bulkAdd([
+      { ...entry, name: 'Raka', aliases: ['Kapten', 'Penjaga'], description: 'Penjaga dermaga saat fajar.',
+        details: [{ id: 'duty', label: 'Tugas', value: 'Membunyikan lonceng', includeInAI: false }] },
+      { ...entry, name: 'Mira' },
+    ]);
   });
   const editor = page.locator('.tiptap[contenteditable="true"]');
+  const highlights = editor.locator('.chapter-codex-highlight');
   await page.getByRole('button', { name: 'Codex di Bab Ini' }).click();
-  await editor.fill('Raka bertemu Kapten.');
+  await editor.fill('Raka bertemu Kapten. Penjaga memanggil Raka.');
   await expect(page.getByRole('heading', { name: 'Penyebutan ambigu' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Mira', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Raka.*1 penyebutan/ }).click();
+  const firstMention = page.getByRole('button', { name: /Raka.*3 penyebutan/ });
+  await firstMention.click();
   await expect.poll(() => page.evaluate(() => window.getSelection()?.toString())).toBe('Raka');
+  await firstMention.locator('..').getByRole('button', { name: 'Raka', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Raka', exact: true })).toBeVisible();
+  await expect(page.getByText('Penjaga dermaga saat fajar.')).toBeVisible();
+  await expect(page.getByText('Membunyikan lonceng')).toBeVisible();
+  await expect(highlights).toHaveText(['Raka', 'Penjaga', 'Raka']);
+  await page.getByRole('button', { name: 'Penyebutan berikutnya' }).click();
+  await expect(page.getByText('2 dari 3 penyebutan')).toBeVisible();
+
+  await editor.fill('Teks baru.');
+  await expect(highlights).toHaveCount(0);
+  await expect(page.getByText('Tidak ada penyebutan yang pasti.')).toBeVisible();
+  await editor.fill('Raka tiba kembali.');
+  await expect(highlights).toHaveText(['Raka']);
+  await page.getByRole('button', { name: 'Kembali ke daftar' }).click();
+  await expect(highlights).toHaveCount(0);
+
   await editor.fill('Teks baru.');
   await expect(page.getByText('Belum ada entitas Codex yang terdeteksi di bab ini.')).toBeVisible();
-  await editor.fill('Mira tiba.');
+  await editor.fill('Kapten tiba.');
+  await expect(page.getByRole('heading', { name: 'Penyebutan ambigu' })).toBeVisible();
   await page.getByRole('button', { name: 'Mira', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Mira' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mira', exact: true })).toBeVisible();
+  await expect(highlights).toHaveCount(0);
+});
+
+test('chapter Codex keeps the text highlighted while reading the manuscript on mobile', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db } = await import(path);
+    await db.codex.add({ projectId: 1, category: 'character', name: 'Nara', description: 'Penjaga mercusuar.', aliases: [], tags: [] });
+    const content = '<p><span data-type="mention" data-id="Nara" data-label="Nara">Nara</span> membuka pintu.</p>'
+      + '<p>Ombak datang dan pergi.</p>'.repeat(18) + '<p>Nara memanggil awak.</p>';
+    await db.chapters.update(1, { content });
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  const highlights = editor.locator('.chapter-codex-highlight');
+  await page.getByRole('button', { name: 'Codex di Bab Ini' }).click();
+  await page.getByRole('button', { name: 'Nara', exact: true }).click();
+  await expect(page.getByText('Penjaga mercusuar.')).toBeVisible();
+  await page.getByRole('button', { name: 'Lihat di naskah' }).click();
+  await expect(page.getByText('Penjaga mercusuar.')).toBeHidden();
+  await expect(highlights).toHaveText(['Nara', 'Nara']);
+  await expect(highlights.first()).toHaveAttribute('data-id', 'Nara');
+  await expect(highlights.first()).toHaveAttribute('contenteditable', 'false');
+  await expect(highlights.first()).toBeInViewport();
+  await page.getByRole('button', { name: 'Penyebutan berikutnya' }).click();
+  await expect(page.getByText('2 dari 2 penyebutan')).toBeVisible();
+  await expect.poll(() => highlights.last().evaluate(element => {
+    const { x, y, width, height } = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(x + width / 2, y + height / 2));
+  })).toBe(true);
+  await page.getByRole('button', { name: 'Lihat detail Nara' }).click();
+  await expect(page.getByText('Penjaga mercusuar.')).toBeVisible();
+  await page.getByRole('button', { name: 'Tutup panel editor' }).click();
+  await expect(highlights).toHaveCount(0);
 });
 
 test('DB01 failed autosave keeps the editor open until navigation can save the draft', async ({ page }) => {

@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-23
 
+- Ukuran dan jarak Heading 1–3 di editor diperkecil agar lebih proporsional dengan teks naskah.
+
+- Memilih entri dari **Codex di Bab Ini** membuka detail di sidebar editor dan menyorot semua kemunculan nama dan alias yang cocok di bab aktif. Tombol panah memudahkan berpindah antarpenyebutan.
+
+- Menu seleksi editor kini muncul di atas atau di bawah blok teks sesuai ruang yang tersedia, sehingga kalimat yang disorot tetap terbaca.
+
 - Graf Lore dapat mencari node menurut nama atau alias, memusatkan dan menyorot hasil, serta menampilkan hubungan langsung dari node pilihan.
 
 - Dialog Codex dan Graf Lore menyesuaikan lebar dengan isi. Entri ringkas memakai satu kolom, sementara entri dengan deskripsi dan detail yang padat tetap memakai dua kolom di desktop.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import {
   Sparkles,
   Check,
@@ -25,6 +25,7 @@ import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
 
 interface SelectionFloatingMenuProps {
   editor: Editor;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onAiAction: (action: string, provider?: string, customPrompt?: string) => void;
   customActions?: AIAction[];
   isAiProcessing?: boolean;
@@ -44,6 +45,7 @@ interface SelectionFloatingMenuProps {
 
 export function SelectionFloatingMenu({
   editor,
+  scrollContainerRef,
   onAiAction,
   customActions = [],
   isAiProcessing = false,
@@ -66,8 +68,10 @@ export function SelectionFloatingMenu({
     selectedProvider, 
     setSelectedProvider 
   } = useAvailableProviders();
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const [placement, setPlacement] = useState<'top' | 'bottom'>('top');
+  const selectionRangeRef = React.useRef<Range | null>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const [bounds, setBounds] = useState<{ rect: DOMRect; top: number; bottom: number; width: number } | null>(null);
+  const [menuSize, setMenuSize] = useState({ width: 0, height: 0 });
 
   // Load docked state from localStorage
   const [isDocked, setIsDocked] = useState(() => {
@@ -107,8 +111,20 @@ export function SelectionFloatingMenu({
     isCustomOpenRef.current = isCustomOpen;
   }, [isCustomOpen]);
 
+  const updateBounds = React.useCallback(() => {
+    const rect = selectionRangeRef.current?.getBoundingClientRect();
+    const container = scrollContainerRef.current?.getBoundingClientRect();
+    setBounds(rect?.width && rect.height && container ? {
+      rect,
+      top: Math.max(container.top, 0),
+      bottom: Math.min(container.bottom, window.innerHeight),
+      width: window.innerWidth,
+    } : null);
+  }, [scrollContainerRef]);
+
   const handleSelection = React.useCallback(() => {
     if (rewritePreview) return; // Freeze menu state during preview
+    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
 
     const { selection } = editor.state;
     
@@ -121,6 +137,7 @@ export function SelectionFloatingMenu({
         }
       }
       
+      selectionRangeRef.current = null;
       setShow(false);
       setSelectedText('');
       setIsCustomOpen(false);
@@ -130,39 +147,18 @@ export function SelectionFloatingMenu({
     const rawText = editor.state.doc.textBetween(selection.from, selection.to, ' ');
     setSelectedText(rawText);
 
-    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
-
     selectionTimerRef.current = setTimeout(() => {
       const domSelection = window.getSelection();
       if (!domSelection || domSelection.rangeCount === 0) return;
 
-      // Ignore selection changes originating inside our menu's inputs
-      const anchorNode = domSelection.anchorNode;
-      const isMenuSelection = anchorNode?.nodeType === Node.ELEMENT_NODE 
-          ? (anchorNode as Element).closest('#selection-floating-menu')
-          : anchorNode?.parentElement?.closest('#selection-floating-menu');
-          
-      if (isMenuSelection) return;
-
       const range = domSelection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      
-      if (rect.width > 0 && rect.height > 0) {
-        const showAtBottom = rect.top < 140;
-        setPlacement(showAtBottom ? 'bottom' : 'top');
-        
-        setPosition({
-          top: showAtBottom ? rect.bottom + 18 : rect.top - 18,
-          left: window.innerWidth < 720 ? window.innerWidth / 2 : Math.max(325, Math.min(window.innerWidth - 325, rect.left + rect.width / 2))
-        });
-        setShow(true);
-      } else {
-        if (!showAiMenuRef.current && !isCustomOpenRef.current) {
-          setShow(false);
-        }
-      }
+      if (range.collapsed || !editor.view.dom.contains(range.commonAncestorContainer)) return;
+
+      selectionRangeRef.current = range.cloneRange();
+      updateBounds();
+      setShow(true);
     }, 0);
-  }, [editor, rewritePreview]);
+  }, [editor, rewritePreview, updateBounds]);
 
   useEffect(() => {
     return () => {
@@ -181,10 +177,7 @@ export function SelectionFloatingMenu({
           return;
         }
       }
-      // Re-evaluate placement if menu is shown, unless user is actively interacting with AI menu
-      if (showRef.current && !showAiMenuRef.current && !isCustomOpenRef.current) {
-        handleSelection();
-      }
+      if (selectionRangeRef.current) updateBounds();
     };
 
     window.addEventListener('scroll', handleScrollOrResize, true);
@@ -195,7 +188,22 @@ export function SelectionFloatingMenu({
       window.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
     };
-  }, [editor, handleSelection]);
+  }, [editor, handleSelection, updateBounds]);
+
+  useLayoutEffect(() => {
+    const menu = menuRef.current;
+    if (!show || !menu) return;
+    const measure = () => {
+      const width = menu.offsetWidth;
+      // Include content beyond the scroll boundary when deciding which side fits.
+      const height = menu.scrollHeight + menu.offsetHeight - menu.clientHeight;
+      setMenuSize(size => size.width === width && size.height === height ? size : { width, height });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(menu);
+    return () => observer.disconnect();
+  }, [show, showAiMenu, rewritePreview]);
 
   // Clean-up custom view when floating menu hides
   useEffect(() => {
@@ -242,6 +250,22 @@ export function SelectionFloatingMenu({
 
   const hasLengthWarning = selectedText.replace(/\s/g, '').length < 5;
 
+  const gap = 12;
+  const rect = bounds?.rect;
+  const above = bounds ? bounds.rect.top - bounds.top - gap * 2 : 0;
+  const below = bounds ? bounds.bottom - bounds.rect.bottom - gap * 2 : 0;
+  const showAbove = !isDocked && (above >= menuSize.height || (below < menuSize.height && above >= below));
+  const availableHeight = showAbove ? above : below;
+  const canScroll = showAiMenu || !!rewritePreview;
+  const constrained = !isDocked && canScroll && availableHeight < menuSize.height;
+  const minHeight = canScroll ? Math.min(menuSize.height, 44) : menuSize.height;
+  const selectionVisible = bounds && bounds.rect.bottom > bounds.top && bounds.rect.top < bounds.bottom;
+  const menuVisible = isDocked || (selectionVisible && menuSize.height > 0 && availableHeight >= minHeight);
+  const viewportWidth = bounds?.width ?? 0;
+  const center = rect && viewportWidth >= 720 ? rect.left + rect.width / 2 : viewportWidth / 2;
+  const edge = Math.min(gap, (viewportWidth - menuSize.width) / 2);
+  const left = Math.max(edge, Math.min(viewportWidth - menuSize.width - edge, center - menuSize.width / 2));
+
   const builtInActions = [
     { id: "Show don't tell", label: "Show, don't tell", icon: Sparkles, desc: "Ubah kalimat deskriptif pasif" },
     { id: "Focus Senses", label: "Senses", icon: Eye, desc: "Perkaya deskripsi suasana" },
@@ -253,30 +277,29 @@ export function SelectionFloatingMenu({
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          ref={menuRef}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.12, ease: "easeOut" }}
           className={cn(
-            "fixed z-[100] transition-colors duration-200 flex",
-            placement === 'top' ? "flex-col-reverse items-center" : "flex-col items-center",
-            (rewritePreview || isAiProcessing) ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border max-w-[95vw]" : "",
+            "fixed z-[100] w-max max-w-[95vw] transition-colors duration-200 flex flex-col items-center",
+            constrained && "overflow-y-auto no-scrollbar [&>*]:shrink-0",
+            (rewritePreview || isAiProcessing) ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border" : "",
             rewritePreview
               ? "rounded-2xl p-4 w-[480px] border-slate-200 dark:border-slate-800"
               : isAiProcessing
                 ? "rounded-full p-2 border-slate-200/50 dark:border-slate-700/50"
                 : ""
           )}
-          style={isDocked ? { 
-            position: 'fixed',
-            bottom: '72px', 
-            left: '50%', 
-            transform: 'translateX(-50%)',
-            top: 'auto'
-          } : { 
-            top: position.top, 
-            left: position.left, 
-            transform: placement === 'bottom' ? 'translateX(-50%)' : 'translateX(-50%) translateY(-100%)' 
+          style={{
+            visibility: menuVisible ? 'visible' : 'hidden',
+            ...(isDocked ? { bottom: 72, left: '50%', translate: '-50%' } : {
+              top: showAbove ? (rect?.top ?? 0) - gap : (rect?.bottom ?? 0) + gap,
+              left,
+              translate: showAbove ? '0 -100%' : undefined,
+              maxHeight: constrained ? Math.max(0, availableHeight) : undefined,
+            }),
           }}
           id="selection-floating-menu"
         >
@@ -473,13 +496,13 @@ export function SelectionFloatingMenu({
               <AnimatePresence>
                 {showAiMenu && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: placement === 'top' && !isDocked ? 10 : -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: placement === 'top' && !isDocked ? 10 : -10 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: "easeOut" }}
                     className={cn(
                       "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl flex flex-col w-[340px] max-w-[95vw] overflow-hidden",
-                      placement === 'bottom' || isDocked ? "mt-2" : "mb-2"
+                      showAbove && !constrained ? "order-first mb-2" : "mt-2"
                     )}
                   >
                     {/* Header + Multi-provider indicator */}

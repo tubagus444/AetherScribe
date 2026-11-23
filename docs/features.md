@@ -18,6 +18,11 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 
 ## Kontrak editor dan analitik naskah
 
+- Heading 1–3 di naskah tampil lebih ringkas pada layar sempit dan lebar,
+  dengan ukuran yang berbeda untuk tiap level.
+- Menu seleksi mengambang menjaga jarak dari seluruh blok teks. Menu dipasang
+  di atas seleksi jika muat, atau di bawahnya saat ruang di atas terbatas.
+  Jika ruang di kedua sisi terlalu sempit, bilah aksi muncul kembali setelah editor digulir.
 - Pertahankan draf ketika simpan gagal. Transisi yang memerlukan simpan
   menunggu flush, termasuk perpindahan panel atau bab dan pengambilan
   snapshot cadangan. [Perlindungan dan pengujian simpan](testing.md#inventaris-alur-kritis)
@@ -64,9 +69,14 @@ aksi dilakukan. **Catatan Teks** masih dibuat melalui seleksi di naskah.
 Catatan Novel disimpan di luar konten naskah.
 
 Panel **Codex di Bab Ini** memindai isi editor melalui worker menggunakan
-nama dan alias entri Codex yang terlihat. Nama entitas membuka detail Codex,
-cuplikan memilih teks sumber, dan alias yang cocok dengan beberapa entri
-ditandai sebagai ambigu.
+nama dan alias entri Codex yang terlihat. Klik nama entitas untuk membaca
+deskripsi, alias, dan detailnya langsung di sidebar editor. Semua penyebutan
+yang cocok secara pasti disorot di bab aktif. **Lihat di naskah** dan
+tombol panah berpindah antarpenyebutan. Pada layar sempit, panel meringkas
+ke tepi bawah saat penulis melihat naskah. Kembali ke daftar atau tutup panel
+untuk menghapus sorotan sementara. Alias yang cocok dengan beberapa entri
+tetap tampil di daftar penyebutan ambigu. Cuplikan dalam daftar memilih
+teks sumber.
 
 ## Codex & Ensiklopedia Lore
 - **Deskripsi:** Ensiklopedia komprehensif untuk mencatat karakter, tempat, item, sihir, dan lore dengan dukungan alias multi-kata untuk deteksi teks instan.

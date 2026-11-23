@@ -118,15 +118,15 @@
 }
 
 .tiptap h1 {
-  @apply text-4xl sm:text-5xl font-bold mt-8 mb-6 font-serif tracking-tight text-slate-800 dark:text-slate-200;
+  @apply text-3xl sm:text-[2rem] leading-tight font-bold mt-8 mb-4 font-serif tracking-tight text-slate-800 dark:text-slate-200;
 }
 
 .tiptap h2 {
-  @apply text-3xl sm:text-4xl font-semibold mt-8 mb-4 font-serif tracking-tight text-slate-800 dark:text-slate-200;
+  @apply text-2xl sm:text-[1.625rem] leading-tight font-semibold mt-6 mb-3 font-serif tracking-tight text-slate-800 dark:text-slate-200;
 }
 
 .tiptap h3 {
-  @apply text-2xl sm:text-3xl font-medium mt-6 mb-4 font-serif tracking-tight text-slate-800 dark:text-slate-200;
+  @apply text-xl sm:text-[1.375rem] leading-snug font-medium mt-5 mb-3 font-serif tracking-tight text-slate-800 dark:text-slate-200;
 }
 
 .tiptap ul {
@@ -163,6 +163,10 @@
 
 .tiptap .codex-highlight {
   @apply text-indigo-700 dark:text-indigo-400 border-b border-indigo-300 dark:border-indigo-700 border-dotted cursor-help transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/50;
+}
+
+.tiptap .chapter-codex-highlight {
+  @apply rounded-sm bg-teal-200 text-teal-950 dark:bg-teal-800 dark:text-teal-50;
 }
 
 .tiptap .revision-comment {

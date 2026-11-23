@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, X } from 'lucide-react';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { PANEL_WIDTH } from '@/src/lib/constants';
+import type { CategoryDef } from '@/src/lib/codexCategories';
+import { cn } from '@/src/lib/utils';
 import { restoreChapterSnapshot } from '@/src/services/chapterOperations';
 
 // Lazy load side panels
@@ -26,6 +28,7 @@ interface NovelPanelsProps {
   chapterId: number;
   editor: Editor | null;
   codexEntries: CodexEntry[];
+  codexCategories: CategoryDef[];
   bibleRules: any[];
   relationships?: any[];
   focusCommentId?: string | null;
@@ -33,7 +36,7 @@ interface NovelPanelsProps {
 }
 
 function EditorNotes({ projectId, chapterId, editor, focusCommentId, onFocusCommentConsumed }:
-  Omit<NovelPanelsProps, 'codexEntries' | 'bibleRules' | 'relationships'>) {
+  Pick<NovelPanelsProps, 'projectId' | 'chapterId' | 'editor' | 'focusCommentId' | 'onFocusCommentConsumed'>) {
   const [tab, setTab] = React.useState<'chapter' | 'text'>('chapter');
   const showText = Boolean(focusCommentId) || tab === 'text';
 
@@ -55,8 +58,15 @@ function EditorNotes({ projectId, chapterId, editor, focusCommentId, onFocusComm
   );
 }
 
-export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleRules, relationships, focusCommentId, onFocusCommentConsumed }: NovelPanelsProps) {
+export function NovelPanels({ projectId, chapterId, editor, codexEntries, codexCategories, bibleRules, relationships, focusCommentId, onFocusCommentConsumed }: NovelPanelsProps) {
   const { activePanel, setActivePanel } = useEditorPanel();
+  const [codexTextChapter, setCodexTextChapter] = React.useState<number | null>(null);
+  const showingCodexText = activePanel === 'chapterCodex' && codexTextChapter === chapterId;
+  const showCodexDetails = React.useCallback(() => setCodexTextChapter(null), []);
+
+  React.useEffect(() => {
+    if (activePanel !== 'chapterCodex') showCodexDetails();
+  }, [activePanel, showCodexDetails]);
   
   return (
     <AnimatePresence>
@@ -70,10 +80,13 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleR
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: window.innerWidth < 1024 ? (window.innerWidth < 400 ? '100%' : PANEL_WIDTH) : PANEL_WIDTH, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="h-full absolute lg:relative right-0 top-0 z-50 lg:z-auto border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl lg:shadow-none"
+            className={cn(
+              'h-full absolute lg:relative right-0 top-0 z-50 lg:z-auto border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl lg:shadow-none',
+              showingCodexText && 'max-lg:bottom-0 max-lg:top-auto max-lg:h-auto',
+            )}
           >
             <div className="h-full flex flex-col" style={{ width: window.innerWidth < 1024 && window.innerWidth < 400 ? '100%' : PANEL_WIDTH }}>
-              {(activePanel === 'comments' || activePanel === 'chapterCodex') && (
+              {(activePanel === 'comments' || (activePanel === 'chapterCodex' && !showingCodexText)) && (
                 <button type="button" aria-label="Tutup panel editor" className="self-end p-2 lg:hidden" onClick={() => setActivePanel('none')}>
                   <X size={18} />
                 </button>
@@ -88,9 +101,16 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, bibleR
               )}
 
               {activePanel === 'chapterCodex' && editor && (
-                <ChapterCodexPanel key={chapterId} editor={editor} entries={codexEntries} onJump={() => {
-                  if (window.innerWidth < 1024) setActivePanel('none');
-                }} />
+                <ChapterCodexPanel
+                  key={chapterId}
+                  editor={editor}
+                  entries={codexEntries}
+                  categories={codexCategories}
+                  showingText={showingCodexText}
+                  onJump={() => { if (window.innerWidth < 1024) setActivePanel('none'); }}
+                  onViewText={() => { if (window.innerWidth < 1024) setCodexTextChapter(chapterId); }}
+                  onShowDetails={showCodexDetails}
+                />
               )}
 
               {activePanel === 'assistant' && (

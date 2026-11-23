@@ -272,6 +272,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
           chapterId={chapterId}
           editor={editor}
           codexEntries={codexEntries || []}
+          codexCategories={categories}
           bibleRules={bibleRules || []}
           relationships={relationships || []}
           focusCommentId={focusCommentId}
@@ -308,6 +309,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
         {editor && (
           <SelectionFloatingMenu 
             editor={editor} 
+            scrollContainerRef={containerRef}
             onAiAction={runAiAction} 
             customActions={aiActions} 
             isAiProcessing={isAiProcessing}
