@@ -9,10 +9,10 @@
  *
  * Protokol pesan:
  *   → { type: 'BUILD_GRAPH_VIEW', entries, relationships, promises, requestId }
- *   ← { type: 'GRAPH_VIEW_RESULT', nodes, links, requestId }
+ *   ← { type: 'GRAPH_VIEW_RESULT', nodes, links, backlinks, requestId }
  */
 
-import { buildLoreGraphView } from '@/src/lib/loreGraph';
+import { buildLoreGraph, buildLoreGraphView, scanMentions, type LoreGraph, type LoreGraphView } from '@/src/lib/loreGraph';
 import type { CodexEntry, Relationship, PlotPromise } from '@/src/types';
 
 export interface LoreGraphWorkerRequest {
@@ -23,10 +23,8 @@ export interface LoreGraphWorkerRequest {
   requestId: number;
 }
 
-export interface LoreGraphWorkerResponse {
+export interface LoreGraphWorkerResponse extends LoreGraphView, Pick<LoreGraph, 'backlinks'> {
   type: 'GRAPH_VIEW_RESULT';
-  nodes: ReturnType<typeof buildLoreGraphView>['nodes'];
-  links: ReturnType<typeof buildLoreGraphView>['links'];
   requestId: number;
 }
 
@@ -34,11 +32,13 @@ self.onmessage = (e: MessageEvent<LoreGraphWorkerRequest>) => {
   const { type, entries, relationships, promises, requestId } = e.data;
 
   if (type === 'BUILD_GRAPH_VIEW') {
-    const { nodes, links } = buildLoreGraphView(entries, relationships, promises);
+    const mentions = scanMentions(entries);
+    const view = buildLoreGraphView(entries, relationships, promises, mentions);
+    const { backlinks } = buildLoreGraph(entries, relationships, promises, mentions);
     const response: LoreGraphWorkerResponse = {
       type: 'GRAPH_VIEW_RESULT',
-      nodes,
-      links,
+      ...view,
+      backlinks,
       requestId,
     };
     self.postMessage(response);

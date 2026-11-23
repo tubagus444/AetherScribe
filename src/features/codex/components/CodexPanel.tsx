@@ -445,16 +445,18 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
             detailChapters={detailChapters}
             onClose={() => setSelectedEntry(null)}
             onOpenEntry={setSelectedEntry}
-            onEdit={(entry) => {
-              setSelectedEntry(null);
-              startEditing(entry);
+            management={{
+              onEdit: (entry) => {
+                setSelectedEntry(null);
+                startEditing(entry);
+              },
+              onDelete: (id) => {
+                setSelectedEntry(null);
+                deleteEntry(id);
+              },
+              onAddBond: addBond,
+              onDeleteRelationship: deleteRelationship,
             }}
-            onDelete={(id) => {
-              setSelectedEntry(null);
-              deleteEntry(id);
-            }}
-            onAddBond={addBond}
-            onDeleteRelationship={deleteRelationship}
           />
         )}
       </AnimatePresence>

@@ -8,6 +8,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Graf Lore 23 November 2026 | [Verifikasi detail entri di Graf Lore](audits/2026-11-23-lore-graph-detail.md) |
 | Linimasa 22 November 2026 | [Kronologi dan pencatatan dari editor](audits/2026-11-22-linimasa.md) |
 | Editor 21 November 2026 | [Verifikasi Catatan Novel dan Codex di Bab Ini](audits/2026-11-21-editor-notes-codex.md) |
 | Rute Atlas 21 November 2026 | [Verifikasi titik, kurva, dan kalkulator perjalanan](audits/2026-11-21-atlas-routes.md) |

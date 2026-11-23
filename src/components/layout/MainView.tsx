@@ -207,7 +207,7 @@ export function MainView() {
           {viewMode === 'graph' && projectId && (
             <ViewContainer key="graph" className="z-20">
               <Suspense fallback={<LoadingFallback />}>
-                <LoreGraphPanel projectId={projectId} />
+                <LoreGraphPanel key={projectId} projectId={projectId} />
               </Suspense>
             </ViewContainer>
           )}

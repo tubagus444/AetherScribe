@@ -5,7 +5,7 @@ import { Tag, Link2, X, Edit2, Trash2, FlaskConical, Crosshair, EyeOff, Dices, Q
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/src/db';
 import { CodexEntry, Relationship, PlotPromise } from '@/src/types';
-import { buildLoreGraph } from '@/src/lib/loreGraph';
+import { buildLoreGraph, type LoreGraph } from '@/src/lib/loreGraph';
 import { effectiveStatus, parseTodos } from '@/src/lib/worldCompleteness';
 import { WorldStatusBadge } from '@/src/features/codex/components/WorldStatusBadge';
 import { useNavigation } from '@/src/contexts/NavigationContext';
@@ -22,6 +22,7 @@ import { formatDate } from '@/src/lib/worldCalendar';
 import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
 import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
 import { CodexCoverViewer } from '@/src/features/codex/components/CodexCoverViewer';
+import { cn } from '@/src/lib/utils';
 
 const fieldScroll = 'no-scrollbar max-h-[min(12rem,30dvh)] overflow-y-auto focus-visible:outline-2 focus-visible:outline-indigo-500';
 const detailTabs = [
@@ -37,11 +38,15 @@ interface CodexDetailModalProps {
   projectId: number;
   categories?: CategoryDef[];
   detailChapters: DetailChapterIndex;
+  backlinks?: LoreGraph['backlinks'];
   onClose: () => void;
-  onEdit: (entry: CodexEntry) => void;
-  onDelete: (id: number) => void;
-  onAddBond: (sourceId: number, targetId: number, type: string) => void;
-  onDeleteRelationship: (id: number) => void;
+  management?: {
+    onEdit: (entry: CodexEntry) => void;
+    onDelete: (id: number) => void;
+    onAddBond: (sourceId: number, targetId: number, type: string) => void;
+    onDeleteRelationship: (id: number) => void;
+  };
+  onOpenInCodex?: () => void;
   onOpenEntry?: (entry: CodexEntry) => void;
 }
 
@@ -53,11 +58,10 @@ export function CodexDetailModal({
   projectId,
   categories,
   detailChapters,
+  backlinks,
   onClose,
-  onEdit,
-  onDelete,
-  onAddBond,
-  onDeleteRelationship,
+  management,
+  onOpenInCodex,
   onOpenEntry
 }: CodexDetailModalProps) {
   const titleId = useId();
@@ -75,19 +79,37 @@ export function CodexDetailModal({
     r => r.sourceId === entry.id || r.targetId === entry.id
   );
   const accent = getCategoryAccent(entry.category, categories);
-  const linkTargets = entries.filter(e => e.id !== entry.id);
+  const linkTargets = management ? entries.filter(e => e.id !== entry.id) : [];
   const fieldValues = resolveFieldValues(entry);
   const status = effectiveStatus(entry);
   const todos = parseTodos(entry.todo);
+  const details = (entry.details ?? []).map(detail => {
+    const history = readDetailHistory(detail, detailChapters);
+    return { detail, history, current: readCurrentDetail(detail, history) };
+  });
+  const secret = entry.secret?.trim() ?? '';
+  const description = entry.description?.trim() ?? '';
+  const showClueIdeas = !!management && entry.id != null && !!(secret || (entry.hidden && description));
+  const detailCount = details.length + fieldValues.length + todos.length + Number(!!secret);
+  const detailLength = secret.length
+    + todos.reduce((length, todo) => length + todo.length, 0)
+    + fieldValues.reduce((length, field) => length + field.value.trim().length, 0)
+    + details.reduce((length, { current }) => length + (current.value?.trim().length ?? 0), 0);
+  const hasDetailContent = detailCount > 0 || showClueIdeas;
+  // Dua kolom memberi ruang ketika kedua sisi punya isi yang cukup untuk dibaca terpisah.
+  const identityCount = (entry.aliases?.length ?? 0) + (entry.tags?.length ?? 0);
+  const wideLayout = (description.length >= 240 || identityCount >= 8)
+    && (detailCount >= 2 || detailLength >= 240);
+  const inactivePanel = wideLayout ? 'aria-hidden:invisible' : 'aria-hidden:hidden';
 
   // Backlink (#9): siapa yang menunjuk ke entri ini. Relasi sengaja DIKELUARKAN —
   // sudah tampil dua-arah di seksi "Hubungan"; sisakan sebutan-nama & payoff janji
   // yang selama ini tak terlihat dari sisi entri yang ditunjuk.
   const mentionBacklinks = useMemo(() => {
     if (entry.id == null) return [];
-    const { backlinks } = buildLoreGraph(entries, relationships, promises || []);
-    return (backlinks.get(entry.id) || []).filter(l => l.via !== 'relationship');
-  }, [entry.id, entries, relationships, promises]);
+    const links = backlinks ?? buildLoreGraph(entries, relationships, promises).backlinks;
+    return (links.get(entry.id) || []).filter(l => l.via !== 'relationship');
+  }, [entry.id, backlinks, entries, relationships, promises]);
 
   const { openWorkshop, openAtlasMarker } = useNavigation();
   const [bondType, setBondType] = useState('Friend');
@@ -95,14 +117,15 @@ export function CodexDetailModal({
   const [showPromise, setShowPromise] = useState<QuickPromiseSeed | null>(null);
   const [showForge, setShowForge] = useState(false);
   const [showMapMenu, setShowMapMenu] = useState(false);
+  const canManage = !!management;
 
   const linkedMarkers = useLiveQuery(
-    () => entry.id != null ? db.mapMarkers.where('codexId').equals(entry.id).toArray() : Promise.resolve([]),
-    [entry.id]
+    () => canManage && entry.id != null ? db.mapMarkers.where('codexId').equals(entry.id).toArray() : Promise.resolve([]),
+    [canManage, entry.id]
   );
   const maps = useLiveQuery(
-    () => db.maps.where('projectId').equals(projectId).toArray(),
-    [projectId]
+    () => canManage ? db.maps.where('projectId').equals(projectId).toArray() : Promise.resolve([]),
+    [canManage, projectId]
   );
 
   const mapNameById = useMemo(() => {
@@ -116,8 +139,8 @@ export function CodexDetailModal({
   }, [maps]);
 
   const handleAddBond = () => {
-    if (!bondTarget) return;
-    onAddBond(entry.id!, Number(bondTarget), bondType);
+    if (!management || !bondTarget) return;
+    management.onAddBond(entry.id!, Number(bondTarget), bondType);
     setBondTarget('');
   };
 
@@ -152,7 +175,10 @@ export function CodexDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-full w-full max-w-[96rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+        className={cn(
+          'flex max-h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900',
+          wideLayout ? 'max-w-2xl lg:max-w-[96rem]' : 'max-w-2xl',
+        )}
         onKeyDown={event => {
           if (event.key !== 'Tab') return;
           const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>('button, a[href], select, summary, [tabindex]')]
@@ -194,7 +220,7 @@ export function CodexDetailModal({
             </div>
           </div>
           
-          <div className="col-span-2 col-start-1 row-start-2 flex min-w-0 flex-wrap items-center gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+          {management && <div className="col-span-2 col-start-1 row-start-2 flex min-w-0 flex-wrap items-center gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1">
             {linkedMarkers && linkedMarkers.length > 0 && (
               <div className="relative">
                 <button
@@ -256,20 +282,29 @@ export function CodexDetailModal({
               <FlaskConical size={20} />
             </button>
             <button
-              onClick={() => { onClose(); onEdit(entry); }}
+              onClick={() => { onClose(); management.onEdit(entry); }}
               className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 rounded-xl transition-all"
               title="Ubah Entri"
             >
               <Edit2 size={20} />
             </button>
             <button 
-              onClick={() => { onClose(); onDelete(entry.id!); }}
+              onClick={() => { onClose(); management.onDelete(entry.id!); }}
               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-xl transition-all"
               title="Hapus Entri"
             >
               <Trash2 size={20} />
             </button>
-          </div>
+          </div>}
+          {onOpenInCodex && (
+            <button
+              type="button"
+              onClick={onOpenInCodex}
+              className="col-start-1 row-start-2 justify-self-start rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 sm:col-start-2 sm:row-start-1 dark:text-indigo-300 dark:hover:bg-indigo-900/40"
+            >
+              Buka di Codex
+            </button>
+          )}
           <button
             ref={closeRef}
             onClick={onClose}
@@ -314,12 +349,18 @@ export function CodexDetailModal({
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1">
-          <div role="tabpanel" id={`${tabsId}-details-panel`} aria-labelledby={`${tabsId}-details-tab`} aria-hidden={isLinksTab} inert={isLinksTab} className="col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col aria-hidden:invisible">
-            <div key={entry.id} role="region" aria-label="Isi entri Codex" tabIndex={0} className="no-scrollbar grid min-h-0 flex-1 auto-rows-max overflow-y-auto overscroll-contain [overflow-wrap:anywhere] lg:auto-rows-auto lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] lg:overflow-hidden">
-              <section aria-label="Deskripsi dan identitas" className="flex min-w-0 flex-col gap-5 p-4 sm:p-6 lg:min-h-0 lg:overflow-hidden">
-                <div className="lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+          <div role="tabpanel" id={`${tabsId}-details-panel`} aria-labelledby={`${tabsId}-details-tab`} aria-hidden={isLinksTab} inert={isLinksTab} className={cn('col-start-1 row-start-1 flex min-h-0 min-w-0 flex-col', inactivePanel)}>
+            <div key={entry.id} role="region" aria-label="Isi entri Codex" tabIndex={0} className={cn(
+              'no-scrollbar grid min-h-0 flex-1 auto-rows-max overflow-y-auto overscroll-contain [overflow-wrap:anywhere]',
+              wideLayout && 'lg:auto-rows-auto lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] lg:overflow-hidden',
+            )}>
+              <section aria-label="Deskripsi dan identitas" className={cn('flex min-w-0 flex-col gap-5 p-4 sm:p-6', wideLayout && 'lg:min-h-0 lg:overflow-hidden')}>
+                <div className={wideLayout ? 'lg:flex lg:min-h-0 lg:flex-1 lg:flex-col' : undefined}>
                   <h3 className="mb-2 shrink-0 text-sm font-bold text-slate-800 dark:text-slate-100">Deskripsi</h3>
-                  <div role="region" aria-label="Teks deskripsi" tabIndex={0} className="no-scrollbar prose prose-slate max-h-[min(22rem,45dvh)] max-w-none overflow-y-auto font-serif text-slate-700 focus-visible:outline-2 focus-visible:outline-indigo-500 lg:min-h-0 lg:max-h-none lg:flex-1 dark:prose-invert dark:text-slate-300">
+                  <div role="region" aria-label="Teks deskripsi" tabIndex={0} className={cn(
+                    'no-scrollbar prose prose-slate max-h-[min(22rem,45dvh)] max-w-none overflow-y-auto font-serif text-slate-700 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:prose-invert dark:text-slate-300',
+                    wideLayout && 'lg:min-h-0 lg:max-h-none lg:flex-1',
+                  )}>
                     {entry.description ? (
                       <LinkifiedDescription text={entry.description} allEntries={entries || []} />
                     ) : (
@@ -369,14 +410,14 @@ export function CodexDetailModal({
                 )}
               </section>
 
-              <section aria-label="Detail entri" tabIndex={0} className="no-scrollbar min-w-0 space-y-5 border-t border-slate-100 p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0 dark:border-slate-800">
-                {!!entry.details?.length && (
+              {hasDetailContent && <section aria-label="Detail entri" tabIndex={0} className={cn(
+                'no-scrollbar min-w-0 space-y-5 border-t border-slate-100 p-4 sm:p-6 dark:border-slate-800',
+                wideLayout && 'lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:border-l lg:border-t-0',
+              )}>
+                {details.length > 0 && (
                   <section className="space-y-3" aria-label="Detail tambahan">
                     <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Detail tambahan</h4>
-                    {entry.details.map(detail => {
-                      const history = readDetailHistory(detail, detailChapters);
-                      const current = readCurrentDetail(detail, history);
-                      return (
+                    {details.map(({ detail, history, current }) => (
                         <div key={detail.id} className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                           <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <h5 className="min-w-0 break-words text-sm font-semibold text-slate-800 dark:text-slate-200">{detail.label}</h5>
@@ -400,15 +441,14 @@ export function CodexDetailModal({
                             </details>
                           )}
                         </div>
-                      );
-                    })}
+                    ))}
                   </section>
                 )}
 
                 {/* Template field per kategori (#17) — detail terstruktur khas kategori */}
                 {fieldValues.length > 0 && (
                   <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-5">
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                    <dl className={cn('grid grid-cols-1 gap-x-8 gap-y-4', wideLayout && 'sm:grid-cols-2')}>
                       {fieldValues.map(f => (
                         <div key={f.key} className="min-w-0">
                           <dt className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">{f.label}</dt>
@@ -420,18 +460,18 @@ export function CodexDetailModal({
                 )}
 
                 {/* Kebenaran tersembunyi — hanya untuk penulis, tak pernah ke output pembaca */}
-                {entry.secret?.trim() && (
+                {secret && (
                   <div className="rounded-2xl border border-purple-200 dark:border-purple-800/50 bg-purple-50/50 dark:bg-purple-900/15 p-5">
                     <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-purple-700 dark:text-purple-300 mb-2">
                       <EyeOff size={14} /> Kebenaran Tersembunyi
                       <span className="font-normal normal-case tracking-normal text-purple-400 dark:text-purple-500">· hanya penulis &amp; AI</span>
                     </h4>
-                    <p aria-label="Isi Kebenaran Tersembunyi" tabIndex={0} className={`${fieldScroll} whitespace-pre-wrap font-serif leading-relaxed text-slate-700 dark:text-slate-300`}>{entry.secret.trim()}</p>
+                    <p aria-label="Isi Kebenaran Tersembunyi" tabIndex={0} className={`${fieldScroll} whitespace-pre-wrap font-serif leading-relaxed text-slate-700 dark:text-slate-300`}>{secret}</p>
                   </div>
                 )}
 
-                {entry.id != null && (entry.secret?.trim() || (entry.hidden && entry.description?.trim())) && (
-                  <PlotClueIdeas key={entry.id} secret={entry.name + "\n" + (entry.secret?.trim() || entry.description)} entryId={entry.id} projectId={projectId} promises={promises ?? []} chapters={detailChapters} onChoose={setShowPromise} />
+                {showClueIdeas && (
+                  <PlotClueIdeas key={entry.id} secret={entry.name + "\n" + (secret || entry.description)} entryId={entry.id} projectId={projectId} promises={promises ?? []} chapters={detailChapters} onChoose={setShowPromise} />
                 )}
 
                 {/* Catatan & TODO (#11) — pekerjaan worldbuilding yang tersisa untuk entri ini */}
@@ -451,12 +491,12 @@ export function CodexDetailModal({
                   </div>
                 )}
 
-              </section>
+              </section>}
             </div>
           </div>
 
-          <div role="tabpanel" id={`${tabsId}-links-panel`} aria-labelledby={`${tabsId}-links-tab`} aria-hidden={!isLinksTab} inert={!isLinksTab} tabIndex={0} className="no-scrollbar col-start-1 row-start-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 [overflow-wrap:anywhere] aria-hidden:invisible sm:p-6">
-            <div key={entry.id} className="grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div role="tabpanel" id={`${tabsId}-links-panel`} aria-labelledby={`${tabsId}-links-tab`} aria-hidden={!isLinksTab} inert={!isLinksTab} tabIndex={0} className={cn('no-scrollbar col-start-1 row-start-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 [overflow-wrap:anywhere] sm:p-6', inactivePanel)}>
+            <div key={entry.id} className={cn('grid grid-cols-1 items-start gap-6', wideLayout && 'lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]')}>
               {/* Relationships — dikelola di sini (tambah/hapus) */}
               <div>
                 <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
@@ -475,13 +515,15 @@ export function CodexDetailModal({
                           <span className="text-indigo-400 dark:text-indigo-600 text-sm shrink-0">dengan</span>
                           <span className="font-bold text-slate-900 dark:text-slate-100 truncate">{otherEntry.name}</span>
                         </div>
-                        <button
-                          onClick={() => onDeleteRelationship(r.id!)}
-                          className="shrink-0 p-1 text-indigo-300 dark:text-indigo-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg opacity-0 group-hover/bond:opacity-100 focus:opacity-100 transition-all"
-                          title="Hapus hubungan"
-                        >
-                          <X size={14} />
-                        </button>
+                        {management && (
+                          <button
+                            onClick={() => management.onDeleteRelationship(r.id!)}
+                            className="shrink-0 p-1 text-indigo-300 dark:text-indigo-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-lg opacity-0 group-hover/bond:opacity-100 focus:opacity-100 transition-all"
+                            title="Hapus hubungan"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
                       </div>
                     );
                   })}

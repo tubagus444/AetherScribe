@@ -105,8 +105,11 @@ ditandai sebagai ambigu.
   menyesuaikan tingginya. Tombol Asisten AI berada di deretan aksi Codex.
   Indikator pengindeksan aktif mendapat ruang di bawah panel.
 - Kartu menampilkan pratinjau hingga tiga alias dan tiga tag. Dialog detail
-  menampilkan daftar lengkap di atas navigasi aplikasi. Di layar lebar,
-  deskripsi dan identitas tampil di kiri dan detail entri di kanan.
+  menampilkan daftar lengkap di atas navigasi aplikasi. Entri ringkas
+  memakai satu kolom dan tinggi mengikuti tab aktif. Bagian detail
+  muncul jika berisi sesuatu. Di layar lebar, entri dengan cukup isi
+  di kedua bagian menampilkan deskripsi dan identitas di kiri dan detail
+  di kanan. Tata letak ini berlaku dari Codex dan Graf Lore.
   Deskripsi, nilai detail, dan riwayat yang panjang memiliki area gulir
   sendiri. Di layar sempit, kedua bagian ditumpuk. Judul dan tombol tutup
   tetap terlihat saat membaca entri.
@@ -350,8 +353,11 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 
 ## Graf Lore Visual Interaktif (Force Graph)
 - **Deskripsi:** Graf jaringan fisika interaktif yang memvisualisasikan bagaimana setiap karakter, faksi, lokasi, dan item saling terhubung di dalam cerita.
-- **File terkait:** `src/features/codex/components/LoreGraphPanel.tsx`, `src/lib/loreGraph.ts`, `src/features/codex/workers/loreGraphWorker.ts`
-- **Tabel DB:** `codex`, `relationships`
+- Klik node membuka dialog detail di atas graf, termasuk deskripsi, detail, dan keterkaitan. Menutup dialog mengembalikan fokus ke graf dengan posisi kanvas dan filter yang sama. Tombol **Buka di Codex** membuka entri untuk dikelola.
+- **Cari node** memakai nama dan alias dari proyek aktif. Pilih hasil untuk memusatkan kamera dan menyorot node. Jika filter menyembunyikannya, **Tampilkan di graf** menampilkan node itu sementara sambil mempertahankan filter.
+- **Fokus hubungan langsung** menampilkan node terpilih dan tetangga yang terhubung melalui tautan yang lolos filter. **Kembali ke graf** memulihkan posisi dan zoom kamera sebelumnya.
+- **File terkait:** `src/features/codex/components/LoreGraphPanel.tsx`, `src/lib/loreGraph.ts`, `src/workers/loreGraphWorker.ts`
+- **Tabel DB:** `codex`, `relationships`, `plotPromises`
 - **Endpoint:** Tidak ada (lokal)
 - **Catatan:** ⚠️ Hit-test hover dan klik node dilakukan secara manual via koordinat kanvas matematis, JANGAN menggunakan API hit-test bawaan force-graph yang rawan bug.
 

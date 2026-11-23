@@ -690,6 +690,161 @@ test('Codex keeps the detail header visible while a long entry scrolls on deskto
   }
 });
 
+for (const width of [1280, 390]) {
+  test(`Lore Graph opens node details in place at ${width}px`, async ({ page }) => {
+    await page.evaluate(async () => {
+      const path = '/src/db.ts';
+      const { db }: DbModule = await import(path);
+      await db.codex.update(1, {
+        name: 'Arsip Utara',
+        description: 'Tempat penyimpanan catatan kota.',
+        details: [{ id: 'access', label: 'Akses', value: 'Kunci perak', includeInAI: false }],
+      });
+      await db.codex.add({
+        id: 3, projectId: 1, name: 'Penjaga Arsip', category: 'character',
+        aliases: [], tags: [], description: 'Bekerja di Arsip Utara.',
+      });
+      localStorage.setItem('aether_view_mode', 'graph');
+    });
+    await page.reload();
+    const graph = page.getByRole('heading', { name: 'Graf Lore', exact: true });
+    await expect(graph).toBeVisible();
+    if (width === 390) await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+    await page.setViewportSize({ width, height: 700 });
+    await page.getByTitle('Sembunyikan Karakter').click();
+
+    const canvas = page.locator('main canvas:visible');
+    await expect(canvas).toBeVisible();
+    const graphCanvas = await canvas.elementHandle();
+    const clickNode = async () => {
+      // Once the category is filtered, the only visible node settles at the center.
+      const box = (await canvas.boundingBox())!;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await expect(async () => {
+        await page.mouse.move(x + 10, y);
+        await page.mouse.move(x, y);
+        await expect(page.getByText(/Arsip Utara — Lokasi/)).toBeVisible({ timeout: 500 });
+      }).toPass({ timeout: 6000 });
+      await page.mouse.click(x, y);
+    };
+
+    const dialog = page.getByRole('dialog', { name: 'Arsip Utara' });
+    if (width === 390) {
+      await page.getByRole('searchbox', { name: 'Cari node' }).fill('arsip utara');
+      await page.getByRole('button', { name: /Arsip Utara.*Lokasi/ }).click();
+      await expect(page.getByRole('status').filter({ hasText: 'Arsip Utara' })).toBeVisible();
+    }
+    await clickNode();
+    await expect(dialog.getByText('Tempat penyimpanan catatan kota.')).toBeVisible();
+    await expect(dialog.getByRole('region', { name: 'Nilai Akses' })).toHaveText('Kunci perak');
+    await expect(dialog).toHaveCSS('max-width', '672px');
+    const stacked = await dialog.getByRole('region', { name: 'Isi entri Codex' }).evaluate(body => {
+      const [description, details] = Array.from(body.children, section => section.getBoundingClientRect());
+      return details.top >= description.bottom - 1;
+    });
+    expect(stacked).toBe(true);
+    await expect(graph).toBeVisible();
+    await dialog.getByRole('tab', { name: 'Keterkaitan' }).click();
+    await dialog.getByRole('button', { name: 'Penjaga Arsip' }).click();
+    const related = page.getByRole('dialog', { name: 'Penjaga Arsip' });
+    await expect(related.getByRole('region', { name: 'Teks deskripsi' })).toContainText('Bekerja di Arsip Utara.');
+    await expect(related.getByRole('region', { name: 'Detail entri', exact: true })).toHaveCount(0);
+    await expect(related).toHaveCSS('max-width', '672px');
+    const activePanel = related.getByRole('tabpanel', { name: 'Deskripsi & Detail' });
+    const inactivePanel = related.locator('[role="tabpanel"][aria-hidden="true"]');
+    await expect(activePanel).toBeVisible();
+    await expect(inactivePanel).toHaveCSS('display', 'none');
+    await page.keyboard.press('Escape');
+    await expect(related).toBeHidden();
+    expect(await graphCanvas.evaluate(element => element.isConnected)).toBe(true);
+    await expect(page.getByTitle('Tampilkan Karakter')).toBeVisible();
+
+    await clickNode();
+    await dialog.getByRole('button', { name: 'Buka di Codex' }).click();
+    await expect(graph).toBeHidden();
+    await expect(dialog.getByTitle('Ubah Entri', { exact: true })).toBeVisible();
+    await expect(dialog).toHaveCSS('max-width', '672px');
+  });
+}
+
+test('Lore Graph finds aliases, reveals filtered nodes and restores the camera after focus', async ({ page }) => {
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.codex.update(1, { name: 'Arsip Utara', aliases: ['Arsip Induk'] });
+    await db.codex.update(2, { name: 'Arsip Induk Luar' });
+    await db.codex.bulkAdd([
+      { id: 3, projectId: 1, name: 'Gerbang Utara', category: 'location', aliases: [], tags: [], description: '' },
+      { id: 4, projectId: 1, name: 'Penjaga Arsip', category: 'character', aliases: ['Sang Penjaga'], tags: [], description: '' },
+      { id: 5, projectId: 1, name: 'Menara Sela', category: 'location', aliases: [], tags: [], description: '' },
+      ...Array.from({ length: 9 }, (_, i) => ({
+        projectId: 1, name: `Indeks ${i + 1}`, category: 'location', aliases: ['Daftar Cadangan'], tags: [], description: '',
+      })),
+    ]);
+    await db.relationships.bulkAdd([
+      { projectId: 1, sourceId: 1, targetId: 3, type: 'Ally' },
+      { projectId: 1, sourceId: 1, targetId: 4, type: 'Ally' },
+      { projectId: 1, sourceId: 3, targetId: 5, type: 'Ally' },
+    ]);
+    localStorage.setItem('aether_view_mode', 'graph');
+  });
+  await page.reload();
+  const canvas = page.locator('main canvas:visible');
+  await expect(canvas).toBeVisible();
+  await page.getByTitle('Sembunyikan Karakter').click();
+  const connected = page.getByRole('checkbox', { name: 'Hanya yang terhubung' });
+  await connected.check();
+  const search = page.getByRole('searchbox', { name: 'Cari node' });
+  const status = page.getByRole('status').filter({ hasText: /Arsip Utara|Penjaga Arsip/ });
+  const results = page.getByRole('list', { name: 'Hasil pencarian node' });
+  await search.fill('daftar cadangan');
+  await expect(results.getByRole('button')).toHaveCount(8);
+  await page.getByRole('button', { name: /Tampilkan lebih banyak/ }).click();
+  await expect(results.getByRole('button')).toHaveCount(9);
+  await search.fill('arsip induk');
+  await expect(results.getByRole('button')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Arsip Utara.*Lokasi.*Alias Arsip Induk/ })).toBeVisible();
+  await search.press('Enter');
+  await expect(status).toHaveText('Arsip Utara');
+
+  const expectArsipAtCenter = async () => {
+    const box = (await canvas.boundingBox())!;
+    await expect(async () => {
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.move(x + 10, y);
+      await page.mouse.move(x, y);
+      await expect(page.getByText(/Arsip Utara — Lokasi/)).toBeVisible({ timeout: 500 });
+    }).toPass({ timeout: 7000 });
+  };
+  await expectArsipAtCenter();
+  await page.getByRole('button', { name: 'Fokus hubungan langsung' }).click();
+  await expect(status).toHaveText('Fokus Arsip Utara · 1 node terhubung');
+  await search.fill('Menara Sela');
+  await expect(page.getByRole('button', { name: /Menara Sela.*Tampilkan di graf/ })).toBeVisible();
+  await search.press('Escape');
+  await page.getByRole('button', { name: 'Kembali ke graf' }).click();
+  await expect(status).toHaveText('Arsip Utara');
+  await expect(connected).toBeChecked();
+  await expect(page.getByTitle('Tampilkan Karakter')).toBeEnabled();
+  await expectArsipAtCenter();
+
+  await search.fill('sang penjaga');
+  await page.getByRole('button', { name: /Penjaga Arsip.*Alias Sang Penjaga.*Tampilkan di graf/ }).click();
+  await expect(status).toHaveText('Penjaga Arsip · Ditampilkan sementara');
+  await expect(page.getByTitle('Tampilkan Karakter')).toBeEnabled();
+  await expect(connected).toBeChecked();
+  await page.getByRole('button', { name: 'Lihat detail', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Penjaga Arsip' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Hapus sorotan' }).click();
+  await search.fill('sang penjaga');
+  await expect(page.getByRole('button', { name: /Penjaga Arsip.*Tampilkan di graf/ })).toBeVisible();
+  await search.fill('tanpa hasil');
+  await expect(page.getByText('Tidak ada node yang cocok.', { exact: true })).toBeVisible();
+});
+
 test('Codex uploads, previews, replaces and removes a local cover', async ({ page }) => {
   const makeImage = async (color: string) => {
     const dataUrl = await page.evaluate(fill => {

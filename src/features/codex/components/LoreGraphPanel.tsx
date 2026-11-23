@@ -5,7 +5,7 @@
  * Graf Lore Visual Interaktif (#14) — visualisasi node-edge di atas `buildLoreGraphView`
  * (`src/lib/loreGraph.ts`). Nol token, nol AI, nol tabel baru: seluruh graf DITURUNKAN dari
  * Codex + relasi + janji plot yang sudah ada. Render pakai `react-force-graph-2d` (canvas +
- * d3-force, sudah di dependencies). Klik node → buka entri Codex (deep-link `openCodexEntry`).
+ * d3-force, sudah di dependencies). Klik node membuka dialog detail di atas graf.
  *
  * Komputasi graf (scan Aho-Corasick O(n²)) dijalankan di Web Worker via `useLoreGraphWorker`
  * agar main thread tetap responsif saat codex ratusan entri. Debounce 300ms mencegah burst.
@@ -16,11 +16,15 @@ import ForceGraph2D, { type ForceGraphMethods } from 'react-force-graph-2d';
 import { forceX, forceY } from 'd3-force';
 import { Share2, Database, ArrowRight, Users, Quote, Crosshair, Maximize2, EyeOff, Loader2 } from 'lucide-react';
 import { db } from '@/src/db';
+import { useChapterList } from '@/src/hooks/useChapterQueries';
 import { useOptimizedLiveQuery } from '@/src/hooks/useOptimizedLiveQuery';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useUI } from '@/src/contexts/UIContext';
 import { useCodexCategories } from '@/src/features/codex/hooks/useCodexCategories';
+import { CodexDetailModal } from '@/src/features/codex/components/CodexDetailModal';
+import { LoreGraphSearch } from '@/src/features/codex/components/LoreGraphSearch';
 import { getCategoryDef, getCategoryLabel } from '@/src/lib/codexCategories';
+import { indexDetailChapters } from '@/src/lib/codexDetails';
 import { RELATIONSHIP_TYPES } from '@/src/features/codex/relationshipTypes';
 import { useLoreGraphWorker } from '@/src/features/codex/hooks/useLoreGraphWorker';
 import { type LoreGraphNode, type LoreLinkVia } from '@/src/lib/loreGraph';
@@ -66,6 +70,7 @@ const linkHex = (l: { via: LoreLinkVia; label?: string }): string =>
 // Node yang dipakai runtime react-force-graph (menambah x/y/vx/vy di objek yang sama).
 type GNode = LoreGraphNode & { color: string; categoryLabel: string; x?: number; y?: number };
 type GLink = { source: number | GNode; target: number | GNode; via: LoreLinkVia; label?: string };
+type GraphFocus = { id: number; center: { x: number; y: number }; zoom: number };
 
 /** Ambil id kedua ujung link — force-graph me-resolve source/target dari angka jadi objek. */
 const linkEndIds = (l: GLink): [number, number] => {
@@ -77,10 +82,17 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
   const { openCodexEntry, setViewMode } = useNavigation();
   const { theme } = useUI();
   const { categories } = useCodexCategories(projectId);
+  const chapters = useChapterList(projectId);
+  const detailChapters = useMemo(() => indexDetailChapters(chapters ?? []), [chapters]);
 
   const entries = useOptimizedLiveQuery(() => db.codex.where('projectId').equals(projectId).toArray(), [projectId]);
   const relationships = useOptimizedLiveQuery(() => db.relationships.where('projectId').equals(projectId).toArray(), [projectId]);
   const promises = useOptimizedLiveQuery(() => db.plotPromises.where('projectId').equals(projectId).toArray(), [projectId]);
+  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
+  const selectedEntry = selectedEntryId === null
+    ? undefined
+    : entries?.find(entry => entry.id === selectedEntryId && entry.projectId === projectId);
+  const closeDetail = useCallback(() => setSelectedEntryId(null), []);
 
   // Signature stabil dari data yang MEMENGARUHI graf. `useLiveQuery` memancarkan array baru
   // tiap emit (walau isi identik) → tanpa ini `base`/`graphData` bikin objek node baru terus
@@ -123,17 +135,16 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
   const [hiddenCats, setHiddenCats] = useState<Set<string>>(new Set());
   const [activeVia, setActiveVia] = useState<Set<LoreLinkVia>>(new Set(ALL_VIA));
   const [onlyConnected, setOnlyConnected] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const [revealedId, setRevealedId] = useState<number | null>(null);
+  const [jump, setJump] = useState<{ id: number } | null>(null);
+  const [focus, setFocus] = useState<GraphFocus | null>(null);
 
-  const toggleCat = (slug: string) => setHiddenCats(prev => {
-    const next = new Set(prev);
-    next.has(slug) ? next.delete(slug) : next.add(slug);
-    return next;
-  });
-  const toggleVia = (via: LoreLinkVia) => setActiveVia(prev => {
-    const next = new Set(prev);
-    next.has(via) ? next.delete(via) : next.add(via);
-    return next;
-  });
+  const clearHighlight = () => {
+    setHighlightedId(null);
+    setRevealedId(null);
+    setJump(null);
+  };
 
   // --- Graf tersaring — objek node BARU tiap deps berubah (force re-layout) ------------
   const graphData = useMemo(() => {
@@ -148,7 +159,7 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
       deg.set(l.source as number, (deg.get(l.source as number) ?? 0) + 1);
       deg.set(l.target as number, (deg.get(l.target as number) ?? 0) + 1);
     }
-    let nodes = base.nodes
+    const nodes = base.nodes
       .filter(n => visibleIds.has(n.id))
       .filter(n => !onlyConnected || (deg.get(n.id) ?? 0) > 0)
       .map(n => ({ ...n, degree: deg.get(n.id) ?? 0 }));
@@ -157,9 +168,20 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
       const keep = new Set(nodes.map(n => n.id));
       liveLinks = liveLinks.filter(l => keep.has(l.source as number) && keep.has(l.target as number));
     }
-    return { nodes, links: liveLinks.map(l => ({ ...l })) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, hiddenCats, activeVia, onlyConnected]);
+    const filteredIds = new Set(nodes.map(n => n.id));
+    if (revealedId !== null && !filteredIds.has(revealedId)) {
+      const revealed = base.nodes.find(n => n.id === revealedId);
+      if (revealed) nodes.push({ ...revealed, degree: 0 });
+    }
+    return { nodes, links: liveLinks.map(l => ({ ...l })), filteredIds };
+  }, [base, hiddenCats, activeVia, onlyConnected, revealedId]);
+
+  const locateNode = (id: number) => {
+    setFocus(null);
+    setHighlightedId(id);
+    setRevealedId(graphData.filteredIds.has(id) ? null : id);
+    setJump({ id });
+  };
 
   const isolatedCount = useMemo(() => base.nodes.filter(n => n.degree === 0).length, [base.nodes]);
 
@@ -183,8 +205,8 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
     roRef.current = ro;
   }, []);
 
-  const fgRef = useRef<ForceGraphMethods | undefined>(undefined);
-  const fitView = useCallback(() => fgRef.current?.zoomToFit(400, 60), []);
+  const fgRef = useRef<ForceGraphMethods<GNode, GLink> | undefined>(undefined);
+  const preserveCameraOnSettle = useRef(false);
   // Paskan HANYA setelah simulasi berhenti (`onEngineStop`) — memaskan saat node masih di
   // titik asal membuat bbox nol → zoom meledak → node melayang keluar viewport. Selama
   // menetap, kamera default (zoom 1, terpusat) menampilkan node menyebar dari tengah.
@@ -197,12 +219,65 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
   // sampai `graphData` berganti (mis. toggle filter) — itulah kenapa awalnya melayang jauh.
   const canvasReady = size.w > 0;
   useEffect(() => {
-    const fg = fgRef.current as any;
+    const fg = fgRef.current;
     if (!fg?.d3Force) return;
+    preserveCameraOnSettle.current = false;
     fg.d3Force('x', forceX(0).strength(0.07));
     fg.d3Force('y', forceY(0).strength(0.07));
     fg.d3ReheatSimulation?.();
   }, [graphData, canvasReady]);
+
+  const adjacency = useMemo(() => {
+    const neighbors = new Map<number, Set<number>>();
+    for (const link of graphData.links) {
+      const [source, target] = linkEndIds(link);
+      if (!neighbors.has(source)) neighbors.set(source, new Set());
+      if (!neighbors.has(target)) neighbors.set(target, new Set());
+      neighbors.get(source)?.add(target);
+      neighbors.get(target)?.add(source);
+    }
+    return neighbors;
+  }, [graphData]);
+  const focusId = focus?.id ?? null;
+  const focusIds = useMemo(() => focusId === null ? null : new Set([focusId, ...(adjacency.get(focusId) ?? [])]), [focusId, adjacency]);
+  const highlightedNode = graphData.nodes.find(node => node.id === highlightedId);
+  useEffect(() => {
+    if (focusId !== null && !highlightedNode) setFocus(null);
+  }, [focusId, highlightedNode]);
+
+  const fitView = useCallback(() => {
+    fgRef.current?.zoomToFit(0, Math.min(60, size.w / 5, size.h / 5), node => !focusIds || focusIds.has(node.id));
+  }, [focusIds, size]);
+  const centerNode = useCallback((id: number) => {
+    const fg = fgRef.current;
+    const node = graphData.nodes.find(n => n.id === id);
+    if (!fg || node?.x == null || node.y == null) return false;
+    fg.zoom(2.5);
+    fg.centerAt(node.x, node.y);
+    return true;
+  }, [graphData]);
+  useEffect(() => {
+    if (jump && canvasReady) centerNode(jump.id);
+  }, [jump, canvasReady, centerNode]);
+
+  const startFocus = () => {
+    const fg = fgRef.current;
+    if (!fg || highlightedId === null) return;
+    setJump(null);
+    setFocus({ id: highlightedId, center: fg.centerAt(), zoom: fg.zoom() });
+  };
+  useEffect(() => {
+    if (focusIds && canvasReady) fitView();
+  }, [focusIds, canvasReady, fitView]);
+
+  const endFocus = () => {
+    if (!focus) return;
+    preserveCameraOnSettle.current = true;
+    setFocus(null);
+    setHighlightedId(focus.id);
+    fgRef.current?.zoom(focus.zoom);
+    fgRef.current?.centerAt(focus.center.x, focus.center.y);
+  };
 
   // Cari node di titik layar (relatif kanvas) SENDIRI, mem-bypass hit-test bawaan force-graph
   // — di lib versi ini + React 19 hanya SATU node teregistrasi di shadow-canvas (bug
@@ -210,34 +285,22 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
   // `graph2ScreenCoords` terbukti akurat, jadi klik & tooltip kita hitung dari koordinat.
   // Dipakai bersama oleh onClick & onMouseMove wrapper (lihat kanvas).
   const nodeAtScreen = useCallback((x: number, y: number): GNode | null => {
-    const fg: any = fgRef.current;
-    if (!fg?.graph2ScreenCoords) return null;
-    const k = fg.zoom?.() ?? 1;
+    const fg = fgRef.current;
+    if (!fg) return null;
+    const k = fg.zoom();
     let hit: GNode | null = null, best = Infinity;
-    for (const n of graphData.nodes as GNode[]) {
+    for (const n of graphData.nodes) {
+      if (focusIds && !focusIds.has(n.id)) continue;
       const sc = fg.graph2ScreenCoords(n.x ?? 0, n.y ?? 0);
       const d = Math.hypot(sc.x - x, sc.y - y);
       const rScreen = (3 + Math.min(8, n.degree * 1.1)) * k + 8; // radius node × zoom + padding
       if (d <= rScreen && d < best) { best = d; hit = n; }
     }
     return hit;
-  }, [graphData]);
+  }, [graphData, focusIds]);
 
   // Tooltip kustom (bawaan force-graph rusak, lihat di atas). Simpan node + posisi kursor.
   const [hovered, setHovered] = useState<{ node: GNode; x: number; y: number } | null>(null);
-
-  // Peta ketetanggaan untuk sorot-tetangga saat hover. `source`/`target` bisa angka (saat
-  // dibuat) atau objek node (setelah force-graph me-resolve) → tangani keduanya.
-  const adjacency = useMemo(() => {
-    const m = new Map<number, Set<number>>();
-    for (const l of graphData.links as GLink[]) {
-      const [s, t] = linkEndIds(l);
-      if (!m.has(s)) m.set(s, new Set());
-      if (!m.has(t)) m.set(t, new Set());
-      m.get(s)!.add(t); m.get(t)!.add(s);
-    }
-    return m;
-  }, [graphData]);
 
   // Node yang di-sorot (id + tetangga langsung) — REF agar drawNode/linkColor membacanya
   // tiap frame tanpa memicu re-render React. Diisi di onMouseMove wrapper.
@@ -248,13 +311,15 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
   const haloColor = dark ? '#0f172a' : '#f8fafc';
 
   const drawNode = useCallback((node: GNode, ctx: CanvasRenderingContext2D, scale: number) => {
+    if (focusIds && !focusIds.has(node.id)) return;
     const r = 3 + Math.min(8, node.degree * 1.1);
     const x = node.x ?? 0, y = node.y ?? 0;
     // Sorot-tetangga: saat sebuah node di-hover, node ini "aktif" bila ia sendiri atau
     // tetangga langsungnya; sisanya diredupkan agar fokus ke ego-network.
     const h = hoverRef.current;
-    const active = !h || node.id === h.id || h.neighbors.has(node.id);
-    const isFocus = !!h && node.id === h.id;
+    const highlighted = node.id === highlightedId;
+    const active = highlighted || !h || node.id === h.id || h.neighbors.has(node.id);
+    const isFocus = highlighted || node.id === h?.id;
     const baseAlpha = node.degree === 0 ? 0.5 : 1;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -265,7 +330,7 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
       // Cincin fokus di node yang di-hover.
       ctx.globalAlpha = 1;
       ctx.lineWidth = 2 / scale;
-      ctx.strokeStyle = dark ? '#e2e8f0' : '#0f172a';
+      ctx.strokeStyle = highlighted ? (dark ? '#a5b4fc' : '#4338ca') : (dark ? '#e2e8f0' : '#0f172a');
       ctx.stroke();
     } else if (node.hidden) {
       // Entri rahasia (mystery-box) → cincin putus-putus agar penulis mengenalinya.
@@ -277,7 +342,7 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
     }
     ctx.globalAlpha = 1;
     // Label tampil saat cukup zoom, ATAU saat node aktif dalam sorot (walau zoom kecil).
-    if ((scale > 1.1 || (h && active)) && active) {
+    if (active && (scale > 1.1 || h || highlighted)) {
       const fontSize = Math.max(3, 11 / scale);
       ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = 'center';
@@ -289,7 +354,7 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
       ctx.fillStyle = labelColor;
       ctx.fillText(label, x, y + r + 1.5);
     }
-  }, [dark, labelColor, haloColor]);
+  }, [dark, labelColor, haloColor, focusIds, highlightedId]);
 
   // Area klik lewat jalur BAWAAN `nodeVal` (radius default = √nodeVal × nodeRelSize).
   // `nodePointerAreaPaint` kustom terbukti tak diterapkan di versi lib ini → force-graph
@@ -333,10 +398,20 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Graf Lore</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Jaringan seluruh dunia — {base.nodes.length} entri, {base.links.length} tautan
-            {isolatedCount > 0 && <span className="text-amber-600 dark:text-amber-400">, {isolatedCount} terisolasi</span>}. Klik node untuk membuka entri.
+            {isolatedCount > 0 && <span className="text-amber-600 dark:text-amber-400">, {isolatedCount} terisolasi</span>}. Pilih node untuk melihat detailnya.
           </p>
         </div>
       </header>
+
+      <div className="mb-3 shrink-0">
+        <LoreGraphSearch
+          entries={entries}
+          categories={categories}
+          visibleIds={focusIds ?? graphData.filteredIds}
+          disabled={!workerResult}
+          onLocate={locateNode}
+        />
+      </div>
 
       {/* Toolbar filter */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 shrink-0 text-xs">
@@ -349,8 +424,14 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
             return (
               <button
                 key={cat.slug}
-                onClick={() => toggleCat(cat.slug)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-medium transition-all ${
+                disabled={!!focus}
+                onClick={() => {
+                  clearHighlight();
+                  const next = new Set(hiddenCats);
+                  off ? next.delete(cat.slug) : next.add(cat.slug);
+                  setHiddenCats(next);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-medium transition-all disabled:opacity-60 ${
                   off
                     ? 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 opacity-60'
                     : 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900'
@@ -374,8 +455,14 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
             return (
               <button
                 key={via}
-                onClick={() => toggleVia(via)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-medium transition-all ${
+                disabled={!!focus}
+                onClick={() => {
+                  clearHighlight();
+                  const next = new Set(activeVia);
+                  on ? next.delete(via) : next.add(via);
+                  setActiveVia(next);
+                }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-medium transition-all disabled:opacity-60 ${
                   on ? 'border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900' : 'border-slate-200 dark:border-slate-800 text-slate-400 opacity-60'
                 }`}
                 title={on ? `Sembunyikan ${st.label}` : `Tampilkan ${st.label}`}
@@ -393,14 +480,19 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
           <input
             type="checkbox"
             checked={onlyConnected}
-            onChange={e => setOnlyConnected(e.target.checked)}
+            disabled={!!focus}
+            onChange={e => { clearHighlight(); setOnlyConnected(e.target.checked); }}
             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
           />
           Hanya yang terhubung
         </label>
 
         <button
-          onClick={fitView}
+          onClick={() => {
+            preserveCameraOnSettle.current = true;
+            setJump(null);
+            fitView();
+          }}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-all"
           title="Paskan tampilan"
         >
@@ -412,9 +504,11 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
           koordinat sendiri, karena hit-test bawaan lib hanya mengenali satu node. */}
       <div
         ref={setWrapEl}
+        tabIndex={-1}
         className="relative flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40 overflow-hidden"
         style={{ cursor: hovered ? 'pointer' : 'default' }}
         onMouseMove={(e) => {
+          if (!(e.target instanceof HTMLCanvasElement)) return;
           const el = wrapElRef.current;
           if (!el) return;
           const rect = el.getBoundingClientRect();
@@ -425,11 +519,20 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
         }}
         onMouseLeave={() => { hoverRef.current = null; setHovered(null); }}
         onClick={(e) => {
+          if (!(e.target instanceof HTMLCanvasElement)) return;
           const el = wrapElRef.current;
           if (!el) return;
           const rect = el.getBoundingClientRect();
           const n = nodeAtScreen(e.clientX - rect.left, e.clientY - rect.top);
-          if (n) openCodexEntry(n.id);
+          if (!n) return;
+          el.focus({ preventScroll: true });
+          hoverRef.current = null;
+          setHovered(null);
+          if (!focus) {
+            setJump(null);
+            setHighlightedId(n.id);
+          }
+          setSelectedEntryId(n.id);
         }}
       >
         {graphData.nodes.length === 0 ? (
@@ -438,7 +541,7 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
           </div>
         ) : size.w > 0 && (
           <ForceGraph2D<GNode, GLink>
-            ref={fgRef as any}
+            ref={fgRef}
             width={size.w}
             height={size.h}
             graphData={graphData}
@@ -452,6 +555,8 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
             // Klik/hover ditangani di wrapper (deteksi koordinat sendiri). Drag dimatikan
             // agar gestur di kanvas tak diserobot d3-drag.
             enableNodeDrag={false}
+            enablePointerInteraction={false}
+            linkVisibility={link => !focus || linkEndIds(link).includes(focus.id)}
             linkColor={(l: GLink) => {
               const h = hoverRef.current;
               if (h) {
@@ -468,12 +573,12 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
               const [s, t] = linkEndIds(l);
               return (s === h.id || t === h.id) ? base + 1 : base;
             }}
-            // Link tak ikut deteksi-pointer: tanpa ini, area link menimpa pusat node ber-relasi
-            // → klik ter-resolve ke link (tak ditangani) → node ber-relasi tampak "tak bisa diklik".
-            linkPointerAreaPaint={() => {}}
             linkDirectionalParticles={0}
             cooldownTicks={120}
-            onEngineStop={fitView}
+            onEngineStop={() => {
+              if (jump && centerNode(jump.id)) return;
+              if (!preserveCameraOnSettle.current) fitView();
+            }}
           />
         )}
 
@@ -541,7 +646,44 @@ export function LoreGraphPanel({ projectId }: LoreGraphPanelProps) {
             })}
           </div>
         </div>
+        {highlightedNode && (
+          <div className="absolute left-3 top-3 z-30 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-2 rounded-xl border border-indigo-100 bg-white px-2.5 py-1 text-xs text-indigo-800 shadow-sm dark:border-indigo-900 dark:bg-slate-900 dark:text-indigo-200">
+            <span role="status" className="min-w-0 break-words font-semibold">
+              {focus ? `Fokus ${highlightedNode.name} · ${(focusIds?.size ?? 1) - 1} node terhubung`
+                : highlightedNode.name + (revealedId === highlightedNode.id ? ' · Ditampilkan sementara' : '')}
+            </span>
+            <button type="button" onClick={() => setSelectedEntryId(highlightedNode.id)} className="rounded-lg px-1.5 py-1.5 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900">Lihat detail</button>
+            {focus ? (
+              <button type="button" onClick={endFocus} className="rounded-lg px-1.5 py-1.5 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900">Kembali ke graf</button>
+            ) : (
+              <>
+                {adjacency.has(highlightedNode.id) && (
+                  <button type="button" onClick={startFocus} className="rounded-lg px-1.5 py-1.5 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900">Fokus hubungan langsung</button>
+                )}
+                <button type="button" onClick={clearHighlight} className="rounded-lg px-1.5 py-1.5 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900">Hapus sorotan</button>
+              </>
+            )}
+          </div>
+        )}
       </div>
+      {selectedEntry && entries && relationships && workerResult && (
+        <CodexDetailModal
+          entry={selectedEntry}
+          entries={entries}
+          relationships={relationships}
+          projectId={projectId}
+          categories={categories}
+          detailChapters={detailChapters}
+          backlinks={workerResult.backlinks}
+          onClose={closeDetail}
+          onOpenEntry={entry => setSelectedEntryId(entry.id ?? null)}
+          onOpenInCodex={() => {
+            if (selectedEntryId === null) return;
+            closeDetail();
+            openCodexEntry(selectedEntryId);
+          }}
+        />
+      )}
     </div>
   );
 }

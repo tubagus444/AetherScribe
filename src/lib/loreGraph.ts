@@ -131,6 +131,7 @@ export function buildLoreGraph(
   entries: CodexEntry[],
   relationships: Relationship[] = [],
   promises: PlotPromise[] = [],
+  mentions = scanMentions(entries),
 ): LoreGraph {
   const byId = new Map<number, CodexEntry>();
   for (const e of entries) {
@@ -153,7 +154,7 @@ export function buildLoreGraph(
   };
 
   // --- Sebutan nama (scan bersama `scanMentions`) --------------------------
-  for (const { sourceId, mentionedId } of scanMentions(entries)) {
+  for (const { sourceId, mentionedId } of mentions) {
     const src = byId.get(sourceId);
     if (src) addBacklink(mentionedId, { sourceId, sourceName: src.name, via: 'mention' });
   }
@@ -218,6 +219,7 @@ export function buildLoreGraphView(
   entries: CodexEntry[],
   relationships: Relationship[] = [],
   promises: PlotPromise[] = [],
+  mentions = scanMentions(entries),
 ): LoreGraphView {
   const byId = new Map<number, CodexEntry>();
   for (const e of entries) {
@@ -243,7 +245,7 @@ export function buildLoreGraphView(
   }
 
   // --- Sebutan nama (scan bersama `scanMentions`) ----------------------------
-  for (const { sourceId, mentionedId } of scanMentions(entries)) {
+  for (const { sourceId, mentionedId } of mentions) {
     addLink(sourceId, mentionedId, 'mention');
   }
 

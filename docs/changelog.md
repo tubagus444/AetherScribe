@@ -6,6 +6,12 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-23
 
+- Graf Lore dapat mencari node menurut nama atau alias, memusatkan dan menyorot hasil, serta menampilkan hubungan langsung dari node pilihan.
+
+- Dialog Codex dan Graf Lore menyesuaikan lebar dengan isi. Entri ringkas memakai satu kolom, sementara entri dengan deskripsi dan detail yang padat tetap memakai dua kolom di desktop.
+
+- Klik node di Graf Lore membuka detail entri di atas graf. Menutup detail menjaga posisi kanvas dan filter, dengan opsi **Buka di Codex** untuk mengelola entri.
+
 - Kronologi Cerita merapikan toolbar, kartu, dan bagian Belum Bertanggal. Garis penghubung sejajar dengan titik tanggal, kedua ujung garis waktu memiliki ruang, dan panah geser mengikuti batas gulir.
 
 ## 2026-11-22

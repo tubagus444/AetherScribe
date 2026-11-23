@@ -12,7 +12,6 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { LoreGraphView } from '@/src/lib/loreGraph';
 import type { CodexEntry, Relationship, PlotPromise } from '@/src/types';
 import type { LoreGraphWorkerResponse } from '@/src/workers/loreGraphWorker';
 
@@ -48,7 +47,7 @@ function releaseWorker() {
 }
 
 export interface UseLoreGraphWorkerResult {
-  data: LoreGraphView | null;
+  data: Pick<LoreGraphWorkerResponse, 'nodes' | 'links' | 'backlinks'> | null;
   computing: boolean;
 }
 
@@ -68,7 +67,7 @@ export function useLoreGraphWorker(
   promises: PlotPromise[] | undefined,
   sig: string,
 ): UseLoreGraphWorkerResult {
-  const [data, setData] = useState<LoreGraphView | null>(null);
+  const [data, setData] = useState<UseLoreGraphWorkerResult['data']>(null);
   const [computing, setComputing] = useState(false);
 
   // Monoton naik — request lama diabaikan saat hasilnya tiba.
@@ -81,7 +80,8 @@ export function useLoreGraphWorker(
     if (e.data.type === 'GRAPH_VIEW_RESULT') {
       // Abaikan hasil dari request yang sudah di-supersede.
       if (e.data.requestId !== requestIdRef.current) return;
-      setData({ nodes: e.data.nodes, links: e.data.links });
+      const { nodes, links, backlinks } = e.data;
+      setData({ nodes, links, backlinks });
       setComputing(false);
     }
   }, []);
@@ -100,6 +100,7 @@ export function useLoreGraphWorker(
   }, [handleMessage]);
 
   // Kirim data ke worker saat signature berubah (debounced).
+  const ready = !!entries && !!relationships && !!promises;
   useEffect(() => {
     if (!entries || !relationships || !promises) return;
 
@@ -107,9 +108,9 @@ export function useLoreGraphWorker(
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     setComputing(true);
+    const id = ++requestIdRef.current;
 
     debounceRef.current = setTimeout(() => {
-      const id = ++requestIdRef.current;
       workerRef.current?.postMessage({
         type: 'BUILD_GRAPH_VIEW',
         entries,
@@ -126,7 +127,7 @@ export function useLoreGraphWorker(
     // TIDAK di deps — mereka berubah referensi tiap emit useLiveQuery tapi sig
     // menjaga agar hanya perubahan ISI yang memicu rebuild.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig]);
+  }, [sig, ready]);
 
   return { data, computing };
 }
