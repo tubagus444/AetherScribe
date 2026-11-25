@@ -1,5 +1,5 @@
 import React from 'react';
-import { Editor } from '@tiptap/react';
+import { useEditorState, type Editor } from '@tiptap/react';
 import {
   Bold,
   Italic,
@@ -92,6 +92,13 @@ const Divider = () => (
 );
 
 export function EditorToolbar({ editor }: EditorToolbarProps) {
+  const history = useEditorState({
+    editor,
+    selector: ({ editor }) => editor && {
+      canUndo: editor.can().undo(),
+      canRedo: editor.can().redo(),
+    },
+  });
   if (!editor) return null;
 
   return (
@@ -101,14 +108,14 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
         <ToolbarButton
           title="Undo (Ctrl+Z)"
           onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
+          disabled={!history?.canUndo}
         >
           <Undo size={16} />
         </ToolbarButton>
         <ToolbarButton
           title="Redo (Ctrl+Y)"
           onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
+          disabled={!history?.canRedo}
         >
           <Redo size={16} />
         </ToolbarButton>

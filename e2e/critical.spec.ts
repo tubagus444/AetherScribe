@@ -32,6 +32,71 @@ test('F05 editor persists a draft across reload', async ({ page }) => {
   await expect(editor).toHaveText('Draft browser F24');
 });
 
+test('editor preserves undo and redo for the active chapter across panel changes', async ({ page }) => {
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  const tabs = page.getByRole('navigation', { name: /Sub-navigasi/ });
+  const undo = page.getByRole('button', { name: 'Undo (Ctrl+Z)', exact: true });
+  const redo = page.getByRole('button', { name: 'Redo (Ctrl+Y)', exact: true });
+  const saveStatus = page.getByRole('main').getByRole('status');
+  const paragraphs = editor.locator('p');
+  const first = 'Paragraf pertama.';
+  const second = 'Paragraf kedua.';
+
+  await editor.fill(first);
+  await expect(saveStatus).toHaveText('Isi bab tersimpan');
+  await editor.press('End');
+  await editor.press('Enter');
+  await page.keyboard.insertText(second);
+  await expect(paragraphs).toHaveText([first, second]);
+  await expect(saveStatus).toHaveText('Isi bab tersimpan');
+
+  await undo.click();
+  await expect(paragraphs).toHaveText([first]);
+  await redo.click();
+  await expect(paragraphs).toHaveText([first, second]);
+
+  const switchPanels = async () => {
+    await tabs.getByRole('button', { name: 'Catatan', exact: true }).click();
+    await expect(editor).toHaveCount(0);
+    await tabs.getByRole('button', { name: 'Editor', exact: true }).click();
+    await expect(editor).toBeVisible();
+  };
+
+  await switchPanels();
+  await undo.click();
+  await expect(paragraphs).toHaveText([first]);
+
+  await switchPanels();
+  await redo.click();
+  await expect(paragraphs).toHaveText([first, second]);
+  await expect(saveStatus).toHaveText('Isi bab tersimpan');
+  await page.reload();
+  await expect(paragraphs).toHaveText([first, second]);
+  await expect(undo).toBeDisabled();
+  await expect(redo).toBeDisabled();
+});
+
+test('editor starts fresh history if the saved manuscript changes in another panel', async ({ page }) => {
+  const editor = page.locator('.tiptap[contenteditable="true"]');
+  const tabs = page.getByRole('navigation', { name: /Sub-navigasi/ });
+  const undo = page.getByRole('button', { name: 'Undo (Ctrl+Z)', exact: true });
+  const redo = page.getByRole('button', { name: 'Redo (Ctrl+Y)', exact: true });
+  await editor.fill('Isi lokal sebelum diganti.');
+  await undo.click();
+  await expect(redo).toBeEnabled();
+  await tabs.getByRole('button', { name: 'Catatan', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await page.evaluate(async () => {
+    const path = '/src/db.ts';
+    const { db }: typeof import('../src/db') = await import(path);
+    await db.chapters.update(1, { content: '<p>Isi pengganti dari penyimpanan.</p>' });
+  });
+  await tabs.getByRole('button', { name: 'Editor', exact: true }).click();
+  await expect(editor).toHaveText('Isi pengganti dari penyimpanan.');
+  await expect(undo).toBeDisabled();
+  await expect(redo).toBeDisabled();
+});
+
 for (const width of [1280, 390]) {
   test(`editor selection menu clears the highlighted text at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });

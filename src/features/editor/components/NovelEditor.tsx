@@ -5,7 +5,8 @@
 
 import { readChapter } from '@/src/services/chapterQueries';
 import { useProjectChapters } from '@/src/hooks/useChapterQueries';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
+import type { RefObject } from 'react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { 
@@ -17,7 +18,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useUI } from '@/src/contexts/UIContext';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
-import { EditorContent } from '@tiptap/react';
+import { createDocument, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/react';
+import { history } from '@tiptap/pm/history';
 import { SelectionFloatingMenu } from '@/src/features/editor/components/SelectionFloatingMenu';
 import { QuickPromiseModal, QuickPromiseSeed } from '@/src/features/consistency/components/QuickPromiseModal';
 import { EditorPanelProvider } from '@/src/contexts/EditorPanelContext';
@@ -30,6 +33,7 @@ import { CategoryIcon } from '@/src/features/codex/components/CategoryIcon';
 
 // New Modular Components & Hooks
 import { useNovelEditor } from '@/src/features/editor/hooks/useNovelEditor';
+import { useEditorSetup, type EditorBindings } from '@/src/features/editor/hooks/useEditorSetup';
 import { EditorHeader } from '@/src/features/editor/components/EditorHeader';
 import { NovelFooter } from '@/src/features/editor/components/NovelFooter';
 import { EditorLayout } from '@/src/features/editor/components/EditorLayout';
@@ -38,6 +42,7 @@ import { NovelPanels } from '@/src/features/editor/components/NovelPanels';
 import { EditorActivityRail } from '@/src/features/editor/components/EditorActivityRail';
 import { SearchReplaceBar } from '@/src/features/editor/components/SearchReplaceBar';
 import { chapterSearchHighlightKey, getChapterSearchRange } from '@/src/features/editor/extensions/ChapterSearchHighlight';
+import type { Chapter } from '@/src/types';
 
 const CalendarEventModal = React.lazy(() => import('@/src/features/timeline/components/CalendarEventModal')
   .then(module => ({ default: module.CalendarEventModal })));
@@ -47,16 +52,104 @@ interface NovelEditorProps {
   projectId: number;
 }
 
-export function NovelEditor(props: NovelEditorProps) {
+export function NovelEditor({ chapterId, projectId, isVisible }: NovelEditorProps & { isVisible: boolean }) {
+  const [chapter, setChapter] = useState<Chapter | null>();
+  const [session, setSession] = useState<{ revision: number; content: string }>();
+  const retainedEditor = useRef<Editor | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isVisible) setChapter(undefined);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    let active = true;
+    void readChapter(chapterId).then(fresh => {
+      if (!active) return;
+      if (!fresh || fresh.projectId !== projectId) {
+        setSession(undefined);
+        setChapter(null);
+        return;
+      }
+      const editor = retainedEditor.current;
+      const content = fresh.content ?? '';
+      // Bandingkan dokumen, agar HTML lama yang dinormalisasi TipTap tetap bisa memakai riwayatnya.
+      if (!editor || (editor.getHTML() !== content &&
+        !editor.state.doc.eq(createDocument(content, editor.schema, editor.options.parseOptions)))) {
+        setSession(previous => ({ revision: (previous?.revision ?? 0) + 1, content }));
+      }
+      setChapter(fresh);
+    });
+    return () => { active = false; };
+  }, [chapterId, isVisible, projectId]);
+
+  return (
+    <div hidden={!isVisible} className="absolute inset-0 z-10">
+      {isVisible && !chapter && (
+        <div className="h-full flex flex-col items-center justify-center text-slate-300 bg-white dark:bg-slate-900">
+          {chapter === null ? (
+            <>
+              <ScrollText size={48} className="mb-4 opacity-20" />
+              <p className="font-serif italic text-lg text-center px-8">Bab ini telah dihapus.<br/>Silakan pilih jalur lain dari kerangka.</p>
+            </>
+          ) : (
+            <>
+              <Loader2 size={32} className="animate-spin mb-4 opacity-20" />
+              <p className="font-serif italic text-lg">Menyinkronkan naskah...</p>
+            </>
+          )}
+        </div>
+      )}
+      {session && (
+        <NovelEditorSession
+          key={session.revision}
+          chapterId={chapterId}
+          projectId={projectId}
+          chapter={isVisible ? chapter : undefined}
+          initialContent={session.content}
+          retainedEditor={retainedEditor}
+        />
+      )}
+    </div>
+  );
+}
+
+function NovelEditorSession({ chapterId, projectId, chapter, initialContent, retainedEditor }: NovelEditorProps & {
+  chapter: Chapter | null | undefined;
+  initialContent: string;
+  retainedEditor: RefObject<Editor | null>;
+}) {
+  const bindings = useRef<EditorBindings | null>(null);
+  const editor = useEditorSetup(initialContent, bindings);
+
+  useLayoutEffect(() => {
+    retainedEditor.current = editor;
+    return () => { retainedEditor.current = null; };
+  }, [editor, retainedEditor]);
+
+  useEffect(() => {
+    if (!editor || chapter) return;
+    // EditorContent sudah melepas DOM dari panel. Pertahankan riwayat sambil menutup
+    // state sementara plugin seperti saran mention dan sorotan pencarian.
+    const state = editor.state;
+    const undoRedo = history().spec.key?.get(state);
+    const retained = state.reconfigure({ plugins: undoRedo ? [undoRedo] : [] });
+    editor.view.updateState(retained.reconfigure({ plugins: state.plugins }));
+  }, [chapter, editor]);
+
+  if (!chapter || !editor) return null;
   return (
     <EditorPanelProvider>
-      <NovelEditorInner {...props} />
+      <NovelEditorInner chapterId={chapterId} projectId={projectId} chapter={chapter} editor={editor} bindings={bindings} />
     </EditorPanelProvider>
   );
 }
 
-function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
-  const [chapter, setChapter] = useState<any>(undefined);
+function NovelEditorInner({ chapterId, projectId, chapter, editor, bindings }: NovelEditorProps & {
+  chapter: Chapter;
+  editor: Editor;
+  bindings: RefObject<EditorBindings | null>;
+}) {
   const [isTypewriterMode, setIsTypewriterMode] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<number>(() => {
     const saved = localStorage.getItem('editor_zoom');
@@ -87,17 +180,6 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chapterSearchEffect = useRef<{ frame: number; timer: ReturnType<typeof setTimeout> }>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    setChapter(undefined); // Start loading
-    readChapter(chapterId).then(data => {
-      if (isMounted) {
-        setChapter(data || null); // null if not found
-      }
-    });
-    return () => { isMounted = false; };
-  }, [chapterId]);
-
   const { codexEntries, aiActions, bibleRules, relationships, isLoading } = useProjectData(projectId);
   const { categories } = useCodexCategories(projectId);
 
@@ -106,7 +188,6 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   const allChapters = useProjectChapters(eventDraft ? projectId : undefined, 'manuscript');
 
   const {
-    editor,
     title,
     handleTitleChange,
     isAiProcessing,
@@ -143,10 +224,11 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   } = useNovelEditor({
     chapterId,
     chapter,
+    editor,
+    bindings,
     codexEntries: codexEntries || [],
     bibleRules: bibleRules || [],
     relationships: relationships || [],
-    aiActions: aiActions || [],
     isTypewriterMode,
     containerRef
   });
@@ -212,7 +294,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   // sorot semua kecocokan, lalu pilih+scroll ke yang pertama. Retry singkat sambil
   // konten bab selesai dimuat ke editor.
   useEffect(() => {
-    if (!editor || !pendingHighlight || !chapter) return;
+    if (!pendingHighlight) return;
     const term = pendingHighlight;
     clearPendingHighlight();
     setSearchQuery(term);
@@ -228,7 +310,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
     };
     const t = setTimeout(tryScroll, 80);
     return () => clearTimeout(t);
-  }, [editor, pendingHighlight, chapter, clearPendingHighlight, setSearchQuery, setIsSearchOpen]);
+  }, [editor, pendingHighlight, clearPendingHighlight, setSearchQuery, setIsSearchOpen]);
 
   useEffect(() => () => {
     if (!chapterSearchEffect.current) return;
@@ -240,14 +322,14 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   useEffect(() => {
     const target = pendingChapterSearch;
     if (!target || target.projectId !== projectId || target.chapterId !== chapterId
-      || !editor || chapter === undefined || isLoading) return;
+      || isLoading) return;
     clearPendingChapterSearch(target);
     if (chapterSearchEffect.current) {
       cancelAnimationFrame(chapterSearchEffect.current.frame);
       clearTimeout(chapterSearchEffect.current.timer);
       chapterSearchEffect.current = null;
     }
-    const range = chapter ? getChapterSearchRange(editor.state.doc, target.match) : undefined;
+    const range = getChapterSearchRange(editor.state.doc, target.match);
     editor.view.dispatch(editor.state.tr.setMeta(chapterSearchHighlightKey, range ?? null));
     if (!range) {
       toast.info('Bab dibuka. Letak cuplikan hasil pencarian sudah berubah.');
@@ -263,22 +345,13 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
       chapterSearchEffect.current = null;
     }, 5000);
     chapterSearchEffect.current = { frame, timer };
-  }, [pendingChapterSearch, clearPendingChapterSearch, projectId, chapterId, editor, chapter, isLoading, toast]);
+  }, [pendingChapterSearch, clearPendingChapterSearch, projectId, chapterId, editor, isLoading, toast]);
 
-  if (chapter === undefined || isLoading) {
+  if (isLoading) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-300 bg-white dark:bg-slate-900">
         <Loader2 size={32} className="animate-spin mb-4 opacity-20" />
         <p className="font-serif italic text-lg">Menyinkronkan naskah...</p>
-      </div>
-    );
-  }
-
-  if (chapter === null) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-300 bg-white dark:bg-slate-900">
-        <ScrollText size={48} className="mb-4 opacity-20" />
-        <p className="font-serif italic text-lg text-center px-8">Bab ini telah dihapus.<br/>Silakan pilih jalur lain dari kerangka.</p>
       </div>
     );
   }

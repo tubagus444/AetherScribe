@@ -1,4 +1,5 @@
 import { useEditor, ReactRenderer, Editor } from '@tiptap/react';
+import type { RefObject } from 'react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Mention from '@tiptap/extension-mention';
@@ -17,20 +18,14 @@ import tippy from 'tippy.js';
 import { cn } from '@/src/lib/utils';
 import { CodexEntry } from '@/src/types';
 import { InlineQuoteFinding, InlineSpellingFinding, InlineGlossaryFinding } from '@/src/lib/inlineConsistency';
-import { useRef, useEffect } from 'react';
 
-interface UseEditorSetupProps {
-  chapterId: number;
-  initialContent?: string;
+export interface EditorBindings {
   codexEntries: CodexEntry[];
   onCodexClick: (entryId: number, event: MouseEvent) => void;
   onUpdate: (props: { editor: Editor }) => void;
-  /** Akses temuan kutipan dari lapisan AI inline (Fase 2), stabil identitasnya. */
-  getConsistencyQuotes?: () => InlineQuoteFinding[];
-  /** Akses temuan salah-eja nama (Buku Gaya), stabil identitasnya. */
-  getConsistencySpelling?: () => InlineSpellingFinding[];
-  /** Akses temuan glosarium istilah in-world (#8), stabil identitasnya. */
-  getConsistencyGlossary?: () => InlineGlossaryFinding[];
+  getConsistencyQuotes: () => InlineQuoteFinding[];
+  getConsistencySpelling: () => InlineSpellingFinding[];
+  getConsistencyGlossary: () => InlineGlossaryFinding[];
 }
 
 const CustomMention = Mention.extend({
@@ -46,35 +41,8 @@ const CustomMention = Mention.extend({
   },
 });
 
-export function useEditorSetup({ chapterId, initialContent, codexEntries, onCodexClick, onUpdate, getConsistencyQuotes, getConsistencySpelling, getConsistencyGlossary }: UseEditorSetupProps) {
-  const visibleCodexEntriesRef = useRef<CodexEntry[]>(codexEntries.filter(e => !e.hidden));
-  const onUpdateRef = useRef(onUpdate);
-  // Akses flag/temuan konsistensi lewat ref agar closure extension selalu baca versi terkini.
-  const getQuotesRef = useRef(getConsistencyQuotes);
-  const getSpellingRef = useRef(getConsistencySpelling);
-  const getGlossaryRef = useRef(getConsistencyGlossary);
-
-  useEffect(() => {
-    visibleCodexEntriesRef.current = codexEntries.filter(e => !e.hidden);
-  }, [codexEntries]);
-
-  useEffect(() => {
-    getQuotesRef.current = getConsistencyQuotes;
-  }, [getConsistencyQuotes]);
-
-  useEffect(() => {
-    getSpellingRef.current = getConsistencySpelling;
-  }, [getConsistencySpelling]);
-
-  useEffect(() => {
-    getGlossaryRef.current = getConsistencyGlossary;
-  }, [getConsistencyGlossary]);
-
-  useEffect(() => {
-    onUpdateRef.current = onUpdate;
-  }, [onUpdate]);
-
-  const editor = useEditor({
+export function useEditorSetup(initialContent: string, bindings: RefObject<EditorBindings | null>) {
+  return useEditor({
     extensions: [
       StarterKit,
       TextAlign.configure({
@@ -89,14 +57,14 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
       }),
       SemanticHighlight,
       ConsistencyUnderline.configure({
-        getQuoteFindings: () => getQuotesRef.current?.() ?? [],
-        getSpellingFindings: () => getSpellingRef.current?.() ?? [],
-        getGlossaryFindings: () => getGlossaryRef.current?.() ?? [],
+        getQuoteFindings: () => bindings.current?.getConsistencyQuotes() ?? [],
+        getSpellingFindings: () => bindings.current?.getConsistencySpelling() ?? [],
+        getGlossaryFindings: () => bindings.current?.getConsistencyGlossary() ?? [],
       }),
       RevisionComment,
       PassiveCodexHighlight.configure({
-        getCodexEntries: () => visibleCodexEntriesRef.current,
-        onCodexClick: (entryId, event) => onCodexClick(entryId, event)
+        getCodexEntries: () => bindings.current?.codexEntries ?? [],
+        onCodexClick: (entryId, event) => bindings.current?.onCodexClick(entryId, event)
       }),
       Placeholder.configure({
         placeholder: 'Mulai menulis cerita Anda...',
@@ -107,7 +75,7 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
         },
         suggestion: {
           items: ({ query }) => {
-            const entries = visibleCodexEntriesRef.current;
+            const entries = bindings.current?.codexEntries ?? [];
             return entries
               .filter(item =>
                 item.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -163,10 +131,8 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
         },
       }),
     ],
-    content: initialContent || '',
-    onUpdate: (props) => {
-      onUpdateRef.current?.(props as any);
-    },
+    content: initialContent,
+    onUpdate: props => bindings.current?.onUpdate(props),
     editorProps: {
       attributes: {
         class: cn(
@@ -175,24 +141,4 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
       },
     },
   });
-
-  const hasSetInitialContent = useRef(false);
-
-  // Reset the flag when chapterId changes
-  useEffect(() => {
-    hasSetInitialContent.current = false;
-  }, [chapterId]);
-
-  // Apply initial content when it becomes available
-  useEffect(() => {
-    if (editor && initialContent !== undefined && !hasSetInitialContent.current) {
-      if (editor.getHTML() !== initialContent) {
-        // emitUpdate:false → muat konten awal tanpa memicu onUpdate (cegah autosave churn). (ED2)
-        editor.commands.setContent(initialContent, { emitUpdate: false });
-      }
-      hasSetInitialContent.current = true;
-    }
-  }, [editor, initialContent]);
-
-  return editor;
 }

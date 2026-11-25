@@ -79,23 +79,17 @@ export function MainView() {
 
       <PanelErrorBoundary resetKey={viewMode}>
       <div className="flex-1 overflow-hidden relative bg-background">
-        {/* Persistent Editor: Conditionally mounted to save RAM as requested */}
-        {viewMode === 'write' && (
-          <div 
-            className="absolute inset-0 z-10"
-          >
-            {activeChapterId && projectId ? (
-              <NovelEditor 
-                key={activeChapterId}
-                chapterId={activeChapterId} 
-                projectId={projectId} 
-              />
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-300">
-                <ScrollText size={48} className="mb-4 opacity-20" />
-                <p className="font-serif italic text-lg text-slate-400">Select a chapter to begin your journey.</p>
-              </div>
-            )}
+        {activeChapterId && projectId ? (
+          <NovelEditor
+            key={`${projectId}:${activeChapterId}`}
+            chapterId={activeChapterId}
+            projectId={projectId}
+            isVisible={viewMode === 'write'}
+          />
+        ) : viewMode === 'write' && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-slate-300">
+            <ScrollText size={48} className="mb-4 opacity-20" />
+            <p className="font-serif italic text-lg text-slate-400">Select a chapter to begin your journey.</p>
           </div>
         )}
 

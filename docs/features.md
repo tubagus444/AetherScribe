@@ -18,6 +18,11 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
 
 ## Kontrak editor dan analitik naskah
 
+- Undo dan Redo tetap tersedia saat kembali ke Editor pada bab yang sama.
+  Riwayat berlaku selama sesi halaman untuk bab aktif. Riwayat dimulai ulang
+  saat mengganti bab atau proyek, memuat ulang halaman, atau kembali setelah
+  isi bab di penyimpanan berubah dari panel lain.
+
 - Heading 1–3 di naskah tampil lebih ringkas pada layar sempit dan lebar,
   dengan ukuran yang berbeda untuk tiap level.
 - Menu seleksi mengambang menjaga jarak dari seluruh blok teks. Menu dipasang

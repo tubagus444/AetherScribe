@@ -6,6 +6,8 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-25
 
+- Undo dan Redo tetap tersedia setelah berpindah panel dan kembali ke bab
+  yang sama. Isi awal bab dimuat tanpa menambah aksi ke riwayat Undo.
 - Snippet menunggu hasil lengkap dan mengikuti sasaran saat naskah disunting.
   Penulis dapat menetapkan ulang sasaran yang berubah dari pratinjau.
 - Snippet meminta 4.096–8.192 token output dan menyesuaikan permintaan jika

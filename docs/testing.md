@@ -50,6 +50,7 @@ memulainya tanpa seed. Service worker offline diuji terpisah oleh test:startup.
 | Area | Integrasi/regresi yang tersedia | Bukti browser / batas |
 |---|---|---|
 | Save F05 | useEditorSave dan CrossChapterReplace: reject, update nol baris, draft, retry, flush/reload | Editor TipTap asli: autosave/reload serta injeksi write failure, flush reject, draft tetap utuh dan retry |
+| Riwayat Editor | — | `critical.spec.ts` memeriksa Undo/Redo setelah kembali dari Catatan, riwayat kosong setelah refresh, dan pemuatan isi pengganti saat bab diubah di penyimpanan |
 | Bab/triage F06/F07 | chapterTriage: duplikasi HTML/metadata, urutan, rollback, concurrency dan reopen DB | Duplikasi melalui service produksi menyalin draft editor aktif ke IndexedDB native |
 | Backup F03/F04/F19 | backupService/backupConsistency: validasi, snapshot wajib, aset, atomic restore dan konsistensi snapshot | Blob/FileReader/Web Crypto/gzip native: Atlas dipulihkan dan snapshot pengaman dibuat; restore versi asing ditolak |
 | Round-trip F10 | projectRoundTrip: remap FK/triage/workshop, rollback dan legacy | Export/import service produksi memakai native IndexedDB dan remap triage; L03 melengkapi ekspor/impor lewat tombol, filechooser dan dialog aplikasi |

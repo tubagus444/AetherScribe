@@ -2,7 +2,7 @@
  * Jembatan ke editor yang sedang aktif (jika ada) untuk operasi lintas-bab seperti
  * Find & Replace global.
  *
- * Editor di-mount HANYA saat `viewMode === 'write'` dan menyimpan konten ke Dexie secara
+ * Panel Editor mendaftarkan bridge saat terbuka dan menyimpan konten ke Dexie secara
  * debounce. Bila operasi lain mengubah konten bab yang sedang dibuka langsung di DB,
  * autosave editor bisa MENIMPA balik perubahan itu (risiko kehilangan data). Bridge ini
  * memberi pemanggil dua kait aman:
@@ -29,7 +29,7 @@ export function unregisterActiveEditor(bridge: ActiveEditorBridge): void {
   if (current === bridge) current = null;
 }
 
-/** Id bab yang sedang dibuka di editor, atau null bila editor tak ter-mount. */
+/** Id bab yang sedang dibuka di panel Editor, atau null bila panel ditutup. */
 export function getActiveEditorChapterId(): number | null {
   return current ? current.getChapterId() : null;
 }

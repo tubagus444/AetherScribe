@@ -51,7 +51,13 @@ AetherScribe tidak menggunakan Redux maupun Zustand. State dikelola secara reakt
   - `NavigationContext`: Nilai `viewMode` aktif, bab terpilih (`activeChapterId`), dan navigasi deep-link.
   - `UIContext`: Mode fokus (*focus mode*), tema tampilan (dark/light), status sidebar.
   - `EditorPanelContext`: Tab editor aktif dan panel split view.
-- **Routing Tampilan:** Ditentukan oleh variabel `viewMode` di `NavigationContext`. Komponen `src/components/layout/MainView.tsx` merender panel terkait. Semua panel dimuat secara malas (*React.lazy*), kecuali Editor TipTap yang di-mount ketika `viewMode === 'write'` demi menghemat RAM.
+- `MainView` memilih panel berdasarkan `viewMode` dari
+  `NavigationContext`. Saat pertama membuka Editor, TipTap dibuat dari isi bab
+  yang sudah dimuat. Saat berpindah panel, antarmuka Editor dan bridge autosave
+  dilepas. Satu instance TipTap bertahan dalam memori untuk riwayat bab aktif.
+  Ketika Editor dibuka kembali, isi di IndexedDB diperiksa sebelum instance itu
+  dipakai kembali. Ganti bab, ganti proyek, atau perubahan isi di penyimpanan
+  memulai sesi TipTap baru.
 
 ---
 
