@@ -3,192 +3,181 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useProjectChapters } from '@/src/hooks/useChapterQueries';
-import React, { useState, useMemo, useEffect } from 'react';
-import { db } from '@/src/db';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Search, FileText, Book, X, Hash } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '@/src/lib/utils';
+import { Book, FileText, Search, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { db } from '@/src/db';
+import { useProjectChapters } from '@/src/hooks/useChapterQueries';
+import { findCodexResults, type ChapterSearchMatch, type ChapterSearchRequest, type ChapterSearchResponse } from '@/src/lib/globalSearch';
 
 interface GlobalSearchProps {
   projectId: number;
-  onSelectChapter: (id: number) => void;
-  onSelectCodex: (id: number) => void;
+  onSelectChapter: (id: number, match?: ChapterSearchMatch) => Promise<boolean>;
+  onSelectCodex: (id: number) => Promise<boolean>;
   onClose: () => void;
+}
+
+function MatchExcerpt({ match }: { match: ChapterSearchMatch }) {
+  return (
+    <p className="mt-0.5 break-words text-xs text-slate-600 dark:text-slate-300">
+      {match.before.length === 48 && '…'}{match.before}
+      <mark className="rounded bg-amber-100 text-slate-900 dark:bg-amber-300">{match.text}</mark>
+      {match.after}{match.after.length === 48 && '…'}
+    </p>
+  );
 }
 
 export function GlobalSearch({ projectId, onSelectChapter, onSelectCodex, onClose }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
+  const searchTerm = query.trim();
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [isOpening, setIsOpening] = useState(false);
+  const [openFailed, setOpenFailed] = useState(false);
+  const openingRef = useRef(false);
+  const chapters = useProjectChapters(projectId, 'manuscript');
+  const codex = useLiveQuery(() => db.codex.where('projectId').equals(projectId).toArray(), [projectId]);
+  const [chapterSearch, setChapterSearch] = useState<{
+    projectId: number;
+    chapters: typeof chapters;
+    query: string;
+    response: ChapterSearchResponse;
+  }>();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
+    const timer = setTimeout(() => setDebouncedQuery(searchTerm), 300);
     return () => clearTimeout(timer);
-  }, [query]);
-  
-  const chapters = useProjectChapters(projectId);
-
-  const codex = useLiveQuery(() => 
-    db.codex.where('projectId').equals(projectId).toArray()
-  , [projectId]);
-
-  const results = useMemo(() => {
-    if (!debouncedQuery.trim()) return { chapters: [], codex: [] };
-    
-    const q = debouncedQuery.toLowerCase();
-    
-    const matchedChapters = chapters?.filter(ch => 
-      ch.title.toLowerCase().includes(q) || ch.content.toLowerCase().includes(q)
-    ).map(ch => {
-      // Mock hybrid relevance calculation
-      const exactMatchTitle = ch.title.toLowerCase() === q ? 1 : 0;
-      const includesTitle = ch.title.toLowerCase().includes(q) ? 0.6 : 0;
-      const includesContent = ch.content.toLowerCase().includes(q) ? 0.3 : 0;
-      
-      const semanticMock = Math.random() * 0.4; // Simulate semantic vector score
-      const score = Math.min(1, Math.max(exactMatchTitle, includesTitle, includesContent) + semanticMock);
-      
-      return { ...ch, relevanceScore: score };
-    }).sort((a, b) => b.relevanceScore - a.relevanceScore) || [];
-
-    const matchedCodex = codex?.filter(ctx => 
-      ctx.name.toLowerCase().includes(q) || 
-      ctx.description.toLowerCase().includes(q) ||
-      ctx.aliases?.some(a => a.toLowerCase().includes(q))
-    ).map(ctx => {
-      const exactMatchTitle = ctx.name.toLowerCase() === q ? 1 : 0;
-      const includesTitle = ctx.name.toLowerCase().includes(q) ? 0.7 : 0;
-      const semanticMock = Math.random() * 0.3;
-      const score = Math.min(1, Math.max(exactMatchTitle, includesTitle) + semanticMock);
-
-      return { ...ctx, relevanceScore: score };
-    }).sort((a, b) => b.relevanceScore - a.relevanceScore) || [];
-
-    return { chapters: matchedChapters, codex: matchedCodex };
-  }, [debouncedQuery, chapters, codex]);
+  }, [searchTerm]);
 
   useEffect(() => {
-    const handleDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    if (!debouncedQuery || debouncedQuery !== searchTerm || !chapters) return;
+    const receive = (response: ChapterSearchResponse) =>
+      setChapterSearch({ projectId, chapters, query: debouncedQuery, response });
+    let worker: Worker | undefined;
+    try {
+      worker = new Worker(new URL('../../workers/chapterSearchWorker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (event: MessageEvent<ChapterSearchResponse>) => receive(event.data);
+      worker.onerror = () => receive({ error: true });
+      worker.postMessage({
+        query: debouncedQuery,
+        chapters: chapters.flatMap(({ id, title, content }) => id == null ? [] : [{ id, title, content }]),
+      } satisfies ChapterSearchRequest);
+    } catch {
+      receive({ error: true });
+    }
+    return () => {
+      if (!worker) return;
+      worker.onmessage = null;
+      worker.onerror = null;
+      worker.terminate();
+    };
+  }, [projectId, chapters, debouncedQuery, searchTerm]);
+
+  const codexResults = useMemo(() => findCodexResults(codex ?? [], searchTerm === debouncedQuery ? searchTerm : ''), [codex, searchTerm, debouncedQuery]);
+  const currentResponse = chapterSearch?.projectId === projectId && chapterSearch.chapters === chapters
+    && chapterSearch.query === searchTerm ? chapterSearch.response : undefined;
+  const chapterResults = currentResponse && 'results' in currentResponse ? currentResponse.results : [];
+  const failed = !!currentResponse && 'error' in currentResponse;
+  const isSearching = !!searchTerm && (!currentResponse || !codex);
+
+  useEffect(() => {
+    const handleDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !openingRef.current) onClose();
     };
     window.addEventListener('keydown', handleDown);
     return () => window.removeEventListener('keydown', handleDown);
   }, [onClose]);
 
+  const open = async (navigate: () => Promise<boolean>) => {
+    if (openingRef.current) return;
+    openingRef.current = true;
+    setIsOpening(true);
+    setOpenFailed(false);
+    try {
+      if (await navigate()) onClose();
+      else setOpenFailed(true);
+    } finally {
+      openingRef.current = false;
+      setIsOpening(false);
+    }
+  };
+
+  const resultClass = 'flex w-full items-start gap-3 rounded-xl p-3 text-left hover:bg-slate-100 focus-visible:outline-2 dark:hover:bg-slate-800 disabled:opacity-60';
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-6 sm:pt-24 bg-slate-900/40 backdrop-blur-sm p-4">
-      <motion.div 
+    <div className="fixed inset-0 z-[100] flex items-start justify-center bg-slate-900/40 p-4 pt-6 backdrop-blur-sm sm:pt-24">
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pencarian global"
         initial={{ opacity: 0, scale: 0.95, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[80vh]"
+        className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[80vh]"
       >
-        <div className="flex-none p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-          <Search size={20} className="text-slate-400 dark:text-slate-500 shrink-0" />
-          <input 
+        <div className="flex flex-none items-center gap-3 border-b border-slate-100 p-4 dark:border-slate-800">
+          <Search size={20} className="shrink-0 text-slate-400" />
+          <input
             autoFocus
-            className="flex-1 bg-transparent text-base sm:text-lg focus:outline-none placeholder:text-slate-300 min-w-0"
-            placeholder="Search chapters, characters, places..."
+            type="search"
+            aria-label="Cari bab atau entri Codex"
+            className="min-w-0 flex-1 bg-transparent text-base focus:outline-none sm:text-lg"
+            placeholder="Cari bab atau entri Codex…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={event => {
+              setOpenFailed(false);
+              setQuery(event.target.value);
+            }}
+            onKeyDown={event => {
+              if (event.key !== 'Enter' || isSearching) return;
+              const chapter = chapterResults[0];
+              const entry = codexResults[0];
+              if (chapter) void open(() => onSelectChapter(chapter.id, chapter.match));
+              else if (entry) void open(() => onSelectCodex(entry.id));
+            }}
           />
-          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 dark:bg-slate-800 rounded-md text-slate-400 dark:text-slate-500 shrink-0">
+          <button type="button" aria-label="Tutup pencarian" disabled={isOpening} onClick={onClose} className="shrink-0 rounded-md p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X size={16} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
-          {!query && (
-            <div className="py-12 text-center text-slate-400 dark:text-slate-500">
-              <Search size={32} className="mx-auto mb-3 opacity-20" />
-              <p className="text-sm italic">Type something to search across your manuscript.</p>
-            </div>
+        <div className="custom-scrollbar flex-1 overflow-y-auto p-2">
+          {openFailed && <p role="status" className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300">Tujuan belum bisa dibuka. Coba lagi.</p>}
+          {!searchTerm && <p className="p-6 text-center text-sm text-slate-500">Ketik judul, frasa naskah, atau nama entri.</p>}
+          {isSearching && <p role="status" className="px-3 py-2 text-sm text-slate-500">Mencari…</p>}
+          {failed && <p role="status" className="px-3 py-2 text-sm text-slate-500">Pencarian bab gagal. Ubah kata kunci atau buka ulang pencarian.</p>}
+          {!!searchTerm && !isSearching && !failed && !chapterResults.length && !codexResults.length && (
+            <p role="status" className="p-6 text-center text-sm text-slate-500">Tidak ada hasil untuk “{searchTerm}”.</p>
           )}
 
-          {query && results.chapters.length === 0 && results.codex.length === 0 && (
-            <div className="py-12 text-center text-slate-400 dark:text-slate-500">
-              <p className="text-sm">No results found for "{query}"</p>
-            </div>
-          )}
-
-          {results.chapters.length > 0 && (
-            <div className="space-y-1 mb-4">
-              <h3 className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Chapters</h3>
-              {results.chapters.map(ch => (
-                <button 
-                  key={ch.id}
-                  onClick={() => { onSelectChapter(ch.id!); onClose(); }}
-                  className="w-full flex items-center justify-between gap-3 p-3 hover:bg-indigo-50 rounded-xl transition-colors group text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 text-indigo-500 rounded-lg group-hover:bg-white dark:hover:bg-slate-900 transition-colors">
-                      <FileText size={16} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">{ch.title || 'Untitled Chapter'}</h4>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-1">Chapter • {ch.content.substring(0, 100)}...</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className={cn(
-                      "text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1",
-                      (ch as any).relevanceScore > 0.8 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                      (ch as any).relevanceScore > 0.5 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                      "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                    )}>
-                      <span>{((ch as any).relevanceScore * 100).toFixed(0)}%</span>
-                    </div>
-                    <span className="text-[8px] uppercase tracking-wider text-slate-400 opacity-50">Hybrid</span>
+          {chapterResults.length > 0 && (
+            <section aria-label="Hasil bab" className="mb-2 space-y-1">
+              <h3 className="px-3 py-1 text-xs font-semibold text-slate-500">Bab</h3>
+              {chapterResults.map(chapter => (
+                <button key={chapter.id} type="button" disabled={isOpening} className={resultClass} onClick={() => void open(() => onSelectChapter(chapter.id, chapter.match))}>
+                  <FileText size={16} className="mt-0.5 shrink-0 text-indigo-500" />
+                  <div className="min-w-0">
+                    <span className="block break-words text-sm font-semibold">{chapter.title || 'Bab tanpa judul'}</span>
+                    {chapter.match && <MatchExcerpt match={chapter.match} />}
                   </div>
                 </button>
               ))}
-            </div>
+            </section>
           )}
 
-          {results.codex.length > 0 && (
-            <div className="space-y-1">
-              <h3 className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Codex</h3>
-              {results.codex.map(ctx => (
-                <button 
-                  key={ctx.id}
-                  onClick={() => { onSelectCodex(ctx.id!); onClose(); }}
-                  className="w-full flex items-center justify-between gap-3 p-3 hover:bg-emerald-50 rounded-xl transition-colors group text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 text-emerald-500 rounded-lg group-hover:bg-white dark:hover:bg-slate-900 transition-colors">
-                      <Book size={16} />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-700 dark:text-slate-200">{ctx.name}</h4>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-1 italic">{ctx.category} — {ctx.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className={cn(
-                      "text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1",
-                      (ctx as any).relevanceScore > 0.8 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                      (ctx as any).relevanceScore > 0.5 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                      "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-                    )}>
-                      <span>{((ctx as any).relevanceScore * 100).toFixed(0)}%</span>
-                    </div>
-                    <span className="text-[8px] uppercase tracking-wider text-slate-400 opacity-50">Hybrid</span>
+          {codexResults.length > 0 && (
+            <section aria-label="Hasil Codex" className="space-y-1">
+              <h3 className="px-3 py-1 text-xs font-semibold text-slate-500">Codex</h3>
+              {codexResults.map(({ entry, id }) => (
+                <button key={id} type="button" disabled={isOpening} className={resultClass} onClick={() => void open(() => onSelectCodex(id))}>
+                  <Book size={16} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <div className="min-w-0">
+                    <span className="block break-words text-sm font-semibold">{entry.name}</span>
+                    <p className="line-clamp-2 break-words text-xs text-slate-600 dark:text-slate-300">{entry.category} · {entry.description}</p>
                   </div>
                 </button>
               ))}
-            </div>
+            </section>
           )}
-        </div>
-
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center gap-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm">ESC</kbd> to close
-          </div>
-          <div className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm">⏎</kbd> to open
-          </div>
         </div>
       </motion.div>
     </div>

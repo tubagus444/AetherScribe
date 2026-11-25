@@ -4,6 +4,21 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-25
+
+- Snippet menunggu hasil lengkap dan mengikuti sasaran saat naskah disunting.
+  Penulis dapat menetapkan ulang sasaran yang berubah dari pratinjau.
+- Snippet meminta 4.096–8.192 token output dan menyesuaikan permintaan jika
+  model melaporkan batas yang lebih rendah.
+- Aksi **Sisipkan di Bawah** menggulir ke hasil baru dan memberi sorotan
+  sementara pada sisipan.
+- Pratinjau Snippet menampilkan status sejak permintaan dimulai sampai
+  hasil siap diterapkan.
+- Codex mempertahankan nilai kolom setelah kolom dihapus dari templat atau
+  entri dipindahkan ke kategori lain. Nilai lama bisa dihapus dari formulir entri.
+- Pencarian global membuka detail Codex yang dipilih atau melompat ke cuplikan
+  bab. Urutan hasil deterministik dan pemindaian isi bab berjalan di Web Worker.
+
 ## 2026-11-23
 
 - Ukuran dan jarak Heading 1–3 di editor diperkecil agar lebih proporsional dengan teks naskah.

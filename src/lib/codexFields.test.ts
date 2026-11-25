@@ -30,6 +30,26 @@ describe('slugifyFieldKey', () => {
 });
 
 describe('buildFieldValues', () => {
+  it('supports field keys that are also inherited object property names', () => {
+    const field = { key: 'constructor', label: 'Constructor', type: 'text' } as const;
+    expect(buildFieldValues([field], {})).toEqual([]);
+    expect(buildFieldValues([field], { constructor: 'Damar' })).toEqual([{ key: 'constructor', label: 'Constructor', value: 'Damar' }]);
+  });
+  it('preserves retired values and reserves keys for active fields even when they are empty', () => {
+    const retained = [
+      { key: 'habitat', label: 'Habitat lama', value: 'Pohon Raksasa' },
+      { key: 'habitat-2', label: 'Habitat awal', value: 'Danau' },
+      { key: 'asal', label: 'Asal', value: 'Desa Awan' },
+    ];
+    const values = buildFieldValues(defs, {}, retained);
+    expect(values).toEqual([
+      { ...retained[0], key: 'habitat-3' },
+      retained[1],
+      retained[2],
+    ]);
+    expect(buildFieldValues(defs, {}, values)).toEqual(values);
+    expect(buildFieldValues([], {}, retained)).toEqual(retained);
+  });
   it('menyertakan hanya field ber-nilai, urut sesuai defs, denormalisasi label', () => {
     const out = buildFieldValues(defs, { kelemahan: 'Api', habitat: 'Gua', ancaman: '' });
     expect(out).toEqual<CustomFieldValue[]>([

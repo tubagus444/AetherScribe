@@ -7,10 +7,7 @@
  * (KB AI, ekspor Markdown, detail/kartu) self-contained — tak perlu resolusi kategori,
  * jadi tak ada penerusan kategori ke jalur AI (jaga cache prompt byte-identik).
  *
- * Konsekuensi yang disengaja (v1): mengganti `label` sebuah field TIDAK mengubah entri
- * lama sampai entri disimpan ulang; berpindah kategori lalu menyimpan membuang nilai
- * kategori sebelumnya (dibangun ulang dari definisi kategori aktif). Keduanya diterima
- * demi kesederhanaan & determinisme.
+ * Nilai di luar templat aktif dipertahankan sampai penulis menghapusnya dari entri.
  */
 import type { CodexEntry, CategoryFieldDef, CustomFieldValue } from '@/src/types';
 import { slugify } from '@/src/lib/codexCategories';
@@ -35,7 +32,7 @@ export function resolveFieldValues(entry: Pick<CodexEntry, 'customFields'>): Cus
 export function fieldValueMap(
   entry?: Pick<CodexEntry, 'customFields'> | null
 ): Record<string, string> {
-  const map: Record<string, string> = {};
+  const map: Record<string, string> = Object.create(null);
   for (const f of entry?.customFields ?? []) {
     if (f && typeof f.key === 'string') map[f.key] = f.value ?? '';
   }
@@ -49,14 +46,25 @@ export function fieldValueMap(
  */
 export function buildFieldValues(
   defs: CategoryFieldDef[] | undefined,
-  values: Record<string, string>
+  values: Record<string, string>,
+  retained: CustomFieldValue[] = [],
 ): CustomFieldValue[] {
-  if (!defs?.length) return [];
+  const definitions = defs ?? [];
   const out: CustomFieldValue[] = [];
-  for (const d of defs) {
-    const raw = values[d.key];
-    const v = (raw ?? '').trim();
-    if (v) out.push({ key: d.key, label: d.label, value: v });
+  for (const d of definitions) {
+    const value = Object.hasOwn(values, d.key) ? values[d.key]?.trim() : undefined;
+    if (value) out.push({ key: d.key, label: d.label, value });
+  }
+  // Cadangkan semua kunci templat, termasuk input kosong, agar nilai lama
+  // tidak dianggap sebagai nilai kolom aktif saat entri dibuka kembali.
+  const usedKeys = new Set(definitions.map(def => def.key));
+  const retainedKeys = retained.map(field => field.key);
+  for (const field of retained) {
+    const key = usedKeys.has(field.key)
+      ? slugifyFieldKey(field.key, [...usedKeys, ...retainedKeys])
+      : field.key;
+    usedKeys.add(key);
+    out.push({ key, label: field.label, value: field.value });
   }
   return out;
 }

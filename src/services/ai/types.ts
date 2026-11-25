@@ -54,6 +54,7 @@ export interface GenerateParams {
   contextText?: string;
   ragContextText?: string;
   stream?: boolean;
+  onFinish?: (status: StreamFinishStatus) => void;
   onChunk?: (chunk: string) => void;
   onRetry?: (attempt: number, error: unknown, provider: string) => void;
 }

@@ -42,6 +42,8 @@ export default defineConfig(({mode}) => {
       'process.env.HAS_GEMINI_KEY': JSON.stringify(!!env.GEMINI_API_KEY),
     },
     worker: { format: 'es' },
+    // The dev dependency scanner does not discover the parser inside a lazy worker.
+    optimizeDeps: { include: ['parse5'] },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

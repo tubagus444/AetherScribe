@@ -93,6 +93,9 @@ teks sumber.
 - **Tabel DB:** `codexCategories`, `codex`
 - **Endpoint:** Tidak ada (lokal)
 - **Catatan:** Nilai field disimpan di `CodexEntry.customFields` dengan snapshot `label` agar jalur baca (ekspor & AI) mandiri tanpa perlu join tabel.
+- Menghapus kolom dari templat atau memindahkan entri ke kategori lain
+  mempertahankan nilai lama. Formulir menampilkannya di **Detail dari templat
+  sebelumnya** dan menyediakan aksi hapus per nilai yang berlaku saat disimpan.
 - Dialog Kelola Kategori tampil di atas navigasi aplikasi. Pada desktop,
   formulir ada di kiri, kategori bawaan dan kustom di kanan. Daftar kustom
   memiliki area gulir sendiri. Pada layar sempit, isi ditumpuk dalam satu area
@@ -412,6 +415,23 @@ Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di Indexed
 - **Tabel DB:** `aiActions`, `chapters`, `snapshots`
 - **Endpoint:** `POST /api/ai/proxy`
 - **Catatan:** Otomatis mengambil snapshot pelindung sebelum teks ditimpa; membersihkan pembungkus format markdown berlebih pada hasil rewrite.
+- Pratinjau Snippet mengaktifkan **Ganti Teks** dan **Sisipkan di Bawah**
+  setelah balasan lengkap dan berisi teks. Hasil diterapkan sebagai teks
+  sesuai pratinjau. Balasan yang terpotong tetap terlihat di pratinjau
+  dengan kedua aksi terkunci. Sasaran mengikuti edit di luar
+  kutipan. Jika kutipan berubah, pilih teks di editor lalu tekan
+  **Gunakan Seleksi Ini** sebelum menerapkan hasil. Pratinjau berpindah ke
+  bawah layar saat posisi kutipan tidak lagi bisa dipakai untuk menampilkannya.
+- Pratinjau menunjukkan status saat menunggu balasan, menerima teks,
+  mencoba ulang, dan siap diterapkan. Penulis bisa membatalkan permintaan
+  dari pratinjau dan tetap bekerja di editor selama AI merespons.
+- **Sisipkan di Bawah** menggulir ke teks baru dan menyorot sisipannya di
+  editor. Sorotan mengikuti edit di luar sisipan dan hilang saat sisipan
+  disunting, bab ditinggalkan, atau hasil lain disisipkan. Sorotan hanya
+  tampil di editor dan tidak ikut disimpan atau diekspor.
+- Snippet meminta 4.096 token output sebagai batas awal dan dapat meminta hingga
+  8.192 untuk kutipan panjang. Jika provider menolak karena batas model yang
+  disebutkan dalam respons, Snippet mencoba lagi dengan batas tersebut.
 
 ---
 
@@ -421,6 +441,16 @@ Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di Indexed
 - **Tabel DB:** `sceneEmbeddings`, `codex`, `chapters`
 - **Endpoint:** Tidak ada (lokal di worker)
 - **Catatan:** Indeks naskah diperbarui secara otomatis di latar belakang oleh daemon `useAutoSemanticIndex` saat bab mengalami perubahan.
+
+### Pencarian global (Ctrl+K)
+
+- Memilih hasil Codex langsung membuka dialog detail entri. Memilih hasil
+  isi bab menggulir ke frasa pada cuplikan dan menyorotnya selama lima detik.
+  Hasil judul saja membuka bab. Jika lokasi cuplikan sudah berubah dan tak
+  dapat dipastikan, aplikasi tetap membuka bab dan memberi tahu penulis.
+- Kecocokan persis pada judul atau nama diprioritaskan. Bab dengan jenis
+  kecocokan yang sama mengikuti urutan manuskrip. Pencarian isi memakai teks
+  yang terlihat di bab tersimpan dan berjalan lokal di Web Worker.
 
 ---
 

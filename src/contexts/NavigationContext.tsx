@@ -10,6 +10,9 @@ import { flushSync } from 'react-dom';
 import { ViewMode, WorkshopTarget } from '@/src/types';
 import { useProject } from '@/src/contexts/ProjectContext';
 import { flushActiveEditor, getActiveEditorChapterId } from '@/src/features/editor/editorBridge';
+import type { ChapterSearchMatch } from '@/src/lib/globalSearch';
+
+type ChapterSearchTarget = { projectId: number; chapterId: number; match: ChapterSearchMatch };
 
 const VIEW_MODE_STORAGE_KEY = 'aether_view_mode';
 /** Baca panel terakhir dari localStorage; fallback ke 'write' bila kosong/tidak valid. */
@@ -32,10 +35,13 @@ interface NavigationContextType {
   /** Pindah ke editor pada bab tertentu lalu sorot sepotong teks (mis. dari Cek Konsistensi). */
   jumpToText: (chapterId: number, text: string) => void;
   clearPendingHighlight: () => void;
+  pendingChapterSearch: ChapterSearchTarget | null;
+  openChapterFromSearch: (chapterId: number, match?: ChapterSearchMatch) => Promise<boolean>;
+  clearPendingChapterSearch: (target: ChapterSearchTarget) => void;
   /** Entri Codex yang harus dibuka detailnya setelah berpindah ke panel Codex (deep-link). */
   pendingCodexEntryId: number | null;
   /** Pindah ke panel Codex lalu buka modal detail entri tertentu (mis. dari panel Kelengkapan). */
-  openCodexEntry: (entryId: number) => void;
+  openCodexEntry: (entryId: number) => Promise<boolean>;
   clearPendingCodexEntry: () => void;
   /** Target penanda & peta Atlas yang harus disorot setelah berpindah ke panel Atlas (deep-link). */
   pendingAtlasTarget: { mapId: number; markerId?: number } | null;
@@ -57,6 +63,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const [activeChapterId, setActiveChapterId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(loadInitialViewMode);
   const [pendingHighlight, setPendingHighlight] = useState<string | null>(null);
+  const [pendingChapterSearch, setPendingChapterSearch] = useState<ChapterSearchTarget | null>(null);
   const [pendingCodexEntryId, setPendingCodexEntryId] = useState<number | null>(null);
   const [pendingAtlasTarget, setPendingAtlasTarget] = useState<{ mapId: number; markerId?: number } | null>(null);
   const [workshopTarget, setWorkshopTarget] = useState<WorkshopTarget | null>(null);
@@ -68,15 +75,19 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
 
   const navigate = useCallback((leavesEditor: boolean, apply: () => void): Promise<boolean> => {
     const request = ++navigationRequest.current;
-    if (!leavesEditor || getActiveEditorChapterId() === null) {
+    const commit = () => {
+      setPendingChapterSearch(null);
       apply();
+    };
+    if (!leavesEditor || getActiveEditorChapterId() === null) {
+      commit();
       return Promise.resolve(true);
     }
     // Editor menampilkan kegagalan dan mempertahankan draf untuk percobaan berikutnya.
     return flushActiveEditor().then(() => {
       if (navigationRequest.current !== request) return false;
       // Lepas editor sebelum ia menerima input berikutnya setelah simpan berhasil.
-      flushSync(apply);
+      flushSync(commit);
       return true;
     }, () => false);
   }, []);
@@ -102,8 +113,21 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
 
   const clearPendingHighlight = useCallback(() => setPendingHighlight(null), []);
 
+  const openChapterFromSearch = useCallback((chapterId: number, match?: ChapterSearchMatch) => {
+    if (projectId == null) return Promise.resolve(false);
+    return navigate(viewMode === 'write' && chapterId !== activeChapterId, () => {
+      setPendingHighlight(null);
+      setPendingChapterSearch(match ? { projectId, chapterId, match } : null);
+      setActiveChapterId(chapterId);
+      setViewMode('write');
+    });
+  }, [activeChapterId, navigate, projectId, viewMode]);
+  const clearPendingChapterSearch = useCallback((target: ChapterSearchTarget) => {
+    setPendingChapterSearch(current => current === target ? null : current);
+  }, []);
+
   const openCodexEntry = useCallback((entryId: number) => {
-    void navigate(viewMode === 'write', () => {
+    return navigate(viewMode === 'write', () => {
       setPendingCodexEntryId(entryId);
       setViewMode('codex');
     });
@@ -146,17 +170,21 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
 
   // Load first chapter when project changes
   useEffect(() => {
+    let active = true;
     if (projectId) {
       readFirstChapter(projectId).then(ch => {
-        if (ch) setActiveChapterId(ch.id!);
+        if (ch && active) setActiveChapterId(ch.id!);
       });
       // Hanya reset ke editor saat benar-benar BERPINDAH proyek, bukan saat
       // proyek pertama dimuat (refresh) — agar panel terpulihkan dari localStorage.
       if (prevProjectIdRef.current !== null && prevProjectIdRef.current !== projectId) {
+        ++navigationRequest.current;
+        setPendingChapterSearch(null);
         setViewMode('write');
       }
       prevProjectIdRef.current = projectId;
     }
+    return () => { active = false; };
   }, [projectId]);
 
   // Handle case where active chapter is deleted
@@ -192,6 +220,9 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
       pendingHighlight,
       jumpToText,
       clearPendingHighlight,
+      pendingChapterSearch,
+      openChapterFromSearch,
+      clearPendingChapterSearch,
       pendingCodexEntryId,
       openCodexEntry,
       clearPendingCodexEntry,

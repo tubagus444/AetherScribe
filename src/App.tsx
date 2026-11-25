@@ -33,7 +33,7 @@ const ExportManager = React.lazy(() => import('@/src/components/modals/ExportMan
 
 export default function App() {
   const { projectId, project, isLoading } = useProject();
-  const { setActiveChapterId, setViewMode, viewMode } = useNavigation();
+  const { setActiveChapterId, setViewMode, viewMode, openChapterFromSearch, openCodexEntry } = useNavigation();
   const { 
     isFocusMode,
     setIsFocusMode,
@@ -129,16 +129,12 @@ export default function App() {
       
       <Suspense fallback={null}>
         {isSearchOpen && projectId && (
-          <GlobalSearch 
+          <GlobalSearch
+            key={projectId}
             projectId={projectId}
             onClose={() => setIsSearchOpen(false)}
-            onSelectChapter={(id) => {
-              setActiveChapterId(id);
-              setViewMode('write');
-            }}
-            onSelectCodex={() => {
-              setViewMode('codex');
-            }}
+            onSelectChapter={openChapterFromSearch}
+            onSelectCodex={openCodexEntry}
           />
         )}
 

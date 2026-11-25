@@ -25,7 +25,8 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
     model: params.model || getModelForProvider(provider),
   };
 
-  const capacity = params.actionType === 'chat' ? knownOutputLimit(provider, body.model) : undefined;
+  const supportsOutputAdjustment = params.actionType === 'chat' || params.actionType === 'rewrite';
+  const capacity = supportsOutputAdjustment ? knownOutputLimit(provider, body.model) : undefined;
   if (capacity && params.maxTokens && capacity < params.maxTokens) {
     params = { ...params, maxTokens: capacity };
   }
@@ -215,14 +216,15 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
     const rawMessage = extractErrorMessage(errorText);
     // Beberapa model menolak batas output melebihi kapasitasnya sebelum mulai menghasilkan teks.
     const reported = reportedOutputLimit(rawMessage);
-    if (params.actionType === 'chat' && params.maxTokens && params.maxTokens > 1 &&
+    if (supportsOutputAdjustment && params.maxTokens && params.maxTokens > 1 &&
         (response.status === 400 || response.status === 422) &&
-        (reported || (/max[_ ]?(?:output[_ ]?|completion[_ ]?)?tokens|maximum context length/i.test(rawMessage) &&
+        (reported || (params.actionType === 'chat' &&
+        /max[_ ]?(?:output[_ ]?|completion[_ ]?)?tokens|maximum context length/i.test(rawMessage) &&
         /exceed|maximum|at most|too (?:large|high)|less than|range|<=/i.test(rawMessage)))) {
       const adjusted = reported ?? 2048;
       if (adjusted < params.maxTokens) {
         if (reported) rememberOutputLimit(provider, body.model, reported);
-        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('chat-output-adjusted', {
+        if (params.actionType === 'chat' && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('chat-output-adjusted', {
           detail: { provider, limit: adjusted }
         }));
         return callProxy(provider, { ...params, maxTokens: adjusted }, apiKey);

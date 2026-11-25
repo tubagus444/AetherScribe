@@ -20,7 +20,7 @@ it('canonicalizes storage/setter while preserving chapter and entity deep links'
   expect(localStorage.getItem('aether_view_mode')).toBe('completeness');
   await act(async () => { await hook.result.current.setViewMode('arc'); });
   expect(hook.result.current.viewMode).toBe('continuity');
-  act(() => hook.result.current.openCodexEntry(44));
+  await act(async () => { await hook.result.current.openCodexEntry(44); });
   expect(hook.result.current.viewMode).toBe('codex');
   expect(hook.result.current.pendingCodexEntryId).toBe(44);
   act(() => hook.result.current.openAtlasMarker(9, 3));
@@ -51,7 +51,8 @@ it('keeps the current panel and deep link state if the editor cannot save', asyn
   registerActiveEditor(bridge);
   try {
     await act(async () => {
-      hook.result.current.openCodexEntry(44);
+      expect(await hook.result.current.openCodexEntry(44)).toBe(false);
+      expect(await hook.result.current.openChapterFromSearch(9)).toBe(false);
       hook.result.current.jumpToText(9, 'kutipan');
     });
     expect(hook.result.current.viewMode).toBe('write');
@@ -65,4 +66,16 @@ it('keeps the current panel and deep link state if the editor cannot save', asyn
   } finally {
     unregisterActiveEditor(bridge);
   }
+});
+
+it('opens a chapter and its search target atomically, then clears it for title-only navigation', async () => {
+  const hook = renderHook(useNavigation, { wrapper });
+  await waitFor(() => expect(hook.result.current.activeChapterId).toBe(7));
+  const match = { block: 1, offset: 2, text: 'target', before: 'a ', after: '.', chapterHash: 'hash' };
+  await act(async () => { expect(await hook.result.current.openChapterFromSearch(9, match)).toBe(true); });
+  expect(hook.result.current.viewMode).toBe('write');
+  expect(hook.result.current.activeChapterId).toBe(9);
+  expect(hook.result.current.pendingChapterSearch).toEqual({ chapterId: 9, projectId: 1, match });
+  await act(async () => { await hook.result.current.openChapterFromSearch(9); });
+  expect(hook.result.current.pendingChapterSearch).toBeNull();
 });

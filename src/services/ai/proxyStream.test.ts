@@ -29,3 +29,13 @@ it('falls back to the previous chat limit when the model rejects 4096 output tok
   expect(await callProxy('openai', { ...params, actionType: 'chat', maxTokens: 4096 })).toBe('OK');
   expect(fetch.mock.calls.map(([, options]) => JSON.parse(String(options?.body)).body.max_tokens)).toEqual([4096, 2048]);
 });
+
+it('retries Snippet with the reported model limit and preserves its finish status', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: 'max_tokens must be at most 3000' }), { status: 422 }))
+    .mockResolvedValueOnce(new Response('data: {"choices":[{"delta":{"content":"Hasil."},"finish_reason":"stop"}]}\n\n'));
+  const onFinish = vi.fn();
+  expect(await callProxy('openai', { ...params, actionType: 'rewrite', maxTokens: 4096, onFinish })).toBe('Hasil.');
+  expect(fetch.mock.calls.map(([, options]) => JSON.parse(String(options?.body)).body.max_tokens)).toEqual([4096, 3000]);
+  expect(onFinish).toHaveBeenCalledExactlyOnceWith('complete');
+});

@@ -14,11 +14,10 @@ Belum ada pekerjaan aktif yang dijadwalkan.
 
 ### Prioritas penyempurnaan alur penulis
 
-Ketiga usulan ini belum dijadwalkan. Urutannya mempertimbangkan seberapa jelas kebutuhan penulis saat melakukan tindakan tersebut. Temuan berasal dari peninjauan kode. Frekuensi kendalanya masih perlu dinilai saat uji alur dengan proyek nyata.
+Usulan berikut belum dijadwalkan. Temuan berasal dari peninjauan kode. Frekuensi kendalanya masih perlu dinilai saat uji alur dengan proyek nyata.
 
-1. **Pencarian global langsung membuka hasil yang dipilih.** Penulis sudah memilih tujuan, tetapi masih harus mencarinya lagi setelah mengeklik hasil. Dahulukan hasil Codex agar klik nama langsung membuka entri yang dipilih. Untuk hasil di isi bab, tampilkan cuplikan di sekitar frasa yang cocok, lalu lompat ke cuplikan itu dan sorot frasanya. Jika hanya judul yang cocok, cukup buka bab. Ganti skor yang mengandung angka acak dengan urutan yang konsisten, utamakan kecocokan persis pada nama atau judul, dan gunakan urutan bab untuk hasil naskah yang setara.
-2. **“Lanjutkan menulis” kembali ke posisi edit terakhir.** Tombol saat ini membuka bab yang terakhir diubah. Simpan posisi edit per bab di perangkat agar penulis bisa meneruskan revisi di tengah bab panjang. Membaca bab lain untuk mengecek referensi tetap mempertahankan posisi kerja. Jika posisi lama sudah tidak sesuai, misalnya setelah pemulihan snapshot, buka bab seperti biasa. Saat uji proyek nyata, amati seberapa sering penulis harus menggulir untuk menemukan paragraf tempat ia terakhir bekerja.
-3. **Filter catatan revisi yang masih terbuka.** Panel sudah menghitung catatan terbuka, tetapi penulis masih harus mencarinya di antara catatan yang selesai. Jadikan label jumlah terbuka sebagai filter dan sediakan pilihan **Semua**. Pertahankan urutan naskah dan aksi lompat ke kutipan. Saat catatan terakhir selesai, tampilkan pesan “Semua catatan di bab ini sudah selesai.” Ini penyempurnaan dengan lingkup terkecil karena status tiap catatan sudah tersedia.
+1. **“Lanjutkan menulis” kembali ke posisi edit terakhir.** Tombol saat ini membuka bab yang terakhir diubah. Simpan posisi edit per bab di perangkat agar penulis bisa meneruskan revisi di tengah bab panjang. Membaca bab lain untuk mengecek referensi tetap mempertahankan posisi kerja. Jika posisi lama sudah tidak sesuai, misalnya setelah pemulihan snapshot, buka bab seperti biasa. Saat uji proyek nyata, amati seberapa sering penulis harus menggulir untuk menemukan paragraf tempat ia terakhir bekerja.
+2. **Filter catatan revisi yang masih terbuka.** Panel sudah menghitung catatan terbuka, tetapi penulis masih harus mencarinya di antara catatan yang selesai. Jadikan label jumlah terbuka sebagai filter dan sediakan pilihan **Semua**. Pertahankan urutan naskah dan aksi lompat ke kutipan. Saat catatan terakhir selesai, tampilkan pesan “Semua catatan di bab ini sudah selesai.” Ini penyempurnaan dengan lingkup terkecil karena status tiap catatan sudah tersedia.
 
 ### Prioritas Codex — penyimpanan dan penelusuran fakta
 
@@ -26,10 +25,9 @@ Perilaku berikut telah diuji di Chromium desktop dengan proyek contoh terpisah. 
 
 **Perbaikan, menurut prioritas**
 
-1. **Pertahankan nilai lama ketika kolom dihapus dari templat kategori.** Pada entri *Tombak*, nilai *Asal · Desa Awan* masih tersimpan setelah kolom *Asal* dihapus dari templat, tetapi hilang saat penulis hanya mengubah deskripsi lalu menyimpan. Nilai lama perlu tetap terbaca sampai penulis memilih menghapusnya dari entri.
-2. **Perbaiki pengetikan alias dan tag.** Saat diketik karakter demi karakter, `Rara, Bu Laras` tersimpan sebagai satu alias `RaraBuLaras`. Gejala yang sama terjadi pada tag. Pertahankan spasi di dalam nama dan gunakan koma untuk memisahkan nilai setelah penulis selesai mengisi.
-3. **Muat dan simpan tanggal lahir karakter.** Pada proyek dengan Kalender Dunia, tahun 42 yang dipilih untuk karakter baru tidak tersimpan. Saat karakter dengan tahun lahir 9 disunting menjadi 22, formulir tidak memuat tanggal lama dan nilai tersimpan tetap 9. Periksa alur menetapkan, mengubah, dan menghapus tanggal dengan membuka kembali entri setelah setiap penyimpanan.
-4. **Tampilkan kemunculan dengan satu klik.** Tombol **Cek Kemunculan di Chapter** pada kartu membuka dialog detail. Di tab **Keterkaitan**, penulis harus mengeklik tombol cek sekali lagi. Arahkan klik pertama langsung ke bagian **Kemunculan** dan tampilkan hasilnya di sana.
+1. **Perbaiki pengetikan alias dan tag.** Saat diketik karakter demi karakter, `Rara, Bu Laras` tersimpan sebagai satu alias `RaraBuLaras`. Gejala yang sama terjadi pada tag. Pertahankan spasi di dalam nama dan gunakan koma untuk memisahkan nilai setelah penulis selesai mengisi.
+2. **Muat dan simpan tanggal lahir karakter.** Pada proyek dengan Kalender Dunia, tahun 42 yang dipilih untuk karakter baru tidak tersimpan. Saat karakter dengan tahun lahir 9 disunting menjadi 22, formulir tidak memuat tanggal lama dan nilai tersimpan tetap 9. Periksa alur menetapkan, mengubah, dan menghapus tanggal dengan membuka kembali entri setelah setiap penyimpanan.
+3. **Tampilkan kemunculan dengan satu klik.** Tombol **Cek Kemunculan di Chapter** pada kartu membuka dialog detail. Di tab **Keterkaitan**, penulis harus mengeklik tombol cek sekali lagi. Arahkan klik pertama langsung ke bagian **Kemunculan** dan tampilkan hasilnya di sana.
 
 **Peningkatan setelah perbaikan**
 
@@ -38,13 +36,11 @@ Perilaku berikut telah diuji di Chromium desktop dengan proyek contoh terpisah. 
 
 ### Prioritas Snippet, Diskusi AI, dan Nova
 
-Belum dijadwalkan. Temuan diuji di Chromium dengan proyek contoh dan balasan AI simulasi. Untuk lampiran Diskusi AI, pengujian memeriksa isi permintaan yang dikirim aplikasi. Prioritas pertama adalah melindungi naskah saat menerapkan hasil Snippet.
+Belum dijadwalkan. Temuan diuji di Chromium dengan proyek contoh dan balasan AI simulasi. Untuk lampiran Diskusi AI, pengujian memeriksa isi permintaan yang dikirim aplikasi.
 
 **Snippet**
 
-1. **Pertahankan sasaran Ganti Teks saat naskah disunting.** Setelah pratinjau muncul, menambah kata di paragraf sebelumnya menggeser posisi seleksi sehingga hasil menimpa potongan paragraf lain. Ikuti posisi kutipan asal saat bagian lain berubah. Jika kutipan itu sendiri disunting, pertahankan pratinjau dan minta penulis memilih kembali sasaran.
-2. **Tunggu hasil lengkap sebelum menerapkannya.** Ganti Teks sudah aktif sebelum jawaban selesai. Dalam uji, dua kata pertama menggantikan kalimat asli dan pratinjau muncul kembali saat sisa jawaban tiba. Aktifkan **Ganti Teks** dan **Sisipkan di Bawah** setelah jawaban selesai dan berisi teks.
-3. **Perlihatkan aksi kartu pada layar sentuh.** Pada emulasi lebar 390 piksel, ikon Ubah dan Hapus transparan meskipun bisa diketuk. Tampilkan tombol **Opsi** yang selalu terlihat untuk mengakses keduanya.
+- **Perlihatkan aksi kartu pada layar sentuh.** Pada emulasi lebar 390 piksel, ikon Ubah dan Hapus transparan meskipun bisa diketuk. Tampilkan tombol **Opsi** yang selalu terlihat untuk mengakses keduanya.
 
 **Diskusi AI dan Nova**
 
@@ -98,6 +94,8 @@ Pada kartu rahasia, penulis dapat mencoba memilih bab pengungkapan untuk satu ka
 <a id="audit-2026-11-09"></a>
 
 ## Pekerjaan selesai
+
+- [Pengamanan Snippet, retensi nilai templat Codex, dan navigasi hasil pencarian global](docs/reports/audits/2026-11-25-writer-priorities.md)
 
 - [Linimasa, Kalender, dan pencatatan dari editor](docs/reports/audits/2026-11-22-linimasa.md)
 

@@ -83,6 +83,10 @@ Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI
    - Menghitung kalkulasi graf keterhubungan entitas lore ratusan node di latar belakang agar kanvas `react-force-graph` tidak membekukan browser.
 4. **`src/workers/tokenWorker.ts`**:
    - Menghitung live meter token pada panel editor dan pratinjau konteks.
+5. **`src/workers/chapterSearchWorker.ts`**:
+   - Memindai teks bab tersimpan untuk pencarian global dan mengembalikan
+     cuplikan serta lokasi kecocokan. Editor memeriksa lokasi terhadap
+     dokumen aktif sebelum menampilkan dekorasi sementara.
 
 ---
 

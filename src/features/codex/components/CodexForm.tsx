@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Edit2, Plus, X, Wand2, Check, Undo2, AlertTriangle, ClipboardPaste, EyeOff, SlidersHorizontal, Users } from 'lucide-react';
-import { CodexEntry, CodexCategory } from '@/src/types';
+import { CodexEntry, CodexCategory, type CategoryFieldDef, type CustomFieldValue } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { expandCodexEntry } from '@/src/services/ai';
 import { useToast } from '@/src/hooks/useToast';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { BUILTIN_CATEGORIES, type CategoryDef } from '@/src/lib/codexCategories';
 import { parseCodexMarkdown } from '@/src/lib/codexImport';
-import { fieldValueMap, buildFieldValues } from '@/src/lib/codexFields';
+import { fieldValueMap, buildFieldValues, resolveFieldValues } from '@/src/lib/codexFields';
 import { WORLD_STATUSES, STATUS_LABEL, suggestStatus } from '@/src/lib/worldCompleteness';
 import { WORLD_STATUS_META } from '@/src/features/codex/components/WorldStatusBadge';
 import { useProject } from '@/src/contexts/ProjectContext';
@@ -30,6 +30,12 @@ interface CodexFormProps {
   /** Buat banyak entri sekaligus dari paste multi-blok (importer #7). Kembalikan jumlah yang dibuat. */
   onBulkCreate?: (entries: Partial<CodexEntry>[]) => Promise<number>;
   onCancel: () => void;
+}
+
+type DraftField = CustomFieldValue & { category: CodexCategory };
+
+function loadFields(entry?: Partial<CodexEntry>): DraftField[] {
+  return resolveFieldValues(entry ?? {}).map(field => ({ ...field, category: entry?.category ?? 'character' }));
 }
 
 export function CodexForm({ initialData, editingId, bibleRules, existingEntries = [], categories = BUILTIN_CATEGORIES, detailChapters, onSave, onBulkCreate, onCancel }: CodexFormProps) {
@@ -58,8 +64,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
   // Hanya untuk entri baru; deterministik & nol token (src/lib/codexImport).
   const [showPaste, setShowPaste] = useState(false);
   const [pasteText, setPasteText] = useState('');
-  // Template field per kategori (#17): nilai per key field kategori terpilih.
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => fieldValueMap(initialData));
+  const [draftFields, setDraftFields] = useState(() => loadFields(initialData));
 
   useEffect(() => {
     setFormData({
@@ -70,7 +75,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
       tags: [],
       ...initialData
     });
-    setFieldValues(fieldValueMap(initialData));
+    setDraftFields(loadFields(initialData));
     setPrevDescription(null);
     setCoverDraft(undefined);
   }, [initialData]);
@@ -78,16 +83,23 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
   // Definisi field untuk kategori aktif (hanya kategori kustom yang punya).
   const activeCategory = categories.find(c => c.slug === formData.category);
   const fieldDefs = activeCategory?.fields ?? [];
-  const setField = (key: string, v: string) => setFieldValues(prev => ({ ...prev, [key]: v }));
+  const category = formData.category ?? 'character';
+  const isField = (field: DraftField, def: CategoryFieldDef) =>
+    field.category === category && field.key === def.key && field.label === def.label;
+  const activeFields = fieldDefs.flatMap(def => draftFields.find(field => isField(field, def)) ?? []);
+  const fieldValues = fieldValueMap({ customFields: activeFields });
+  const retainedFields = draftFields.filter(field => field.value.trim() && !activeFields.includes(field));
+  const setField = ({ key, label }: CategoryFieldDef, value: string) => setDraftFields(prev => [
+    ...prev.filter(field => field.category !== category || field.key !== key || field.label !== label),
+    { category, key, label, value },
+  ]);
 
   // Kelengkapan worldbuilding (#11): saran status "lembut" dari isi form saat ini.
   // Ditampilkan saat penulis belum menetapkan status (mode "Otomatis").
   const suggested = suggestStatus({
     description: formData.description || '',
     secret: formData.secret,
-    customFields: Object.values(fieldValues).some(v => v?.trim())
-      ? [{ key: '_', label: '_', value: 'x' }]
-      : [],
+    customFields: draftFields,
   });
 
   const handleSave = async () => {
@@ -103,7 +115,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
     }
     setIsSaving(true);
     try {
-      await onSave({ ...formData, details, customFields: buildFieldValues(fieldDefs, fieldValues) }, coverDraft);
+      await onSave({ ...formData, details, customFields: buildFieldValues(fieldDefs, fieldValues, retainedFields) }, coverDraft);
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         toast.error('Penyimpanan browser penuh. Entri dan sampul sebelumnya tetap tersimpan.');
@@ -320,6 +332,7 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kategori</label>
               <select 
+                aria-label="Kategori"
                 className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow dark:text-slate-100"
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value as CodexCategory})}
@@ -534,15 +547,17 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">{def.label}</label>
                   {def.type === 'textarea' ? (
                     <textarea
+                      aria-label={def.label}
                       className="w-full min-h-[70px] bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-100 resize-y"
                       value={fieldValues[def.key] ?? ''}
-                      onChange={e => setField(def.key, e.target.value)}
+                      onChange={e => setField(def, e.target.value)}
                     />
                   ) : def.type === 'select' ? (
                     <select
+                      aria-label={def.label}
                       className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-100"
                       value={fieldValues[def.key] ?? ''}
-                      onChange={e => setField(def.key, e.target.value)}
+                      onChange={e => setField(def, e.target.value)}
                     >
                       <option value="">—</option>
                       {(def.options ?? []).map(opt => (
@@ -551,16 +566,40 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
                     </select>
                   ) : (
                     <input
+                      aria-label={def.label}
                       type={def.type === 'number' ? 'number' : 'text'}
                       className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-100"
                       value={fieldValues[def.key] ?? ''}
-                      onChange={e => setField(def.key, e.target.value)}
+                      onChange={e => setField(def, e.target.value)}
                     />
                   )}
                 </div>
               ))}
             </div>
           </div>
+        )}
+
+        {retainedFields.length > 0 && (
+          <section className="mt-6 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <h4 className="mb-2 text-xs font-semibold">Detail dari templat sebelumnya</h4>
+            <ul className="space-y-2">
+              {retainedFields.map((field, index) => (
+                <li key={index} className="flex items-start justify-between gap-2 text-sm">
+                  <div className="min-w-0 whitespace-pre-wrap break-words">
+                    <span className="font-semibold">{field.label}</span> · {field.value}
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded p-1 hover:bg-red-50 dark:hover:bg-red-950"
+                    aria-label={`Hapus nilai lama ${field.label}`}
+                    onClick={() => setDraftFields(prev => prev.filter(item => item !== field))}
+                  >
+                    <X size={16} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {/* Kelengkapan worldbuilding (#11) — status kematangan + catatan/TODO */}

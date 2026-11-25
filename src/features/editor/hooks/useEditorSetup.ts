@@ -5,6 +5,8 @@ import Mention from '@tiptap/extension-mention';
 import TextAlign from '@tiptap/extension-text-align';
 
 import { SearchAndReplace } from '@/src/features/editor/extensions/SearchAndReplace';
+import { ChapterSearchHighlight } from '@/src/features/editor/extensions/ChapterSearchHighlight';
+import { SnippetInsertionHighlight } from '@/src/features/editor/extensions/SnippetInsertionHighlight';
 import { PassiveCodexHighlight } from '@/src/features/editor/extensions/PassiveCodexHighlight';
 import { SemanticHighlight } from '@/src/features/editor/extensions/SemanticHighlight';
 import { ConsistencyUnderline } from '@/src/features/editor/extensions/ConsistencyUnderline';
@@ -79,6 +81,8 @@ export function useEditorSetup({ chapterId, initialContent, codexEntries, onCode
         types: ['heading', 'paragraph'],
       }),
       CustomAIKeymap,
+      ChapterSearchHighlight,
+      SnippetInsertionHighlight,
       SearchAndReplace.configure({
         disableRegex: false,
         caseSensitive: false,

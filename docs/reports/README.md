@@ -8,6 +8,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Alur penulis 25 November 2026 | [Verifikasi Snippet, Codex, dan pencarian global](audits/2026-11-25-writer-priorities.md) |
 | Graf Lore 23 November 2026 | [Verifikasi detail entri di Graf Lore](audits/2026-11-23-lore-graph-detail.md) |
 | Linimasa 22 November 2026 | [Kronologi dan pencatatan dari editor](audits/2026-11-22-linimasa.md) |
 | Editor 21 November 2026 | [Verifikasi Catatan Novel dan Codex di Bab Ini](audits/2026-11-21-editor-notes-codex.md) |

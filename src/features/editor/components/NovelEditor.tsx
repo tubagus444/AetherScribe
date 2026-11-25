@@ -34,10 +34,10 @@ import { EditorHeader } from '@/src/features/editor/components/EditorHeader';
 import { NovelFooter } from '@/src/features/editor/components/NovelFooter';
 import { EditorLayout } from '@/src/features/editor/components/EditorLayout';
 import { EditorToolbar } from '@/src/features/editor/components/EditorToolbar';
-import { AiProcessingOverlay } from '@/src/features/editor/components/AiProcessingOverlay';
 import { NovelPanels } from '@/src/features/editor/components/NovelPanels';
 import { EditorActivityRail } from '@/src/features/editor/components/EditorActivityRail';
 import { SearchReplaceBar } from '@/src/features/editor/components/SearchReplaceBar';
+import { chapterSearchHighlightKey, getChapterSearchRange } from '@/src/features/editor/extensions/ChapterSearchHighlight';
 
 const CalendarEventModal = React.lazy(() => import('@/src/features/timeline/components/CalendarEventModal')
   .then(module => ({ default: module.CalendarEventModal })));
@@ -79,12 +79,13 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
   }, [zoomLevel]);
 
   const { isFocusMode, setIsFocusMode } = useUI();
-  const { pendingHighlight, clearPendingHighlight } = useNavigation();
+  const { pendingHighlight, clearPendingHighlight, pendingChapterSearch, clearPendingChapterSearch } = useNavigation();
   const { setActivePanel } = useEditorPanel();
   const { toast } = useToast();
   const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
   const [promiseSeed, setPromiseSeed] = useState<QuickPromiseSeed | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const chapterSearchEffect = useRef<{ frame: number; timer: ReturnType<typeof setTimeout> }>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -113,7 +114,7 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
     checkConsistencySelection,
     retryStatus,
     rewritePreview,
-    setRewritePreview,
+    reselectRewriteTarget,
     runAiAction,
     acceptRewrite,
     insertRewriteBelow,
@@ -229,6 +230,41 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
     return () => clearTimeout(t);
   }, [editor, pendingHighlight, chapter, clearPendingHighlight, setSearchQuery, setIsSearchOpen]);
 
+  useEffect(() => () => {
+    if (!chapterSearchEffect.current) return;
+    cancelAnimationFrame(chapterSearchEffect.current.frame);
+    clearTimeout(chapterSearchEffect.current.timer);
+    chapterSearchEffect.current = null;
+  }, [editor]);
+
+  useEffect(() => {
+    const target = pendingChapterSearch;
+    if (!target || target.projectId !== projectId || target.chapterId !== chapterId
+      || !editor || chapter === undefined || isLoading) return;
+    clearPendingChapterSearch(target);
+    if (chapterSearchEffect.current) {
+      cancelAnimationFrame(chapterSearchEffect.current.frame);
+      clearTimeout(chapterSearchEffect.current.timer);
+      chapterSearchEffect.current = null;
+    }
+    const range = chapter ? getChapterSearchRange(editor.state.doc, target.match) : undefined;
+    editor.view.dispatch(editor.state.tr.setMeta(chapterSearchHighlightKey, range ?? null));
+    if (!range) {
+      toast.info('Bab dibuka. Letak cuplikan hasil pencarian sudah berubah.');
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      if (editor.isDestroyed) return;
+      editor.view.dom.querySelector('[data-chapter-search-highlight]')
+        ?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    const timer = setTimeout(() => {
+      if (!editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta(chapterSearchHighlightKey, null));
+      chapterSearchEffect.current = null;
+    }, 5000);
+    chapterSearchEffect.current = { frame, timer };
+  }, [pendingChapterSearch, clearPendingChapterSearch, projectId, chapterId, editor, chapter, isLoading, toast]);
+
   if (chapter === undefined || isLoading) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-300 bg-white dark:bg-slate-900">
@@ -313,7 +349,9 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
             onAiAction={runAiAction} 
             customActions={aiActions} 
             isAiProcessing={isAiProcessing}
+            retryStatus={retryStatus}
             rewritePreview={rewritePreview}
+            onReselectRewriteTarget={reselectRewriteTarget}
             onAcceptRewrite={acceptRewrite}
             onInsertBelow={insertRewriteBelow}
             onDiscardRewrite={discardRewrite}
@@ -375,7 +413,6 @@ function NovelEditorInner({ chapterId, projectId }: NovelEditorProps) {
           <EditorContent editor={editor} />
         </div>
 
-        <AiProcessingOverlay isProcessing={isAiProcessing} retryStatus={retryStatus} />
 
         {/* Indikator lapisan konsistensi inline AI sedang memeriksa paragraf */}
         <AnimatePresence>

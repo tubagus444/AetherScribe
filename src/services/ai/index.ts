@@ -5,18 +5,25 @@ export type { CodexAuditFinding } from './resultParsing';
 import { record } from '@/src/lib/dataContracts';
 import { StoryBibleRule, CodexEntry, Relationship, ConsistencyFinding } from '@/src/types';
 import { callProxy } from '@/src/services/ai/proxy';
-import { GenerateParams, ChatParams, ConsistencyParams, AIRenderParams } from '@/src/services/ai/types';
+import { GenerateParams, ChatParams, ConsistencyParams, AIRenderParams, type StreamFinishStatus } from '@/src/services/ai/types';
 import { AI_PROMPTS, BIBLE_ASSIST_FIELD_GUIDE } from '@/src/lib/aiPrompts';
 import { cleanRewriteOutput } from '@/src/lib/cleanRewriteOutput';
 import { getRewriteTemperature } from '@/src/lib/aiTuning';
 import { rewriteDedupKey, parseJsonArray } from '@/src/services/ai/resilience';
 import { AIError } from './dispatch';
 export { AIError, callAI } from './dispatch';
-import { executeAIAction } from './execution';
-export { cancelAI } from './execution';
+import { cancelAI as cancelExecution, executeAIAction } from './execution';
 import { resolveContextBuilder } from './context';
 export { isCacheSupported, getContextWindow } from './context';
-const inFlightRewrites = new Map<string, Promise<string>>();
+type RewriteResult = { text: string; status: StreamFinishStatus };
+const inFlightRewrites = new Map<string, Promise<RewriteResult>>();
+const MIN_REWRITE_OUTPUT = 4096;
+const MAX_REWRITE_OUTPUT = 8192;
+
+export function cancelAI(type?: string) {
+  if (!type || type === 'rewrite') inFlightRewrites.clear();
+  cancelExecution(type);
+}
 
 export { suggestPlotClues } from './plotClues';
 
@@ -32,10 +39,16 @@ export async function processRewrite(params: GenerateParams): Promise<string> {
   // variasi baru. Catatan: peserta kedua berbagi stream peserta pertama sehingga onChunk-nya
   // tak terpanggil — ia tetap menerima hasil final via promise. Cukup untuk kasus double-fire.
   const dedupKey = rewriteDedupKey(provider, params.action, params.prompt, params.selection, params.chapterId);
+  const finish = async (task: Promise<RewriteResult>) => {
+    const { text, status } = await task;
+    if (params.stream) params.onFinish?.(status);
+    return text;
+  };
   const existing = inFlightRewrites.get(dedupKey);
-  if (existing) return existing;
+  if (existing) return finish(existing);
 
-  const task = (async (): Promise<string> => {
+  const task = (async (): Promise<RewriteResult> => {
+    let status: StreamFinishStatus = 'complete';
     const res = await executeAIAction({
       abortKey: 'rewrite',
       actionType: 'rewrite',
@@ -69,20 +82,21 @@ export async function processRewrite(params: GenerateParams): Promise<string> {
       },
       callOptions: {
         temperature: getRewriteTemperature(),
-        maxTokens: Math.min(4000, Math.max(512, Math.ceil(Math.ceil((params.selection?.length || 0) / 4) * 2.5))),
+        maxTokens: Math.min(MAX_REWRITE_OUTPUT, Math.max(MIN_REWRITE_OUTPUT, Math.ceil(Math.ceil(params.selection.length / 4) * 2.5))),
         stream: params.stream,
+        onFinish: finishStatus => { status = finishStatus; },
         onChunk: params.onChunk,
         onRetry: params.onRetry
       }
     });
-    return cleanRewriteOutput(res);
+    return { text: cleanRewriteOutput(res), status };
   })();
 
   inFlightRewrites.set(dedupKey, task);
   try {
-    return await task;
+    return await finish(task);
   } finally {
-    inFlightRewrites.delete(dedupKey);
+    if (inFlightRewrites.get(dedupKey) === task) inFlightRewrites.delete(dedupKey);
   }
 }
 

@@ -22,6 +22,7 @@ import { Editor } from '@tiptap/react';
 import { AIAction } from '@/src/types';
 import { getActionIcon } from './actionIcons';
 import { useAvailableProviders } from '@/src/hooks/useAvailableProviders';
+import type { RewritePreview } from '@/src/features/editor/hooks/useEditorAI';
 
 interface SelectionFloatingMenuProps {
   editor: Editor;
@@ -29,7 +30,9 @@ interface SelectionFloatingMenuProps {
   onAiAction: (action: string, provider?: string, customPrompt?: string) => void;
   customActions?: AIAction[];
   isAiProcessing?: boolean;
-  rewritePreview?: { original: string; rewritten: string; from: number; to: number } | null;
+  retryStatus?: string | null;
+  rewritePreview?: RewritePreview | null;
+  onReselectRewriteTarget?: () => void;
   onAcceptRewrite?: () => void;
   onInsertBelow?: () => void;
   onDiscardRewrite?: () => void;
@@ -49,7 +52,9 @@ export function SelectionFloatingMenu({
   onAiAction,
   customActions = [],
   isAiProcessing = false,
+  retryStatus,
   rewritePreview = null,
+  onReselectRewriteTarget,
   onAcceptRewrite,
   onInsertBelow,
   onDiscardRewrite,
@@ -61,6 +66,27 @@ export function SelectionFloatingMenu({
 }: SelectionFloatingMenuProps) {
   const [show, setShow] = useState(false);
   const [selectedText, setSelectedText] = useState('');
+  const [hasRewriteSelection, setHasRewriteSelection] = useState(false);
+  const needsRewriteTarget = rewritePreview?.targetValid === false;
+  const canApplyRewrite = rewritePreview?.status === 'complete' && rewritePreview.targetValid && !isAiProcessing;
+  const rewriteStatusText = isAiProcessing
+    ? retryStatus ?? (rewritePreview?.rewritten ? 'AI sedang menyusun hasil…' : 'Menunggu balasan AI…')
+    : rewritePreview?.status === 'length'
+      ? 'Balasan mencapai batas panjang dan belum lengkap.'
+      : rewritePreview?.status === 'provider-stop'
+        ? 'Penyedia AI menghentikan balasan sebelum selesai.'
+        : canApplyRewrite ? 'Hasil siap diterapkan.' : null;
+
+  useEffect(() => {
+    if (!needsRewriteTarget) return;
+    const updateSelection = () => {
+      const { from, to, empty } = editor.state.selection;
+      setHasRewriteSelection(!empty && !!editor.state.doc.textBetween(from, to, ' ').trim());
+    };
+    updateSelection();
+    editor.on('transaction', updateSelection);
+    return () => { editor.off('transaction', updateSelection); };
+  }, [editor, needsRewriteTarget]);
   const [isCustomOpen, setIsCustomOpen] = useState(false);
   const [customPromptText, setCustomPromptText] = useState('');
   const { 
@@ -160,6 +186,8 @@ export function SelectionFloatingMenu({
     }, 0);
   }, [editor, rewritePreview, updateBounds]);
 
+  useEffect(() => { handleSelection(); }, [handleSelection]);
+
   useEffect(() => {
     return () => {
       if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
@@ -192,7 +220,7 @@ export function SelectionFloatingMenu({
 
   useLayoutEffect(() => {
     const menu = menuRef.current;
-    if (!show || !menu) return;
+    if (!menu) return;
     const measure = () => {
       const width = menu.offsetWidth;
       // Include content beyond the scroll boundary when deciding which side fits.
@@ -203,7 +231,7 @@ export function SelectionFloatingMenu({
     const observer = new ResizeObserver(measure);
     observer.observe(menu);
     return () => observer.disconnect();
-  }, [show, showAiMenu, rewritePreview]);
+  }, [show, showAiMenu, rewritePreview, isAiProcessing]);
 
   // Clean-up custom view when floating menu hides
   useEffect(() => {
@@ -257,10 +285,14 @@ export function SelectionFloatingMenu({
   const showAbove = !isDocked && (above >= menuSize.height || (below < menuSize.height && above >= below));
   const availableHeight = showAbove ? above : below;
   const canScroll = showAiMenu || !!rewritePreview;
-  const constrained = !isDocked && canScroll && availableHeight < menuSize.height;
-  const minHeight = canScroll ? Math.min(menuSize.height, 44) : menuSize.height;
+  const minHeight = canScroll ? Math.min(menuSize.height, isAiProcessing ? 128 : 44) : menuSize.height;
   const selectionVisible = bounds && bounds.rect.bottom > bounds.top && bounds.rect.top < bounds.bottom;
-  const menuVisible = isDocked || (selectionVisible && menuSize.height > 0 && availableHeight >= minHeight);
+  const canFloat = selectionVisible && menuSize.height > 0 && availableHeight >= minHeight;
+  // Editing can collapse the DOM Range while the rewrite preview still needs to be usable.
+  const dockPreview = !canFloat && (!!rewritePreview || isAiProcessing);
+  const dockMenu = isDocked || dockPreview;
+  const constrained = !dockMenu && canScroll && availableHeight < menuSize.height;
+  const menuVisible = dockMenu || canFloat;
   const viewportWidth = bounds?.width ?? 0;
   const center = rect && viewportWidth >= 720 ? rect.left + rect.width / 2 : viewportWidth / 2;
   const edge = Math.min(gap, (viewportWidth - menuSize.width) / 2);
@@ -275,7 +307,7 @@ export function SelectionFloatingMenu({
 
   return (
     <AnimatePresence>
-      {show && (
+      {(show || rewritePreview || isAiProcessing) && (
         <motion.div
           ref={menuRef}
           initial={{ opacity: 0 }}
@@ -284,7 +316,7 @@ export function SelectionFloatingMenu({
           transition={{ duration: 0.12, ease: "easeOut" }}
           className={cn(
             "fixed z-[100] w-max max-w-[95vw] transition-colors duration-200 flex flex-col items-center",
-            constrained && "overflow-y-auto no-scrollbar [&>*]:shrink-0",
+            (constrained || (dockMenu && !!rewritePreview)) && "overflow-y-auto no-scrollbar [&>*]:shrink-0",
             (rewritePreview || isAiProcessing) ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border" : "",
             rewritePreview
               ? "rounded-2xl p-4 w-[480px] border-slate-200 dark:border-slate-800"
@@ -294,7 +326,7 @@ export function SelectionFloatingMenu({
           )}
           style={{
             visibility: menuVisible ? 'visible' : 'hidden',
-            ...(isDocked ? { bottom: 72, left: '50%', translate: '-50%' } : {
+            ...(dockMenu ? { bottom: 72, left: '50%', translate: '-50%', maxHeight: 'calc(100dvh - 96px)' } : {
               top: showAbove ? (rect?.top ?? 0) - gap : (rect?.bottom ?? 0) + gap,
               left,
               translate: showAbove ? '0 -100%' : undefined,
@@ -308,7 +340,7 @@ export function SelectionFloatingMenu({
             <div className="flex flex-col gap-3 text-slate-800 dark:text-slate-100" id="preview-container">
               <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800/80">
                 <span className="flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-indigo-500 dark:text-indigo-400">
-                  <Sparkles size={13} className="text-indigo-500 animate-pulse" />
+                  <Sparkles size={13} className="text-indigo-500" />
                   Pratinjau Hasil Tenun AI
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -331,14 +363,21 @@ export function SelectionFloatingMenu({
                     type="button"
                     onClick={onDiscardRewrite}
                     className="p-1 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="Batalkan"
+                    title="Tutup pratinjau"
                   >
                     <X size={13} />
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto no-scrollbar">
+              {rewriteStatusText && (
+                <div role="status" className="flex items-center gap-2 rounded-lg bg-indigo-50 px-2.5 py-2 text-xs font-medium text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-100">
+                  {isAiProcessing && <Loader2 size={14} aria-hidden="true" className="shrink-0 motion-safe:animate-spin" />}
+                  {rewriteStatusText}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto no-scrollbar" aria-busy={isAiProcessing}>
                 {/* Before (Original) */}
                 <div className="p-2.5 rounded-lg border border-amber-200/50 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/10 flex flex-col gap-1.5 select-none">
                   <span className="text-[9px] font-bold tracking-wide uppercase text-amber-600 dark:text-amber-500">
@@ -360,20 +399,35 @@ export function SelectionFloatingMenu({
                 </div>
               </div>
 
-              {/* Action Buttons row */}
+              {needsRewriteTarget && (rewritePreview.status === 'complete' || rewritePreview.status === 'streaming') && (
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <p role="status">Kutipan asal berubah. Pilih teks sasaran di editor.</p>
+                  <button
+                    type="button"
+                    disabled={!hasRewriteSelection}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={onReselectRewriteTarget}
+                    className="rounded-lg border px-2 py-1 font-semibold disabled:opacity-50"
+                  >
+                    Gunakan Seleksi Ini
+                  </button>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                 <button
                   onClick={onDiscardRewrite}
                   className="px-3 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1"
                 >
                   <X size={13} />
-                  Abaikan
+                  {isAiProcessing ? 'Batalkan' : 'Abaikan'}
                 </button>
 
                 <div className="flex gap-2">
                   <button
                     onClick={onInsertBelow}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 rounded-lg transition-colors flex items-center gap-1.5"
+                    disabled={!canApplyRewrite}
+                    type="button"
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     title="Sisipkan teks baru di bawah teks terpilih"
                   >
                     <CornerDownRight size={13} className="text-slate-500" />
@@ -381,7 +435,9 @@ export function SelectionFloatingMenu({
                   </button>
                   <button
                     onClick={onAcceptRewrite}
-                    className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-lg hover:shadow-indigo-500/10 transition-all flex items-center gap-1.5"
+                    disabled={!canApplyRewrite}
+                    type="button"
+                    className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-lg hover:shadow-indigo-500/10 transition-all flex items-center gap-1.5 disabled:opacity-50"
                     title="Timpa teks terpilih dengan hasil baru"
                   >
                     <Check size={13} />
@@ -392,9 +448,9 @@ export function SelectionFloatingMenu({
             </div>
           ) : isAiProcessing ? (
             /* --- ACTIVE PROCESSING LOADING STATE --- */
-            <div className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 min-w-[200px]" id="loading-container">
-              <Loader2 size={14} className="animate-spin text-indigo-500" />
-              <span className="font-serif italic animate-pulse">Menenun prosa indah...</span>
+            <div role="status" className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-300 min-w-[200px]">
+              <Loader2 size={14} aria-hidden="true" className="text-indigo-500 motion-safe:animate-spin" />
+              <span>{rewriteStatusText}</span>
             </div>
           ) : (
             /* --- DEFAULT MULTI-LAYERED MENU --- */
