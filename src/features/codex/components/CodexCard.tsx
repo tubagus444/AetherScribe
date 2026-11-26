@@ -8,12 +8,14 @@ import { effectiveStatus } from '@/src/lib/worldCompleteness';
 import { WorldStatusBadge } from '@/src/features/codex/components/WorldStatusBadge';
 import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
 import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
+import type { CodexFactMatch } from '@/src/features/codex/hooks/useCodexPanel';
 
 interface CodexCardProps {
   entry: CodexEntry;
   relationships: Relationship[];
   categories?: CategoryDef[];
   detailChapters: DetailChapterIndex;
+  factMatch?: CodexFactMatch;
   onEdit: (entry: CodexEntry) => void;
   onDelete: (id: number) => void;
   onSelect: (entry: CodexEntry, openAppearances?: boolean) => void;
@@ -32,6 +34,7 @@ function CodexCardImpl({
   relationships,
   categories,
   detailChapters,
+  factMatch,
   onEdit,
   onDelete,
   onSelect,
@@ -42,7 +45,7 @@ function CodexCardImpl({
   // Template field per kategori (#17): tampilkan ringkas maksimal 2 field kunci.
   const keyFields = resolveFieldValues(entry).slice(0, 2);
   const previewDetails = (entry.details ?? []).flatMap(detail => {
-    const current = readCurrentDetail(detail, readDetailHistory(detail, detailChapters));
+    const current = readCurrentDetail(detail, readDetailHistory(detail, detailChapters), entry.projectId);
     return current.value.trim() ? [{ key: detail.id, label: detail.label, value: current.value }] : [];
   }).slice(0, 2);
   // Kelengkapan worldbuilding (#11): status kematangan (badge kecil).
@@ -100,6 +103,12 @@ function CodexCardImpl({
         </div>
 
         <div className="flex-1 border-t border-slate-100 dark:border-slate-800/60 pt-4">
+          {factMatch && (
+            <p className="mb-3 break-words rounded-lg bg-indigo-50 p-2 text-xs text-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200">
+              <span className="block font-semibold">Cocok dengan fakta</span>
+              <span className="block">{factMatch.label} · {factMatch.value || 'Belum diisi.'}</span>
+            </p>
+          )}
           <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-4 leading-relaxed font-serif whitespace-pre-wrap break-words">
             {entry.description ? (
               entry.description

@@ -155,6 +155,9 @@ teks sumber.
   Pilih judul hasil untuk membuka bab di editor.
 - Label kategori dan tag yang dipilih pada filter dapat tampil dalam beberapa
   baris. Kontrol memakai pilihan bawaan browser dan bisa digunakan lewat papan ketik.
+- Pencarian di panel Codex juga mencocokkan label dan nilai detail terkini
+  serta kolom kustom yang tersimpan. Kartu menunjukkan alasan kecocokan,
+  misalnya **Pangkat · Panglima**.
 - Di formulir entri, **Tambah detail** menambahkan kolom dengan nama dan
   nilai pilihan penulis. Detail dapat menyimpan satu nilai atau nilai awal
   beserta satu catatan per bab. Ringkasan mengambil nilai terakhir menurut
@@ -162,6 +165,11 @@ teks sumber.
   **Sertakan dalam konteks AI** dinonaktifkan saat detail dibuat. Jika
   diaktifkan, AI memakai nilai yang berlaku di bab aktif. Audit batch dan
   audit Codex mendalam dapat memakai riwayat sesuai anggaran konteks.
+- **Lihat sampai bab…** tersedia pada entri dengan riwayat tertaut. Dialog
+  Codex membuka nilai terkini. **Codex di Bab Ini** memakai bab aktif sebagai
+  acuan awal. Pilihan bab mengikuti urutan baca dan membatasi nilai serta
+  riwayat yang ditampilkan. Untuk kilas balik, pilih bab yang mewakili
+  keadaan tokoh pada adegan itu. Nilai awal berlaku sebelum revisi pertama.
 - Gunakan `useCodexCategories`, `getCategoryDef`, dan `CategoryIcon` untuk
   kategori per proyek. Nilai field kustom menyimpan label saat entri
   disimpan agar format AI dan ekspor dapat membaca entri secara mandiri.

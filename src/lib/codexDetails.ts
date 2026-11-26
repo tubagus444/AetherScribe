@@ -23,8 +23,14 @@ export function readDetailHistory(detail: CodexDetail, chapters: DetailChapterIn
   })).sort((a, b) => (a.chapter?.position ?? Number.MAX_SAFE_INTEGER) - (b.chapter?.position ?? Number.MAX_SAFE_INTEGER));
 }
 
-export function readCurrentDetail(detail: CodexDetail, revisions: ReturnType<typeof readDetailHistory>) {
-  return revisions.findLast(revision => revision.chapter && revision.value.trim()) ?? { value: detail.value, chapter: undefined };
+export function readCurrentDetail(detail: CodexDetail, revisions: ReturnType<typeof readDetailHistory>, projectId: number, throughPosition = Infinity) {
+  return revisions.findLast(revision => revision.chapter?.projectId === projectId &&
+    revision.chapter.position <= throughPosition && revision.value.trim()) ?? { value: detail.value, chapter: undefined };
+}
+
+export function hasChapterDetailHistory(entry: CodexEntry, chapters: DetailChapterIndex) {
+  return entry.details?.some(detail => detail.revisions?.some(({ chapterId }) =>
+    chapterId !== undefined && chapters.get(chapterId)?.projectId === entry.projectId)) ?? false;
 }
 
 export function hasSharedDetailHistory(entry: CodexEntry) {
@@ -38,13 +44,13 @@ export function createCodexDetailFormatter(chapters: readonly DetailChapter[], s
     const cutoff = scope.chapterId === undefined ? Infinity : target?.projectId === entry.projectId ? target.position : -1;
     return (entry.details ?? []).flatMap(detail => {
       if (!detail.includeInAI) return [];
-      const revisions = readDetailHistory(detail, chaptersById).flatMap(revision => {
+      const historyRows = readDetailHistory(detail, chaptersById);
+      const revisions = historyRows.flatMap(revision => {
         const { chapter, value } = revision;
         return chapter?.projectId === entry.projectId && value.trim() ? [{ chapter, value: value.trim() }] : [];
       });
       const initial = detail.value.trim();
-      const latest = revisions.findLast(revision => revision.chapter.position <= cutoff);
-      const value = latest?.value ?? initial;
+      const value = readCurrentDetail(detail, historyRows, entry.projectId, cutoff).value.trim();
       if (scope.history && revisions.length) {
         const history = revisions.map(({ chapter, value }) => `Bab ${chapter.position + 1} (${chapter.title}): ${value}`);
         if (initial) history.unshift(`Nilai awal: ${initial}`);

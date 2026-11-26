@@ -19,7 +19,8 @@ import { getRelationshipLabel, RELATIONSHIP_TYPES } from '@/src/features/codex/r
 import { getCategoryLabel, getCategoryAccent, type CategoryDef } from '@/src/lib/codexCategories';
 import { resolveFieldValues } from '@/src/lib/codexFields';
 import { formatDate } from '@/src/lib/worldCalendar';
-import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
+import { hasChapterDetailHistory, readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
+import { CodexChapterScope } from '@/src/features/codex/components/CodexChapterScope';
 import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexCover';
 import { CodexCoverViewer } from '@/src/features/codex/components/CodexCoverViewer';
 import { cn } from '@/src/lib/utils';
@@ -73,6 +74,7 @@ export function CodexDetailModal({
   const detailsTabRef = useRef<HTMLButtonElement>(null);
   const thumbnail = useCoverUrl(useCodexCover(entry.id, 'thumbnail'));
   const [showCover, setShowCover] = useState(false);
+  const [scope, setScope] = useState<{ entryId?: number; chapterId: number }>();
   const [linksEntryId, setLinksEntryId] = useState<number | null | undefined>(() => openAppearances ? entry.id : null);
   const isLinksTab = linksEntryId !== null && linksEntryId === entry.id;
   const activeTab = isLinksTab ? 'links' : 'details';
@@ -86,9 +88,19 @@ export function CodexDetailModal({
   const fieldValues = resolveFieldValues(entry);
   const status = effectiveStatus(entry);
   const todos = parseTodos(entry.todo);
+  const scopedChapter = scope && scope.entryId === entry.id ? detailChapters.get(scope.chapterId) : undefined;
+  const cutoff = scopedChapter?.projectId === entry.projectId ? scopedChapter.position : undefined;
+  const hasHistory = hasChapterDetailHistory(entry, detailChapters);
   const details = (entry.details ?? []).map(detail => {
     const history = readDetailHistory(detail, detailChapters);
-    return { detail, history, current: readCurrentDetail(detail, history) };
+    const latest = readCurrentDetail(detail, history, entry.projectId);
+    return {
+      detail,
+      latest,
+      history: cutoff === undefined ? history : history.filter(revision =>
+        revision.chapter?.projectId === entry.projectId && revision.chapter.position <= cutoff),
+      current: cutoff === undefined ? latest : readCurrentDetail(detail, history, entry.projectId, cutoff),
+    };
   });
   const secret = entry.secret?.trim() ?? '';
   const description = entry.description?.trim() ?? '';
@@ -97,7 +109,7 @@ export function CodexDetailModal({
   const detailLength = secret.length
     + todos.reduce((length, todo) => length + todo.length, 0)
     + fieldValues.reduce((length, field) => length + field.value.trim().length, 0)
-    + details.reduce((length, { current }) => length + (current.value?.trim().length ?? 0), 0);
+    + details.reduce((length, { latest }) => length + latest.value.trim().length, 0);
   const hasDetailContent = detailCount > 0 || showClueIdeas;
   // Dua kolom memberi ruang ketika kedua sisi punya isi yang cukup untuk dibaca terpisah.
   const identityCount = (entry.aliases?.length ?? 0) + (entry.tags?.length ?? 0);
@@ -426,6 +438,14 @@ export function CodexDetailModal({
                 {details.length > 0 && (
                   <section className="space-y-3" aria-label="Detail tambahan">
                     <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Detail tambahan</h4>
+                    {hasHistory && (
+                      <CodexChapterScope
+                        chapters={detailChapters}
+                        projectId={projectId}
+                        chapterId={scopedChapter?.id}
+                        onChange={chapterId => setScope(chapterId === undefined ? undefined : { entryId: entry.id, chapterId })}
+                      />
+                    )}
                     {details.map(({ detail, history, current }) => (
                         <div key={detail.id} className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
                           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -433,8 +453,10 @@ export function CodexDetailModal({
                             <span className="text-xs text-slate-500 dark:text-slate-400">{detail.includeInAI ? 'Disertakan ke AI' : 'Hanya di Codex'}</span>
                           </div>
                           {current.chapter && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">Bab {current.chapter.position + 1} · {current.chapter.title}</p>}
-                          <div role="region" aria-label={`Nilai ${detail.label}`} tabIndex={0} className={`${fieldScroll} whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200`}>{current.value || 'Belum diisi.'}</div>
-                          {detail.revisions && (
+                          <div role="region" aria-label={`Nilai ${detail.label}`} tabIndex={0} className={`${fieldScroll} whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200`}>
+                            {current.value.trim() ? current.value : (cutoff === undefined ? 'Belum diisi.' : 'Belum tercatat sampai bab ini.')}
+                          </div>
+                          {detail.revisions && (cutoff === undefined || history.length > 0 || detail.value.trim()) && (
                             <details className="border-t border-slate-200 pt-2 text-sm dark:border-slate-800">
                               <summary className="cursor-pointer font-medium text-indigo-600 dark:text-indigo-400">Riwayat per bab</summary>
                               <ol tabIndex={0} aria-label={`Riwayat ${detail.label}`} className={`${fieldScroll} mt-2 space-y-2`}>
@@ -446,7 +468,9 @@ export function CodexDetailModal({
                                   </li>
                                 ))}
                               </ol>
-                              {!history.length && <p className="mt-2 text-xs text-slate-500">Belum ada catatan yang ditautkan ke bab.</p>}
+                              {history.length === 0 && <p className="mt-2 text-xs text-slate-500">
+                                {cutoff === undefined ? 'Belum ada catatan yang ditautkan ke bab.' : 'Belum ada perubahan sampai bab pilihan.'}
+                              </p>}
                             </details>
                           )}
                         </div>

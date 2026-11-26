@@ -8,6 +8,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Fakta Codex 26 November 2026 | [Verifikasi pencarian dan tampilan sampai bab pilihan](audits/2026-11-26-codex-fakta.md) |
 | Editor 26 November 2026 | [Verifikasi posisi edit dan filter catatan revisi](audits/2026-11-26-editor-posisi-catatan-revisi.md) |
 | Codex dan Snippet 26 November 2026 | [Verifikasi kemunculan dan tombol Opsi](audits/2026-11-26-interaksi-kartu-codex-snippet.md) |
 | Diskusi AI dan Nova 26 November 2026 | [Verifikasi draf, pencarian riwayat, dan Coba Lagi](audits/2026-11-26-diskusi-ai-riwayat-nova.md) |

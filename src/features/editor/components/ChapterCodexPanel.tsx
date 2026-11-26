@@ -16,6 +16,7 @@ const smallButton = 'rounded-md px-2 py-1.5 font-medium text-indigo-700 hover:bg
 
 interface ChapterCodexPanelProps {
   editor: Editor;
+  chapterId: number;
   entries: CodexEntry[];
   categories: CategoryDef[];
   showingText: boolean;
@@ -24,7 +25,7 @@ interface ChapterCodexPanelProps {
   onShowDetails: () => void;
 }
 
-export function ChapterCodexPanel({ editor, entries, categories, showingText, onJump, onViewText, onShowDetails }: ChapterCodexPanelProps) {
+export function ChapterCodexPanel({ editor, chapterId, entries, categories, showingText, onJump, onViewText, onShowDetails }: ChapterCodexPanelProps) {
   const [scan, setScan] = useState<Scan>();
   const [failed, setFailed] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -205,7 +206,7 @@ export function ChapterCodexPanel({ editor, entries, categories, showingText, on
             )}
           </div>
           <div className={showingText ? 'max-lg:hidden' : undefined}>
-            <ChapterCodexEntryDetails entry={entry} categories={categories} />
+            <ChapterCodexEntryDetails key={entry.id} entry={entry} categories={categories} chapterId={chapterId} />
           </div>
         </>
       ) : (

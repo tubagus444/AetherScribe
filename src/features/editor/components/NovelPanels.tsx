@@ -103,6 +103,7 @@ export function NovelPanels({ projectId, chapterId, editor, codexEntries, codexC
               {activePanel === 'chapterCodex' && editor && (
                 <ChapterCodexPanel
                   key={chapterId}
+                  chapterId={chapterId}
                   editor={editor}
                   entries={codexEntries}
                   categories={codexCategories}

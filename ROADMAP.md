@@ -6,17 +6,9 @@
 
 ## Prioritas implementasi
 
-Semua pekerjaan di bagian ini masih terbuka dan belum dijadwalkan. Nomor
-menunjukkan urutan yang disarankan di setiap tingkat.
-
 ### P2 — Penyempurnaan alur kerja
 
-| Urutan | Pekerjaan | Hasil yang diharapkan |
-| --- | --- | --- |
-| 8 | **Codex — cari entri berdasarkan fakta** | Pencarian di panel Codex mencakup label dan nilai detail yang sedang berlaku serta kolom kategori kustom. Pencarian `panglima` menampilkan Sagara dengan alasan kecocokan *Pangkat · Panglima*. |
-| 9 | **Codex — lihat fakta sampai bab pilihan** | Sediakan **Lihat sampai bab…** untuk entri dengan riwayat dan gunakan bab aktif sebagai acuan awal di editor. Gunakan urutan baca. Untuk kilas balik, penulis menentukan keadaan tokoh pada waktu adegan berlangsung. |
-
-Temuan Codex berasal dari uji Chromium dengan proyek contoh.
+Seluruh butir P2 selesai. Lihat [hasil verifikasi](#pekerjaan-selesai).
 
 ## Verifikasi terbuka
 
@@ -108,6 +100,7 @@ dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 
 ### Worldbuilding
 
+- [P2.8 dan P2.9 · Pencarian fakta dan tampilan Codex sampai bab pilihan](docs/reports/audits/2026-11-26-codex-fakta.md)
 - [Pengetikan alias dan tag serta penyimpanan tanggal lahir karakter Codex](docs/reports/audits/2026-11-26-codex-form.md)
 - [Linimasa, Kalender, dan pencatatan dari editor](docs/reports/audits/2026-11-22-linimasa.md)
 - [Seleksi, kamera, dan panel detail Atlas](docs/reports/audits/2026-11-21-atlas-sidebar.md)

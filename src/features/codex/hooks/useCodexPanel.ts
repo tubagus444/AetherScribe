@@ -11,10 +11,33 @@ import { invalidateContextCache } from '@/src/services/contextEngine';
 import { useCodexCategories } from '@/src/features/codex/hooks/useCodexCategories';
 import { useToast } from '@/src/hooks/useToast';
 import type { CodexCoverPair } from '@/src/lib/codexCoverLimits';
+import { readCurrentDetail, readDetailHistory, type DetailChapterIndex } from '@/src/lib/codexDetails';
+import { resolveFieldValues } from '@/src/lib/codexFields';
 
 export type CodexSort = 'name-asc' | 'name-desc' | 'category' | 'recent' | 'oldest';
+export type CodexFactMatch = { label: string; value: string };
 
-export function useCodexPanel(projectId: number) {
+function factMatchPreview({ label, value }: CodexFactMatch, query: string): CodexFactMatch {
+  const text = value.trim().replace(/\s+/g, ' ');
+  const limit = 140;
+  if (text.length <= limit) return { label, value: text };
+  const start = Math.max(0, text.toLowerCase().indexOf(query) - 36);
+  const end = Math.min(start + limit, text.length);
+  return { label, value: `${start ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}` };
+}
+
+function findFactMatch(entry: CodexEntry, chapters: DetailChapterIndex, query: string): CodexFactMatch | undefined {
+  for (const detail of entry.details ?? []) {
+    const { value } = readCurrentDetail(detail, readDetailHistory(detail, chapters), entry.projectId);
+    if (detail.label.toLowerCase().includes(query) || value.toLowerCase().includes(query)) {
+      return { label: detail.label, value };
+    }
+  }
+  return resolveFieldValues(entry).find(field =>
+    field.label.toLowerCase().includes(query) || field.value.toLowerCase().includes(query));
+}
+
+export function useCodexPanel(projectId: number, detailChapters: DetailChapterIndex) {
   const { toast } = useToast();
   const entries = useOptimizedLiveQuery(() => 
     db.codex.where('projectId').equals(projectId).toArray()
@@ -69,23 +92,25 @@ export function useCodexPanel(projectId: number) {
     return { total: entries?.length ?? 0, byCategory: counts };
   }, [entries]);
 
-  const filteredEntries = useMemo(() => {
-    if (!entries) return [];
-    const q = debouncedQuery.toLowerCase();
-    const result = entries.filter(entry => {
+  const { filteredEntries, factMatches } = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    const matches = new Map<CodexEntry, CodexFactMatch>();
+    const sorted = (entries ?? []).filter(entry => {
+      if (filterCategory !== 'all' && entry.category !== filterCategory) return false;
+      if (filterTag !== 'all' && !entry.tags?.includes(filterTag)) return false;
+      if (!q) return true;
+
+      const factMatch = findFactMatch(entry, detailChapters, q);
+      if (factMatch) matches.set(entry, factMatchPreview(factMatch, q));
       const matchesSearch =
         entry.name.toLowerCase().includes(q) ||
         entry.description?.toLowerCase().includes(q) ||
         entry.aliases?.some(a => a.toLowerCase().includes(q)) ||
         entry.tags?.some(t => t.toLowerCase().includes(q));
 
-      const matchesCategory = filterCategory === 'all' || entry.category === filterCategory;
-      const matchesTag = filterTag === 'all' || (entry.tags?.includes(filterTag) ?? false);
-
-      return matchesSearch && matchesCategory && matchesTag;
+      return factMatch !== undefined || matchesSearch;
     });
 
-    const sorted = [...result];
     switch (sortBy) {
       case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name, 'id'));
@@ -104,8 +129,8 @@ export function useCodexPanel(projectId: number) {
         sorted.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
         break;
     }
-    return sorted;
-  }, [entries, debouncedQuery, filterCategory, filterTag, sortBy]);
+    return { filteredEntries: sorted, factMatches: matches };
+  }, [entries, debouncedQuery, filterCategory, filterTag, sortBy, detailChapters]);
 
   const startAdding = () => {
     setInitialData({ name: '', category: 'character', description: '', aliases: [], tags: [] });
@@ -254,6 +279,7 @@ export function useCodexPanel(projectId: number) {
   return {
     entries,
     filteredEntries,
+    factMatches,
     bibleRules,
     relationships,
     plotPromises,

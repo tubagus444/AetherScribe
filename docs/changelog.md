@@ -6,6 +6,11 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- Pencarian panel Codex mencocokkan label dan nilai fakta terkini, termasuk
+  kolom kustom. Kartu menampilkan alasan kecocokan.
+- **Lihat sampai bab…** menampilkan fakta Codex sesuai urutan baca.
+  Sidebar editor memulai dari bab aktif dan penulis bisa memilih acuan lain
+  untuk kilas balik.
 - **Lanjutkan menulis** di Dashboard kembali ke titik edit terakhir yang
   tersimpan di perangkat. Membaca bab referensi tetap mempertahankan tujuan.
 - **Catatan Revisi** dapat difilter untuk menampilkan catatan terbuka sambil

@@ -75,6 +75,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
   const {
     entries,
     filteredEntries,
+    factMatches,
     bibleRules,
     relationships,
     plotPromises,
@@ -110,7 +111,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
     addBond,
     deleteRelationship,
     resolveDangling
-  } = useCodexPanel(projectId);
+  } = useCodexPanel(projectId, detailChapters);
   const [selection, setSelection] = useState<{ entry: CodexEntry; openAppearances: boolean } | null>(null);
   const setSelectedEntry = useCallback((entry: CodexEntry | null, openAppearances = false) => {
     setSelection(entry ? { entry, openAppearances } : null);
@@ -242,7 +243,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
               <input 
                 type="text"
                 aria-label="Cari entri Codex"
-                placeholder="Cari nama, alias, tag, atau deskripsi…"
+                placeholder="Cari nama, alias, tag, deskripsi, atau fakta…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow dark:text-slate-200 placeholder:text-slate-400"
@@ -370,6 +371,7 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
                 categories={categories}
                 detailChapters={detailChapters}
                 onEdit={startEditing}
+                factMatch={factMatches.get(entry)}
                 onDelete={deleteEntry}
                 onSelect={setSelectedEntry}
               />

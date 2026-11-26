@@ -57,6 +57,102 @@ test.beforeEach(async ({ context, page, baseURL }) => {
   });
 });
 
+async function seedCodexFacts(page: Page, mode: 'codex' | 'write') {
+  await page.evaluate(async mode => {
+    localStorage.setItem('aether_view_mode', mode);
+    const path = '/src/db.ts';
+    const { db }: DbModule = await import(path);
+    await db.chapters.update(1, { content: '<p>Sagara baru tiba di pelabuhan.</p>' });
+    await db.chapters.update(2, { order: 2 });
+    await db.chapters.add({ id: 3, projectId: 1, order: 1, title: 'Gerbang Utara', content: '<p>Sagara menjaga gerbang.</p>', lastModified: 1 });
+    const fields = [{ key: 'keahlian', label: 'Keahlian', type: 'text' as const }];
+    await db.codexCategories.add({ projectId: 1, slug: 'prajurit', label: 'Prajurit', order: 2, icon: 'users', color: 'indigo', fields });
+    await db.codex.add({
+      projectId: 1, name: 'Sagara', category: 'prajurit', description: 'Datang dari pesisir.', aliases: ['Anak Ombak'], tags: ['utama'],
+      customFields: [{ key: 'keahlian', label: 'Keahlian', value: 'Navigasi bintang' }],
+      details: [
+        { id: 'pangkat', label: 'Pangkat', value: 'Kurir', includeInAI: false, revisions: [
+          { id: 'pangkat-2', chapterId: 2, value: 'Panglima' },
+          { id: 'pangkat-detached', detachedChapterTitle: 'Bab lama', value: 'Laksamana' },
+          { id: 'pangkat-3', chapterId: 3, value: 'Penjaga' },
+        ] },
+        { id: 'afiliasi', label: 'Afiliasi', value: '', includeInAI: false, revisions: [
+          { id: 'afiliasi-2', chapterId: 2, value: 'Armada Timur' },
+        ] },
+      ],
+    });
+  }, mode);
+}
+
+for (const width of [1280, 390]) {
+  test(`Codex mencari fakta terkini dan menampilkan riwayat sampai bab pilihan pada ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await seedCodexFacts(page, 'codex');
+    await page.goto('/');
+    if (width === 390) await dismissMobileSidebar(page);
+    const query = page.getByRole('textbox', { name: 'Cari entri Codex' });
+    const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Sagara', exact: true }) });
+    for (const term of ['PANGKAT', '  Panglima  ']) {
+      await query.fill(term);
+      await expect(card.getByText('Pangkat · Panglima', { exact: true })).toBeVisible();
+    }
+    for (const term of ['Kurir', 'Penjaga', 'Laksamana']) {
+      await query.fill('Panglima');
+      await expect(card.getByText('Pangkat · Panglima', { exact: true })).toBeVisible();
+      await query.fill(term);
+      await expect(card).toHaveCount(0);
+    }
+    for (const term of ['Keahlian', 'Navigasi bintang']) {
+      await query.fill(term);
+      await expect(card.getByText('Keahlian · Navigasi bintang', { exact: true })).toBeVisible();
+    }
+    await query.fill('Anak Ombak');
+    await expect(card).toBeVisible();
+    await expect(card.getByText('Cocok dengan fakta')).toHaveCount(0);
+
+    await card.getByRole('heading', { name: 'Sagara', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Sagara' });
+    const scope = dialog.getByRole('combobox', { name: 'Lihat sampai bab…' });
+    const rank = dialog.getByRole('region', { name: 'Nilai Pangkat' });
+    await expect(scope).toHaveValue('');
+    await expect(scope.locator('option')).toHaveText(['Nilai terkini', 'Bab 1 · Pembukaan', 'Bab 2 · Gerbang Utara', 'Bab 3 · Bab Dermaga']);
+    await expect(rank).toHaveText('Panglima');
+    await dialog.getByText('Riwayat per bab', { exact: true }).first().click();
+    const history = dialog.getByRole('list', { name: 'Riwayat Pangkat' });
+    await expect(history).toContainText('Laksamana');
+    await scope.selectOption('3');
+    await expect(rank).toHaveText('Penjaga');
+    await expect(history.getByRole('listitem')).toHaveText([/Nilai awal.*Kurir/, /Bab 2.*Gerbang Utara.*Penjaga/]);
+    await expect(dialog.getByRole('region', { name: 'Nilai Afiliasi' })).toHaveText('Belum tercatat sampai bab ini.');
+    await expect(dialog.getByText('Navigasi bintang', { exact: true })).toBeVisible();
+    await scope.selectOption('1');
+    await expect(rank).toHaveText('Kurir');
+    await scope.selectOption('');
+    await expect(rank).toHaveText('Panglima');
+    await expect(history).toContainText('Laksamana');
+  });
+
+  test(`Codex di Bab Ini memilih bab aktif dan memungkinkan acuan kilas balik pada ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await seedCodexFacts(page, 'write');
+    await page.goto('/');
+    if (width === 390) await dismissMobileSidebar(page);
+    await page.getByRole('button', { name: 'Codex di Bab Ini', exact: true }).click();
+    await page.getByRole('button', { name: 'Sagara', exact: true }).click();
+    const scope = page.getByRole('combobox', { name: 'Lihat sampai bab…' });
+    await expect(scope).toHaveValue('1');
+    await expect(page.getByText('Kurir', { exact: true })).toBeVisible();
+    await expect(page.getByText('Panglima', { exact: true })).toHaveCount(0);
+    await scope.selectOption('3');
+    await expect(page.getByText('Penjaga', { exact: true })).toBeVisible();
+    await scope.selectOption('');
+    await expect(page.getByText('Panglima', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Kembali ke daftar', exact: true }).click();
+    await page.getByRole('button', { name: 'Sagara', exact: true }).click();
+    await expect(scope).toHaveValue('1');
+  });
+}
+
 for (const width of [1280, 390]) {
   test(`Lanjutkan menulis memulihkan titik edit setelah membaca bab referensi pada ${width} px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 850 });
