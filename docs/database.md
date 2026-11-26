@@ -259,7 +259,7 @@ catatan dan impor proyek memetakan ulang setiap tautan bab.
   - `activeChapterId` | `number` | Ya | `undefined` | Bab yang sedang dibuka saat chat berlangsung
   - `title` | `string` | Tidak | - | Judul sesi percakapan
   - `maxOutputTokens` | `number` | Opsional | 4096 | Batas keluaran per permintaan Diskusi AI, termasuk kelanjutan.
-  - `messages` | `ChatMessage[]` | Tidak | `[]` | Riwayat pesan (`role`, `content`, `timestamp`)
+  - `messages` | `ChatMessage[]` | Tidak | `[]` | Riwayat pesan. Pesan pengguna di Diskusi AI dapat menyertakan `requestSnapshot` berisi teks dan nama lampiran manual.
   - `lastMessageAt` | `number` | Tidak | `Date.now()` | Timestamp pesan terakhir
   - `mode` | `SessionMode` | Ya | `'brainstorm'` | Mode: `'prose-review'|'plot-check'|'brainstorm'`
   - `smartAutoEnabled` | `boolean` | Ya | `true` | Otomatis injeksi konteks relevan

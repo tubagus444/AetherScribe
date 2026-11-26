@@ -4,7 +4,8 @@ import { sessionOutput } from '@/src/lib/chatOutputLimit';
 import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { useChatSession } from '@/src/hooks/useChatSession';
-import { SessionMode, CodexEntry, StoryBibleRule } from '@/src/types';
+import { formatCodexLore, resolveLoreTags } from '@/src/lib/loreUtils';
+import { SessionMode, CodexEntry, StoryBibleRule, ChatRequestSnapshot, ChatSession } from '@/src/types';
 
 export function useAssistantSession({
   projectId,
@@ -19,6 +20,10 @@ export function useAssistantSession({
   input,
   setInput,
   chapterContext,
+  automaticChapterContext,
+  getManualChapterContext,
+  attachedCodexEntries,
+  clearCodexAttachments,
   provider,
 }: {
   projectId: number | null;
@@ -26,13 +31,17 @@ export function useAssistantSession({
   sessionChapterId: number | null;
   activeSessionId: number | null;
   setActiveSessionId: (id: number | null) => void;
-  activeSession: any;
+  activeSession: ChatSession | undefined;
   codexEntries: CodexEntry[];
   bibleRules: StoryBibleRule[];
   relationships?: import('@/src/types').Relationship[];
   input: string;
   setInput: (val: string) => void;
   chapterContext: string;
+  automaticChapterContext: string;
+  getManualChapterContext: (text: string) => string | undefined;
+  attachedCodexEntries: CodexEntry[];
+  clearCodexAttachments: () => void;
   provider: string;
 }) {
   const { toast } = useToast();
@@ -133,7 +142,7 @@ export function useAssistantSession({
   };
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !projectId) return;
+    if ((!input.trim() && !attachedCodexEntries.length) || isLoading || !projectId) return;
 
     // Create session if none active
     if (!activeSessionId) {
@@ -143,15 +152,26 @@ export function useAssistantSession({
     }
 
     const textToSend = input;
+    const manualChapterContext = getManualChapterContext(textToSend);
+    const resolved = resolveLoreTags(textToSend, codexEntries, bibleRules);
+    const loreNames = attachedCodexEntries.map(entry => entry.name);
+    const message = [resolved, ...attachedCodexEntries.map(formatCodexLore)].filter(Boolean).join('\n');
+    const requestSnapshot: ChatRequestSnapshot = {
+      ...(message !== textToSend && { message }),
+      ...(manualChapterContext !== undefined && { chapterContext: manualChapterContext }),
+      ...(loreNames.length > 0 && { loreNames }),
+    };
     setInput('');
+    clearCodexAttachments();
 
     try {
       if (messages.length === 0) {
-        const newTitle = textToSend.substring(0, 40) + (textToSend.length > 40 ? '...' : '');
+        const title = textToSend.trim() || loreNames.join(', ');
+        const newTitle = title.substring(0, 40) + (title.length > 40 ? '...' : '');
         await updateChatSession(activeSessionId, { title: newTitle });
       }
 
-      await sendMessage(textToSend, chapterContext);
+      await sendMessage(textToSend, automaticChapterContext, Object.keys(requestSnapshot).length ? requestSnapshot : undefined);
     } catch (err: any) {
       console.error('Assistant operation failed; sensitive details omitted.');
       const errorMessage = err.message || 'Gagal mengirim pesan ke AI.';
@@ -177,7 +197,7 @@ export function useAssistantSession({
   const handleRegenerate = async () => {
     if (isLoading || !activeSessionId) return;
     try {
-      await regenerate(chapterContext);
+      await regenerate(automaticChapterContext);
     } catch (err: any) {
       console.error('Assistant operation failed; sensitive details omitted.');
       toast.error(err.message || 'Gagal meregenerasi respons.');

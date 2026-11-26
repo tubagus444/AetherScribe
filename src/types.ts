@@ -167,6 +167,12 @@ export interface ConsistencyFinding {
 
 export type SessionMode = 'prose-review' | 'plot-check' | 'brainstorm';
 
+export interface ChatRequestSnapshot {
+  message?: string;
+  chapterContext?: string;
+  loreNames?: string[];
+}
+
 export interface ChatMessage {
   role: 'user' | 'model';
   content: string;
@@ -176,6 +182,8 @@ export interface ChatMessage {
   isWelcome?: boolean;
   finishStatus?: 'complete' | 'length' | 'provider-stop' | 'interrupted' | 'stopped';
   isError?: boolean;
+  /** Isi lampiran manual pada saat pesan pengguna dikirim. */
+  requestSnapshot?: ChatRequestSnapshot;
 }
 
 export interface ChatSession {

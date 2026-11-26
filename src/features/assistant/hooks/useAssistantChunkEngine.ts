@@ -1,14 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { readProjectChapters } from '@/src/services/chapterQueries';
 import { splitIntoScenes, getRelevantScenes, getLastScene, buildExcerptContext, Scene } from '@/src/lib/chunkEngine';
+import type { Chapter, CodexEntry } from '@/src/types';
 
 interface UseAssistantChunkEngineProps {
   input: string;
   isSmartAuto?: boolean;
   activeSessionId: number | null;
-  sessionChapter?: any; // replace with Chapter type if available
-  codexEntries?: any[]; // replace with CodexEntry[] type if available
+  sessionChapter?: Chapter;
+  codexEntries?: CodexEntry[];
 }
+
+type SceneMetadata = { name: string; wordCount: number; isManual: boolean; manualType?: 'excerpt' | 'summary' };
 
 export function useAssistantChunkEngine({
   input,
@@ -18,7 +21,7 @@ export function useAssistantChunkEngine({
   codexEntries = []
 }: UseAssistantChunkEngineProps) {
   const [chapterContext, setChapterContext] = useState('');
-  const [sceneMetadata, setSceneMetadata] = useState<{ name: string; wordCount: number; isManual: boolean; manualType?: 'excerpt' | 'summary' } | null>(null);
+  const [sceneMetadata, setSceneMetadata] = useState<SceneMetadata | null>(null);
 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const scenesRef = useRef(scenes);
@@ -40,6 +43,23 @@ export function useAssistantChunkEngine({
     }
   }, [sessionChapter?.id, sessionChapter?.content]);
 
+  const getManualChapterAttachment = useCallback((text: string): { context: string; metadata: SceneMetadata | null } | undefined => {
+    if (text.includes('@chapter-excerpt')) {
+      const lastScene = getLastScene(scenesRef.current);
+      return lastScene ? {
+        context: buildExcerptContext([lastScene]),
+        metadata: { name: `Scene ${lastScene.index + 1}`, wordCount: lastScene.wordCount, isManual: true, manualType: 'excerpt' },
+      } : { context: '', metadata: null };
+    }
+    if (text.includes('@chapter-summary')) {
+      const summary = sessionChapter?.summary;
+      return summary ? {
+        context: `[CHAPTER SUMMARY]\n${summary}\n[END SUMMARY]`,
+        metadata: { name: 'Chapter Summary', wordCount: summary.split(/\s+/).length, isManual: true, manualType: 'summary' },
+      } : { context: '', metadata: null };
+    }
+  }, [sessionChapter?.summary]);
+
   // Run chunk engine on input change
   useEffect(() => {
     if (!sessionChapter) {
@@ -48,30 +68,10 @@ export function useAssistantChunkEngine({
       return;
     }
     
-    const hasManualExcerpt = input.includes('@chapter-excerpt');
-    const hasManualSummary = input.includes('@chapter-summary');
-
-    if (hasManualExcerpt) {
-      if (sessionChapter && sessionChapter.content) {
-        const lastScene = getLastScene(scenesRef.current);
-        if (lastScene) {
-          setChapterContext(buildExcerptContext([lastScene]));
-          setSceneMetadata({
-            name: `Scene ${lastScene.index + 1}`,
-            wordCount: lastScene.wordCount,
-            isManual: true,
-            manualType: 'excerpt'
-          });
-        }
-      }
-      return;
-    }
-
-    if (hasManualSummary) {
-      if (sessionChapter && sessionChapter.summary) {
-        setChapterContext(`[CHAPTER SUMMARY]\n${sessionChapter.summary}\n[END SUMMARY]`);
-        setSceneMetadata({ name: 'Chapter Summary', wordCount: sessionChapter.summary.split(/\s+/).length, isManual: true, manualType: 'summary' });
-      }
+    const attachment = getManualChapterAttachment(input);
+    if (attachment) {
+      setChapterContext(attachment.context);
+      setSceneMetadata(attachment.metadata);
       return;
     }
 
@@ -127,17 +127,18 @@ export function useAssistantChunkEngine({
         cancelled = true;
         clearTimeout(runEngine);
       };
-    } else if (!hasManualExcerpt && !hasManualSummary) {
+    } else {
       setChapterContext('');
       setSceneMetadata(null);
     }
-  }, [input, isSmartAuto, sessionChapter?.id, sessionChapter?.summary, sessionChapter?.content, activeSessionId]);
+  }, [input, isSmartAuto, sessionChapter?.id, sessionChapter?.content, activeSessionId, getManualChapterAttachment]);
 
   return {
     chapterContext,
     setChapterContext,
     sceneMetadata,
     setSceneMetadata,
+    getManualChapterAttachment,
     scenes
   };
 }

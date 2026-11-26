@@ -159,6 +159,11 @@ Untuk menjaga antarmuka penulisan tetap mulus (60 FPS) tanpa terblokir (*zero UI
   dan Workshop. Tetapkan jenis pada sesi baru dan jaga riwayat Studio terpisah
   dari dua jenis lain. Aturan remap target Workshop ada di
   [format backup](backup-format.md#round-trip-f10).
+- Diskusi AI memilih entri Codex dari ID dalam proyek aktif. Saat mengirim,
+  pesan pengguna menyimpan `requestSnapshot` opsional berisi hasil ekspansi
+  lore manual, nama lampiran, dan konteks bab manual bila tersedia. Buat Ulang
+  menggunakan salinan ini dari pesan asal. Konteks otomatis tetap berasal
+  dari sesi.
 - Saat menyimpan ringkasan otomatis, pakai hash isi sumber dan commit
   bersyarat di transaksi. Pertahankan nilai nol yang valid pada pengaturan
   suhu dan metrik usage. [Ringkasan dan metrik](features.md#ringkasan-otomatis-dan-metrik-ai-f29f13)

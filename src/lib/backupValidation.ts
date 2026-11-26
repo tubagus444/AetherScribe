@@ -119,6 +119,7 @@ const backupSchemas = {
   relationships: object({ id, projectId: id, sourceId: id, targetId: id, type: text }, { description: text }),
   chatSessions: object({ id, projectId: id, title: text, messages: array(object({ role: choice('user', 'model'), content: text, timestamp: nonnegative }, {
     id: text, isActionable: bool, isWelcome: bool, isError: bool,
+    requestSnapshot: object({}, { message: text, chapterContext: text, loreNames: array(text) }),
   })), lastMessageAt: nonnegative }, {
     chapterId: id, activeChapterId: id, mode: choice('prose-review', 'plot-check', 'brainstorm'), smartAutoEnabled: bool, maxOutputTokens: id,
     kind: choice('studio', 'scribble', 'workshop'), workshopKey: text,

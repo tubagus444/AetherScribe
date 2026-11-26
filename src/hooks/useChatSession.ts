@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ChatMessage, CodexEntry, StoryBibleRule } from '@/src/types';
+import { ChatMessage, ChatRequestSnapshot, CodexEntry, StoryBibleRule } from '@/src/types';
 import { processChat, cancelAI } from '@/src/services/ai';
 import type { StreamFinishStatus } from '@/src/services/ai/types';
 import { resolveLoreTags, stripLoreTags } from '@/src/lib/loreUtils';
@@ -88,13 +88,18 @@ export function useChatSession({
     customContext?: string,
     retryMessages?: ChatMessage[],
     continuationIndex?: number,
+    requestSnapshot?: ChatRequestSnapshot,
   ) => {
-    if (!text.trim() || isLoadingRef.current) return;
+    const snapshot = retryMessages?.at(-1)?.requestSnapshot ?? requestSnapshot;
+    if ((!text.trim() && !snapshot?.message) || isLoadingRef.current) return;
     const targetSessionId = sessionIdRef.current;
     const previous = messagesRef.current;
     const original = continuationIndex === undefined ? undefined : previous[continuationIndex];
     if (continuationIndex !== undefined && (original?.role !== 'model' || original.finishStatus !== 'length')) return;
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now(),
+      ...(requestSnapshot && { requestSnapshot }),
+    };
     const turn = original ? previous.slice(0, continuationIndex! + 1) : retryMessages ?? [...previous, userMsg];
     const assistantId = Date.now().toString() + '_assistant';
     activeReplyId.current = assistantId;
@@ -124,14 +129,14 @@ export function useChatSession({
       }
       if (manualStopRef.current) return;
       const history = (original ? turn : turn.slice(0, -1)).filter(m => !m.isError).slice(-10).map(m => ({
-        role: m.role, parts: [{ text: stripLoreTags(m.content) }],
+        role: m.role, parts: [{ text: [stripLoreTags(m.content), ...(m.requestSnapshot?.loreNames ?? [])].filter(Boolean).join('\n') }],
       }));
       let reply: string;
       try {
         reply = await processChat({
-          message: resolveLoreTags(text, codexEntries, bibleRules),
+          message: snapshot?.message ?? resolveLoreTags(text, codexEntries, bibleRules),
           history, bibleRules, codexEntries, relationships, chapterId, provider, sessionMode, extraSystem,
-          contextText: customContext || contextText,
+          contextText: snapshot?.chapterContext ?? (customContext || contextText),
           stream: true, maxTokens,
           onFinish: status => { finishStatus = status; },
           onRetry: (attempt, _error, currentProvider) => {
@@ -197,8 +202,8 @@ export function useChatSession({
   }, [bibleRules, chapterId, codexEntries, contextText, extraSystem, onError, onMessageAdded,
     onResponseReceived, maxTokens, provider, relationships, sessionMode, showInlineErrors]);
 
-  const sendMessage = useCallback((text: string, customContext?: string) =>
-    runTurn(text, customContext), [runTurn]);
+  const sendMessage = useCallback((text: string, customContext?: string, requestSnapshot?: ChatRequestSnapshot) =>
+    runTurn(text, customContext, undefined, undefined, requestSnapshot), [runTurn]);
 
   const continueReply = useCallback((index: number, context?: string) =>
     runTurn('Lanjutkan persis dari akhir jawaban sebelumnya. Tulis hanya sambungannya tanpa mengulang pembukaan atau isi sebelumnya.',

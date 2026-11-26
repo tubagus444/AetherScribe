@@ -150,6 +150,16 @@ export function AssistantMessageList({ messages, isLoading, waitingForReply, ret
                         <span key={i}>{segment.text}</span>
                       )
                     ))}
+                    {!!m.requestSnapshot?.loreNames?.length && (
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {m.requestSnapshot.loreNames.map((name, index) => (
+                          <span key={index} className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-white/10 bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+                            <Sparkles size={12} className="shrink-0" />
+                            <span className="min-w-0 break-words">{name}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="markdown-body text-[14px] md:text-[15px]">

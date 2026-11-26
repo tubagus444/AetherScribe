@@ -111,6 +111,88 @@ for (const width of [1280, 390]) {
   });
 }
 
+for (const attachment of ['summary', 'excerpt'] as const) {
+  test(`Diskusi AI sends the selected Codex entry and reuses the original ${attachment}`, async ({ context, page, baseURL }) => {
+    await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+    await page.addInitScript(() => {
+      localStorage.setItem('aether_view_mode', 'brainstorm');
+      localStorage.setItem('ai_local_only', 'true');
+      localStorage.setItem('ollama_enabled', 'true');
+      localStorage.setItem('ai_provider', 'ollama');
+    });
+    const userPrompts: string[] = [];
+    await page.route('**/api/ai/proxy', route => {
+      const { messages } = route.request().postDataJSON().body;
+      userPrompts.push(messages.at(-1).content);
+      const frame = { choices: [{ delta: { content: `Balasan ${userPrompts.length} selesai.` }, finish_reason: 'stop' }] };
+      return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify(frame) + '\n\n' });
+    });
+
+    await page.route('**/__seed_attachments', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+    await page.goto('/__seed_attachments');
+    await page.evaluate(async () => {
+      const path = '/src/db.ts';
+      const { db }: typeof import('../src/db') = await import(path);
+      await db.projects.add({ id: 1, name: 'Novel', description: '', createdAt: 1, lastOpened: 1 });
+      await db.chapters.bulkAdd([
+        { id: 1, projectId: 1, title: 'Bab awal', content: '<p>Cuplikan asli dermaga.</p>', summary: 'Ringkasan asli mercusuar.', order: 0, lastModified: 1 },
+        { id: 2, projectId: 1, title: 'Bab lain', content: '<p>Cuplikan baru lembah.</p>', summary: 'Ringkasan baru gunung.', order: 1, lastModified: 1 },
+      ]);
+      await db.codex.bulkAdd([
+        { id: 1, projectId: 1, category: 'character', name: 'Ratu', description: 'Penguasa istana utara.', aliases: [], tags: [] },
+        { id: 2, projectId: 1, category: 'character', name: 'Ratu Senja', description: 'Penjaga gerbang senja.', aliases: [], tags: [] },
+      ]);
+      await db.chatSessions.add({ id: 1, projectId: 1, activeChapterId: 1, title: 'Sesi lampiran', kind: 'studio', mode: 'plot-check',
+        smartAutoEnabled: false, lastMessageAt: 2, messages: [{ role: 'model', content: 'Mari berdiskusi.', timestamp: 2 }] });
+    });
+    await page.goto('/');
+    const session = page.getByText('Sesi lampiran', { exact: true });
+    await session.click();
+    const composer = page.getByPlaceholder('Sampaikan ide liar Anda di sini...');
+    const loreMenu = page.getByTitle('Lampirkan Lore', { exact: true });
+    const selectCodex = (name: string) => page.getByRole('button').filter({ has: page.getByText(name, { exact: true }) });
+    const chapterAttachment = page.getByRole('button', { name: `@chapter-${attachment}`, exact: true });
+    const chips = page.getByRole('group', { name: 'Lampiran Codex' });
+
+    await composer.fill('Bahas petunjuk ini.');
+    await loreMenu.click();
+    await selectCodex('Ratu').click();
+    await chips.getByRole('button', { name: 'Lepas lampiran Ratu', exact: true }).click();
+    await loreMenu.click();
+    await selectCodex('Ratu Senja').click();
+    await expect(chips).toHaveText('Ratu Senja');
+    await expect(composer).toHaveValue('Bahas petunjuk ini.');
+    await loreMenu.click();
+    await chapterAttachment.click();
+    await page.getByRole('button', { name: 'Kirim Ide' }).click();
+    await expect(page.getByText('Balasan 1 selesai.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Ratu Senja', { exact: true })).toBeVisible();
+    await expect(chips).toHaveCount(0);
+    expect(userPrompts).toHaveLength(1);
+    expect(userPrompts[0]).toContain('[Lore - Ratu Senja: Penjaga gerbang senja.]');
+    expect(userPrompts[0]).not.toContain('Penguasa istana utara.');
+    expect(userPrompts[0]).toContain(attachment === 'summary' ? 'Ringkasan asli mercusuar.' : 'Cuplikan asli dermaga.');
+
+    await page.evaluate(async () => {
+      const path = '/src/db.ts';
+      const { db }: typeof import('../src/db') = await import(path);
+      await db.codex.update(2, { name: 'Ratu Fajar', description: 'Versi Codex yang baru.' });
+      await db.chatSessions.update(1, { activeChapterId: 2 });
+    });
+    await page.reload();
+    await session.click();
+    await expect(page.getByRole('button', { name: 'Bab lain', exact: true })).toBeVisible();
+    await expect(page.getByText('Ratu Senja', { exact: true })).toBeVisible();
+    await composer.fill('Draf yang belum dikirim.');
+    await loreMenu.click();
+    await chapterAttachment.click();
+    await page.getByRole('button', { name: 'Buat Ulang', exact: true }).click();
+    await expect(page.getByText('Balasan 2 selesai.', { exact: true })).toBeVisible();
+    expect(userPrompts).toEqual([userPrompts[0], userPrompts[0]]);
+    await expect(composer).toHaveValue(`Draf yang belum dikirim. @chapter-${attachment} `);
+  });
+}
+
 test('Nova Assistant reloads saved messages when the editor panel reopens', async ({ context, page, baseURL }) => {
   await page.setViewportSize({ width: 1280, height: 850 });
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());

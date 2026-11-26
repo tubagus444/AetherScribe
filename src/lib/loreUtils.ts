@@ -17,6 +17,17 @@ function splitTrailingPunct(token: string): { core: string; trail: string } {
   return { core: token.slice(0, token.length - m[0].length), trail: m[0] };
 }
 
+export function formatCodexLore(entry: CodexEntry): string {
+  let description = entry.description;
+  if (description.length > 150) {
+    description = description.substring(0, 150);
+    const lastSpace = description.lastIndexOf(' ');
+    if (lastSpace > 0) description = description.substring(0, lastSpace);
+    description += '...';
+  }
+  return `[Lore - ${entry.name}: ${description}]`;
+}
+
 /**
  * Resolves lore tags like @rule:key and @codex:name into more descriptive
  * text that the AI can understand better.
@@ -50,19 +61,7 @@ export function resolveLoreTags(
       (e.aliases && e.aliases.some(alias => alias.toLowerCase() === lowerSearch || alias.replace(/_/g, ' ').toLowerCase() === lowerSearch))
     );
 
-    if (!entry) return match;
-
-    let description = entry.description;
-    if (description.length > 150) {
-      description = description.substring(0, 150);
-      const lastSpace = description.lastIndexOf(' ');
-      if (lastSpace > 0) {
-        description = description.substring(0, lastSpace);
-      }
-      description += '...';
-    }
-
-    return `[Lore - ${entry.name}: ${description}]${trail}`;
+    return entry ? formatCodexLore(entry) + trail : match;
   });
 
   return resolved;

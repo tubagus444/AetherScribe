@@ -1,85 +1,95 @@
 # Roadmap AetherScribe
 
-## Pekerjaan aktif
+**Pekerjaan aktif:** belum ada yang dijadwalkan.
 
-Belum ada pekerjaan aktif yang dijadwalkan.
+[Prioritas implementasi](#prioritas-implementasi) · [Verifikasi](#verifikasi-terbuka) · [Eksplorasi](#eksplorasi) · [Pekerjaan bersyarat](#pekerjaan-bersyarat) · [Ide diparkir](#ide-diparkir) · [Pekerjaan selesai](#pekerjaan-selesai)
 
-## Pilihan berikutnya
+## Prioritas implementasi
 
-| Pilihan                                       | Hasil yang ingin diketahui                                                                          |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Verifikasi CI pada commit yang akan dibagikan | Hasil job Windows dan Ubuntu beserta artefak pada SHA yang sama                                     |
-| Uji alur penulis dengan salinan proyek nyata  | Kelancaran menulis, Atlas, ekspor, backup, dan pemulihan di profil terpisah                         |
-| Uji lingkungan yang dipakai pengguna          | Perilaku Drive atau provider nyata, beberapa tab, browser lain, atau aksesibilitas sesuai kebutuhan |
+Semua pekerjaan di bagian ini masih terbuka dan belum dijadwalkan. Nomor
+menunjukkan urutan yang disarankan di setiap tingkat.
 
-### Prioritas penyempurnaan alur penulis
+### P2 — Penyempurnaan alur kerja
 
-Usulan berikut belum dijadwalkan. Temuan berasal dari peninjauan kode. Frekuensi kendalanya masih perlu dinilai saat uji alur dengan proyek nyata.
+| Urutan | Pekerjaan | Hasil yang diharapkan |
+| --- | --- | --- |
+| 1 | **Codex — tampilkan kemunculan dengan satu klik** | Klik **Cek Kemunculan di Chapter** pada kartu langsung membuka bagian **Kemunculan** dan menampilkan hasil. |
+| 2 | **Editor — kembalikan posisi edit lewat Lanjutkan menulis** | Simpan posisi edit per bab di perangkat. Membaca bab lain untuk referensi tetap mempertahankan posisi kerja. Jika posisi sudah tidak sesuai setelah pemulihan snapshot, buka bab seperti biasa. |
+| 3 | **Editor — filter catatan revisi yang masih terbuka** | Jumlah catatan terbuka bisa diklik untuk memfilter dan opsi **Semua** memulihkan daftar. Urutan naskah dan aksi lompat ke kutipan tetap tersedia. Tampilkan pesan saat semua catatan selesai. |
+| 4 | **Snippet — tampilkan aksi kartu pada layar sentuh** | Tombol **Opsi** selalu terlihat dan memberi akses ke **Ubah** dan **Hapus**. Uji pada lebar 390 piksel, tempat ikon lama transparan meski bisa diketuk. |
+| 5 | **Diskusi AI — simpan draf pertanyaan per sesi** | Berpindah sesi menyimpan draf masing-masing dan memulihkannya saat sesi dibuka kembali. |
+| 6 | **Diskusi AI — cari judul di seluruh riwayat proyek** | Pencarian menemukan judul sesi lama, termasuk sesi ke-51 dalam uji. Batas 50 sesi terbaru berlaku pada tampilan awal. |
+| 7 | **Nova — arahkan Coba Lagi ke pertanyaan yang benar** | Tawarkan **Coba Lagi** pada giliran terakhir yang gagal, mengikuti pola Diskusi AI. Percobaan ulang mengirim pertanyaan dari giliran itu. |
+| 8 | **Codex — cari entri berdasarkan fakta** | Pencarian di panel Codex mencakup label dan nilai detail yang sedang berlaku serta kolom kategori kustom. Pencarian `panglima` menampilkan Sagara dengan alasan kecocokan *Pangkat · Panglima*. |
+| 9 | **Codex — lihat fakta sampai bab pilihan** | Sediakan **Lihat sampai bab…** untuk entri dengan riwayat dan gunakan bab aktif sebagai acuan awal di editor. Gunakan urutan baca. Untuk kilas balik, penulis menentukan keadaan tokoh pada waktu adegan berlangsung. |
 
-1. **“Lanjutkan menulis” kembali ke posisi edit terakhir.** Tombol saat ini membuka bab yang terakhir diubah. Simpan posisi edit per bab di perangkat agar penulis bisa meneruskan revisi di tengah bab panjang. Membaca bab lain untuk mengecek referensi tetap mempertahankan posisi kerja. Jika posisi lama sudah tidak sesuai, misalnya setelah pemulihan snapshot, buka bab seperti biasa. Saat uji proyek nyata, amati seberapa sering penulis harus menggulir untuk menemukan paragraf tempat ia terakhir bekerja.
-2. **Filter catatan revisi yang masih terbuka.** Panel sudah menghitung catatan terbuka, tetapi penulis masih harus mencarinya di antara catatan yang selesai. Jadikan label jumlah terbuka sebagai filter dan sediakan pilihan **Semua**. Pertahankan urutan naskah dan aksi lompat ke kutipan. Saat catatan terakhir selesai, tampilkan pesan “Semua catatan di bab ini sudah selesai.” Ini penyempurnaan dengan lingkup terkecil karena status tiap catatan sudah tersedia.
+Temuan editor berasal dari peninjauan kode. Uji dengan proyek nyata untuk
+menilai seberapa sering penulis perlu mencari ulang posisi edit atau menyaring
+catatan. Temuan Codex, Snippet, Diskusi AI, dan Nova berasal dari uji Chromium
+dengan proyek contoh, dengan balasan AI simulasi untuk alur yang memerlukan AI.
 
-### Prioritas Codex — penyimpanan dan penelusuran fakta
+## Verifikasi terbuka
 
-Perilaku berikut telah diuji di Chromium desktop dengan proyek contoh terpisah. Pekerjaan belum dijadwalkan.
+| Kapan | Pemeriksaan | Bukti yang dicari |
+| --- | --- | --- |
+| Saat commit siap dibagikan | Verifikasi CI Windows dan Ubuntu | Hasil job dan artefak dari SHA yang sama. |
+| Saat menilai alur kerja dan prioritas penyempurnaan | Uji dengan salinan proyek nyata di profil terpisah | Kelancaran menulis, Atlas, ekspor, backup, dan pemulihan. |
+| Saat ada lingkungan atau integrasi yang perlu dipastikan | Uji sesuai kebutuhan pengguna | Perilaku Drive atau provider nyata, beberapa tab, browser lain, atau aksesibilitas. |
 
-**Perbaikan, menurut prioritas**
+## Eksplorasi
 
-1. **Tampilkan kemunculan dengan satu klik.** Tombol **Cek Kemunculan di Chapter** pada kartu membuka dialog detail. Di tab **Keterkaitan**, penulis harus mengeklik tombol cek sekali lagi. Arahkan klik pertama langsung ke bagian **Kemunculan** dan tampilkan hasilnya di sana.
+Usulan berikut belum dijadwalkan. Uji manfaatnya sebelum menetapkan urutan
+implementasi lintas fitur.
 
-**Peningkatan setelah perbaikan**
+### Editor — membaca referensi sambil menulis
 
-1. **Cari entri dari fakta yang diingat penulis.** Kartu *Sagara* menampilkan pangkat *panglima*, tetapi pencarian `panglima` di panel Codex menghasilkan daftar kosong. Sertakan label dan nilai detail yang sedang berlaku serta kolom kategori kustom. Tampilkan bagian yang cocok, misalnya *Pangkat · Panglima*, agar alasan entri muncul langsung terbaca.
-2. **Lihat fakta yang tercatat sampai bab pilihan.** Dalam uji, Sagara berpangkat *prajurit* pada awal cerita dan menjadi *panglima* di bab kedua. Sidebar editor bab pertama sudah menampilkan *panglima*. Usulkan pilihan **Lihat sampai bab…** pada entri Codex yang punya riwayat dan gunakan bab aktif sebagai acuan awal di editor. Acuannya urutan baca. Saat adegan berupa kilas balik, penulis tetap menentukan keadaan tokoh pada waktu adegan berlangsung.
+1. **Cari di Codex novel.** Pertahankan penyebutan bab aktif sebagai tampilan awal
+   **Codex di Bab Ini**. Dari panel yang sama, cari nama atau alias dan buka detail
+   termasuk untuk entri yang belum disebut di bab aktif.
+2. **Cari catatan novel dari Catatan Bab.** Cari judul atau isi catatan proyek dan
+   baca hasilnya di sidebar. Sediakan aksi opsional **Tautkan ke bab ini**.
+3. **Intip bab lain.** Buka bab dalam tampilan baca-saja untuk memeriksa dialog
+   atau kejadian. Sediakan akses ke bab sebelumnya dan pencarian judul. Amati
+   kapan penulis memerlukan kalimat asli dan kapan Codex atau catatan sudah cukup.
 
-### Prioritas Snippet, Diskusi AI, dan Nova
+Uji satu adegan di desktop dan ponsel. Periksa apakah penulis bisa menemukan
+referensi dan kembali mengetik di posisi semula. Manfaatkan panel yang ada agar
+bilah editor tetap ringkas.
 
-Belum dijadwalkan. Temuan diuji di Chromium dengan proyek contoh dan balasan AI simulasi. Untuk lampiran Diskusi AI, pengujian memeriksa isi permintaan yang dikirim aplikasi.
+### Janji Plot — petunjuk sebelum pengungkapan
 
-**Snippet**
+Kartu rahasia menghitung petunjuk terkait yang terdeteksi di seluruh naskah.
+Memindahkan adegan petunjuk melewati pengungkapan bisa mempertahankan jumlah
+yang sama sambil mengubah pengalaman pembaca.
 
-- **Perlihatkan aksi kartu pada layar sentuh.** Pada emulasi lebar 390 piksel, ikon Ubah dan Hapus transparan meskipun bisa diketuk. Tampilkan tombol **Opsi** yang selalu terlihat untuk mengakses keduanya.
+Coba pilihan bab pengungkapan untuk satu kali peninjauan. Gunakan data
+kemunculan lokal untuk menunjukkan bab pertama setiap petunjuk terdeteksi,
+baik sebelum, di, maupun sesudah bab pilihan. Untuk kilas balik, gunakan bab
+tempat adegan diceritakan. Untuk petunjuk di bab pengungkapan, penulis memeriksa
+urutan paragraf. Penulis tetap menilai makna tiap kecocokan dalam konteks adegan.
 
-**Diskusi AI dan Nova**
+Uji dengan satu rahasia di naskah nyata. Periksa apakah ringkasannya membantu
+penulis memutuskan kapan pembaca sebaiknya menemukan petunjuk.
 
-1. **Kirim entri Codex yang dipilih di Lampirkan Lore.** Memilih *Ratu Senja* ketika ada entri *Ratu* justru mengirim deskripsi Ratu. Simpan identitas entri pada lampiran dan tampilkan nama lengkapnya kepada penulis.
-2. **Pertahankan lampiran saat Buat Ulang.** Dengan konteks otomatis dimatikan, ringkasan bab manual terkirim pada permintaan pertama. Saat regenerasi, hanya penanda `@chapter-summary` yang tersisa. Kaitkan isi lampiran dengan pesan asal agar regenerasi memakai bahan yang sama.
-3. **Pisahkan draf pertanyaan per sesi Diskusi.** Draf yang belum dikirim ikut muncul ketika sesi berganti. Mengetik di sesi kedua juga menimpa draf sesi pertama. Pulihkan draf masing-masing ketika penulis kembali.
-4. **Cari judul di seluruh riwayat Diskusi proyek.** Dalam uji dengan 51 sesi, judul persis sesi tertua tidak ditemukan karena daftar dibatasi sebelum pencarian. Batas 50 sesi terbaru cukup diterapkan pada tampilan awal.
-5. **Arahkan Coba Lagi di Nova ke pertanyaan yang benar.** Menekan tombol pada pesan gagal lama mengirim ulang pertanyaan terbaru. Gunakan pola Diskusi AI dengan menawarkan **Coba Lagi** pada giliran terakhir yang gagal.
+### Snippet — masukan untuk kutipan
 
-**Eksplorasi setelah perbaikan.** Tambahkan pilihan **Beri masukan** di samping **Tulis ulang** pada Snippet. Misalnya, penulis dapat meminta alasan dialog terasa terlalu menjelaskan perasaan tokoh. Tampilkan komentar bersama kutipan dengan aksi **Salin** dan **Tutup**, sehingga penulis bisa merevisi sendiri. Uji manfaatnya dalam sesi menulis nyata.
-
-### Eksplorasi editor — membaca referensi sambil menulis
-
-Usulan ini belum dijadwalkan. Tujuannya agar penulis bisa memeriksa satu detail, menutup referensi, lalu meneruskan kalimat di posisi semula, termasuk di ponsel. Urutan prioritas di dalam editor:
-
-1. **Cari di Codex novel.** Pertahankan daftar penyebutan sebagai tampilan awal **Codex di Bab Ini**. Dari panel yang sama, cari entri lewat nama atau alias dan buka kartu detailnya meskipun entri belum disebut di bab aktif.
-2. **Cari catatan novel dari Catatan Bab.** Cari judul atau isi catatan proyek dan baca hasilnya di sidebar. Sediakan aksi opsional **Tautkan ke bab ini** agar penulis bisa menyimpan referensi yang akan dipakai lagi.
-3. **Intip bab lain.** Buka teks bab dalam tampilan baca-saja untuk memeriksa dialog atau kejadian sebelumnya. Sediakan akses cepat ke bab sebelumnya dan pencarian judul. Sebelum memprioritaskannya, amati kapan penulis perlu membaca kalimat asli dan kapan Codex atau catatan sudah cukup.
-
-Uji dengan satu adegan di desktop dan ponsel. Perhatikan apakah penulis dapat menemukan referensi yang diperlukan dan kembali mengetik tanpa mencari ulang paragrafnya. Dahulukan pemanfaatan panel yang sudah ada agar bilah editor tetap ringkas.
-
-### Eksplorasi Janji Plot — petunjuk sebelum pengungkapan
-
-Usulan eksplorasi berikutnya, belum dijadwalkan. Saat ini kartu rahasia menghitung petunjuk terkait yang terdeteksi di seluruh naskah. Jika penulis memindahkan adegan petunjuk melewati bab pengungkapan, jumlahnya bisa tetap sama meski pengalaman pembaca berubah.
-
-Pada kartu rahasia, penulis dapat mencoba memilih bab pengungkapan untuk satu kali peninjauan. Gunakan data kemunculan per bab yang sudah tersedia secara lokal untuk menunjukkan kapan setiap petunjuk terkait pertama kali terdeteksi menurut urutan baca: sebelum bab pilihan, di bab itu, atau sesudahnya. Cantumkan babnya agar penulis bisa memeriksa konteks. Untuk kilas balik, gunakan bab tempat adegan diceritakan. Untuk petunjuk di bab pengungkapan, penulis perlu memeriksa urutan paragraf. Kata **terdeteksi** menunjukkan kecocokan di naskah; penulis yang menilai maknanya sebagai petunjuk.
-
-**Uji manfaat:** pilih satu rahasia dari naskah nyata dan tentukan bab pengungkapannya. Periksa apakah ringkasan membantu penulis mengambil keputusan revisi, misalnya mempertahankan petunjuk di kilas balik sebagai penjelasan susulan atau memindahkannya lebih awal agar pembaca sempat curiga.
+Setelah perbaikan Snippet, uji pilihan **Beri masukan** di samping **Tulis
+ulang** dalam sesi menulis nyata. Misalnya, penulis meminta alasan dialog
+terasa terlalu menjelaskan perasaan tokoh. Tampilkan komentar bersama kutipan
+dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 
 <a id="database-improvement"></a>
 
 ## Pekerjaan bersyarat
 
-| Pekerjaan                                                                                                                                                        | Pemicu                                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [DB09 — Identitas global dan pelacakan perubahan](docs/archive/2026-11-18-database-improvement-plan.md#db09--identitas-global-dan-pelacakan-perubahan-bersyarat) | Kebutuhan sinkronisasi atau penggabungan perangkat sudah jelas                          |
-| [DB10 — Pembuktian migrasi](docs/archive/2026-11-18-database-improvement-plan.md#db10--pembuktian-migrasi-bersyarat)                                             | Target migrasi dipilih                                                                  |
-| Migrasi bertahap                                                                                                                                                 | Migrasi baru memproses tabel besar                                                      |
-| Font PDF non-Latin                                                                                                                                               | Naskah memerlukan glyph di luar cakupan font saat ini                                   |
-| Pemisahan Atlas lanjutan                                                                                                                                         | Toolbar, modal, atau orkestrasi perlu dipisah saat perubahan fitur                      |
-| Optimasi backup lanjutan                                                                                                                                         | Pengukuran pemakaian menunjukkan kendala collect/Blob, memori, atau koordinasi antartab |
+| Pekerjaan | Pemicu |
+| --- | --- |
+| [DB09 — Identitas global dan pelacakan perubahan](docs/archive/2026-11-18-database-improvement-plan.md#db09--identitas-global-dan-pelacakan-perubahan-bersyarat) | Kebutuhan sinkronisasi atau penggabungan perangkat sudah jelas. |
+| [DB10 — Pembuktian migrasi](docs/archive/2026-11-18-database-improvement-plan.md#db10--pembuktian-migrasi-bersyarat) | Target migrasi sudah dipilih. |
+| Migrasi bertahap | Migrasi baru memproses tabel besar. |
+| Font PDF non-Latin | Naskah memerlukan glyph di luar cakupan font saat ini. |
+| Pemisahan Atlas lanjutan | Perubahan fitur memerlukan pemisahan toolbar, modal, atau orkestrasi. |
+| Optimasi backup lanjutan | Pengukuran menunjukkan kendala collect/Blob, memori, atau koordinasi antartab. |
 
 ## Ide diparkir
 
@@ -93,13 +103,20 @@ Pada kartu rahasia, penulis dapat mencoba memilih bab pengungkapan untuk satu ka
 
 ## Pekerjaan selesai
 
-- [Pengetikan alias dan tag serta penyimpanan tanggal lahir karakter Codex](docs/reports/audits/2026-11-26-codex-form.md)
+### Editor, Snippet, dan pencarian
 
+- [Undo dan Redo saat berpindah panel](docs/reports/audits/2026-11-25-editor-history.md)
 - [Pengamanan Snippet, retensi nilai templat Codex, dan navigasi hasil pencarian global](docs/reports/audits/2026-11-25-writer-priorities.md)
-
-- [Linimasa, Kalender, dan pencatatan dari editor](docs/reports/audits/2026-11-22-linimasa.md)
-
 - [Catatan Novel dan Codex di sidebar editor](docs/reports/audits/2026-11-21-editor-notes-codex.md)
+
+### Diskusi AI
+
+- [Pemilihan entri Codex dan pemulihan lampiran saat Buat Ulang](docs/reports/audits/2026-11-26-diskusi-ai-lampiran.md)
+
+### Worldbuilding
+
+- [Pengetikan alias dan tag serta penyimpanan tanggal lahir karakter Codex](docs/reports/audits/2026-11-26-codex-form.md)
+- [Linimasa, Kalender, dan pencatatan dari editor](docs/reports/audits/2026-11-22-linimasa.md)
 - [Seleksi, kamera, dan panel detail Atlas](docs/reports/audits/2026-11-21-atlas-sidebar.md)
 - [Isi wilayah dan peran lokasi penting Atlas](docs/reports/audits/2026-11-21-atlas-areas.md#isi-wilayah-dan-lokasi-penting)
 - [Pratinjau batas melengkung dan sudut tegas pada area Atlas](docs/reports/audits/2026-11-21-atlas-areas.md)
@@ -108,6 +125,9 @@ Pada kartu rahasia, penulis dapat mencoba memilih bab pengungkapan untuk satu ka
 - [Perbaikan gulir tab Kelengkapan Dunia](docs/reports/audits/2026-11-20-codex-layout.md#gulir-tab-kelengkapan-dunia)
 - [Gambar sampul Codex dan cadangan aset](docs/reports/audits/2026-11-20-codex-cover.md)
 - [Detail tambahan Codex, riwayat per bab, dan konteks AI](docs/reports/audits/2026-11-20-codex-details.md)
+
+### Penguatan aplikasi dan database
+
 - [Audit F01–F29](docs/archive/2026-11-15-roadmap-audit-completed.md)
 - [Penguatan L01–L06](docs/archive/2026-11-15-roadmap-l01-l06-completed.md)
 - [Penguatan database DB01–DB08](docs/reports/audits/2026-11-19-db01-db08.md)

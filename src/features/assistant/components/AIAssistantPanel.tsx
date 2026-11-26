@@ -1,5 +1,5 @@
 import { useProjectChapters } from '@/src/hooks/useChapterQueries';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, BrainCircuit } from 'lucide-react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -26,10 +26,16 @@ export function AIAssistantPanel() {
 
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
   const [input, setInput] = useState('');
+  const [attachedCodexIds, setAttachedCodexIds] = useState<number[]>([]);
+
+  useEffect(() => setAttachedCodexIds([]), [projectId, activeSessionId]);
 
   const codexEntries = useOptimizedLiveQuery(() => 
     projectId ? db.codex.where('projectId').equals(projectId).toArray() : []
   , [projectId]);
+  const attachedCodexEntries = useMemo(() => attachedCodexIds.flatMap(id =>
+    codexEntries?.find(entry => entry.id === id && entry.projectId === projectId) ?? []),
+  [attachedCodexIds, codexEntries, projectId]);
 
   const bibleRules = useOptimizedLiveQuery(() => 
     projectId ? db.bible.where('projectId').equals(projectId).toArray() : []
@@ -68,6 +74,7 @@ export function AIAssistantPanel() {
     setChapterContext,
     sceneMetadata,
     setSceneMetadata,
+    getManualChapterAttachment,
   } = useAssistantChunkEngine({
     input,
     isSmartAuto,
@@ -102,6 +109,10 @@ export function AIAssistantPanel() {
     input,
     setInput,
     chapterContext,
+    automaticChapterContext: isSmartAuto && !sceneMetadata?.isManual ? chapterContext : '',
+    getManualChapterContext: text => getManualChapterAttachment(text)?.context,
+    attachedCodexEntries,
+    clearCodexAttachments: () => setAttachedCodexIds([]),
     provider: selectedProvider
   });
 
@@ -176,6 +187,9 @@ export function AIAssistantPanel() {
               setChapterContext={setChapterContext}
               codexEntries={codexEntries}
               bibleRules={bibleRules}
+              attachedCodexEntries={attachedCodexEntries}
+              onAttachCodex={id => setAttachedCodexIds(ids => ids.includes(id) ? ids : [...ids, id])}
+              onRemoveCodex={id => setAttachedCodexIds(ids => ids.filter(current => current !== id))}
               sessionChapter={sessionChapter}
               isMentionOpen={isMentionOpen}
               setIsMentionOpen={setIsMentionOpen}

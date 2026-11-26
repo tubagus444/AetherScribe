@@ -8,6 +8,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Diskusi AI 26 November 2026 | [Verifikasi Lampirkan Lore dan Buat Ulang](audits/2026-11-26-diskusi-ai-lampiran.md) |
 | Codex 26 November 2026 | [Verifikasi alias, tag, dan tanggal lahir karakter](audits/2026-11-26-codex-form.md) |
 | Editor 25 November 2026 | [Verifikasi riwayat Undo dan Redo](audits/2026-11-25-editor-history.md) |
 | Alur penulis 25 November 2026 | [Verifikasi Snippet, Codex, dan pencarian global](audits/2026-11-25-writer-priorities.md) |

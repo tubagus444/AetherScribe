@@ -6,6 +6,9 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- **Lampirkan Lore** di Diskusi AI memilih entri Codex berdasarkan ID dan
+  menampilkan nama lengkapnya. **Buat Ulang** memakai isi lampiran manual
+  dari pesan asal, termasuk setelah sesi dibuka kembali.
 - Alias dan tag Codex menerima koma dan spasi selama pengetikan. Daftar
   dipisahkan saat entri disimpan.
 - Formulir karakter Codex memuat tanggal lahir dari Kalender Dunia dan

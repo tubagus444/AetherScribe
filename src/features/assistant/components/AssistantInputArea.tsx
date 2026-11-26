@@ -6,7 +6,7 @@ import { cn } from '@/src/lib/utils';
 import { MentionDropdown } from '@/src/components/common/MentionDropdown';
 import { previewContextTokens } from '@/src/services/contextEngine';
 import { isCacheSupported, getContextWindow } from '@/src/services/ai';
-import { stripLoreTags } from '@/src/lib/loreUtils';
+import { formatCodexLore, stripLoreTags } from '@/src/lib/loreUtils';
 
 const providerLabel = (p: string) => (p === 'google' ? 'Gemini' : p.charAt(0).toUpperCase() + p.slice(1));
 
@@ -29,6 +29,9 @@ interface AssistantInputAreaProps {
   // Lore Data
   codexEntries: CodexEntry[] | undefined;
   bibleRules: StoryBibleRule[] | undefined;
+  attachedCodexEntries: CodexEntry[];
+  onAttachCodex: (id: number) => void;
+  onRemoveCodex: (id: number) => void;
   sessionChapter: Chapter | undefined;
   // Mention Props
   isMentionOpen: boolean;
@@ -57,6 +60,9 @@ export function AssistantInputArea({
   setChapterContext,
   codexEntries,
   bibleRules,
+  attachedCodexEntries,
+  onAttachCodex,
+  onRemoveCodex,
   sessionChapter,
   isMentionOpen,
   setIsMentionOpen,
@@ -100,11 +106,12 @@ export function AssistantInputArea({
   useEffect(() => {
     // Debounce token counting
     const timer = setTimeout(() => {
-      let combinedText = input;
+      let combinedText = [input, ...attachedCodexEntries.map(formatCodexLore)].filter(Boolean).join('\n');
       if (chapterContext) combinedText += '\n\n' + chapterContext;
       // Riwayat percakapan (10 pesan terakhir, sama seperti yang dikirim useChatSession)
       // ikut dihitung agar meter mencerminkan total konteks, bukan hanya pesan baru.
-      const historyText = (messages || []).slice(-10).map(m => stripLoreTags(m.content)).join('\n');
+      const historyText = messages.slice(-10)
+        .map(m => [stripLoreTags(m.content), ...(m.requestSnapshot?.loreNames ?? [])].join('\n')).join('\n');
       if (historyText) combinedText += '\n\n' + historyText;
 
       if (!combinedText.trim()) {
@@ -129,7 +136,7 @@ export function AssistantInputArea({
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [input, chapterContext, codexEntries, bibleRules, model, isCachingMode, messages, sessionChapterId, sessionChapter?.projectId, chapters]);
+  }, [input, chapterContext, attachedCodexEntries, codexEntries, bibleRules, model, isCachingMode, messages, sessionChapterId, sessionChapter?.projectId, chapters]);
 
   // Jendela konteks provider sebagai denominator headroom (mis. Gemini ~1jt, Claude 200rb).
   const MAX_TOKENS = getContextWindow(provider);
@@ -207,7 +214,7 @@ export function AssistantInputArea({
                   <button
                   key={entry.id}
                   onClick={() => {
-                    setInput(prev => prev + (prev ? ' ' : '') + `@codex:${entry.name} `);
+                    if (entry.id !== undefined) onAttachCodex(entry.id);
                     setShowLoreMenu(false);
                     setLoreSearchQuery('');
                     inputRef.current?.focus();
@@ -274,6 +281,22 @@ export function AssistantInputArea({
             placeholder="Sampaikan ide liar Anda di sini..."
             className="w-full rounded-t-2xl bg-transparent px-3 py-2 text-[15px] leading-6 focus:outline-none resize-none overflow-y-auto min-h-16 max-h-40 [field-sizing:content] dark:text-slate-200"
           />
+          {attachedCodexEntries.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 px-3 pb-2" role="group" aria-label="Lampiran Codex">
+              {attachedCodexEntries.map(entry => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  aria-label={`Lepas lampiran ${entry.name}`}
+                  onClick={() => { if (entry.id !== undefined) onRemoveCodex(entry.id); }}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300"
+                >
+                  <span className="break-words min-w-0">{entry.name}</span>
+                  <X size={12} className="shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
           <div className="rounded-b-2xl px-2 py-1.5 bg-slate-50 dark:bg-slate-800/50 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 dark:border-slate-800">
             <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-slate-400">
                 <div 
@@ -453,7 +476,7 @@ export function AssistantInputArea({
             ) : (
               <button
                 onClick={handleSend}
-                disabled={!input.trim()}
+                disabled={!input.trim() && !attachedCodexEntries.length}
                 className="ml-auto shrink-0 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:bg-slate-400 transition-all flex items-center gap-2"
               >
                 Kirim Ide <Send size={16} />

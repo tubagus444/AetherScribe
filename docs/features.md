@@ -415,6 +415,10 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 - Pilih panjang jawaban per sesi melalui menu di header. Ringkas (2.048), Standar (4.096), Panjang (8.192), atau nilai khusus berlaku untuk pengiriman, regenerasi, dan kelanjutan berikutnya.
 - Secara bawaan Diskusi AI meminta hingga 4.096 token per balasan. Tombol **Lanjutkan jawaban** menyambung pesan yang mencapai batas, termasuk setelah sesi dibuka kembali.
 - Diskusi menyimpan alasan akhir balasan dan teks parsial bersama pesan. Balasan lama tanpa status tetap dapat dibaca. Posisi baca dipertahankan saat penulis menggulir ke atas. Buat Ulang mempertahankan jawaban sebelumnya sampai pengganti selesai, dan Coba Lagi tersedia pada kesalahan terakhir.
+- **Lampirkan Lore** menampilkan nama lengkap entri Codex yang dipilih. Klik
+  lampiran di draf untuk melepasnya. **Buat Ulang** dan **Coba Lagi** memakai
+  salinan lampiran manual dari pesan asal, termasuk ringkasan atau cuplikan
+  bab. Pemulihan salinan ini berlaku untuk pesan yang dikirim setelah perbaikan.
 
 ---
 

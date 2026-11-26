@@ -145,7 +145,12 @@ it('DB04 preserves the export order and imports all exported table records', asy
   await db.snapshots.add({ chapterId: 1, content: 'Versi lama', label: 'Draf', timestamp: 1 });
   await db.timeline.add({ projectId: 1, title: 'Peristiwa', description: '', type: 'plot', order: 0, chapterId: 1 });
   await db.relationships.add({ projectId: 1, sourceId: 1, targetId: 1, type: 'self' });
-  await db.chatSessions.add({ projectId: 1, title: 'Diskusi', messages: [], lastMessageAt: 1, activeChapterId: 1 });
+  const messages = [
+    { role: 'user' as const, content: 'Bahas @chapter-summary', timestamp: 1,
+      requestSnapshot: { message: 'Bahas @chapter-summary\n[Lore - Tokoh: Penjaga]', chapterContext: 'Ringkasan saat dikirim', loreNames: ['Tokoh'] } },
+    { role: 'model' as const, content: 'Balasan lama', timestamp: 2 },
+  ];
+  await db.chatSessions.add({ projectId: 1, title: 'Diskusi', messages, lastMessageAt: 2, activeChapterId: 1 });
   await db.codexCategories.add({ projectId: 1, slug: 'faksi', label: 'Faksi', icon: 'users', color: 'indigo', order: 1 });
   await db.plotPromises.add({ projectId: 1, title: 'Janji', status: 'open', createdAt: 1, updatedAt: 1, codexId: 1 });
   await db.glossary.add({ projectId: 1, term: 'Istilah', createdAt: 1, updatedAt: 1 });
@@ -172,6 +177,7 @@ it('DB04 preserves the export order and imports all exported table records', asy
   }
   expect(imported.data.maps?.[0].imageDataUrl).toBe(image);
   expect(imported.data.snapshots[0].chapterId).toBe(imported.data.chapters[0].id);
+  expect(imported.data.chatSessions[0].messages).toEqual(messages);
   expect(imported.data.mapMarkers?.[0].mapId).toBe(imported.data.maps?.[0].id);
 });
 
