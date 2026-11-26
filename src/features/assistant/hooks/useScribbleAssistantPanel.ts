@@ -149,8 +149,10 @@ export function useScribbleAssistantPanel({
 
   const hasReceivedReply = messages.some(m => m.role === 'model' && !m.isWelcome);
 
-  const lastMessage = messages[messages.length - 1];
-  const canRegenerate = !isLoading && !!lastMessage && lastMessage.role === 'model' && !lastMessage.isWelcome && !lastMessage.isError;
+  const lastMessage = messages.at(-1);
+  const failedReply = lastMessage?.isError || lastMessage?.finishStatus === 'interrupted';
+  const canRetry = !isLoading && lastMessage?.role === 'model' && failedReply && messages.at(-2)?.role === 'user';
+  const canRegenerate = !isLoading && lastMessage?.role === 'model' && !lastMessage.isWelcome && !failedReply;
 
   useEffect(() => {
     return () => {
@@ -302,6 +304,7 @@ export function useScribbleAssistantPanel({
     messagesEndRef,
     inputRef,
     hasReceivedReply,
+    canRetry,
     canRegenerate,
     suggestedPrompts,
     handleCopy,

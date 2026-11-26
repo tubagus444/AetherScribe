@@ -415,6 +415,8 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 - Pilih panjang jawaban per sesi melalui menu di header. Ringkas (2.048), Standar (4.096), Panjang (8.192), atau nilai khusus berlaku untuk pengiriman, regenerasi, dan kelanjutan berikutnya.
 - Secara bawaan Diskusi AI meminta hingga 4.096 token per balasan. Tombol **Lanjutkan jawaban** menyambung pesan yang mencapai batas, termasuk setelah sesi dibuka kembali.
 - Diskusi menyimpan alasan akhir balasan dan teks parsial bersama pesan. Balasan lama tanpa status tetap dapat dibaca. Posisi baca dipertahankan saat penulis menggulir ke atas. Buat Ulang mempertahankan jawaban sebelumnya sampai pengganti selesai, dan Coba Lagi tersedia pada kesalahan terakhir.
+- Saat panel Diskusi AI tetap terbuka, setiap sesi menyimpan draf pertanyaan dan lampiran Codex masing-masing. Mengirim pesan mengosongkan draf sesi aktif.
+- Daftar awal Diskusi AI menampilkan 50 sesi terbaru. Pencarian judul mencakup seluruh riwayat Diskusi AI proyek aktif. Kosongkan pencarian untuk kembali ke daftar awal.
 - **Lampirkan Lore** menampilkan nama lengkap entri Codex yang dipilih. Klik
   lampiran di draf untuk melepasnya. **Buat Ulang** dan **Coba Lagi** memakai
   salinan lampiran manual dari pesan asal, termasuk ringkasan atau cuplikan
@@ -425,6 +427,8 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 ## Scribble & Aksi Rewrite Prosa
 
 Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di IndexedDB. Saat panel dibuka kembali, pesan dimuat dari sesi Scribble bab tersebut. Gunakan tombol Atur panjang jawaban di header Nova untuk memilih batas per sesi. Balasan yang mencapai batas dapat disambung di pesan yang sama.
+
+**Coba Lagi** tersedia pada balasan terakhir yang gagal atau terputus. Nova mengirim ulang pertanyaan pada giliran itu dan mengganti balasannya pada riwayat sesi.
 - **Deskripsi:** Fitur penyuntingan dan penulisan ulang teks langsung dari seleksi editor (Tulis Ulang, Perpanjang, Cek Dialog, dll) dengan opsi preview perbandingan.
 - **File terkait:** `src/features/editor/components/ActionsPanel.tsx`, `src/services/ai/index.ts`, `src/lib/cleanRewriteOutput.ts`
 - **Tabel DB:** `aiActions`, `chapters`, `snapshots`

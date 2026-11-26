@@ -17,16 +17,12 @@ menunjukkan urutan yang disarankan di setiap tingkat.
 | 2 | **Editor — kembalikan posisi edit lewat Lanjutkan menulis** | Simpan posisi edit per bab di perangkat. Membaca bab lain untuk referensi tetap mempertahankan posisi kerja. Jika posisi sudah tidak sesuai setelah pemulihan snapshot, buka bab seperti biasa. |
 | 3 | **Editor — filter catatan revisi yang masih terbuka** | Jumlah catatan terbuka bisa diklik untuk memfilter dan opsi **Semua** memulihkan daftar. Urutan naskah dan aksi lompat ke kutipan tetap tersedia. Tampilkan pesan saat semua catatan selesai. |
 | 4 | **Snippet — tampilkan aksi kartu pada layar sentuh** | Tombol **Opsi** selalu terlihat dan memberi akses ke **Ubah** dan **Hapus**. Uji pada lebar 390 piksel, tempat ikon lama transparan meski bisa diketuk. |
-| 5 | **Diskusi AI — simpan draf pertanyaan per sesi** | Berpindah sesi menyimpan draf masing-masing dan memulihkannya saat sesi dibuka kembali. |
-| 6 | **Diskusi AI — cari judul di seluruh riwayat proyek** | Pencarian menemukan judul sesi lama, termasuk sesi ke-51 dalam uji. Batas 50 sesi terbaru berlaku pada tampilan awal. |
-| 7 | **Nova — arahkan Coba Lagi ke pertanyaan yang benar** | Tawarkan **Coba Lagi** pada giliran terakhir yang gagal, mengikuti pola Diskusi AI. Percobaan ulang mengirim pertanyaan dari giliran itu. |
 | 8 | **Codex — cari entri berdasarkan fakta** | Pencarian di panel Codex mencakup label dan nilai detail yang sedang berlaku serta kolom kategori kustom. Pencarian `panglima` menampilkan Sagara dengan alasan kecocokan *Pangkat · Panglima*. |
 | 9 | **Codex — lihat fakta sampai bab pilihan** | Sediakan **Lihat sampai bab…** untuk entri dengan riwayat dan gunakan bab aktif sebagai acuan awal di editor. Gunakan urutan baca. Untuk kilas balik, penulis menentukan keadaan tokoh pada waktu adegan berlangsung. |
 
 Temuan editor berasal dari peninjauan kode. Uji dengan proyek nyata untuk
 menilai seberapa sering penulis perlu mencari ulang posisi edit atau menyaring
-catatan. Temuan Codex, Snippet, Diskusi AI, dan Nova berasal dari uji Chromium
-dengan proyek contoh, dengan balasan AI simulasi untuk alur yang memerlukan AI.
+catatan. Temuan Codex dan Snippet berasal dari uji Chromium dengan proyek contoh.
 
 ## Verifikasi terbuka
 
@@ -109,8 +105,9 @@ dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 - [Pengamanan Snippet, retensi nilai templat Codex, dan navigasi hasil pencarian global](docs/reports/audits/2026-11-25-writer-priorities.md)
 - [Catatan Novel dan Codex di sidebar editor](docs/reports/audits/2026-11-21-editor-notes-codex.md)
 
-### Diskusi AI
+### Diskusi AI dan Nova
 
+- [P2.5–P2.7 · Draf per sesi, pencarian seluruh riwayat, dan Coba Lagi di Nova](docs/reports/audits/2026-11-26-diskusi-ai-riwayat-nova.md)
 - [Pemilihan entri Codex dan pemulihan lampiran saat Buat Ulang](docs/reports/audits/2026-11-26-diskusi-ai-lampiran.md)
 
 ### Worldbuilding

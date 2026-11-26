@@ -1,5 +1,5 @@
 import { useProjectChapters } from '@/src/hooks/useChapterQueries';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, type SetStateAction } from 'react';
 import { Plus, BrainCircuit } from 'lucide-react';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -19,16 +19,40 @@ import { AssistantHeader } from '@/src/features/assistant/components/AssistantHe
 import { AssistantMessageList } from '@/src/features/assistant/components/AssistantMessageList';
 import { AssistantInputArea } from '@/src/features/assistant/components/AssistantInputArea';
 
+type SessionDraft = {
+  input: string;
+  attachedCodexIds: number[];
+};
+
+const emptyDraft: SessionDraft = { input: '', attachedCodexIds: [] };
+
 export function AIAssistantPanel() {
   const { projectId } = useProject();
   const { activeChapterId } = useNavigation();
   const { availableProviders, selectedProvider, setSelectedProvider } = useAvailableProviders();
 
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
-  const [input, setInput] = useState('');
-  const [attachedCodexIds, setAttachedCodexIds] = useState<number[]>([]);
+  const [drafts, setDrafts] = useState(() => new Map<number, SessionDraft>());
+  const { input, attachedCodexIds } = (activeSessionId === null ? undefined : drafts.get(activeSessionId)) ?? emptyDraft;
 
-  useEffect(() => setAttachedCodexIds([]), [projectId, activeSessionId]);
+  const updateDraft = (update: (draft: SessionDraft) => SessionDraft) => {
+    if (activeSessionId === null) return;
+    setDrafts(previous => {
+      const draft = update(previous.get(activeSessionId) ?? emptyDraft);
+      const next = new Map(previous);
+      if (draft.input || draft.attachedCodexIds.length) next.set(activeSessionId, draft);
+      else next.delete(activeSessionId);
+      return next;
+    });
+  };
+  const setInput = (value: SetStateAction<string>) => updateDraft(draft => ({
+    ...draft,
+    input: typeof value === 'function' ? value(draft.input) : value,
+  }));
+  const setAttachedCodexIds = (value: SetStateAction<number[]>) => updateDraft(draft => ({
+    ...draft,
+    attachedCodexIds: typeof value === 'function' ? value(draft.attachedCodexIds) : value,
+  }));
 
   const codexEntries = useOptimizedLiveQuery(() => 
     projectId ? db.codex.where('projectId').equals(projectId).toArray() : []
@@ -57,9 +81,7 @@ export function AIAssistantPanel() {
     selectMention
   } = useMentionAutocomplete(codexEntries || [], bibleRules || []);
 
-  const sessions = useLiveQuery(() =>
-    projectId ? db.chatSessions.where('projectId').equals(projectId).reverse().sortBy('lastMessageAt').then(arr => arr.filter(s => s.kind !== 'scribble' && s.kind !== 'workshop').slice(0, 50)) : []
-  , [projectId]);
+  useEffect(() => setIsMentionOpen(false), [activeSessionId, setIsMentionOpen]);
 
   const activeSession = useLiveQuery(() => 
     activeSessionId ? db.chatSessions.get(activeSessionId) : undefined
@@ -119,7 +141,7 @@ export function AIAssistantPanel() {
   return (
     <div className="flex h-full bg-slate-50 dark:bg-slate-900 overflow-hidden text-slate-900 dark:text-slate-100">
       <AssistantSidebar
-        sessions={sessions}
+        projectId={projectId}
         activeSessionId={activeSessionId}
         onSelectSession={setActiveSessionId}
         onCreateSession={createSession}
@@ -171,6 +193,7 @@ export function AIAssistantPanel() {
             />
 
             <AssistantInputArea
+              key={`composer-${activeSessionId}`}
               activeSessionId={activeSessionId}
               input={input}
               setInput={setInput}

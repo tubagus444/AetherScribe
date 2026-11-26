@@ -137,7 +137,7 @@ export function MainView() {
           {viewMode === 'brainstorm' && projectId && (
             <ViewContainer key="brainstorm" className="z-20 !p-0">
               <Suspense fallback={<LoadingFallback />}>
-                <AIAssistantPanel />
+                <AIAssistantPanel key={projectId} />
               </Suspense>
             </ViewContainer>
           )}

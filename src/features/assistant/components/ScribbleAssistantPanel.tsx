@@ -59,6 +59,7 @@ export function ScribbleAssistantPanel({
     messagesEndRef,
     inputRef,
     hasReceivedReply,
+    canRetry,
     canRegenerate,
     suggestedPrompts,
     handleCopy,
@@ -230,12 +231,10 @@ export function ScribbleAssistantPanel({
                         )}
                       </div>
                     )}
-                    {m.isError && (
-                      <button 
-                        onClick={() => {
-                          const lastUser = messages.filter(msg => msg.role === 'user').pop();
-                          if (lastUser) handleSend(lastUser.content);
-                        }}
+                    {canRetry && index === messages.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={handleRegenerate}
                         className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 underline"
                       >
                         Coba Lagi

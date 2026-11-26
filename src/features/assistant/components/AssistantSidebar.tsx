@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { BrainCircuit, Plus, Search, MessageSquare, Check, Trash2, History, Edit2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/src/db';
 import { updateChatSession, deleteChatSession } from '@/src/services/chatSessionOperations';
-import { ChatSession } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 
 interface AssistantSidebarProps {
-  sessions: ChatSession[] | undefined;
+  projectId: number | null;
   activeSessionId: number | null;
   onSelectSession: (id: number | null) => void;
   onCreateSession: () => void;
 }
 
 export function AssistantSidebar({
-  sessions,
+  projectId,
   activeSessionId,
   onSelectSession,
   onCreateSession
@@ -23,9 +24,15 @@ export function AssistantSidebar({
   const [editTitleValue, setEditTitleValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  const filteredSessions = sessions?.filter(s => 
-    s.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const query = searchQuery.trim().toLowerCase();
+  const sessions = useLiveQuery(async () => {
+    if (!projectId) return [];
+    const matching = await db.chatSessions.where('projectId').equals(projectId)
+      .and(session => session.kind !== 'scribble' && session.kind !== 'workshop' &&
+        session.title.toLowerCase().includes(query))
+      .reverse().sortBy('lastMessageAt');
+    return query ? matching : matching.slice(0, 50);
+  }, [projectId, query]);
 
   const handleRename = async (sessionIdToRename: number) => {
     if (!editTitleValue.trim()) {
@@ -89,7 +96,7 @@ export function AssistantSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-        {filteredSessions?.map(session => (
+        {sessions?.map(session => (
           <div
             key={session.id}
             onClick={() => onSelectSession(session.id || null)}
@@ -191,10 +198,12 @@ export function AssistantSidebar({
             )}
           </div>
         ))}
-        {(!filteredSessions || filteredSessions.length === 0) && (
+        {sessions?.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
             <History size={32} className="mb-2 opacity-20" />
-            <p className="text-[11px] uppercase tracking-widest font-bold">Belum ada riwayat</p>
+            <p className="text-[11px] uppercase tracking-widest font-bold">
+              {query ? 'Percakapan tidak ditemukan' : 'Belum ada riwayat'}
+            </p>
           </div>
         )}
       </div>

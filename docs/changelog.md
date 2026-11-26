@@ -6,6 +6,11 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- Diskusi AI memulihkan draf pertanyaan dan lampiran Codex saat berpindah sesi.
+- Pencarian judul Diskusi AI mencakup seluruh riwayat proyek. Daftar awal
+  menampilkan 50 sesi terbaru.
+- **Coba Lagi** di Nova mengirim ulang pertanyaan pada giliran terakhir yang
+  gagal atau terputus, lalu memperbarui balasan pada giliran yang sama.
 - **Lampirkan Lore** di Diskusi AI memilih entri Codex berdasarkan ID dan
   menampilkan nama lengkapnya. **Buat Ulang** memakai isi lampiran manual
   dari pesan asal, termasuk setelah sesi dibuka kembali.

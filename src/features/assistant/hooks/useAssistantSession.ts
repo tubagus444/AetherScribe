@@ -47,6 +47,7 @@ export function useAssistantSession({
   const { toast } = useToast();
   
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [loadedSessionId, setLoadedSessionId] = useState<number | null>(null);
   useEffect(() => {
     const notify = (event: Event) => {
       const { provider: source, limit } = (event as CustomEvent<{ provider: string; limit: number }>).detail;
@@ -92,12 +93,18 @@ export function useAssistantSession({
     }
   });
 
+  const sessionReady = activeSessionId !== null && loadedSessionId === activeSessionId;
+
   // Sync messages ONLY on session change to prevent overwrite loops
   useEffect(() => {
     let isSubscribed = true;
+    setLoadedSessionId(null);
     if (activeSessionId) {
       db.chatSessions.get(activeSessionId).then(session => {
-        if (session && isSubscribed) setMessages(session.messages);
+        if (session && isSubscribed) {
+          setMessages(session.messages);
+          setLoadedSessionId(activeSessionId);
+        }
       });
     } else {
       setMessages([]);
@@ -150,6 +157,7 @@ export function useAssistantSession({
       setShowModeSelector(true);
       return;
     }
+    if (!sessionReady || activeSession?.id !== activeSessionId) return;
 
     const textToSend = input;
     const manualChapterContext = getManualChapterContext(textToSend);
@@ -165,13 +173,13 @@ export function useAssistantSession({
     clearCodexAttachments();
 
     try {
-      if (messages.length === 0) {
-        const title = textToSend.trim() || loreNames.join(', ');
-        const newTitle = title.substring(0, 40) + (title.length > 40 ? '...' : '');
-        await updateChatSession(activeSessionId, { title: newTitle });
-      }
-
-      await sendMessage(textToSend, automaticChapterContext, Object.keys(requestSnapshot).length ? requestSnapshot : undefined);
+      const title = textToSend.trim() || loreNames.join(', ');
+      const newTitle = title.substring(0, 40) + (title.length > 40 ? '...' : '');
+      // Start the turn before awaiting persistence so a session switch cannot redirect it.
+      await Promise.all([
+        sendMessage(textToSend, automaticChapterContext, Object.keys(requestSnapshot).length ? requestSnapshot : undefined),
+        messages.length === 0 ? updateChatSession(activeSessionId, { title: newTitle }) : undefined,
+      ]);
     } catch (err: any) {
       console.error('Assistant operation failed; sensitive details omitted.');
       const errorMessage = err.message || 'Gagal mengirim pesan ke AI.';
@@ -186,7 +194,7 @@ export function useAssistantSession({
   };
 
   const handleContinue = async (index: number) => {
-    if (!activeSessionId || isLoading) return;
+    if (!sessionReady || isLoading) return;
     try {
       await continueReply(index, chapterContext);
     } catch (error) {
@@ -195,7 +203,7 @@ export function useAssistantSession({
   };
 
   const handleRegenerate = async () => {
-    if (isLoading || !activeSessionId) return;
+    if (isLoading || !sessionReady) return;
     try {
       await regenerate(automaticChapterContext);
     } catch (err: any) {
@@ -210,7 +218,7 @@ export function useAssistantSession({
     createSession,
     executeCreateSession,
     handleSend,
-    messages,
+    messages: sessionReady ? messages : [],
     isLoading,
     retryStatus,
     waitingForReply,
