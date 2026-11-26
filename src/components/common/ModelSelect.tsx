@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Search, Loader2, ChevronDown, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   fetchModelsForProvider,
@@ -8,17 +8,13 @@ import {
 import { cn } from '@/src/lib/utils';
 
 interface Props {
+  id?: string;
   provider: ModelListProvider;
   value: string;
   onChange: (value: string) => void;
-  /** Wajib untuk google/groq/claude (listing model butuh key). OpenRouter tidak perlu. */
   apiKey?: string;
   placeholder?: string;
-}
-
-/** OpenRouter punya endpoint publik; provider lain butuh API key untuk listing. */
-function needsKey(provider: ModelListProvider): boolean {
-  return provider !== 'openrouter';
+  lightTaskDefault?: string;
 }
 
 /**
@@ -26,38 +22,70 @@ function needsKey(provider: ModelListProvider): boolean {
  * dibuka, tetap mengizinkan ID model kustom. Menggantikan pola lama yang
  * berbeda-beda (tombol Google vs dropdown OpenRouter vs input polos).
  */
-export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: Props) {
+export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder, lightTaskDefault }: Props) {
   const [models, setModels] = useState<ProviderModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const request = useRef<AbortController | null>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const credential = apiKey?.trim();
+  const lightTask = lightTaskDefault !== undefined;
+  const keyMissing = !lightTask && provider !== 'openrouter' && !credential;
+  const defaultLabel = lightTaskDefault ? `Default AetherScribe (${lightTaskDefault})` : 'Default AetherScribe';
 
-  const keyMissing = needsKey(provider) && !apiKey?.trim();
+  useEffect(() => {
+    setModels([]);
+    setLoaded(false);
+    setIsLoading(false);
+    setError(null);
+    setIsOpen(false);
+    setSearch('');
+    return () => request.current?.abort();
+  }, [provider, credential]);
 
-  const loadModels = useCallback(async () => {
+  const loadModels = async () => {
     if (keyMissing) {
       setError('Masukkan API key terlebih dahulu untuk melihat daftar model.');
       setLoaded(true);
       return;
     }
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchModelsForProvider(provider, apiKey?.trim());
+      const data = await fetchModelsForProvider(provider, credential, { lightTask, signal: controller.signal });
+      if (controller.signal.aborted) return;
       setModels(data);
       if (data.length === 0) {
-        setError('Tidak ada model ditemukan, atau key tidak valid.');
+        setError(lightTask ? 'Tidak ada model teks yang tersedia.' : 'Tidak ada model ditemukan, atau key tidak valid.');
       }
-    } catch (err: any) {
+    } catch (err) {
+      if (controller.signal.aborted) return;
       console.error('Model listing failed; sensitive details omitted.');
-      setError(err?.message || 'Gagal memuat daftar model.');
+      setError(err instanceof Error ? err.message : 'Gagal memuat daftar model.');
     } finally {
-      setIsLoading(false);
-      setLoaded(true);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+        setLoaded(true);
+      }
     }
-  }, [provider, apiKey, keyMissing]);
+  };
+
+  const closePicker = () => {
+    setIsOpen(false);
+    setSearch('');
+    trigger.current?.focus();
+  };
+
+  const selectModel = (model: string) => {
+    onChange(model);
+    closePicker();
+  };
 
   const handleToggle = () => {
     const next = !isOpen;
@@ -77,17 +105,28 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
   }, [models, value]);
 
   const showCustomOption =
-    !!search && !models.find((m) => m.id === search || m.name === search);
+    !lightTask && !!search && !models.find((m) => m.id === search || m.name === search);
 
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      onKeyDown={(event) => {
+        if (isOpen && event.key === 'Escape') {
+          event.stopPropagation();
+          closePicker();
+        }
+      }}
+    >
       <button
+        id={id}
+        ref={trigger}
         type="button"
+        aria-expanded={isOpen}
         onClick={handleToggle}
         className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 text-xs text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-between"
       >
         <span className="truncate text-slate-700 dark:text-slate-300">
-          {selectedLabel || placeholder || 'Pilih model...'}
+          {selectedLabel || (lightTask ? defaultLabel : placeholder || 'Pilih model...')}
         </span>
         <ChevronDown size={14} className={cn('text-slate-400 transition-transform shrink-0', isOpen && 'rotate-180')} />
       </button>
@@ -99,7 +138,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
             <input
               autoFocus
               type="text"
-              placeholder="Cari atau ketik ID model..."
+              placeholder={lightTask ? 'Cari model...' : 'Cari atau ketik ID model...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent border-none text-xs focus:ring-0 focus:outline-none text-slate-900 dark:text-slate-100 min-w-0"
@@ -107,6 +146,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
             <button
               type="button"
               title="Muat ulang daftar model"
+              disabled={isLoading}
               onClick={(e) => {
                 e.stopPropagation();
                 loadModels();
@@ -117,6 +157,17 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
             </button>
           </div>
 
+          {lightTask && (
+            <button
+              type="button"
+              onClick={() => selectModel('')}
+              className="w-full shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-left text-xs font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+            >
+              <span className="truncate">{defaultLabel}</span>
+              {!value && <Check size={12} className="text-indigo-600 shrink-0" />}
+            </button>
+          )}
+
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
             {isLoading ? (
               <div className="p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
@@ -124,7 +175,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
                 Memuat model...
               </div>
             ) : error ? (
-              <div className="p-4 text-center">
+              <div className="p-4 text-center" role="status">
                 <AlertCircle size={20} className="mx-auto mb-2 text-amber-500 opacity-70" />
                 <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 font-medium">{error}</p>
                 {!keyMissing && (
@@ -149,11 +200,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => {
-                    onChange(m.id);
-                    setIsOpen(false);
-                    setSearch('');
-                  }}
+                  onClick={() => selectModel(m.id)}
                   className={cn(
                     'w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex flex-col gap-0.5 transition-colors',
                     value === m.id && 'bg-indigo-50/50 dark:bg-indigo-900/10',
@@ -177,11 +224,7 @@ export function ModelSelect({ provider, value, onChange, apiKey, placeholder }: 
             <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
               <button
                 type="button"
-                onClick={() => {
-                  onChange(search.trim());
-                  setIsOpen(false);
-                  setSearch('');
-                }}
+                onClick={() => selectModel(search.trim())}
                 className="w-full text-left px-2 py-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline truncate"
               >
                 Gunakan ID model kustom: "{search.trim()}"

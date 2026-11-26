@@ -110,6 +110,14 @@ Verifikasi memakai fixture/mocked upstream dan HTTP loopback terisolasi; tidak m
 
 ---
 
+### POST /api/ai/openrouter-models
+
+Memuat katalog teks untuk tugas ringan berdasarkan pengaturan akun
+OpenRouter. Header opsional `x-api-key` didahulukan dari `OPENROUTER_API_KEY`
+di server. Jika keduanya kosong, respons berstatus 400. Bentuk respons
+sukses mengikuti `{ "data": [...] }` dari OpenRouter dan tidak di-cache.
+[Dokumentasi OpenRouter](https://openrouter.ai/docs/api/api-reference/models/list-models-filtered-by-user-provider-preferences-privacy-settings-and-guardrails)
+
 ### POST /api/ai/huggingface-models
 - **Deskripsi:** Mengambil daftar model yang didukung router Hugging Face Inference.
 - **File Handler:** `server.ts:234-256`

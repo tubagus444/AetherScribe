@@ -24,13 +24,14 @@ export function AIPreferences({ provider, setProvider, contextDepth, setContextD
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label htmlFor="default-ai-provider" className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
             Penyedia AI Default
           </label>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
             Pilih AI mana yang berjalan secara default.
           </p>
           <select
+            id="default-ai-provider"
             value={provider}
             onChange={(e) => setProvider(e.target.value)}
             className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"

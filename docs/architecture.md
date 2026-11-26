@@ -174,6 +174,13 @@ Pertahankan `SettingsPanel` sebagai shell tab. Tambahkan kontrol pada section
 terkait dan pusatkan baca/tulis pengaturan AI di `useAISettings.ts`. Gunakan
 `useConnectionTest.ts` serta komponen status koneksi yang ada.
 
+Pemilih model tugas ringan memakai `ModelSelect` dan memuat katalog penyedia
+cloud saat dibuka. Proxy memakai API key pada form atau fallback server.
+Gunakan ID kosong untuk default AetherScribe. ID lama tetap dipertahankan
+saat katalog gagal dimuat atau tidak mencantumkannya. Pilihan disimpan per
+penyedia melalui **Simpan Kredensial**. Ollama memakai model utama.
+Rangkuman otomatis di latar belakang memerlukan API key di browser.
+
 Facade AI dan panel memakai `credentialStore` bersama. Terapkan perubahan mode
 penyimpanan kredensial pada Save. Pertahankan kunci legacy saat mount dan
 laporkan kegagalan storage sebelum menampilkan sukses. Clear membersihkan

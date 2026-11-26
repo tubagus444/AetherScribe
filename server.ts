@@ -239,6 +239,23 @@ export function createProxyApp(port = 3000) {
     }
   });
 
+  post("/api/ai/openrouter-models", async (req, res) => {
+    const apiKey = req.get('x-api-key') || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) return res.status(400).json({ error: 'OpenRouter API key diperlukan.' });
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/models/user?output_modalities=text', {
+        method: 'GET',
+        redirect: 'error',
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!response.ok) return res.status(response.status).json({ error: 'OpenRouter gagal mengembalikan daftar model akun.' });
+      res.set('Cache-Control', 'no-store').json(await response.json());
+    } catch {
+      sendError(res, 502, undefined, 'OpenRouter models listing error', 'Gagal memuat daftar model OpenRouter.');
+    }
+  });
+
   // Query Allowed Hugging Face Models (router OpenAI-compatible)
   post("/api/ai/huggingface-models", async (req, res) => {
     const clientApiKey = (req.headers['x-api-key'] as string) || '';

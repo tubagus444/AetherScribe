@@ -23,6 +23,7 @@ export function AISettingsTab() {
 
       <AdvancedAIOptimization
         provider={s.provider}
+        keys={s.keys}
         maxLoreChars={s.maxLoreChars}
         setMaxLoreChars={s.setMaxLoreChars}
         lightModels={s.lightModels}

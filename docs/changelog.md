@@ -6,6 +6,8 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- **Model Tugas Ringan** menyediakan daftar model teks yang dapat dicari per
+  penyedia cloud, dengan opsi kembali ke default dan memuat ulang daftar.
 - Pencarian panel Codex mencocokkan label dan nilai fakta terkini, termasuk
   kolom kustom. Kartu menampilkan alasan kecocokan.
 - **Lihat sampai bab…** menampilkan fakta Codex sesuai urutan baca.

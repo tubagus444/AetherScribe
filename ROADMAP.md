@@ -85,6 +85,10 @@ dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 
 ## Pekerjaan selesai
 
+### Pengaturan AI
+
+- [Pemilih model tugas ringan per penyedia](docs/reports/audits/2026-11-26-model-tugas-ringan.md)
+
 ### Editor, Snippet, dan pencarian
 
 - [P2.2 dan P2.3 · Posisi edit dan filter catatan revisi](docs/reports/audits/2026-11-26-editor-posisi-catatan-revisi.md)

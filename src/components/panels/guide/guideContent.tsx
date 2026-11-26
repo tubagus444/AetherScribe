@@ -656,7 +656,7 @@ export const FEATURES: Feature[] = [
     what: 'Lima penyetel lanjutan untuk menekan token/biaya. Default sudah aman — ubah hanya bila ingin menyetel manual.',
     steps: [
       'Maks. Lore di Cache: batas karakter Codex pada prompt statis — 25.000 (~6k token, paling hemat), 50.000 (default), 75.000, atau 100.000 (lore terkaya). Makin kecil = cache lebih murah ditulis ulang bila sering edit lore di tengah sesi.',
-      'Model Tugas Ringan: model murah untuk tugas mekanis (rangkum, ekstraksi entitas) pada penyedia terpilih; kosongkan = pakai default. Tugas berat (tulis ulang, chat) tetap memakai model utama.',
+      'Model Tugas Ringan untuk rangkuman dan ekstraksi entitas. Pilih dari daftar penyedia terpilih atau gunakan Default AetherScribe, lalu klik Simpan Kredensial. Ollama memakai model utama.',
       'Masa Hidup Cache (Claude): 1 jam (default — jaga cache hangat untuk sesi menulis panjang) atau 5 menit (untuk pemakaian jarang / burst pendek). Hanya Claude langsung; OpenRouter & Google tak terpengaruh.',
       'Kreativitas Tulis Ulang: geser 0–1 khusus aksi "Tanya AI" di editor. Rendah = presisi & taat instruksi; tinggi = variatif/kreatif tapi rawan menyimpang. Tugas analitis (cek konsistensi, ekstraksi) tak terpengaruh.',
       'Cek Konsistensi Otomatis (boros token): toggle mode idle-check yang menggarisbawahi paragraf (ungu) saat Anda berhenti mengetik. Default MATI.',

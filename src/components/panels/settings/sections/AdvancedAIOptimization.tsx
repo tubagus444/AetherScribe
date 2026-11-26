@@ -1,10 +1,14 @@
 import React from 'react';
 import { BrainCircuit } from 'lucide-react';
+import { ModelSelect } from '@/src/components/common/ModelSelect';
+import { isModelListProvider } from '@/src/services/ai/modelService';
+import type { ProviderKeys } from '@/src/services/ai/credentialStore';
 import { getDefaultLightModelForProvider } from '@/src/services/ai/proxy';
 import { DEFAULT_REWRITE_TEMPERATURE } from '@/src/lib/aiTuning';
 
 interface Props {
   provider: string;
+  keys: ProviderKeys;
   maxLoreChars: string;
   setMaxLoreChars: (v: string) => void;
   lightModels: Record<string, string>;
@@ -18,7 +22,7 @@ interface Props {
 }
 
 export function AdvancedAIOptimization({
-  provider,
+  provider, keys,
   maxLoreChars, setMaxLoreChars,
   lightModels, setLightModels,
   cacheTtl, setCacheTtl,
@@ -56,25 +60,27 @@ export function AdvancedAIOptimization({
         </div>
 
         {/* #7 — override model tugas ringan untuk provider default terpilih */}
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+        <div className="min-w-0 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
+          <label htmlFor="light-task-model" className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
             Model Tugas Ringan
           </label>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex-1">
-            Model untuk tugas mekanis (rangkum, ekstraksi entitas) pada penyedia <strong>{provider}</strong>. Kosongkan untuk pakai default. Tugas berat (tulis ulang, chat) tetap pakai model utama.
+            Model untuk rangkuman dan ekstraksi entitas pada penyedia <strong>{provider}</strong>. Simpan pilihan lewat <strong>Simpan Kredensial</strong>.
           </p>
-          {provider === 'ollama' ? (
-            <p className="text-xs italic text-slate-400 dark:text-slate-500 py-2">
-              Ollama tak punya tier model ringan terpisah — tugas ringan memakai model utama.
-            </p>
-          ) : (
-            <input
-              type="text"
+          {isModelListProvider(provider) ? (
+            <ModelSelect
+              key={provider}
+              id="light-task-model"
+              provider={provider}
+              apiKey={keys[provider]}
               value={lightModels[provider] ?? ''}
-              onChange={(e) => setLightModels({ ...lightModels, [provider]: e.target.value })}
-              placeholder={`Default: ${getDefaultLightModelForProvider(provider) || '—'}`}
-              className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
+              onChange={(value) => setLightModels({ ...lightModels, [provider]: value })}
+              lightTaskDefault={getDefaultLightModelForProvider(provider) ?? ''}
             />
+          ) : (
+            <p className="text-xs italic text-slate-400 dark:text-slate-500 py-2">
+              Tugas ringan memakai model utama.
+            </p>
           )}
         </div>
 

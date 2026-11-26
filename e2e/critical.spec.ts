@@ -552,6 +552,67 @@ test('F27 settings keep session keys out of persistent storage and clear saved k
   expect(await page.evaluate(() => localStorage.getItem('ai_key_openai'))).toBeNull();
 });
 
+test('light task models use the selected provider catalog and preserve saved choices', async ({ page }) => {
+  await page.route('**/api/ai/ollama-models', route => route.fulfill({ json: { models: [] } }));
+  let groqRequests = 0;
+  await page.route('**/api/ai/groq-models', route => {
+    expect(route.request().headers()['x-api-key']).toBe('synthetic-groq');
+    groqRequests += 1;
+    return groqRequests === 1
+      ? route.fulfill({ status: 503, json: {} })
+      : route.fulfill({ json: { data: [{ id: 'groq-text-model', active: true }, { id: 'whisper-large', active: true }] } });
+  });
+  await page.route('**/api/ai/openrouter-models', route => {
+    expect(route.request().headers()['x-api-key']).toBeUndefined();
+    return route.fulfill({ json: { data: [{ id: 'test/account-model', name: 'Account Text' }] } });
+  });
+
+  await page.evaluate(() => localStorage.setItem('ai_light_model_groq', 'legacy-groq-model'));
+  await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
+  const provider = page.getByLabel('Penyedia AI Default');
+  const model = page.getByLabel('Model Tugas Ringan', { exact: true });
+  const save = page.getByRole('button', { name: /Simpan Kredensial|Tersimpan!/ });
+
+  await provider.selectOption('groq');
+  await page.getByLabel('API key Groq Cloud').fill('synthetic-groq');
+  await expect(model).toContainText('legacy-groq-model');
+  expect(groqRequests).toBe(0);
+  await model.click();
+  await expect(page.getByText(/Gagal memuat daftar model/)).toBeVisible();
+  await expect(model).toContainText('legacy-groq-model');
+  await page.getByTitle('Muat ulang daftar model').click();
+  await expect(page.getByRole('button', { name: /groq-text-model/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /whisper-large/ })).toHaveCount(0);
+  const search = page.getByPlaceholder('Cari model...', { exact: true });
+  await search.fill('unknown-model');
+  await expect(page.getByText('Tidak ada model cocok.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Gunakan ID model kustom/ })).toHaveCount(0);
+  await search.fill('groq-text');
+  await page.getByRole('button', { name: /groq-text-model/ }).click();
+
+  await provider.selectOption('openrouter');
+  await model.click();
+  await page.getByRole('button', { name: /Account Text/ }).click();
+  await save.click();
+  expect(await page.evaluate(() => localStorage.getItem('ai_light_model_openrouter'))).toBe('test/account-model');
+  expect(await page.evaluate(() => localStorage.getItem('ai_light_model_groq'))).toBe('groq-text-model');
+
+  await page.reload();
+  await expect(model).toContainText('test/account-model');
+  await page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await page.setViewportSize({ width: 390, height: 700 });
+  await provider.selectOption('groq');
+  await expect(model).toContainText('groq-text-model');
+  await model.click();
+  await search.press('Escape');
+  await expect(model).toBeFocused();
+  await model.click();
+  await page.getByRole('button', { name: /Default AetherScribe/ }).click();
+  await save.click();
+  expect(await page.evaluate(() => localStorage.getItem('ai_light_model_groq'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('ai_light_model_openrouter'))).toBe('test/account-model');
+});
+
 for (const [legacy, current] of [['arc', 'continuity'], ['orphans', 'completeness'], ['unknown-panel', 'write'], ['workshop', 'codex']]) {
   test(`F26 restores ${legacy} into ${current} without changing manuscript`, async ({ page }) => {
     await page.evaluate(mode => localStorage.setItem('aether_view_mode', mode), legacy);
