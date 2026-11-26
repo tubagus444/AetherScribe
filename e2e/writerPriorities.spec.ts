@@ -18,7 +18,9 @@ test.beforeEach(async ({ context, page, baseURL }) => {
   await page.evaluate(async () => {
     const path = '/src/db.ts';
     const { db }: DbModule = await import(path);
-    await db.projects.add({ id: 1, name: 'Novel uji', description: '', createdAt: 1, lastOpened: 1 });
+    const calendarPath = '/src/lib/worldCalendar.ts';
+    const { calendarPreset }: typeof import('../src/lib/worldCalendar') = await import(calendarPath);
+    await db.projects.add({ id: 1, name: 'Novel uji', description: '', createdAt: 1, lastOpened: 1, calendar: calendarPreset('fantasy') });
     await db.chapters.bulkAdd([
       { id: 1, projectId: 1, title: 'Pembukaan', content: '<p>Awal cerita.</p><p>Kutipan asli.</p>', order: 0, lastModified: 1 },
       { id: 2, projectId: 1, title: 'Bab Dermaga', content: '<p>Gelombang reda.</p>'.repeat(35)
@@ -160,6 +162,87 @@ test('nilai templat Codex bertahan saat disunting dan dipindah kategori', async 
   await edit.click();
   await expect(remove).toHaveCount(0);
   await expect(form.getByRole('textbox', { name: 'Asal', exact: true })).toHaveValue('Pelabuhan Baru');
+});
+
+test('form Codex mempertahankan koma dan spasi saat mengetik alias dan tag', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('aether_view_mode', 'codex'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Entri Baru', exact: true }).click();
+  const form = page.locator('[data-codex-form]');
+  const aliases = form.getByRole('textbox', { name: 'Alias', exact: true });
+  const tags = form.getByRole('textbox', { name: 'Tag', exact: true });
+  await form.getByPlaceholder('misal: Kota Angin').fill('Laras');
+  await form.getByPlaceholder(/Deskripsikan sejarah/).fill('Penjaga arsip kerajaan.');
+  await aliases.pressSequentially('Rara, Bu Laras');
+  await tags.pressSequentially('tokoh utama, penjaga arsip');
+  await expect(aliases).toHaveValue('Rara, Bu Laras');
+  await expect(tags).toHaveValue('tokoh utama, penjaga arsip');
+  await form.getByRole('button', { name: 'Buat Entri', exact: true }).click();
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Laras', exact: true }) });
+  await expect(card.getByText('Rara', { exact: true })).toBeVisible();
+  await expect(card.getByText('Bu Laras', { exact: true })).toBeVisible();
+  await expect(card.getByText('#tokoh utama', { exact: true })).toBeVisible();
+  await expect(card.getByText('#penjaga arsip', { exact: true })).toBeVisible();
+  await card.getByTitle('Ubah Entri', { exact: true }).click();
+  await expect(aliases).toHaveValue('Rara, Bu Laras');
+  await expect(tags).toHaveValue('tokoh utama, penjaga arsip');
+  await aliases.fill(' , Bu Laras ,, ');
+  await tags.clear();
+  await form.getByRole('button', { name: 'Simpan Perubahan' }).click();
+  await expect(form).toHaveCount(0);
+  await expect(card.getByText('Rara', { exact: true })).toHaveCount(0);
+  await card.getByTitle('Ubah Entri', { exact: true }).click();
+  await expect(aliases).toHaveValue('Bu Laras');
+  await expect(tags).toHaveValue('');
+});
+
+test('tanggal lahir Codex tersimpan saat dibuat, diubah, dan dihapus', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('aether_view_mode', 'codex'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Entri Baru', exact: true }).click();
+  const form = page.locator('[data-codex-form]');
+  const setDate = form.getByRole('button', { name: 'Tetapkan tanggal lahir' });
+  const era = form.getByLabel('Era Lahir');
+  const year = form.getByLabel('Tahun Lahir');
+  const month = form.getByLabel('Bulan Lahir');
+  const day = form.getByLabel('Hari Lahir');
+  await form.getByPlaceholder('misal: Kota Angin').fill('Laras');
+  await form.getByPlaceholder(/Deskripsikan sejarah/).fill('Penjaga arsip kerajaan.');
+  await setDate.click();
+  await era.selectOption('1');
+  await year.fill('127');
+  await month.selectOption('3');
+  await day.fill('17');
+  await form.getByRole('button', { name: 'Buat Entri', exact: true }).click();
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Laras', exact: true }) });
+  const edit = card.getByTitle('Ubah Entri', { exact: true });
+  const save = form.getByRole('button', { name: 'Simpan Perubahan' });
+  await edit.click();
+  await expect(era).toHaveValue('1');
+  await expect(year).toHaveValue('127');
+  await expect(month).toHaveValue('3');
+  await expect(day).toHaveValue('17');
+
+  await era.selectOption('2');
+  await year.fill('128');
+  await month.selectOption('4');
+  await day.fill('21');
+  await save.click();
+  await expect(form).toHaveCount(0);
+  await page.reload();
+  await edit.click();
+  await expect(era).toHaveValue('2');
+  await expect(year).toHaveValue('128');
+  await expect(month).toHaveValue('4');
+  await expect(day).toHaveValue('21');
+
+  await form.getByRole('button', { name: 'Hapus', exact: true }).click();
+  await save.click();
+  await expect(form).toHaveCount(0);
+  await page.reload();
+  await edit.click();
+  await expect(setDate).toBeVisible();
+  await expect(day).toHaveCount(0);
 });
 
 async function setupSnippet(page: Page) {

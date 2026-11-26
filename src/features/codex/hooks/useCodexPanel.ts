@@ -124,6 +124,7 @@ export function useCodexPanel(projectId: number) {
       description: entry.description,
       aliases: entry.aliases || [],
       tags: entry.tags || [],
+      birthDate: entry.birthDate,
       hidden: entry.hidden,
       secret: entry.secret,
       worldStatus: entry.worldStatus,
@@ -152,6 +153,8 @@ export function useCodexPanel(projectId: number) {
         description: data.description || '',
         aliases: data.aliases || [],
         tags: data.tags || [],
+        // Dexie menghapus field dari entri saat patch berisi undefined.
+        birthDate: data.birthDate,
         hidden: !!data.hidden,
         secret: data.secret?.trim() || '',
         // Kelengkapan worldbuilding (#11). worldStatus dibiarkan undefined bila belum
@@ -172,6 +175,7 @@ export function useCodexPanel(projectId: number) {
         description: data.description || '',
         aliases: data.aliases || [],
         tags: data.tags || [],
+        birthDate: data.birthDate,
         hidden: !!data.hidden,
         secret: data.secret?.trim() || '',
         worldStatus: data.worldStatus,

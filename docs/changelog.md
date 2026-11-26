@@ -4,6 +4,13 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-26
+
+- Alias dan tag Codex menerima koma dan spasi selama pengetikan. Daftar
+  dipisahkan saat entri disimpan.
+- Formulir karakter Codex memuat tanggal lahir dari Kalender Dunia dan
+  menyimpan penetapan, perubahan, serta penghapusannya.
+
 ## 2026-11-25
 
 - Undo dan Redo tetap tersedia setelah berpindah panel dan kembali ke bab

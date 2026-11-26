@@ -25,9 +25,7 @@ Perilaku berikut telah diuji di Chromium desktop dengan proyek contoh terpisah. 
 
 **Perbaikan, menurut prioritas**
 
-1. **Perbaiki pengetikan alias dan tag.** Saat diketik karakter demi karakter, `Rara, Bu Laras` tersimpan sebagai satu alias `RaraBuLaras`. Gejala yang sama terjadi pada tag. Pertahankan spasi di dalam nama dan gunakan koma untuk memisahkan nilai setelah penulis selesai mengisi.
-2. **Muat dan simpan tanggal lahir karakter.** Pada proyek dengan Kalender Dunia, tahun 42 yang dipilih untuk karakter baru tidak tersimpan. Saat karakter dengan tahun lahir 9 disunting menjadi 22, formulir tidak memuat tanggal lama dan nilai tersimpan tetap 9. Periksa alur menetapkan, mengubah, dan menghapus tanggal dengan membuka kembali entri setelah setiap penyimpanan.
-3. **Tampilkan kemunculan dengan satu klik.** Tombol **Cek Kemunculan di Chapter** pada kartu membuka dialog detail. Di tab **Keterkaitan**, penulis harus mengeklik tombol cek sekali lagi. Arahkan klik pertama langsung ke bagian **Kemunculan** dan tampilkan hasilnya di sana.
+1. **Tampilkan kemunculan dengan satu klik.** Tombol **Cek Kemunculan di Chapter** pada kartu membuka dialog detail. Di tab **Keterkaitan**, penulis harus mengeklik tombol cek sekali lagi. Arahkan klik pertama langsung ke bagian **Kemunculan** dan tampilkan hasilnya di sana.
 
 **Peningkatan setelah perbaikan**
 
@@ -94,6 +92,8 @@ Pada kartu rahasia, penulis dapat mencoba memilih bab pengungkapan untuk satu ka
 <a id="audit-2026-11-09"></a>
 
 ## Pekerjaan selesai
+
+- [Pengetikan alias dan tag serta penyimpanan tanggal lahir karakter Codex](docs/reports/audits/2026-11-26-codex-form.md)
 
 - [Pengamanan Snippet, retensi nilai templat Codex, dan navigasi hasil pencarian global](docs/reports/audits/2026-11-25-writer-priorities.md)
 

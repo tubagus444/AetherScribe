@@ -38,6 +38,10 @@ function loadFields(entry?: Partial<CodexEntry>): DraftField[] {
   return resolveFieldValues(entry ?? {}).map(field => ({ ...field, category: entry?.category ?? 'character' }));
 }
 
+function parseCommaSeparated(text: string): string[] {
+  return text.split(',').map(value => value.trim()).filter(Boolean);
+}
+
 export function CodexForm({ initialData, editingId, bibleRules, existingEntries = [], categories = BUILTIN_CATEGORIES, detailChapters, onSave, onBulkCreate, onCancel }: CodexFormProps) {
   const { toast } = useToast();
   const { setViewMode } = useNavigation();
@@ -51,6 +55,8 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
     tags: [],
     ...initialData
   });
+  const [aliasesText, setAliasesText] = useState<string>();
+  const [tagsText, setTagsText] = useState<string>();
   const [isExpanding, setIsExpanding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [coverDraft, setCoverDraft] = useState<CodexCoverPair | null>();
@@ -75,6 +81,8 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
       tags: [],
       ...initialData
     });
+    setAliasesText(undefined);
+    setTagsText(undefined);
     setDraftFields(loadFields(initialData));
     setPrevDescription(null);
     setCoverDraft(undefined);
@@ -115,7 +123,13 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
     }
     setIsSaving(true);
     try {
-      await onSave({ ...formData, details, customFields: buildFieldValues(fieldDefs, fieldValues, retainedFields) }, coverDraft);
+      await onSave({
+        ...formData,
+        aliases: aliasesText === undefined ? formData.aliases : parseCommaSeparated(aliasesText),
+        tags: tagsText === undefined ? formData.tags : parseCommaSeparated(tagsText),
+        details,
+        customFields: buildFieldValues(fieldDefs, fieldValues, retainedFields),
+      }, coverDraft);
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         toast.error('Penyimpanan browser penuh. Entri dan sampul sebelumnya tetap tersimpan.');
@@ -192,6 +206,8 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
       aliases: first.aliases.length ? first.aliases : prev.aliases,
       tags: first.tags.length ? first.tags : prev.tags,
     }));
+    if (first.aliases.length) setAliasesText(undefined);
+    if (first.tags.length) setTagsText(undefined);
     setPrevDescription(null);
     setShowPaste(false);
     setPasteText('');
@@ -344,22 +360,24 @@ export function CodexForm({ initialData, editingId, bibleRules, existingEntries 
             </div>
             
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Alias</label>
+              <label htmlFor="codex-aliases" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Alias</label>
               <input
+                id="codex-aliases"
                 className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow dark:text-slate-100"
                 placeholder="Pisahkan dengan koma (misal: Budi, Pak Budi)"
-                value={formData.aliases?.join(', ')}
-                onChange={e => setFormData({...formData, aliases: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                value={aliasesText ?? formData.aliases?.join(', ') ?? ''}
+                onChange={e => setAliasesText(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tag</label>
+              <label htmlFor="codex-tags" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tag</label>
               <input
+                id="codex-tags"
                 className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow dark:text-slate-100"
                 placeholder="Pisahkan dengan koma (misal: protagonis, bangsawan)"
-                value={formData.tags?.join(', ')}
-                onChange={e => setFormData({...formData, tags: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                value={tagsText ?? formData.tags?.join(', ') ?? ''}
+                onChange={e => setTagsText(e.target.value)}
               />
             </div>
 

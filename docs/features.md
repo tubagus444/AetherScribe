@@ -110,6 +110,12 @@ teks sumber.
 
 ## Kontrak Codex dan graf lore
 
+- Formulir Codex memisahkan alias dan tag berdasarkan koma saat entri
+  disimpan. Spasi di dalam nilai dipertahankan dan bagian kosong diabaikan.
+- Pada proyek dengan Kalender Dunia, formulir karakter memuat tanggal lahir
+  yang tersimpan. Penulis dapat menetapkan, mengubah, atau menghapusnya.
+  Perubahan berlaku setelah entri disimpan.
+
 - Entri dapat memuat satu sampul gambar JPG, PNG, atau WebP. Gambar lokal
   diperkecil hingga 1200 piksel pada sisi terpanjang dan 96 KiB. Daftar hanya
   membaca thumbnail hingga 192 piksel dan 12 KiB. Sampul yang lebih besar
