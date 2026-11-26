@@ -73,6 +73,108 @@ for (const width of [1280, 390]) {
   });
 }
 
+for (const width of [1280, 390]) {
+  test.describe(`Interaksi kartu pada ${width} px`, () => {
+    test.use({ viewport: { width, height: 850 }, hasTouch: width === 390 });
+
+    test('kartu Codex langsung membuka Kemunculan dan menemukan bab lewat alias', async ({ page }) => {
+      await page.evaluate(async () => {
+        localStorage.setItem('aether_view_mode', 'codex');
+        const path = '/src/db.ts';
+        const { db }: DbModule = await import(path);
+        await db.codex.update(1, { aliases: ['Galang Pusaka'] });
+        await db.chapters.update(2, { content: '<p>Ia mengangkat Galang Pusaka dari dermaga.</p>' });
+        await db.relationships.bulkAdd(Array.from({ length: 12 }, () => ({
+          projectId: 1, sourceId: 1, targetId: 2, type: 'Friend',
+        })));
+      });
+      await page.goto('/');
+      if (width === 390) await page.touchscreen.tap(370, 400);
+      const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Tombak', exact: true }) });
+      const shortcut = card.getByRole('button', { name: 'Cek Kemunculan di Chapter' });
+      if (width === 390) await shortcut.tap();
+      else await shortcut.press('Enter');
+      const dialog = page.getByRole('dialog', { name: /Tombak/ });
+      await expect(dialog.getByRole('tab', { name: 'Keterkaitan' })).toHaveAttribute('aria-selected', 'true');
+      const heading = dialog.getByRole('heading', { name: 'Kemunculan', exact: true });
+      await expect(heading).toBeFocused();
+      await expect(heading).toBeInViewport({ ratio: 1 });
+      const chapter = dialog.getByRole('button', { name: 'Bab Dermaga', exact: true });
+      await expect(chapter).toBeInViewport({ ratio: 1 });
+      await expect(dialog.getByRole('button', { name: 'Cek Kemunculan di Chapter' })).toHaveCount(0);
+      await expect(dialog.getByText('Muncul di 1 Chapter:')).toBeVisible();
+
+      await dialog.getByRole('button', { name: 'Tutup', exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(shortcut).toBeFocused();
+      await card.getByRole('heading', { name: 'Tombak', exact: true }).click();
+      await expect(dialog.getByRole('tab', { name: 'Deskripsi & Detail' })).toHaveAttribute('aria-selected', 'true');
+      await dialog.getByRole('button', { name: 'Tutup', exact: true }).click();
+      await expect(dialog).toBeHidden();
+
+      if (width === 1280) {
+        const noMatches = page.getByRole('article').filter({ hasText: 'Kapten kapal.' });
+        await noMatches.getByRole('button', { name: 'Cek Kemunculan di Chapter' }).click();
+        const emptyDialog = page.getByRole('dialog', { name: /Raka/ });
+        await expect(emptyDialog.getByText('Belum ditemukan di chapter mana pun.')).toBeVisible();
+        await emptyDialog.getByRole('button', { name: 'Tutup', exact: true }).click();
+        await expect(emptyDialog).toBeHidden();
+      }
+
+      await card.getByRole('button', { name: 'Cek Kemunculan di Chapter' }).click();
+      await chapter.click();
+      await expect(editor(page)).toContainText('Ia mengangkat Galang Pusaka dari dermaga.');
+    });
+
+    test('menu Opsi Snippet terlihat dan bisa mengubah serta menghapus kartu', async ({ page }) => {
+      await page.evaluate(async () => {
+        localStorage.setItem('aether_view_mode', 'actions');
+        const path = '/src/db.ts';
+        const { db }: DbModule = await import(path);
+        await db.aiActions.bulkAdd([
+          { projectId: 1, label: 'Tenun uji', prompt: 'Perjelas kutipan.' },
+          { projectId: 1, label: 'Kartu lain', prompt: 'Rapikan kalimat.' },
+        ]);
+      });
+      await page.goto('/');
+      if (width === 390) {
+        expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+        await page.touchscreen.tap(370, 400);
+      }
+      const options = page.getByRole('button', { name: 'Opsi Tenun uji', exact: true });
+      await options.scrollIntoViewIfNeeded();
+      await expect(options).toBeInViewport();
+      await expect(options).toHaveCSS('opacity', '1');
+      if (width === 390) await options.tap();
+      else {
+        await options.press('Enter');
+        await expect(options).toHaveAttribute('aria-expanded', 'true');
+        await options.press('Escape');
+        await expect(options).toHaveAttribute('aria-expanded', 'false');
+        await expect(options).toBeFocused();
+        await options.press('Enter');
+      }
+      const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Tenun uji', exact: true }) });
+      const edit = card.getByRole('button', { name: 'Ubah', exact: true });
+      if (width === 390) await edit.tap();
+      else await edit.click();
+      const label = page.getByPlaceholder('mis. Bikin Mencekam');
+      await expect(label).toBeFocused();
+      await expect(label).toHaveValue('Tenun uji');
+      await label.fill('Tenun perbaikan');
+      await page.getByRole('button', { name: 'Simpan Perubahan' }).click();
+      const updated = page.getByRole('button', { name: 'Opsi Tenun perbaikan', exact: true });
+      if (width === 390) await updated.tap();
+      else await updated.click();
+      const remove = page.getByRole('button', { name: 'Hapus', exact: true });
+      if (width === 390) await remove.tap();
+      else await remove.click();
+      await expect(updated).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Opsi Kartu lain', exact: true })).toBeVisible();
+    });
+  });
+}
+
 test('pencarian tetap terbuka jika penyimpanan draf menghalangi navigasi', async ({ page }) => {
   await page.goto('/');
   await expect(editor(page)).toBeVisible();

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search, MessageSquareText, Database, Tags, FlaskConical, Download, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScribbleAssistantPanel } from '@/src/features/assistant/components/ScribbleAssistantPanel';
@@ -18,6 +18,7 @@ import { db } from '@/src/db';
 import { useToast } from '@/src/hooks/useToast';
 import { useChapterList } from '@/src/hooks/useChapterQueries';
 import { indexDetailChapters } from '@/src/lib/codexDetails';
+import type { CodexEntry } from '@/src/types';
 
 interface CodexPanelProps {
   projectId: number;
@@ -84,8 +85,6 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
 
     isAdding,
     editingId,
-    selectedEntry,
-    setSelectedEntry,
     searchQuery,
     setSearchQuery,
     filterCategory,
@@ -112,6 +111,10 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
     deleteRelationship,
     resolveDangling
   } = useCodexPanel(projectId);
+  const [selection, setSelection] = useState<{ entry: CodexEntry; openAppearances: boolean } | null>(null);
+  const setSelectedEntry = useCallback((entry: CodexEntry | null, openAppearances = false) => {
+    setSelection(entry ? { entry, openAppearances } : null);
+  }, []);
 
   useEffect(() => {
     const content = contentRef.current;
@@ -364,7 +367,6 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
                 key={entry.id}
                 entry={entry}
                 relationships={relationships || []}
-                projectId={projectId}
                 categories={categories}
                 detailChapters={detailChapters}
                 onEdit={startEditing}
@@ -434,9 +436,10 @@ export function CodexPanel({ projectId }: CodexPanelProps) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {selectedEntry && (
+        {selection && (
           <CodexDetailModal
-            entry={selectedEntry}
+            entry={selection.entry}
+            openAppearances={selection.openAppearances}
             entries={entries || []}
             relationships={relationships || []}
             promises={plotPromises || []}

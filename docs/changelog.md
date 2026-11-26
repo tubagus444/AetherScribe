@@ -6,6 +6,10 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- Kartu Codex langsung membuka **Kemunculan** dan memuat daftar bab saat
+  penulis memilih **Cek Kemunculan di Chapter**.
+- Kartu Snippet menampilkan tombol **Opsi** untuk mengubah dan menghapus aksi,
+  termasuk di layar sentuh.
 - Diskusi AI memulihkan draf pertanyaan dan lampiran Codex saat berpindah sesi.
 - Pencarian judul Diskusi AI mencakup seluruh riwayat proyek. Daftar awal
   menampilkan 50 sesi terbaru.

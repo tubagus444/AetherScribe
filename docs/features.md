@@ -141,6 +141,9 @@ teks sumber.
   lahir tampil di atas deskripsi agar teks bisa mengisi kolom sampai bawah.
   Tab **Keterkaitan** memuat Hubungan, Kemunculan, dan Disebut oleh. Beralih
   tab mempertahankan posisi baca deskripsi dan field.
+- **Cek Kemunculan di Chapter** pada kartu membuka tab **Keterkaitan**,
+  langsung menuju bagian **Kemunculan**, dan mencari bab secara otomatis.
+  Pilih judul hasil untuk membuka bab di editor.
 - Label kategori dan tag yang dipilih pada filter dapat tampil dalam beberapa
   baris. Kontrol memakai pilihan bawaan browser dan bisa digunakan lewat papan ketik.
 - Di formulir entri, **Tambah detail** menambahkan kolom dengan nama dan
@@ -425,6 +428,9 @@ berbasis urutan bab memakai `chapterId` dan `characterIds`.
 ---
 
 ## Scribble & Aksi Rewrite Prosa
+
+Di panel Snippet, tombol **Opsi** pada setiap kartu selalu terlihat dan
+menyediakan aksi **Ubah** dan **Hapus**.
 
 Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di IndexedDB. Saat panel dibuka kembali, pesan dimuat dari sesi Scribble bab tersebut. Gunakan tombol Atur panjang jawaban di header Nova untuk memilih batas per sesi. Balasan yang mencapai batas dapat disambung di pesan yang sama.
 

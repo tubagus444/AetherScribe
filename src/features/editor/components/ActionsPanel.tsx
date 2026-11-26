@@ -4,13 +4,13 @@ import { ACTION_ICONS, ICON_OPTIONS, DEFAULT_ICON, getActionIcon } from './actio
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { addAiAction, updateAiAction, deleteAiAction } from '@/src/services/aiActionOperations';
 import { db } from '@/src/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Plus, Trash2, Zap, Sparkles, Command, MessageSquare, ChevronRight, PenTool,
-  Pencil, X, Check,
+  Pencil, X, Check, Ellipsis,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
@@ -29,6 +29,18 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
   const [newIcon, setNewIcon] = useState(DEFAULT_ICON);
   const [isFocused, setIsFocused] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [optionsId, setOptionsId] = useState<number | null>(null);
+  const optionsRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (optionsId === null) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !optionsRef.current?.contains(event.target)) setOptionsId(null);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    return () => document.removeEventListener('pointerdown', closeOutside);
+  }, [optionsId]);
 
   const resetForm = () => {
     setNewLabel('');
@@ -51,10 +63,12 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
   };
 
   const startEdit = (action: { id?: number; label: string; prompt: string; icon?: string }) => {
+    setOptionsId(null);
     setEditingId(action.id ?? null);
     setNewLabel(action.label);
     setNewPrompt(action.prompt);
     setNewIcon(action.icon || DEFAULT_ICON);
+    labelRef.current?.focus();
   };
 
   const deleteAction = async (id: number) => {
@@ -83,7 +97,7 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* Creator Form */}
-        <section className="lg:col-span-5 h-fit sticky top-10">
+        <section className="lg:col-span-5 h-fit lg:sticky lg:top-10">
           <div className={cn(
             "bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow-sm transition-all duration-300",
             isFocused ? "border-indigo-400 dark:border-indigo-500 ring-4 ring-indigo-50 dark:ring-indigo-950/50" : "border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800/50"
@@ -113,6 +127,7 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
                   <Command size={12} /> Label Tombol
                 </label>
                 <input
+                  ref={labelRef}
                   className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-900 transition-all placeholder:text-slate-400"
                   placeholder="mis. Bikin Mencekam"
                   value={newLabel}
@@ -183,8 +198,9 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
               {customActions && customActions.length > 0 ? (
                 customActions.map((action, idx) => {
                   const Icon = getActionIcon(action.icon);
+                  const optionsOpen = optionsId === action.id;
                   return (
-                  <motion.div
+                  <motion.article
                     layout
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -192,43 +208,65 @@ export function ActionsPanel({ projectId }: ActionsPanelProps) {
                     transition={{ delay: idx * 0.05 }}
                     key={action.id}
                     className={cn(
-                      "group bg-white dark:bg-slate-900 border rounded-2xl p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4 hover:shadow-sm transition-all",
+                      "relative bg-white dark:bg-slate-900 border rounded-2xl p-6 hover:shadow-sm transition-all",
+                      optionsOpen && "z-10",
                       editingId === action.id
                         ? "border-indigo-400 dark:border-indigo-500 ring-2 ring-indigo-100 dark:ring-indigo-900/40"
                         : "border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800/50"
                     )}
                   >
-                    <div className="space-y-3 flex-1 overflow-hidden">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md shrink-0">
                           <Icon size={14} />
                         </div>
-                        <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">{action.label}</h3>
+                        <h3 className="min-w-0 flex-1 truncate font-semibold text-slate-900 dark:text-slate-100">{action.label}</h3>
+                        <div
+                          ref={optionsOpen ? optionsRef : undefined}
+                          className="relative shrink-0"
+                          onBlur={event => {
+                            if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) {
+                              setOptionsId(current => current === action.id ? null : current);
+                            }
+                          }}
+                          onKeyDown={event => {
+                            if (!optionsOpen || event.key !== 'Escape') return;
+                            event.stopPropagation();
+                            setOptionsId(null);
+                            event.currentTarget.querySelector('button')?.focus();
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setOptionsId(optionsOpen ? null : action.id!)}
+                            aria-label={`Opsi ${action.label}`}
+                            aria-expanded={optionsOpen}
+                            className="flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Ellipsis size={16} aria-hidden /> Opsi
+                          </button>
+                          {optionsOpen && (
+                            <div className="absolute right-0 top-full z-10 min-w-32 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                              <button type="button" onClick={() => startEdit(action)}
+                                className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">
+                                <Pencil size={16} aria-hidden /> Ubah
+                              </button>
+                              <button type="button" onClick={() => { setOptionsId(null); void deleteAction(action.id!); }}
+                                className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                                <Trash2 size={16} aria-hidden /> Hapus
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-start gap-2 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/30 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50">
                         <ChevronRight size={14} className="shrink-0 mt-0.5 text-slate-400" />
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        <p className="min-w-0 break-words text-sm leading-relaxed whitespace-pre-wrap">
                           {action.prompt}
                         </p>
                       </div>
                     </div>
-                    <div className="flex sm:flex-col gap-1 shrink-0 self-end sm:self-start">
-                      <button
-                        onClick={() => startEdit(action)}
-                        className="p-2 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        aria-label="Ubah aksi"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => deleteAction(action.id!)}
-                        className="p-2 text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        aria-label="Hapus aksi"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </motion.div>
+                  </motion.article>
                   );
                 })
               ) : (

@@ -38,6 +38,7 @@ interface CodexDetailModalProps {
   projectId: number;
   categories?: CategoryDef[];
   detailChapters: DetailChapterIndex;
+  openAppearances?: boolean;
   backlinks?: LoreGraph['backlinks'];
   onClose: () => void;
   management?: {
@@ -58,6 +59,7 @@ export function CodexDetailModal({
   projectId,
   categories,
   detailChapters,
+  openAppearances = false,
   backlinks,
   onClose,
   management,
@@ -67,10 +69,11 @@ export function CodexDetailModal({
   const titleId = useId();
   const tabsId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const appearancesHeadingRef = useRef<HTMLHeadingElement>(null);
   const detailsTabRef = useRef<HTMLButtonElement>(null);
   const thumbnail = useCoverUrl(useCodexCover(entry.id, 'thumbnail'));
   const [showCover, setShowCover] = useState(false);
-  const [linksEntryId, setLinksEntryId] = useState<number | null | undefined>(null);
+  const [linksEntryId, setLinksEntryId] = useState<number | null | undefined>(() => openAppearances ? entry.id : null);
   const isLinksTab = linksEntryId !== null && linksEntryId === entry.id;
   const activeTab = isLinksTab ? 'links' : 'details';
   const selectTab = (tab: (typeof detailTabs)[number]['id']) => setLinksEntryId(tab === 'links' ? entry.id : null);
@@ -156,7 +159,13 @@ export function CodexDetailModal({
 
   useLayoutEffect(() => {
     const trigger = document.activeElement;
-    closeRef.current?.focus();
+    const appearancesHeading = openAppearances ? appearancesHeadingRef.current : null;
+    if (appearancesHeading) {
+      appearancesHeading.scrollIntoView({ block: 'start' });
+      appearancesHeading.focus({ preventScroll: true });
+    } else {
+      closeRef.current?.focus();
+    }
     return () => {
       if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus({ preventScroll: true });
     };
@@ -570,10 +579,10 @@ export function CodexDetailModal({
               <div className="space-y-6">
                 {/* Appearances */}
                 <div>
-                  <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
+                  <h4 ref={appearancesHeadingRef} tabIndex={-1} className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">
                     Kemunculan
                   </h4>
-                  <AppearancesList entry={entry} projectId={projectId} />
+                  <AppearancesList entry={entry} projectId={projectId} autoLoad={openAppearances} />
                 </div>
                 {/* Backlink (#9) — "apa yang menyebut entri ini" (sebutan nama + payoff janji) */}
                 <div>

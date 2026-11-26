@@ -1,8 +1,7 @@
 import React from 'react';
-import { Tag, Link2, Edit2, Trash2, EyeOff } from 'lucide-react';
+import { BookOpen, Tag, Link2, Edit2, Trash2, EyeOff } from 'lucide-react';
 import { CodexEntry, Relationship } from '@/src/types';
 import { CategoryIcon } from '@/src/features/codex/components/CategoryIcon';
-import { AppearancesList } from '@/src/features/codex/components/AppearancesList';
 import { getCategoryLabel, getCategoryAccent, type CategoryDef } from '@/src/lib/codexCategories';
 import { resolveFieldValues } from '@/src/lib/codexFields';
 import { effectiveStatus } from '@/src/lib/worldCompleteness';
@@ -13,12 +12,11 @@ import { useCodexCover, useCoverUrl } from '@/src/features/codex/hooks/useCodexC
 interface CodexCardProps {
   entry: CodexEntry;
   relationships: Relationship[];
-  projectId: number;
   categories?: CategoryDef[];
   detailChapters: DetailChapterIndex;
   onEdit: (entry: CodexEntry) => void;
   onDelete: (id: number) => void;
-  onSelect: (entry: CodexEntry) => void;
+  onSelect: (entry: CodexEntry, openAppearances?: boolean) => void;
 }
 
 const metadataPreviewLimit = 3;
@@ -32,7 +30,6 @@ const metadataPreviewLimit = 3;
 function CodexCardImpl({
   entry,
   relationships,
-  projectId,
   categories,
   detailChapters,
   onEdit,
@@ -120,7 +117,13 @@ function CodexCardImpl({
               ))}
             </div>
           )}
-          <AppearancesList entry={entry} projectId={projectId} />
+          <button
+            type="button"
+            onClick={event => { event.stopPropagation(); onSelect(entry, true); }}
+            className="mt-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600 hover:underline dark:text-indigo-400"
+          >
+            <BookOpen size={12} /> Cek Kemunculan di Chapter
+          </button>
         </div>
 
         {aliases.length > 0 && (

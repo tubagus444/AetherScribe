@@ -37,7 +37,6 @@ export function useCodexPanel(projectId: number) {
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [selectedEntry, setSelectedEntry] = useState<CodexEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   // Nilai pencarian yang ditunda agar pemfilteran (di atas seluruh codex) tidak
   // berjalan tiap ketukan tombol pada codex besar.
@@ -265,8 +264,6 @@ export function useCodexPanel(projectId: number) {
 
     isAdding,
     editingId,
-    selectedEntry,
-    setSelectedEntry,
     searchQuery,
     setSearchQuery,
     filterCategory,

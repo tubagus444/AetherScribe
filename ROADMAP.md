@@ -13,16 +13,14 @@ menunjukkan urutan yang disarankan di setiap tingkat.
 
 | Urutan | Pekerjaan | Hasil yang diharapkan |
 | --- | --- | --- |
-| 1 | **Codex — tampilkan kemunculan dengan satu klik** | Klik **Cek Kemunculan di Chapter** pada kartu langsung membuka bagian **Kemunculan** dan menampilkan hasil. |
 | 2 | **Editor — kembalikan posisi edit lewat Lanjutkan menulis** | Simpan posisi edit per bab di perangkat. Membaca bab lain untuk referensi tetap mempertahankan posisi kerja. Jika posisi sudah tidak sesuai setelah pemulihan snapshot, buka bab seperti biasa. |
 | 3 | **Editor — filter catatan revisi yang masih terbuka** | Jumlah catatan terbuka bisa diklik untuk memfilter dan opsi **Semua** memulihkan daftar. Urutan naskah dan aksi lompat ke kutipan tetap tersedia. Tampilkan pesan saat semua catatan selesai. |
-| 4 | **Snippet — tampilkan aksi kartu pada layar sentuh** | Tombol **Opsi** selalu terlihat dan memberi akses ke **Ubah** dan **Hapus**. Uji pada lebar 390 piksel, tempat ikon lama transparan meski bisa diketuk. |
 | 8 | **Codex — cari entri berdasarkan fakta** | Pencarian di panel Codex mencakup label dan nilai detail yang sedang berlaku serta kolom kategori kustom. Pencarian `panglima` menampilkan Sagara dengan alasan kecocokan *Pangkat · Panglima*. |
 | 9 | **Codex — lihat fakta sampai bab pilihan** | Sediakan **Lihat sampai bab…** untuk entri dengan riwayat dan gunakan bab aktif sebagai acuan awal di editor. Gunakan urutan baca. Untuk kilas balik, penulis menentukan keadaan tokoh pada waktu adegan berlangsung. |
 
 Temuan editor berasal dari peninjauan kode. Uji dengan proyek nyata untuk
 menilai seberapa sering penulis perlu mencari ulang posisi edit atau menyaring
-catatan. Temuan Codex dan Snippet berasal dari uji Chromium dengan proyek contoh.
+catatan. Temuan Codex berasal dari uji Chromium dengan proyek contoh.
 
 ## Verifikasi terbuka
 
@@ -101,6 +99,7 @@ dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 
 ### Editor, Snippet, dan pencarian
 
+- [P2.1 dan P2.4 · Kemunculan Codex dan tombol Opsi Snippet](docs/reports/audits/2026-11-26-interaksi-kartu-codex-snippet.md)
 - [Undo dan Redo saat berpindah panel](docs/reports/audits/2026-11-25-editor-history.md)
 - [Pengamanan Snippet, retensi nilai templat Codex, dan navigasi hasil pencarian global](docs/reports/audits/2026-11-25-writer-priorities.md)
 - [Catatan Novel dan Codex di sidebar editor](docs/reports/audits/2026-11-21-editor-notes-codex.md)
