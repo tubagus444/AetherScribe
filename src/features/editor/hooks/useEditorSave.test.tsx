@@ -6,6 +6,7 @@ import type { Editor } from '@tiptap/react';
 import { useEditorSave } from './useEditorSave';
 import { flushActiveEditor, reloadActiveEditor } from '../editorBridge';
 import { EditorPanelContext } from '@/src/contexts/EditorPanelContext';
+import { readEditPosition, readLastEditedChapter } from '@/src/features/editor/editPosition';
 
 const { update, get } = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }));
 vi.mock('@/src/db', () => ({
@@ -24,16 +25,17 @@ describe('F05 editor persistence', () => {
     </EditorPanelContext.Provider>
   );
   const baseContent = '<p>database lama</p>';
-  const mount = () => renderHook(() => useEditorSave({ chapterId: 1, chapter: { title: 'Bab', content: baseContent }, editor }), { wrapper });
+  const mount = () => renderHook(() => useEditorSave({ chapterId: 1, chapter: { title: 'Bab', content: baseContent, projectId: 1 }, editor }), { wrapper });
 
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
+    localStorage.clear();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     update.mockResolvedValue(1);
     get.mockResolvedValue({ content: baseContent });
     html = '<p>draft terbaru</p>';
-    editor = { getHTML: () => html, isDestroyed: false, commands: { setContent: vi.fn() } } as unknown as Editor;
+    editor = { getHTML: () => html, state: { selection: { head: 5 } }, isDestroyed: false, commands: { setContent: vi.fn() } } as unknown as Editor;
   });
   afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
@@ -51,10 +53,13 @@ describe('F05 editor persistence', () => {
     else update.mockResolvedValueOnce(0);
     await expect(flushActiveEditor()).rejects.toThrow();
     expect(status).toHaveBeenLastCalledWith('Gagal menyimpan');
+    expect(readLastEditedChapter(1)).toBeUndefined();
     expect(editor.getHTML()).toBe(html);
     await flushActiveEditor();
     expect(update).toHaveBeenLastCalledWith(1, expect.objectContaining({ content: html }));
     expect(status).toHaveBeenLastCalledWith('Tersimpan');
+    expect(readLastEditedChapter(1)).toBe(1);
+    expect(readEditPosition(1, 1)).toEqual({ position: 5, lastModified: update.mock.lastCall?.[1].lastModified });
   });
 
   it('does not reload over a draft after a failed save', async () => {

@@ -5,6 +5,22 @@ type DbModule = typeof import('../src/db');
 const editor = (page: Page) => page.locator('.tiptap[contenteditable="true"]');
 const search = (page: Page) => page.getByRole('dialog', { name: 'Pencarian global' });
 
+function editorSelection(page: Page) {
+  return editor(page).evaluate(element => {
+    const { editor } = element as HTMLElement & { editor: import('@tiptap/core').Editor };
+    const { doc, selection } = editor.state;
+    return { head: selection.head, text: doc.textBetween(selection.from, selection.to) };
+  });
+}
+
+async function dismissMobileSidebar(page: Page, touch = false) {
+  const backdrop = page.locator('div.fixed.inset-0.z-40.backdrop-blur-sm');
+  const position = { x: 370, y: 400 };
+  if (touch) await backdrop.tap({ position });
+  else await backdrop.click({ position });
+  await expect(backdrop).toBeHidden();
+}
+
 async function openSearch(page: Page, term: string) {
   await page.keyboard.press('Control+k');
   await search(page).getByRole('searchbox').fill(term);
@@ -42,11 +58,101 @@ test.beforeEach(async ({ context, page, baseURL }) => {
 });
 
 for (const width of [1280, 390]) {
+  test(`Lanjutkan menulis memulihkan titik edit setelah membaca bab referensi pada ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await page.evaluate(async () => {
+      const path = '/src/db.ts';
+      const { db }: DbModule = await import(path);
+      const chapterStart = '<p>Awal bab kerja.</p>' + '<p>Paragraf sebelum titik kerja.</p>'.repeat(45);
+      const chapterEnd = '<p>Paragraf setelah titik kerja.</p>'.repeat(35);
+      await db.chapters.update(1, { content: chapterStart + '<p>Titik kerja penulis</p>' + chapterEnd });
+      // The newest stored chapter is not necessarily the one last edited on this device.
+      await db.chapters.update(2, { lastModified: Date.now() + 60_000 });
+      await db.snapshots.add({
+        chapterId: 1, content: chapterStart + '<p>Titik kerja penulis?</p>' + chapterEnd,
+        label: 'Versi sebelum edit', timestamp: 1,
+      });
+    });
+    await page.goto('/');
+    const toggleSidebar = page.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' });
+    const dashboardTab = page.getByRole('navigation', { name: /Sub-navigasi/ }).getByRole('button', { name: 'Statistik', exact: true });
+    const continuation = page.getByRole('button', { name: /Lanjutkan menulis.*Pembukaan/ });
+    if (width === 390) await dismissMobileSidebar(page);
+
+    const paragraph = editor(page).getByText('Titik kerja penulis', { exact: true });
+    await paragraph.click();
+    await page.keyboard.press('End');
+    await page.keyboard.insertText('!');
+    await expect(editor(page).getByText('Titik kerja penulis!', { exact: true })).toBeVisible();
+    const saved = await editorSelection(page);
+    await editor(page).getByText('Awal bab kerja.', { exact: true }).click();
+    expect((await editorSelection(page)).head).not.toBe(saved.head);
+
+    if (width === 390) await toggleSidebar.click();
+    await page.getByRole('complementary').getByText('Bab Dermaga', { exact: true }).click();
+    await expect(editor(page)).toContainText('Gelombang reda.');
+    await dashboardTab.click();
+    await expect(continuation).toBeVisible();
+    await page.reload();
+    if (width === 390) await dismissMobileSidebar(page);
+    await continuation.click();
+    await expect(editor(page)).toBeFocused();
+    await expect.poll(() => editorSelection(page)).toEqual(saved);
+    await expect(editor(page).getByText('Titik kerja penulis!', { exact: true })).toBeInViewport({ ratio: 1 });
+
+    if (width === 1280) {
+      await page.getByRole('button', { name: 'Riwayat Versi', exact: true }).click();
+      page.once('dialog', dialog => dialog.accept());
+      await page.getByRole('button', { name: 'Pulihkan', exact: true }).click();
+      await expect(editor(page)).toContainText('Titik kerja penulis?');
+      await dashboardTab.click();
+      await continuation.click();
+      await expect(editor(page).getByText('Awal bab kerja.', { exact: true })).toBeInViewport({ ratio: 1 });
+      expect((await editorSelection(page)).head).not.toBe(saved.head);
+    }
+  });
+
+  test(`catatan revisi menyaring yang terbuka dan mempertahankan urutan pada ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 });
+    await page.evaluate(async () => {
+      const path = '/src/db.ts';
+      const { db }: DbModule = await import(path);
+      await db.chapters.update(1, { content: [
+        '<p><span data-comment-id="awal" data-note="Perbaiki pembuka">Kutipan pertama</span></p>',
+        '<p><span data-comment-id="tengah" data-note="Sudah diperbaiki" data-resolved="true">Kutipan kedua</span></p>',
+        '<p><span data-comment-id="akhir" data-note="Perjelas penutup">Kutipan ketiga</span></p>',
+      ].join('') });
+    });
+    await page.goto('/');
+    if (width === 390) await dismissMobileSidebar(page);
+    await page.getByRole('button', { name: 'Catatan Revisi', exact: true }).click();
+    await page.getByRole('button', { name: 'Catatan Teks', exact: true }).click();
+    const filter = page.getByRole('group', { name: 'Filter catatan revisi' });
+    const quotes = page.getByTitle('Lompat ke teks ini', { exact: true });
+    await expect(quotes).toHaveText(['"Kutipan pertama"', '"Kutipan kedua"', '"Kutipan ketiga"']);
+    await filter.getByRole('button', { name: '2 terbuka', exact: true }).click();
+    await expect(quotes).toHaveText(['"Kutipan pertama"', '"Kutipan ketiga"']);
+    await quotes.last().click();
+    await expect.poll(() => editorSelection(page).then(selection => selection.text)).toBe('Kutipan ketiga');
+
+    const resolve = page.getByRole('button', { name: 'Tandai selesai', exact: true });
+    await resolve.first().click();
+    await expect(quotes).toHaveText(['"Kutipan ketiga"']);
+    await resolve.click();
+    await expect(page.getByText('Semua catatan revisi sudah selesai.')).toBeVisible();
+    await expect(quotes).toHaveCount(0);
+    await expect(filter.getByRole('button', { name: '0 terbuka' })).toHaveAttribute('aria-pressed', 'true');
+    await filter.getByRole('button', { name: 'Semua', exact: true }).click();
+    await expect(quotes).toHaveText(['"Kutipan pertama"', '"Kutipan kedua"', '"Kutipan ketiga"']);
+  });
+}
+
+for (const width of [1280, 390]) {
   test('pencarian membuka entri yang dipilih dan menyorot cuplikan di ' + width + ' px', async ({ page }) => {
     await page.setViewportSize({ width, height: 850 });
     await page.goto('/');
     await expect(editor(page)).toBeVisible();
-    if (width === 390) await page.mouse.click(370, 400);
+    if (width === 390) await dismissMobileSidebar(page);
     await openSearch(page, 'Raka');
     const codex = search(page).getByRole('region', { name: 'Hasil Codex' });
     await expect(codex.getByRole('button')).toHaveText([/Kapten kapal/, /Pembuat peta/]);
@@ -89,7 +195,7 @@ for (const width of [1280, 390]) {
         })));
       });
       await page.goto('/');
-      if (width === 390) await page.touchscreen.tap(370, 400);
+      if (width === 390) await dismissMobileSidebar(page, true);
       const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Tombak', exact: true }) });
       const shortcut = card.getByRole('button', { name: 'Cek Kemunculan di Chapter' });
       if (width === 390) await shortcut.tap();
@@ -139,7 +245,7 @@ for (const width of [1280, 390]) {
       await page.goto('/');
       if (width === 390) {
         expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
-        await page.touchscreen.tap(370, 400);
+        await dismissMobileSidebar(page, true);
       }
       const options = page.getByRole('button', { name: 'Opsi Tenun uji', exact: true });
       await options.scrollIntoViewIfNeeded();
@@ -457,7 +563,7 @@ test('Snippet menyorot hanya sisipan di ponsel dan menghapus sorotan setelah pin
   await page.goto('/');
   const content = editor(page);
   await expect(content).toContainText('Kutipan asli.');
-  await page.mouse.click(370, 400);
+  await dismissMobileSidebar(page);
   await selectSnippetParagraph(page);
   const menu = page.locator('#selection-floating-menu');
   await menu.getByRole('button', { name: 'Buka menu Asisten AI' }).click();

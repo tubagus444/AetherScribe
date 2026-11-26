@@ -49,6 +49,16 @@ it('accepts one of two concurrent chapter edits based on the same saved content'
   expect((await db.chapters.get(1))?.content).toBe(edits[winner]);
 });
 
+it('assigns distinct content revisions to a save and a snapshot restore even when the device clock is behind', async () => {
+  const original = '<p>Naskah asli</p>';
+  const priorRevision = Date.now() + 60_000;
+  await db.chapters.update(1, { lastModified: priorRevision });
+  const snapshot = await addSnapshot({ chapterId: 1, content: original, label: '', timestamp: 1 });
+  await expect(saveChapterContent(1, '<p>Naskah baru</p>', original)).resolves.toBe(priorRevision + 1);
+  await restoreChapterSnapshot(1, snapshot);
+  expect(await db.chapters.get(1)).toMatchObject({ content: original, lastModified: priorRevision + 2 });
+});
+
 it('rejects missing and cross-project references in each authoring domain', async () => {
   const event = { projectId: 1, title: 'Peristiwa', description: '', type: 'plot' as const };
   await expect(addTimelineEvent({ ...event, chapterId: 2 })).rejects.toThrow(/proyek lain/);

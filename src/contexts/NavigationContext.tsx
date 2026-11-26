@@ -11,8 +11,10 @@ import { ViewMode, WorkshopTarget } from '@/src/types';
 import { useProject } from '@/src/contexts/ProjectContext';
 import { flushActiveEditor, getActiveEditorChapterId } from '@/src/features/editor/editorBridge';
 import type { ChapterSearchMatch } from '@/src/lib/globalSearch';
+import { readEditPosition, type EditPosition } from '@/src/features/editor/editPosition';
 
 type ChapterSearchTarget = { projectId: number; chapterId: number; match: ChapterSearchMatch };
+type ChapterResumeTarget = EditPosition & { projectId: number; chapterId: number };
 
 const VIEW_MODE_STORAGE_KEY = 'aether_view_mode';
 /** Baca panel terakhir dari localStorage; fallback ke 'write' bila kosong/tidak valid. */
@@ -38,6 +40,9 @@ interface NavigationContextType {
   pendingChapterSearch: ChapterSearchTarget | null;
   openChapterFromSearch: (chapterId: number, match?: ChapterSearchMatch) => Promise<boolean>;
   clearPendingChapterSearch: (target: ChapterSearchTarget) => void;
+  pendingChapterResume: ChapterResumeTarget | null;
+  resumeChapter: (chapterId: number) => Promise<boolean>;
+  clearPendingChapterResume: (target: ChapterResumeTarget) => void;
   /** Entri Codex yang harus dibuka detailnya setelah berpindah ke panel Codex (deep-link). */
   pendingCodexEntryId: number | null;
   /** Pindah ke panel Codex lalu buka modal detail entri tertentu (mis. dari panel Kelengkapan). */
@@ -64,6 +69,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const [viewMode, setViewMode] = useState<ViewMode>(loadInitialViewMode);
   const [pendingHighlight, setPendingHighlight] = useState<string | null>(null);
   const [pendingChapterSearch, setPendingChapterSearch] = useState<ChapterSearchTarget | null>(null);
+  const [pendingChapterResume, setPendingChapterResume] = useState<ChapterResumeTarget | null>(null);
   const [pendingCodexEntryId, setPendingCodexEntryId] = useState<number | null>(null);
   const [pendingAtlasTarget, setPendingAtlasTarget] = useState<{ mapId: number; markerId?: number } | null>(null);
   const [workshopTarget, setWorkshopTarget] = useState<WorkshopTarget | null>(null);
@@ -77,6 +83,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
     const request = ++navigationRequest.current;
     const commit = () => {
       setPendingChapterSearch(null);
+      setPendingChapterResume(null);
       apply();
     };
     if (!leavesEditor || getActiveEditorChapterId() === null) {
@@ -124,6 +131,20 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   }, [activeChapterId, navigate, projectId, viewMode]);
   const clearPendingChapterSearch = useCallback((target: ChapterSearchTarget) => {
     setPendingChapterSearch(current => current === target ? null : current);
+  }, []);
+
+  const resumeChapter = useCallback((chapterId: number) => {
+    if (projectId == null) return Promise.resolve(false);
+    return navigate(viewMode === 'write' && chapterId !== activeChapterId, () => {
+      const saved = readEditPosition(projectId, chapterId);
+      setPendingHighlight(null);
+      setPendingChapterResume(saved ? { projectId, chapterId, ...saved } : null);
+      setActiveChapterId(chapterId);
+      setViewMode('write');
+    });
+  }, [activeChapterId, navigate, projectId, viewMode]);
+  const clearPendingChapterResume = useCallback((target: ChapterResumeTarget) => {
+    setPendingChapterResume(current => current === target ? null : current);
   }, []);
 
   const openCodexEntry = useCallback((entryId: number) => {
@@ -180,6 +201,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
       if (prevProjectIdRef.current !== null && prevProjectIdRef.current !== projectId) {
         ++navigationRequest.current;
         setPendingChapterSearch(null);
+        setPendingChapterResume(null);
         setViewMode('write');
       }
       prevProjectIdRef.current = projectId;
@@ -223,6 +245,9 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
       pendingChapterSearch,
       openChapterFromSearch,
       clearPendingChapterSearch,
+      pendingChapterResume,
+      resumeChapter,
+      clearPendingChapterResume,
       pendingCodexEntryId,
       openCodexEntry,
       clearPendingCodexEntry,

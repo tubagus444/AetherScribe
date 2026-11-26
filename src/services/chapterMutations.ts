@@ -9,17 +9,14 @@ import { requireSnapshot, saveAutoSnapshot } from './chapterSnapshots';
 
 const chapterNotInProject = 'Bab tidak ditemukan dalam proyek ini.';
 
-async function saveContent(repository: ChapterTransactions['edit'], id: number, content: string, baseContent?: string) {
+async function saveContent(repository: ChapterTransactions['edit'], id: number, content: string, previousModified: number) {
   assertWriteId(id, 'ID bab');
   validateWriteFields('chapters', { content }, 'patch');
-  if (baseContent !== undefined) {
-    const current = await repository.readChapter(id);
-    if (!current) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
-    if (current.content === content) return;
-    if (current.content !== baseContent) throw new ChapterContentConflictError();
-  }
-  const affected = await repository.patchChapter(id, { content, lastModified: Date.now() });
+  // Distinguish successive content revisions even when they share a clock tick.
+  const lastModified = Math.max(Date.now(), Number.isFinite(previousModified) ? previousModified + 1 : 0);
+  const affected = await repository.patchChapter(id, { content, lastModified });
   if (affected !== 1) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
+  return lastModified;
 }
 
 async function resequence(repository: ChapterTransactions['edit'], rows: Chapter[]) {
@@ -38,7 +35,14 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
 
     async saveChapterContent(id: number, content: string, baseContent: string) {
       if (typeof baseContent !== 'string') throw new Error('Isi awal bab tidak tersedia.');
-      return storage.transact('edit', repository => saveContent(repository, id, content, baseContent));
+      assertWriteId(id, 'ID bab');
+      return storage.transact('edit', async repository => {
+        const current = await repository.readChapter(id);
+        if (!current) throw new Error('Bab tidak ditemukan. Draft belum tersimpan.');
+        if (current.content === content) return;
+        if (current.content !== baseContent) throw new ChapterContentConflictError();
+        return saveContent(repository, id, content, current.lastModified);
+      });
     },
 
     async moveChapter(projectId: number, chapterId: number, targetId: number, adoptStatus: boolean) {
@@ -92,7 +96,7 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
           const { html, count } = replaceInHtml(content, regex, replacement);
           if (!count) continue;
           await saveAutoSnapshot(repositories, chapter.id!, content, `Sebelum ganti ${count}× "${query}"`);
-          await saveContent(repositories, chapter.id!, html);
+          await saveContent(repositories, chapter.id!, html, chapter.lastModified);
           totalReplaced += count;
           chaptersChanged++;
         }
@@ -111,7 +115,7 @@ export function createChapterOperations(storage: ChapterStorage, onDelete: (ids:
         if (!chapter) throw new Error('Record chapters tidak ditemukan.');
         const snapshot = await requireSnapshot(repositories, chapterId, snapshotId);
         await saveAutoSnapshot(repositories, chapterId, chapter.content, 'Sebelum pemulihan');
-        await saveContent(repositories, chapterId, snapshot.content);
+        await saveContent(repositories, chapterId, snapshot.content, chapter.lastModified);
       });
       if (getActiveEditorChapterId() === chapterId) await reloadActiveEditor();
     },

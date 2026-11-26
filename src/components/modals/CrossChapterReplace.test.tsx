@@ -31,6 +31,7 @@ describe('F05 replace with the real save hook and isolated IndexedDB', () => {
     await db.chapters.put(chapter);
     editor = {
       getHTML: () => '<p>lama draft terbaru</p>', isDestroyed: false,
+      state: { selection: { head: 5 } },
       commands: { setContent: vi.fn() },
     } as unknown as Editor;
     const { result } = renderHook(() => useEditorSave({ chapterId: 1, chapter, editor }));

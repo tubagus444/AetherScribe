@@ -21,6 +21,7 @@ import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { createDocument, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import { history } from '@tiptap/pm/history';
+import { Selection } from '@tiptap/pm/state';
 import { SelectionFloatingMenu } from '@/src/features/editor/components/SelectionFloatingMenu';
 import { QuickPromiseModal, QuickPromiseSeed } from '@/src/features/consistency/components/QuickPromiseModal';
 import { EditorPanelProvider } from '@/src/contexts/EditorPanelContext';
@@ -172,7 +173,10 @@ function NovelEditorInner({ chapterId, projectId, chapter, editor, bindings }: N
   }, [zoomLevel]);
 
   const { isFocusMode, setIsFocusMode } = useUI();
-  const { pendingHighlight, clearPendingHighlight, pendingChapterSearch, clearPendingChapterSearch } = useNavigation();
+  const {
+    pendingHighlight, clearPendingHighlight, pendingChapterSearch, clearPendingChapterSearch,
+    pendingChapterResume, clearPendingChapterResume,
+  } = useNavigation();
   const { setActivePanel } = useEditorPanel();
   const { toast } = useToast();
   const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
@@ -346,6 +350,27 @@ function NovelEditorInner({ chapterId, projectId, chapter, editor, bindings }: N
     }, 5000);
     chapterSearchEffect.current = { frame, timer };
   }, [pendingChapterSearch, clearPendingChapterSearch, projectId, chapterId, editor, isLoading, toast]);
+
+  useEffect(() => {
+    const target = pendingChapterResume;
+    if (!target || target.projectId !== projectId || target.chapterId !== chapterId || isLoading) return;
+
+    const frame = requestAnimationFrame(() => {
+      clearPendingChapterResume(target);
+      const container = containerRef.current;
+      if (!container || editor.isDestroyed || target.lastModified !== chapter.lastModified) return;
+
+      const { view } = editor;
+      if (target.position > view.state.doc.content.size) return;
+      const selection = Selection.near(view.state.doc.resolve(target.position));
+      view.dispatch(view.state.tr.setSelection(selection));
+      view.focus();
+      const { top, bottom } = view.coordsAtPos(selection.head);
+      const bounds = container.getBoundingClientRect();
+      container.scrollTo({ top: container.scrollTop + (top + bottom - bounds.top - bounds.bottom) / 2, behavior: 'instant' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pendingChapterResume, clearPendingChapterResume, chapterId, chapter.lastModified, projectId, editor, isLoading]);
 
   if (isLoading) {
     return (

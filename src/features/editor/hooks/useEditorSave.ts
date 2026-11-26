@@ -6,17 +6,18 @@ import { saveChapterContent, updateChapter } from '@/src/services/chapterOperati
 import { useEditorPanel } from '@/src/contexts/EditorPanelContext';
 import { useToast } from '@/src/hooks/useToast';
 import { registerActiveEditor, unregisterActiveEditor, type ActiveEditorBridge } from '@/src/features/editor/editorBridge';
+import { recordEditPosition } from '@/src/features/editor/editPosition';
 import type { Chapter } from '@/src/types';
 
 interface UseEditorSaveProps {
   chapterId: number;
-  chapter: Pick<Chapter, 'title' | 'content'> | null | undefined;
+  chapter: Pick<Chapter, 'title' | 'content' | 'projectId'> | null | undefined;
   editor: Editor | null;
 }
 
 interface DraftState {
   baseContent?: string;
-  pending?: string;
+  pending?: { content: string; position: number };
   writing?: Promise<void>;
   mounted: boolean;
   saveTimer?: ReturnType<typeof setTimeout>;
@@ -30,6 +31,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   const draft = useMemo<DraftState>(() => ({ mounted: false }), [chapterId]);
 
   const initialContent = chapter?.content;
+  const projectId = chapter?.projectId;
   useEffect(() => {
     draft.baseContent ??= initialContent;
   }, [draft, initialContent]);
@@ -40,13 +42,16 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
 
     while (draft.pending !== undefined) {
       if (!draft.writing) {
-        const content = draft.pending;
+        const pending = draft.pending;
         const write = async () => {
           try {
             if (draft.baseContent === undefined) throw new Error('Isi awal bab belum dimuat.');
-            await saveChapterContent(chapterId, content, draft.baseContent);
-            draft.baseContent = content;
-            if (draft.pending === content) {
+            const lastModified = await saveChapterContent(chapterId, pending.content, draft.baseContent);
+            draft.baseContent = pending.content;
+            if (projectId !== undefined && lastModified !== undefined) {
+              recordEditPosition(projectId, chapterId, { position: pending.position, lastModified });
+            }
+            if (draft.pending === pending) {
               draft.pending = undefined;
               if (draft.mounted) {
                 setSaveStatus('Tersimpan');
@@ -69,7 +74,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
       }
       await draft.writing;
     }
-  }, [chapterId, draft, setSaveStatus]);
+  }, [chapterId, draft, projectId, setSaveStatus]);
 
   const saveInBackground = useCallback(() => {
     void flushNow().catch(() => {});
@@ -113,7 +118,7 @@ export function useEditorSave({ chapterId, chapter, editor }: UseEditorSaveProps
   }, [chapter?.title]);
 
   const onEditorUpdate = useCallback(({ editor: currentEditor }: { editor: Editor }) => {
-    draft.pending = currentEditor.getHTML();
+    draft.pending = { content: currentEditor.getHTML(), position: currentEditor.state.selection.head };
     clearTimeout(draft.saveTimer);
     clearTimeout(draft.statusTimer);
     setSaveStatus('Menyimpan...');

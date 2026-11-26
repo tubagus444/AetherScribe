@@ -60,6 +60,7 @@ export function RevisionNotesPanel({ editor, focusCommentId, onFocusConsumed }: 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -151,25 +152,33 @@ export function RevisionNotesPanel({ editor, focusCommentId, onFocusConsumed }: 
     setEditingId(null);
   };
 
-  const openCount = comments.filter((c) => !c.resolved).length;
+  const openComments = comments.filter(comment => !comment.resolved);
+  const visibleComments = showOnlyOpen ? openComments : comments;
 
   return (
     <div className="w-full bg-white dark:bg-slate-900 h-full flex flex-col">
-      <header className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+      <header className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/50">
         <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
           <StickyNote size={14} />
           Catatan Revisi
         </h2>
         {comments.length > 0 && (
-          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-500/15 px-2 py-0.5 rounded-full">
-            {openCount} terbuka
-          </span>
+          <div role="group" aria-label="Filter catatan revisi" className="flex flex-wrap gap-1 text-xs font-semibold">
+            <button type="button" aria-pressed={!showOnlyOpen} onClick={() => setShowOnlyOpen(false)}
+              className="min-h-8 rounded-full px-2 text-slate-600 hover:bg-slate-200 aria-pressed:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700 dark:aria-pressed:bg-slate-700">
+              Semua
+            </button>
+            <button type="button" aria-pressed={showOnlyOpen} onClick={() => setShowOnlyOpen(true)}
+              className="min-h-8 rounded-full px-2 text-amber-800 hover:bg-amber-100 aria-pressed:bg-amber-200 dark:text-amber-300 dark:hover:bg-amber-500/20 dark:aria-pressed:bg-amber-500/30">
+              {openComments.length} terbuka
+            </button>
+          </div>
         )}
       </header>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar">
         <AnimatePresence mode="popLayout">
-          {comments.map((c) => {
+          {visibleComments.map((c) => {
             const active = c.commentId === activeId;
             const isEditing = c.commentId === editingId;
             return (
@@ -294,6 +303,11 @@ export function RevisionNotesPanel({ editor, focusCommentId, onFocusConsumed }: 
           })}
         </AnimatePresence>
 
+        {showOnlyOpen && comments.length > 0 && openComments.length === 0 && (
+          <p role="status" className="px-4 py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+            Semua catatan revisi sudah selesai.
+          </p>
+        )}
         {comments.length === 0 && (
           <div className="text-center py-12 px-4">
             <StickyNote size={24} className="mx-auto text-slate-200 dark:text-slate-700 mb-2 opacity-40" />

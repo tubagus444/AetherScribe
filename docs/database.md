@@ -564,6 +564,9 @@ Dexie dipetakan ke `ChapterStorageError` dengan jenis `quota` atau `failed`.
   melepas langganan saat ID berubah atau komponen ditutup. Editor aktif memuat
   isi awal saat membuka bab dan memuat ulang setelah pemulihan atau penggantian
   teks melalui editor bridge.
+- Penulisan isi bab menaikkan `lastModified` untuk membedakan revisi meski jam
+  perangkat belum maju. **Lanjutkan menulis** memakai nilai ini untuk memastikan
+  posisi dari preferensi browser masih cocok dengan isi bab yang dibuka.
 - Kontrak ini mencakup bab dan riwayat versi. Bootstrap proyek, impor/pemulihan
   cadangan, dan validasi referensi dari domain lain tetap memakai transaksi Dexie
   masing-masing. Skema v34 dan format cadangan v8 tetap berlaku.

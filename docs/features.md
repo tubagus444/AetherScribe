@@ -22,6 +22,15 @@ Referensi fitur AetherScribe, file implementasi, tabel database, dan kontrak tek
   Riwayat berlaku selama sesi halaman untuk bab aktif. Riwayat dimulai ulang
   saat mengganti bab atau proyek, memuat ulang halaman, atau kembali setelah
   isi bab di penyimpanan berubah dari panel lain.
+- **Lanjutkan menulis** di Dashboard membuka bab terakhir yang isi naskahnya
+  berhasil disimpan di perangkat ini, lalu mengembalikan kursor ke titik edit.
+  Membaca bab lain atau menggeser kursor saja tidak mengubah titik kerja.
+  Jika versi isi berubah, termasuk setelah pemulihan snapshot, bab terbuka
+  seperti biasa. Posisi per bab disimpan di preferensi browser.
+- Di **Catatan Revisi → Catatan Teks**, pilih jumlah catatan terbuka untuk
+  menyaring daftar. Pilih **Semua** untuk menampilkan kembali seluruh catatan.
+  Urutan kutipan mengikuti naskah dan setiap kutipan tetap bisa dipilih untuk
+  melompat ke teksnya.
 
 - Heading 1–3 di naskah tampil lebih ringkas pada layar sempit dan lebar,
   dengan ukuran yang berbeda untuk tiap level.

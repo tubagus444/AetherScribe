@@ -13,6 +13,7 @@ import { countWords } from '@/src/lib/utils';
 import { motion } from 'motion/react';
 import { useNavigation } from '@/src/contexts/NavigationContext';
 import { useDailyProgress } from '@/src/hooks/useDailyProgress';
+import { readLastEditedChapter } from '@/src/features/editor/editPosition';
 
 interface DashboardPanelProps {
   projectId: number;
@@ -35,7 +36,7 @@ const actionLabel = (t: string) => ACTION_LABELS[t] || t;
 export function DashboardPanel({ projectId }: DashboardPanelProps) {
   const [storageInfo, setStorageInfo] = useState<{ usage: number, quota: number } | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const { setActiveChapterId, setViewMode } = useNavigation();
+  const { resumeChapter } = useNavigation();
 
   const project = useOptimizedLiveQuery(() => db.projects.get(projectId), [projectId]);
   const chapters = useChapterList(projectId);
@@ -145,16 +146,16 @@ export function DashboardPanel({ projectId }: DashboardPanelProps) {
   // #1 Progres menulis harian + streak (sumber yang sama dengan pill header).
   const { wordsToday, streak, dailyGoal, dailyPercent } = useDailyProgress(projectId, totalWords, project);
 
-  // #3 Bab yang terakhir disentuh → tujuan tombol "Lanjutkan menulis".
   const lastChapter = useMemo(() => {
     if (!chapters || chapters.length === 0) return null;
-    return chapters.reduce((latest, ch) => (ch.lastModified > latest.lastModified || (ch.lastModified === latest.lastModified && ch.id! < latest.id!) ? ch : latest));
-  }, [chapters]);
+    const lastEditedId = readLastEditedChapter(projectId);
+    return chapters.find(chapter => chapter.id === lastEditedId)
+      ?? chapters.reduce((latest, ch) => (ch.lastModified > latest.lastModified || (ch.lastModified === latest.lastModified && ch.id! < latest.id!) ? ch : latest));
+  }, [chapters, projectId]);
 
   const continueWriting = () => {
     if (!lastChapter) return;
-    setActiveChapterId(lastChapter.id!);
-    setViewMode('write');
+    void resumeChapter(lastChapter.id!);
   };
 
   const formatBytes = (bytes: number) => {

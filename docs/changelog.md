@@ -6,6 +6,10 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ## 2026-11-26
 
+- **Lanjutkan menulis** di Dashboard kembali ke titik edit terakhir yang
+  tersimpan di perangkat. Membaca bab referensi tetap mempertahankan tujuan.
+- **Catatan Revisi** dapat difilter untuk menampilkan catatan terbuka sambil
+  mempertahankan urutan dan aksi lompat ke kutipan.
 - Kartu Codex langsung membuka **Kemunculan** dan memuat daftar bab saat
   penulis memilih **Cek Kemunculan di Chapter**.
 - Kartu Snippet menampilkan tombol **Opsi** untuk mengubah dan menghapus aksi,
