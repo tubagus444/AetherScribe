@@ -524,6 +524,8 @@ Nova Assistant di sidebar editor menyimpan riwayat percakapan per bab di Indexed
 ---
 
 ## Pencadangan Otomatis & Google Drive Sync
+
+- **Data & Cadangan** menampilkan titik pulih terakhir dan aksi unduhan di awal tab. Pemulihan file menampilkan nama file, tanggal arsip, dan jumlah novel setelah validasi. Perlindungan penyimpanan, pemeriksaan relasi, dan cache semantik tersedia di **Pemeliharaan data**.
 - **F19/F20:** Backup penuh/per-proyek dan ekspor manuskrip melakukan flush tervalidasi serta membaca snapshot transaksi readonly. Serialisasi Blob/kompresi di luar transaksi. Drive upload sukses dengan ID mendahului retensi; gagal prune dilaporkan terpisah. Lihat [kontrak backup](backup-format.md).
 - **Deskripsi:** Sistem cadangan berkala ke file terkompresi gzip, retensi kuota otomatis, dan integrasi opsional ke folder Google Drive pribadi via GIS token.
 - **File terkait:** `src/services/backupService.ts`, `src/services/driveBackupService.ts`, `src/lib/backupValidation.ts`, `src/lib/backupIO.ts`, `src/lib/backupLimits.ts`, `src/lib/backupRetention.ts`, `src/hooks/useAutoBackup.tsx`
@@ -598,7 +600,7 @@ Checkpoint dilakukan sebelum pekerjaan, setelah pemuatan model dan embedding, se
 ## Privasi Kredensial dan Log (F27)
 
 Pengaturan AI memiliki pilihan **Selama sesi tab ini** dan **Ingat di browser ini**,
-berlaku sesudah **Simpan Kredensial**. Instalasi baru memakai sesi; key lama yang
+berlaku sesudah **Simpan Pengaturan AI**. Instalasi baru memakai sesi; key lama yang
 sudah permanen tetap tersedia sampai pengguna menyimpan pilihan lain. Mode sesi
 menulis hanya ke sessionStorage dan membuang salinan localStorage; reload tetap
 mempertahankan sesi, dan browser dapat menyalin/memulihkan sesi saat membuka atau

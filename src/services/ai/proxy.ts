@@ -16,7 +16,7 @@ function historyText(h: { role: string; parts: { text: string }[] }): string {
   return h.parts?.[0]?.text ?? '';
 }
 
-export async function callProxy(provider: string, params: AIRenderParams, apiKey?: string): Promise<string> {
+export async function callProxy(provider: string, params: AIRenderParams, apiKey?: string, ollamaBaseUrlOverride?: string): Promise<string> {
   assertAIProvider(provider);
   enforceProviderPolicy(provider);
   const history = (params.history || []).slice(-MAX_PROXY_HISTORY);
@@ -33,7 +33,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
 
   let ollamaBaseUrl: string | undefined = undefined;
   if (provider === 'ollama') {
-     ollamaBaseUrl = localStorage.getItem('ollama_base_url') || 'http://localhost:11434';
+     ollamaBaseUrl = ollamaBaseUrlOverride ?? (localStorage.getItem('ollama_base_url') || 'http://localhost:11434');
   }
 
   if (provider === 'claude') {
@@ -227,7 +227,7 @@ export async function callProxy(provider: string, params: AIRenderParams, apiKey
         if (params.actionType === 'chat' && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('chat-output-adjusted', {
           detail: { provider, limit: adjusted }
         }));
-        return callProxy(provider, { ...params, maxTokens: adjusted }, apiKey);
+        return callProxy(provider, { ...params, maxTokens: adjusted }, apiKey, ollamaBaseUrlOverride);
       }
     }
     const code = classifyError(response.status, rawMessage);

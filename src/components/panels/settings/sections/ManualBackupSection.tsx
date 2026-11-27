@@ -2,7 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Upload, Download, Database, FileArchive, FolderInput } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/src/db';
-import { backupService, BackupData } from '@/src/services/backupService';
+import { backupService } from '@/src/services/backupService';
+import type { BackupScope } from '@/src/lib/backupFormat';
+import type { BackupRecord } from '@/src/types';
 import { summarizeProjectBackup, importedProjectName, type ProjectBackupCounts } from '@/src/lib/importRemap';
 import { invalidateContextCache } from '@/src/services/contextEngine';
 import { useProject } from '@/src/contexts/ProjectContext';
@@ -12,7 +14,14 @@ import { readBackupFile } from '@/src/lib/backupIO';
 import { useAutoBackup } from '@/src/hooks/useAutoBackup';
 import { BackupStatus } from './AutoBackupSection';
 
-export function ManualBackupSection() {
+const backupDateFormat = new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+function formatBackupDate(timestamp: number) {
+  const date = new Date(timestamp);
+  return Number.isFinite(date.getTime()) ? backupDateFormat.format(date) : 'Tanggal tidak tersedia';
+}
+
+export function ManualBackupSection({ internalBackups }: { internalBackups: BackupRecord[] | undefined }) {
   const { toast } = useToast();
   const { layerStatus, recordBackupResult } = useAutoBackup();
   const { projectId: activeProjectId, switchProject } = useProject();
@@ -23,21 +32,18 @@ export function ManualBackupSection() {
   // null = ikut proyek aktif; angka = pilihan eksplisit dari dropdown.
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   // Cadangan yang sudah di-parse & tervalidasi, menunggu konfirmasi pengguna.
-  const [pendingRestore, setPendingRestore] = useState<BackupData | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<{ input: unknown; fileName: string; timestamp: number; projectCount: number } | null>(null);
   // File impor per-novel tervalidasi + ringkasan jumlah, menunggu konfirmasi.
-  const [pendingImport, setPendingImport] = useState<{ backup: BackupData; counts: ProjectBackupCounts } | null>(null);
+  const [pendingImport, setPendingImport] = useState<{ input: unknown; projectName?: string; counts: ProjectBackupCounts } | null>(null);
+  const [readingScope, setReadingScope] = useState<BackupScope | null>(null);
+  const readingFile = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const projects = useLiveQuery(() => db.projects.orderBy('lastOpened').reverse().toArray(), []);
   const effectiveProjectId = selectedProjectId ?? activeProjectId ?? projects?.[0]?.id ?? null;
-
-  const resetFileInput = () => {
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-  const resetImportInput = () => {
-    if (importInputRef.current) importInputRef.current.value = '';
-  };
+  const latestLocalBackup = internalBackups?.[0];
+  const fileActionBusy = readingScope !== null || pendingRestore !== null || pendingImport !== null || isRestoring || isImporting;
 
   const handleBackup = async () => {
     setIsBackingUp(true);
@@ -92,72 +98,29 @@ export function ManualBackupSection() {
     }
   };
 
-  const handleRestoreClick = () => {
-    fileInputRef.current?.click();
-  };
+  const inspectFile = async (event: React.ChangeEvent<HTMLInputElement>, scope: BackupScope) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file || readingFile.current || fileActionBusy) return;
 
-  // Parse & validasi file, lalu buka dialog konfirmasi (tanpa menyentuh DB dulu).
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+    readingFile.current = true;
+    setReadingScope(scope);
     try {
-      const backup = await readBackupFile(file) as BackupData;
-
-      if (!backup.data || !backup.data.projects) {
-        throw new Error("Format file cadangan tidak valid");
+      const input = await readBackupFile(file);
+      const verified = await backupService.validateInput(input, scope);
+      // Keep the original archive for the service's checksum check on confirmation.
+      if (scope === 'all') {
+        setPendingRestore({ input, fileName: file.name, timestamp: verified.timestamp, projectCount: verified.data.projects.length });
+      } else {
+        setPendingImport({ input, projectName: verified.projectName, counts: summarizeProjectBackup(verified.data) });
       }
-
-      // Guard (#4): jalur ini adalah restore-PENUH (meng-clear semua tabel). File ekspor
-      // satu novel akan menghapus proyek lain bila dipulihkan di sini — arahkan pengguna
-      // ke tombol "Impor Novel" (non-destruktif, menambah sebagai proyek baru).
-      if (backup.scope === 'project') {
-        toast.error(
-          `Ini file ekspor satu novel${backup.projectName ? ` (“${backup.projectName}”)` : ''}. ` +
-          'Gunakan tombol “Impor Novel” di bawah untuk menambahkannya sebagai proyek baru.'
-        );
-        resetFileInput();
-        return;
-      }
-
-      await backupService.validateInput(backup, 'all');
-      setPendingRestore(backup);
     } catch (error) {
-      console.error('Failed to read backup:', error);
-      toast.error(error instanceof Error ? error.message : 'Gagal membaca file cadangan.');
-      resetFileInput();
+      toast.error(error instanceof SyntaxError ? 'Isi file cadangan harus berupa JSON yang valid.'
+        : error instanceof Error ? error.message : 'Gagal membaca file cadangan.');
+    } finally {
+      readingFile.current = false;
+      setReadingScope(null);
     }
-  };
-
-  const handleImportClick = () => {
-    importInputRef.current?.click();
-  };
-
-  // Parse & validasi file ekspor per-novel, lalu buka dialog konfirmasi impor.
-  const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    let backup: any;
-    try {
-      backup = await readBackupFile(file);
-    } catch (error) {
-      console.error('Failed to read import file:', error);
-      toast.error(error instanceof Error ? error.message : 'Gagal membaca file cadangan.');
-      resetImportInput();
-      return;
-    }
-
-    try {
-      // Fail-closed: hanya menerima file ekspor SATU novel (scope:'project').
-      await backupService.validateInput(backup, 'project');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'File impor tidak valid.');
-      resetImportInput();
-      return;
-    }
-
-    setPendingImport({ backup, counts: summarizeProjectBackup(backup.data) });
   };
 
   const confirmImport = async () => {
@@ -165,13 +128,12 @@ export function ManualBackupSection() {
     setIsImporting(true);
     try {
       // Non-destruktif: menambah proyek BARU (remap id di service), tak menyentuh yang ada.
-      const { projectId: newId } = await backupService.importProjectData(pendingImport.backup);
+      const { projectId: newId } = await backupService.importProjectData(pendingImport.input);
       await invalidateContextCache(true); // konteks/embedding di-regenerasi utk proyek baru
       await switchProject(newId);         // pindah ke proyek yang baru diimpor (tanpa reload)
-      const name = importedProjectName(pendingImport.backup.projectName);
+      const name = importedProjectName(pendingImport.projectName);
       setPendingImport(null);
       setIsImporting(false);
-      resetImportInput();
       toast.success(`Novel “${name}” berhasil diimpor sebagai proyek baru.`);
     } catch (error) {
       console.error('Failed to import project:', error);
@@ -181,18 +143,16 @@ export function ManualBackupSection() {
       toast.error(msg);
       setIsImporting(false);
       setPendingImport(null);
-      resetImportInput();
     }
   };
 
   const cancelImport = () => {
     setPendingImport(null);
-    resetImportInput();
   };
 
   // Nama hasil impor (ber-suffix) + apakah sudah ada novel bernama serupa. Peringatan
   // saja — impor tetap dibuat sebagai salinan terpisah bila pengguna melanjutkan.
-  const importBaseName = pendingImport?.backup.projectName ?? '';
+  const importBaseName = pendingImport?.projectName ?? '';
   const importTargetName = pendingImport ? importedProjectName(importBaseName) : '';
   const importNameClash = pendingImport
     ? !!projects?.some((p) => p.name === importBaseName || p.name === importTargetName)
@@ -204,7 +164,7 @@ export function ManualBackupSection() {
     try {
       // Satu sumber kebenaran restore (verifikasi checksum + snapshot pra-pemulihan
       // + clear semua tabel, atomik). Lihat backupService.restoreData.
-      await backupService.restoreData(pendingRestore);
+      await backupService.restoreData(pendingRestore.input);
       setPendingRestore(null);
       toast.success('Pemulihan berhasil! Memuat ulang…');
       setTimeout(() => window.location.reload(), 1200);
@@ -217,53 +177,65 @@ export function ManualBackupSection() {
       toast.error(msg);
       setIsRestoring(false);
       setPendingRestore(null);
-      resetFileInput();
     }
   };
 
   const cancelRestore = () => {
     setPendingRestore(null);
-    resetFileInput();
   };
 
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2">
         <Database size={18} className="text-indigo-500" />
-        <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Operasi Manual</h3>
+        <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Cadangan ruang kerja</h3>
       </div>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Ekspor seluruh ruang kerja dan gambar peta sebagai cadangan mandiri. Pemulihan dari file cadangan menimpa data yang ada.
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="space-y-1 text-sm">
+            <p className="font-medium">Titik pulih terakhir di peramban</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              {latestLocalBackup ? formatBackupDate(latestLocalBackup.timestamp)
+                : internalBackups ? 'Belum ada titik pulih lokal.' : 'Memuat titik pulih…'}
+            </p>
+          </div>
+          <a href="#titik-pulih-lokal" className="inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 hover:underline dark:text-indigo-300">
+            Lihat titik pulih lokal
+          </a>
+        </div>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Titik pulih tersimpan di peramban ini. Unduh cadangan mandiri berisi seluruh ruang kerja dan aset gambar untuk disimpan di luar peramban.
         </p>
-        <BackupStatus result={layerStatus.file} successLabel="Unduhan terakhir dimulai" okLabel="Unduhan dimulai" />
+        {layerStatus.file && <BackupStatus result={layerStatus.file} successLabel="Unduhan terakhir dimulai" okLabel="Unduhan dimulai" />}
 
         <div className="flex flex-col sm:flex-row gap-4">
           <button
+            type="button"
             onClick={handleBackup}
             disabled={isBackingUp}
-            className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-sm transition-colors shadow-sm disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
           >
-            <Download size={18} className="text-slate-500 dark:text-slate-400" />
-            {isBackingUp ? 'Mengekspor...' : 'Ekspor Semua Cadangan'}
+            <Download size={18} className="shrink-0" aria-hidden="true" />
+            {isBackingUp ? 'Menyiapkan unduhan…' : 'Unduh cadangan ruang kerja'}
           </button>
 
           <input
             type="file"
             accept=".json,.gz"
             ref={fileInputRef}
-            onChange={handleFileChange}
+            onChange={event => void inspectFile(event, 'all')}
             className="hidden"
           />
 
           <button
-            onClick={handleRestoreClick}
-            disabled={isRestoring}
-            className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-sm transition-colors shadow-sm disabled:opacity-50"
+            type="button"
+            onClick={() => { if (!fileActionBusy) fileInputRef.current?.click(); }}
+            aria-disabled={fileActionBusy}
+            className="flex-1 flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-sm transition-colors shadow-sm aria-disabled:opacity-50"
           >
             <Upload size={18} className="text-slate-500 dark:text-slate-400" />
-            {isRestoring ? 'Memulihkan...' : 'Kembalikan dari JSON'}
+            {readingScope === 'all' ? 'Memeriksa file…' : isRestoring ? 'Memulihkan…' : 'Pulihkan seluruh ruang kerja'}
           </button>
         </div>
       </div>
@@ -307,18 +279,20 @@ export function ManualBackupSection() {
           type="file"
           accept=".json,.gz"
           ref={importInputRef}
-          onChange={handleImportFileChange}
+            onChange={event => void inspectFile(event, 'project')}
           className="hidden"
         />
         <button
-          onClick={handleImportClick}
-          disabled={isImporting}
-          className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-sm transition-colors shadow-sm disabled:opacity-50"
+          type="button"
+          onClick={() => { if (!fileActionBusy) importInputRef.current?.click(); }}
+          aria-disabled={fileActionBusy}
+          className="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-sm transition-colors shadow-sm aria-disabled:opacity-50"
         >
           <FolderInput size={18} className="text-slate-500 dark:text-slate-400" />
-          {isImporting ? 'Mengimpor...' : 'Impor Novel (sebagai proyek baru)'}
+          {readingScope === 'project' ? 'Memeriksa file…' : isImporting ? 'Mengimpor…' : 'Impor satu novel sebagai proyek baru'}
         </button>
       </div>
+      <p className="sr-only" role="status">{readingScope ? 'Memeriksa file cadangan…' : ''}</p>
 
       <ConfirmDialog
         open={pendingRestore !== null}
@@ -329,10 +303,16 @@ export function ManualBackupSection() {
         onConfirm={confirmRestore}
         onCancel={cancelRestore}
         message={
-          <>
-            Ini akan <strong>menimpa SEMUA proyek, bab, dan entri</strong> Anda saat ini dengan data dari file cadangan.
-            Sebuah titik <strong>“Sebelum pemulihan”</strong> otomatis dibuat agar Anda bisa membatalkannya.
-          </>
+          pendingRestore && (
+            <div className="space-y-3">
+              <dl className="space-y-1">
+                <div><dt className="inline font-semibold">File </dt><dd className="inline break-all">{pendingRestore.fileName}</dd></div>
+                <div><dt className="inline font-semibold">Tanggal cadangan </dt><dd className="inline">{formatBackupDate(pendingRestore.timestamp)}</dd></div>
+                <div><dt className="inline font-semibold">Jumlah novel </dt><dd className="inline">{pendingRestore.projectCount}</dd></div>
+              </dl>
+              <p>Pemulihan akan <strong>mengganti seluruh ruang kerja ini</strong>. AetherScribe akan membuat titik <strong>Sebelum pemulihan</strong> sebelum mengubah data.</p>
+            </div>
+          )
         }
       />
 

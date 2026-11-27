@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { RefreshCcw, Loader2, FolderOpen, History, Database, Cloud, Upload, Check, X, MinusCircle } from 'lucide-react';
 import { backupService } from '@/src/services/backupService';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { useAutoBackup, LayerResult } from '@/src/hooks/useAutoBackup';
 import { useDriveSync } from '@/src/hooks/useDriveSync';
 import { useToast } from '@/src/hooks/useToast';
 import { ConfirmDialog } from '@/src/components/common/ConfirmDialog';
+import type { BackupRecord } from '@/src/types';
 
 // Restore yang menunggu konfirmasi — bisa dari cadangan internal atau file Drive.
 type PendingRestore =
   | { source: 'internal'; id: number; label: string }
   | { source: 'drive'; fileId: string; label: string };
+
+const restoreButtonClassName = 'min-h-11 shrink-0 px-3 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:border-indigo-400 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200';
 
 // Badge status hasil backup terakhir per-lapisan (agar kegagalan senyap kelihatan).
 export function BackupStatus({ result, successLabel = 'Cadangan berhasil terakhir', okLabel = 'Berhasil' }: {
@@ -37,7 +39,7 @@ export function BackupStatus({ result, successLabel = 'Cadangan berhasil terakhi
   );
 }
 
-export function AutoBackupSection() {
+export function AutoBackupSection({ internalBackups }: { internalBackups: BackupRecord[] | undefined }) {
   const { toast } = useToast();
   const {
     isBackingUp: isAutoBackingUp,
@@ -52,11 +54,6 @@ export function AutoBackupSection() {
 
   const [backupInterval, setBackupInterval] = useState(() =>
     localStorage.getItem('backup_interval') || '30'
-  );
-
-  const internalBackups = useLiveQuery(() =>
-    backupService.getBackupList(),
-    []
   );
 
   const handleIntervalChange = (val: string) => {
@@ -103,7 +100,7 @@ export function AutoBackupSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <RefreshCcw size={18} className="text-indigo-500" />
-          <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Mesin Pencadangan Otomatis</h3>
+          <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Pencadangan otomatis</h3>
         </div>
         <div className="flex items-center gap-2 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 rounded-full text-[10px] font-bold uppercase tracking-wider border border-indigo-100 dark:border-indigo-800/50">
           <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
@@ -117,7 +114,7 @@ export function AutoBackupSection() {
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 <Database size={16} className="text-indigo-500" />
-                Lapisan 1: IndexedDB
+                Peramban ini
               </div>
             </div>
             <BackupStatus result={layerStatus.internal} />
@@ -140,7 +137,7 @@ export function AutoBackupSection() {
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 <FolderOpen size={16} className="text-indigo-500" />
-                Lapisan 2: Folder Lokal
+                Folder lokal
               </div>
             </div>
             <BackupStatus result={layerStatus.folder} />
@@ -181,7 +178,7 @@ export function AutoBackupSection() {
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                 <Cloud size={16} className="text-indigo-500" />
-                Lapisan 3: Google Drive
+                Google Drive
               </div>
             </div>
             <BackupStatus result={layerStatus.drive} />
@@ -254,16 +251,16 @@ export function AutoBackupSection() {
 
           {/* Internal History */}
           <div className="w-full md:w-2/3 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 md:pl-6 flex flex-col">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+            <h4 id="titik-pulih-lokal" tabIndex={-1} className="scroll-mt-4 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
               <History size={14} />
               Titik Pulih Lokal
-            </div>
+            </h4>
             <div className="flex-1 space-y-2 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
               {internalBackups && internalBackups.length > 0 ? (
                 internalBackups.map((backup) => (
-                  <div key={backup.id} className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors group">
-                    <div className="flex flex-col">
-                      <span className="text-slate-900 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5">
+                  <div key={backup.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-slate-900 dark:text-slate-200 text-xs font-semibold flex flex-wrap items-center gap-1.5">
                         {format(backup.timestamp, 'MMM d, yyyy • HH:mm:ss')}
                         {backup.kind === 'pre-restore' && (
                           <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-[9px] font-bold uppercase tracking-wide">
@@ -277,7 +274,7 @@ export function AutoBackupSection() {
                     </div>
                     <button
                       onClick={() => setPendingRestore({ source: 'internal', id: backup.id!, label: format(backup.timestamp, 'PPP p') })}
-                      className="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 rounded-md text-[11px] font-medium transition-all shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      className={restoreButtonClassName}
                     >
                       Pulihkan
                     </button>
@@ -285,7 +282,7 @@ export function AutoBackupSection() {
                 ))
               ) : (
                 <div className="h-full flex items-center justify-center text-xs text-slate-400 italic py-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-lg">
-                  Belum ada titik pemulihan tersedia.
+                  {internalBackups ? 'Belum ada titik pemulihan tersedia.' : 'Memuat titik pulih…'}
                 </div>
               )}
             </div>
@@ -317,19 +314,19 @@ export function AutoBackupSection() {
                 </div>
               ) : driveSync.driveBackups && driveSync.driveBackups.length > 0 ? (
                 driveSync.driveBackups.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700/50 transition-colors group">
-                    <div className="flex flex-col">
+                  <div key={file.id} className="flex items-center justify-between gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                    <div className="flex min-w-0 flex-col">
                       <span className="text-slate-900 dark:text-slate-200 text-xs font-semibold">
                         {format(new Date(file.createdTime), 'MMM d, yyyy • HH:mm:ss')}
                       </span>
-                      <span className="text-slate-500 dark:text-slate-500 text-[10px]">
+                      <span className="truncate text-slate-500 dark:text-slate-500 text-[10px]">
                         {file.size ? `Ukuran: ${(parseInt(file.size) / 1024).toFixed(1)} KB` : file.name}
                       </span>
                     </div>
                     <button
                       onClick={() => setPendingRestore({ source: 'drive', fileId: file.id, label: format(new Date(file.createdTime), 'PPP p') })}
                       disabled={driveSync.isRestoringDrive}
-                      className="px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 rounded-md text-[11px] font-medium transition-all shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+                      className={restoreButtonClassName}
                     >
                       {driveSync.isRestoringDrive ? 'Memulihkan…' : 'Pulihkan'}
                     </button>

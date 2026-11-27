@@ -80,7 +80,7 @@ describe('portable backup without database dependencies', () => {
     const converted = await convertPortableBackup(legacy);
     expect(converted).toMatchObject({ scope: 'project', projectName: project.name });
     await expect(validatePortableBackup(converted, 'project')).resolves.toEqual(converted);
-    await expect(validatePortableBackup(converted, 'all')).rejects.toThrow(/Impor Novel/);
+    await expect(validatePortableBackup(converted, 'all')).rejects.toThrow(/Impor satu novel sebagai proyek baru/);
 
     const json = serializePortableBackup(converted);
     const bytes = new Blob([json]).size;

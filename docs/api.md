@@ -153,10 +153,10 @@ sukses mengikuti `{ "data": [...] }` dari OpenRouter dan tidak di-cache.
 
 ### POST /api/ai/ollama-models
 - **Deskripsi:** Mengambil daftar model lokal yang terpasang di instansi Ollama pengguna.
-- **File Handler:** `server.ts:285-306`
 - **Autentikasi:** Tidak perlu (akses jaringan lokal `localhost:11434`).
 - **Parameter Body (JSON):**
-  - `baseUrl` (`string`, opsional): Base URL host Ollama jika berbeda dari default `http://localhost:11434`.
+  - `baseUrl` (`string`, opsional) menerima alamat HTTP `localhost`, `127.0.0.1`, atau `[::1]` pada port `11434`. Alamat bawaan adalah `http://localhost:11434`.
+- Respons 200 dengan daftar kosong berarti layanan bisa dijangkau dan belum memiliki model. Alamat ditolak dengan 400, respons hulu bermasalah dengan 502, layanan tidak dapat dijangkau dengan 503, dan waktu habis dengan 504.
 - **Contoh Response:**
   ```json
   {

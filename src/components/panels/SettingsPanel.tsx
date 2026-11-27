@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { AISettingsTab } from '@/src/components/panels/settings/AISettingsTab';
 import { BackupTab } from '@/src/components/panels/settings/BackupTab';
+import { useAISettings } from '@/src/components/panels/settings/useAISettings';
 
 export function SettingsPanel() {
   const [activeTab, setActiveTab] = useState<'ai' | 'backup'>('ai');
+  const aiSettings = useAISettings();
 
   const tabs = [
     { id: 'ai', label: 'Konfigurasi AI', icon: BrainCircuit },
@@ -26,6 +28,10 @@ export function SettingsPanel() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
+            aria-label={tab.label}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
+            aria-describedby={tab.id === 'ai' && aiSettings.isDirty ? 'ai-settings-pending' : undefined}
             onClick={() => setActiveTab(tab.id as 'ai' | 'backup')}
             className={cn(
               "relative px-4 py-3 text-sm font-medium flex items-center gap-2 transition-colors whitespace-nowrap",
@@ -36,6 +42,12 @@ export function SettingsPanel() {
           >
             <tab.icon size={16} />
             {tab.label}
+            {tab.id === 'ai' && aiSettings.isDirty && (
+              <span id="ai-settings-pending" className="flex items-center">
+                <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden="true" />
+                <span className="sr-only">Perubahan AI belum disimpan</span>
+              </span>
+            )}
             {activeTab === tab.id && (
               <motion.div
                 layoutId="activeTabIndicatorSettings"
@@ -57,7 +69,7 @@ export function SettingsPanel() {
             transition={{ duration: 0.2 }}
             className="space-y-8"
           >
-            <AISettingsTab />
+            <AISettingsTab settings={aiSettings} />
           </motion.div>
         ) : (
           <motion.div

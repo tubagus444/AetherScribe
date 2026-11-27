@@ -1,61 +1,54 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Loader2, ChevronDown, Check, AlertCircle, RefreshCcw } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
-
-interface OllamaModel {
-  name: string;
-  size: number;
-}
+import { fetchOllamaModels, NO_OLLAMA_MODELS } from '@/src/services/ai/ollamaModels';
 
 interface Props {
+  id?: string;
   value: string;
   onChange: (value: string) => void;
   baseUrl: string;
 }
 
-export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
-  const [models, setModels] = useState<OllamaModel[]>([]);
+export function OllamaModelSelect({ id, value, onChange, baseUrl }: Props) {
+  const [models, setModels] = useState<Awaited<ReturnType<typeof fetchOllamaModels>>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const request = useRef<AbortController | null>(null);
 
-  const loadModels = useCallback(async () => {
+  const loadModels = async () => {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/ai/ollama-models', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ baseUrl })
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to load: ${response.status}`);
+      const available = await fetchOllamaModels(baseUrl, controller.signal);
+      if (!controller.signal.aborted) setModels(available);
+    } catch (cause) {
+      if (!controller.signal.aborted) {
+        setError(cause instanceof Error ? cause.message : 'Gagal memuat model Ollama.');
       }
-      const data = await response.json();
-      if (data && data.models) {
-        setModels(data.models.map((m: any) => ({
-          name: m.name,
-          size: m.size || 0,
-        })));
-      } else {
-        setError("Invalid response format.");
-      }
-    } catch (err: any) {
-      console.error('Ollama model listing failed; sensitive details omitted.');
-      setError(err.message || "Failed to load models. Check base URL.");
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setLoaded(true);
+        setIsLoading(false);
+      }
     }
-  }, [baseUrl]);
+  };
 
   useEffect(() => {
-    if (baseUrl) {
-      loadModels();
-    }
-  }, [loadModels, baseUrl]);
+    setModels([]);
+    setLoaded(false);
+    setIsLoading(false);
+    setIsOpen(false);
+    setSearch('');
+    setError(null);
+    return () => request.current?.abort();
+  }, [baseUrl]);
 
   const filteredModels = useMemo(() => {
     if (!search) return models;
@@ -77,12 +70,18 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
     <div className="relative w-full">
       <div className="flex gap-2">
         <button
+          id={id}
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 text-xs text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-between min-w-0"
+          aria-expanded={isOpen}
+          disabled={!baseUrl}
+          onClick={() => {
+            setIsOpen(!isOpen);
+            if (!isOpen && !loaded && !isLoading) void loadModels();
+          }}
+          className="flex min-h-11 min-w-0 flex-1 items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-indigo-500 dark:border-slate-700 dark:bg-slate-800"
         >
-          <span className={cn("truncate", error && "text-red-500 dark:text-red-400")}>
-            {isLoading ? 'Loading models...' : (error ? 'Failed to load models' : (selectedModel.name || 'Select a model...'))}
+          <span className={cn("min-w-0 [overflow-wrap:anywhere]", error && "text-red-700 dark:text-red-400")}>
+            {selectedModel.name || 'Pilih model…'}
           </span>
           {isLoading ? (
             <Loader2 size={14} className="animate-spin text-slate-400 shrink-0 ml-2" />
@@ -94,8 +93,9 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
         </button>
         <button
           type="button"
-          onClick={loadModels}
-          className="px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md text-slate-500 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+          disabled={!baseUrl || isLoading}
+          onClick={() => void loadModels()}
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
           title="Segarkan Model"
         >
           {isLoading ? (
@@ -106,6 +106,10 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
         </button>
       </div>
 
+      {!isOpen && loaded && (error || models.length === 0) && (
+        <p role="status" className="mt-1 text-xs text-slate-600 dark:text-slate-300">{error || NO_OLLAMA_MODELS}</p>
+      )}
+
       {isOpen && (
         <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl max-h-60 flex flex-col overflow-hidden">
           <div className="p-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
@@ -113,7 +117,7 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
             <input
               autoFocus
               type="text"
-              placeholder="Search models..."
+              placeholder="Cari model…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent border-none text-xs focus:ring-0 focus:outline-none text-slate-900 dark:text-slate-100"
@@ -121,7 +125,9 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
           </div>
           
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-            {error ? (
+            {isLoading ? (
+              <p role="status" className="p-4 text-center text-xs text-slate-500">Memuat model…</p>
+            ) : error ? (
               <div className="p-4 text-center">
                 <AlertCircle size={20} className="mx-auto mb-2 text-red-500 opacity-50" />
                 <p className="text-xs text-red-600 dark:text-red-400 mb-2 font-medium">
@@ -135,12 +141,12 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
                   }}
                   className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
                 >
-                  Try again
+                  Coba lagi
                 </button>
               </div>
             ) : filteredModels.length === 0 ? (
               <div className="p-4 text-center text-xs text-slate-500 italic">
-                No models found in Ollama instance.
+                {models.length === 0 ? NO_OLLAMA_MODELS : 'Tidak ada model yang cocok.'}
               </div>
             ) : (
               filteredModels.map((m) => (
@@ -153,7 +159,7 @@ export function OllamaModelSelect({ value, onChange, baseUrl }: Props) {
                     setSearch('');
                   }}
                   className={cn(
-                    "w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex flex-col gap-0.5 group transition-colors",
+                    "flex min-h-11 w-full flex-col gap-0.5 px-3 py-2 text-left text-sm transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
                     value === m.name && "bg-indigo-50/50 dark:bg-indigo-900/10"
                   )}
                 >

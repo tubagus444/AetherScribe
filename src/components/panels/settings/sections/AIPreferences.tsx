@@ -1,89 +1,93 @@
-import { CLOUD_PROVIDERS } from '@/src/services/ai/providerPolicy';
 import React from 'react';
 import { Shield } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
-import { ContextDepth } from '@/src/types';
+import { CLOUD_PROVIDERS } from '@/src/services/ai/providerPolicy';
+import { PROVIDER_NAMES } from '@/src/components/panels/settings/sections/ApiCredentials';
+import type { ContextDepth } from '@/src/types';
 
 interface Props {
-  localOnly: boolean; setLocalOnly: (value: boolean) => void;
-  allowedFallbacks: string[]; setAllowedFallbacks: (value: string[]) => void;
-  provider: string;
-  setProvider: (v: string) => void;
+  localOnly: boolean;
+  setLocalOnly: (value: boolean) => void;
+  allowedFallbacks: string[];
+  setAllowedFallbacks: (value: string[]) => void;
   contextDepth: ContextDepth;
-  setContextDepth: (v: ContextDepth) => void;
+  setContextDepth: (value: ContextDepth) => void;
 }
 
-export function AIPreferences({ provider, setProvider, contextDepth, setContextDepth, localOnly, setLocalOnly, allowedFallbacks, setAllowedFallbacks }: Props) {
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield size={18} className="text-indigo-500" />
-          <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Preferensi</h3>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
-          <label htmlFor="default-ai-provider" className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-            Penyedia AI Default
-          </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            Pilih AI mana yang berjalan secara default.
-          </p>
-          <select
-            id="default-ai-provider"
-            value={provider}
-            onChange={(e) => setProvider(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
-          >
-            <option value="google">Google AI Studio (Gemini)</option>
-            <option value="groq">Groq Cloud</option>
-            <option value="openrouter">OpenRouter</option>
-            <option value="claude">Anthropic (Claude)</option>
-            <option value="openai">OpenAI</option>
-            <option value="huggingface">Hugging Face</option>
-            <option value="ollama">Ollama (Lokal)</option>
-          </select>
-        </div>
+const contextDescriptions: Record<ContextDepth, string> = {
+  minimal: 'Hemat token dengan konteks yang lebih ringkas.',
+  balanced: 'Pilih lore yang relevan dengan permintaan.',
+  deep: 'Sertakan detail lebih lengkap dengan pemakaian token lebih besar.',
+};
 
-        <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              Kedalaman Konteks
-            </label>
-            <span className={cn(
-              "text-[9px] font-bold uppercase py-0.5 px-2 rounded-full",
-              contextDepth === 'minimal' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-              contextDepth === 'balanced' && "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-              contextDepth === 'deep' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-            )}>
-              {contextDepth === 'minimal' ? 'Eco Mode' : contextDepth === 'balanced' ? 'Optimal' : 'Power Mode'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex-1">
-            {contextDepth === 'minimal' && "Token rendah. Menjaga aturan, mengabaikan dunia."}
-            {contextDepth === 'balanced' && "Pencocokan cerdas. Otomatis memilih dunia."}
-            {contextDepth === 'deep' && "Token besar. Menggunakan kedetailan maksimum."}
-          </p>
-          <select
-            value={contextDepth}
-            onChange={(e) => setContextDepth(e.target.value as ContextDepth)}
-            className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
-          >
-            <option value="minimal">Minimal (Termurah)</option>
-            <option value="balanced">Seimbang (Direkomendasikan)</option>
-            <option value="deep">Mendalam (Detail Terkaya)</option>
-          </select>
+export function AIPreferences({ contextDepth, setContextDepth, localOnly, setLocalOnly, allowedFallbacks, setAllowedFallbacks }: Props) {
+  return (
+    <section aria-labelledby="ai-preferences-heading" className="space-y-5 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+      <h3 id="ai-preferences-heading" className="flex items-center gap-2 text-base font-semibold">
+        <Shield size={18} className="text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+        Preferensi
+      </h3>
+      <div className="grid gap-2 sm:grid-cols-[minmax(10rem,1fr)_minmax(0,2fr)] sm:items-center sm:gap-5">
+        <div>
+          <label htmlFor="ai-context-depth" className="block text-sm font-medium">Kedalaman Konteks</label>
+          <p id="ai-context-help" className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">{contextDescriptions[contextDepth]}</p>
         </div>
+        <select
+          id="ai-context-depth"
+          aria-describedby="ai-context-help"
+          value={contextDepth}
+          onChange={event => setContextDepth(event.target.value as ContextDepth)}
+          className="min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-indigo-500 dark:border-slate-700 dark:bg-slate-800"
+        >
+          <option value="minimal">Minimal (Termurah)</option>
+          <option value="balanced">Seimbang (Direkomendasikan)</option>
+          <option value="deep">Mendalam (Detail Terkaya)</option>
+        </select>
       </div>
-      <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-        <label className="flex gap-2 items-center"><input type="checkbox" checked={localOnly} onChange={e => setLocalOnly(e.target.checked)} />Hanya AI lokal (Ollama)</label>
-        <p className="text-xs text-slate-500">Mode lokal memblokir semua inferensi cloud, termasuk pilihan provider per aksi. Pilih Ollama sebagai penyedia utama saat mode ini aktif. Izin ini langsung tersimpan. Request yang sudah dikirim tidak dapat ditarik kembali.</p>
-        <fieldset disabled={localOnly} className="space-y-2">
-          <legend className="text-sm font-semibold">Izinkan provider cadangan</legend>
-          <p className="text-xs text-slate-500">Jika provider utama gagal, konteks naskah dapat dikirim ke provider yang dicentang dan memiliki API key. Default: tidak ada fallback lintas-provider.</p>
-          {CLOUD_PROVIDERS.map(p => <label key={p} className="flex gap-2 items-center text-sm"><input type="checkbox" checked={allowedFallbacks.includes(p)} onChange={e => setAllowedFallbacks(e.target.checked ? [...allowedFallbacks, p] : allowedFallbacks.filter(value => value !== p))} />{p}</label>)}
-        </fieldset>
+      <div className="space-y-3 border-t border-slate-200 pt-3 dark:border-slate-800">
+        <div>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+            <input
+              type="checkbox"
+              className="size-4 shrink-0 accent-indigo-600"
+              aria-describedby="ai-local-only-help"
+              checked={localOnly}
+              onChange={event => setLocalOnly(event.target.checked)}
+            />
+            Hanya AI lokal (Ollama)
+          </label>
+          <p id="ai-local-only-help" className="text-xs text-slate-600 dark:text-slate-400">
+            <strong>Berlaku langsung.</strong> Mode ini memblokir inferensi cloud. Permintaan yang sudah dikirim dapat berlanjut.
+          </p>
+        </div>
+        <details className="rounded-lg border border-slate-200 px-3 dark:border-slate-700">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+            Penyedia cadangan
+            <span className="ml-2 text-xs font-normal text-slate-600 dark:text-slate-400">
+              {localOnly ? 'Nonaktif selama mode lokal' : `${allowedFallbacks.length} diizinkan`}
+            </span>
+          </summary>
+          <fieldset disabled={localOnly} className="space-y-2 pb-3">
+            <legend className="sr-only">Izinkan penyedia cadangan</legend>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              <strong>Berlaku langsung.</strong> Jika penyedia utama gagal, konteks naskah dapat dikirim ke penyedia yang kamu izinkan dan memiliki API key.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {CLOUD_PROVIDERS.map(provider => (
+                <label key={provider} className="flex min-h-11 items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800">
+                  <input
+                    type="checkbox"
+                    className="size-4 shrink-0 accent-indigo-600"
+                    checked={allowedFallbacks.includes(provider)}
+                    onChange={event => setAllowedFallbacks(event.target.checked
+                      ? [...allowedFallbacks, provider]
+                      : allowedFallbacks.filter(value => value !== provider))}
+                  />
+                  {PROVIDER_NAMES[provider]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </details>
       </div>
     </section>
   );

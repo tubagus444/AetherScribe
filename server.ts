@@ -311,23 +311,24 @@ export function createProxyApp(port = 3000) {
   post("/api/ai/ollama-models", async (req, res) => {
     const { baseUrl } = req.body;
     const url = `${(baseUrl || 'http://localhost:11434').replace(/\/$/, '')}/api/tags`;
+    const timeout = AbortSignal.timeout(8000);
 
+    let response: Response;
     try {
-      const response = await fetch(url, {
-        method: 'GET', redirect: 'error',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-
-      const data = await response.json();
-      res.status(200).json(data);
-    } catch (error: any) {
-      sendError(res, 500, error, 'Ollama models listing error', 'Failed to connect to Ollama. Make sure it is running globally.');
+      response = await fetch(url, { redirect: 'manual', signal: timeout, headers: { Accept: 'application/json' } });
+    } catch {
+      if (timeout.aborted) return res.status(504).json({ error: 'Ollama terlalu lama merespons.' });
+      return res.status(503).json({ error: 'Ollama tidak dapat dijangkau.' });
+    }
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return res.status(502).json({ error: 'Alamat tersebut tidak mengembalikan daftar model Ollama.' });
+    }
+    try {
+      res.json(await response.json());
+    } catch {
+      if (timeout.aborted) return res.status(504).json({ error: 'Ollama terlalu lama merespons.' });
+      res.status(502).json({ error: 'Respons daftar model Ollama tidak valid.' });
     }
   });
 

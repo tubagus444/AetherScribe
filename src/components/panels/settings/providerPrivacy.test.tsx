@@ -18,7 +18,8 @@ it('privacy controls disable cloud fallback selections in local-only mode', () =
     return <AIPreferences {...settings} />;
   }
   render(<Preferences />);
+  expect(screen.getByText('Penyedia cadangan').closest('details')!.open).toBe(false);
   fireEvent.click(screen.getByLabelText('Hanya AI lokal (Ollama)'));
-  expect(screen.getByLabelText('openai').closest('fieldset')!.disabled).toBe(true);
+  expect(screen.getByLabelText('OpenAI').closest('fieldset')!.disabled).toBe(true);
   expect(localStorage.getItem('ai_local_only')).toBe('true');
 });

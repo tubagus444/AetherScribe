@@ -189,8 +189,8 @@ describe('validateProjectBackup', () => {
   });
 
   it('menolak cadangan penuh (scope != project)', () => {
-    expect(() => validateProjectBackup({ version: 7, timestamp: 1, scope: 'all', data: sampleData() })).toThrow(/bukan file ekspor per-novel/i);
-    expect(() => validateProjectBackup({ version: 7, timestamp: 1, data: sampleData() })).toThrow(/bukan file ekspor per-novel/i);
+    expect(() => validateProjectBackup({ version: 7, timestamp: 1, scope: 'all', data: sampleData() })).toThrow(/Pulihkan seluruh ruang kerja/);
+    expect(() => validateProjectBackup({ version: 7, timestamp: 1, data: sampleData() })).toThrow(/Pulihkan seluruh ruang kerja/);
   });
 
   it('menolak file berisi lebih dari satu proyek', () => {

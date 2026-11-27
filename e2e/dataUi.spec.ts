@@ -52,11 +52,11 @@ async function state(page: Page) {
 async function settings(page: Page) {
   await page.getByRole('button', { name: 'Pengaturan Aplikasi', exact: true }).click();
   await page.getByRole('button', { name: 'Data & Cadangan' }).click();
-  await expect(page.getByText('Operasi Manual', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cadangan ruang kerja' })).toBeVisible();
 }
 async function exported(page: Page, project: boolean) {
   const waiting = page.waitForEvent('download');
-  await page.getByRole('button', { name: project ? 'Ekspor Novel Ini' : 'Ekspor Semua Cadangan', exact: true }).click();
+  await page.getByRole('button', { name: project ? 'Ekspor Novel Ini' : 'Unduh cadangan ruang kerja', exact: true }).click();
   const download = await waiting;
   const path = await download.path();
   if (!path) throw new Error('Download missing');
@@ -64,7 +64,7 @@ async function exported(page: Page, project: boolean) {
 }
 async function choose(page: Page, project: boolean, file: { name: string; mimeType: string; buffer: Buffer }) {
   const waiting = page.waitForEvent('filechooser');
-  await page.getByRole('button', { name: project ? 'Impor Novel (sebagai proyek baru)' : 'Kembalikan dari JSON', exact: true }).click();
+  await page.getByRole('button', { name: project ? 'Impor satu novel sebagai proyek baru' : 'Pulihkan seluruh ruang kerja', exact: true }).click();
   await (await waiting).setFiles(file);
 }
 
@@ -86,8 +86,23 @@ test('DB01 restores a full downloaded file into a fresh browser context', async 
     expect((await state(target)).images).toEqual([]);
     await target.goto('/');
     await settings(target);
+    const beforeValidation = await state(target);
+    await target.evaluate(() => {
+      const readFileBytes = File.prototype.arrayBuffer;
+      File.prototype.arrayBuffer = async function () {
+        await new Promise<void>(resolve => Reflect.set(window, 'resumeBackupRead', resolve));
+        return readFileBytes.call(this);
+      };
+    });
     await choose(target, false, file);
     const dialog = target.getByRole('alertdialog', { name: 'Timpa semua data?' });
+    await expect(target.getByRole('button', { name: 'Memeriksa file…', exact: true })).toBeDisabled();
+    await expect(dialog).toHaveCount(0);
+    expect(await state(target)).toEqual(beforeValidation);
+    await target.evaluate(() => Reflect.get(window, 'resumeBackupRead')());
+    await expect(dialog).toContainText(file.name);
+    await expect(dialog).toContainText(/Tanggal cadangan\s+\S/);
+    await expect(dialog).toContainText(/Jumlah novel\s+2/);
     await dialog.getByRole('button', { name: 'Ya, pulihkan' }).click();
     await expect.poll(() => state(target)).toEqual(source);
   } finally {
@@ -157,6 +172,7 @@ for (const supported of [true, false]) {
       });
     }, supported);
     await settings(page);
+    await page.getByText('Pemeliharaan data', { exact: true }).click();
     if (supported) await page.getByRole('button', { name: 'Minta Perlindungan Penyimpanan' }).click();
     await expect(page.getByText(supported ? /Peramban menolak permintaan/ : /Perlindungan penyimpanan tidak tersedia/)).toBeVisible();
     const file = await exported(page, false);
@@ -1023,6 +1039,7 @@ test('DB03 integrity report finds a foreign chapter link and leaves the text int
   });
   const before = await state(page);
   await settings(page);
+  await page.getByText('Pemeliharaan data', { exact: true }).click();
   await page.getByRole('button', { name: 'Periksa Relasi Data', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: '1 masalah relasi ditemukan.' })).toBeVisible();
   await expect(page.getByText('timeline #1 · chapterId · Target berada di proyek lain', { exact: true })).toBeVisible();

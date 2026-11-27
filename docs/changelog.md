@@ -4,8 +4,26 @@ Catatan riwayat perubahan arsitektur, fitur, perbaikan bug, dan dokumentasi di r
 
 ---
 
+## 2026-11-27
+
+- Kartu **Penyedia utama** menjelaskan bahwa pilihan yang disimpan dipakai
+  saat pengguna meminta bantuan AI tanpa memilih penyedia lain.
+
 ## 2026-11-26
 
+- Konfigurasi AI memakai baris terpisah untuk penyedia, kredensial, serta
+  kedua model. Kontrol lebih besar di layar sentuh dan daftar penyedia
+  cadangan dapat dibuka dari Preferensi.
+- Pengaturan AI mempertahankan draf saat pindah tab dan menampilkan tombol
+  **Simpan Pengaturan AI** ketika ada perubahan. Koneksi dan model utama
+  serta model tugas ringan dihimpun di kartu **Penyedia aktif**.
+- Tombol **Pulihkan** selalu terlihat pada titik pulih lokal dan Google Drive
+  serta memiliki tinggi sasaran sentuh minimal 44 px.
+- Tab **Data & Cadangan** mendahulukan titik pulih terakhir dan unduhan
+  cadangan mandiri. Pemulihan file menampilkan kemajuan pemeriksaan dan
+  ringkasan arsip sebelum konfirmasi.
+- Uji Ollama membedakan alamat ditolak, layanan tidak terjangkau, dan daftar
+  model kosong sebelum menguji model utama.
 - **Model Tugas Ringan** menyediakan daftar model teks yang dapat dicari per
   penyedia cloud, dengan opsi kembali ke default dan memuat ulang daftar.
 - Pencarian panel Codex mencocokkan label dan nilai fakta terkini, termasuk

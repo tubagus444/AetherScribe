@@ -26,6 +26,7 @@ function postJson(path: string, body: unknown, host: string, apiKey?: string) {
 it.each([
   ['/api/ai/proxy', { provider: 'google', body: { model: 42 } }, 'localhost:3000', 400],
   ['/api/ai/ollama-models', { baseUrl: 42 }, 'localhost:3000', 400],
+  ['/api/ai/ollama-models', { baseUrl: 'http://localhost:3000' }, 'localhost:3000', 400],
   ['/api/ai/google-models', {}, 'attacker.test:3000', 403],
   ['/api/ai/openrouter-models', {}, 'attacker.test:3000', 403],
 ] as const)('HTTP %s rejects before contacting upstream', async (path, body, host, status) => {
@@ -34,6 +35,25 @@ it.each([
     const result = await postJson(path, body, host);
     expect(result.status).toBe(status); expect(JSON.parse(result.body).error).toBeTruthy(); expect(upstream).not.toHaveBeenCalled();
   } finally { upstream.mockRestore(); }
+});
+
+it('distinguishes an unreachable Ollama from an invalid or empty model catalog', async () => {
+  const upstream = vi.spyOn(globalThis, 'fetch')
+    .mockRejectedValueOnce(new TypeError('fetch failed'))
+    .mockResolvedValueOnce(new Response('Not Ollama'))
+    .mockResolvedValueOnce(Response.json({ models: [] }));
+  try {
+    const load = () => postJson('/api/ai/ollama-models', { baseUrl: 'http://127.0.0.1:11434' }, 'localhost:3000');
+    expect((await load()).status).toBe(503);
+    expect((await load()).status).toBe(502);
+    const empty = await load();
+    expect(empty.status).toBe(200);
+    expect(JSON.parse(empty.body)).toEqual({ models: [] });
+    expect(upstream).toHaveBeenCalledWith('http://127.0.0.1:11434/api/tags', expect.objectContaining({ redirect: 'manual' }));
+    expect(upstream).toHaveBeenCalledTimes(3);
+  } finally {
+    upstream.mockRestore();
+  }
 });
 
 it('loads the OpenRouter account catalog with the form key or server key', async () => {

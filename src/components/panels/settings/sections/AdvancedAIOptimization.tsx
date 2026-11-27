@@ -1,20 +1,11 @@
 import React from 'react';
-import { BrainCircuit } from 'lucide-react';
-import { ModelSelect } from '@/src/components/common/ModelSelect';
-import { isModelListProvider } from '@/src/services/ai/modelService';
-import type { ProviderKeys } from '@/src/services/ai/credentialStore';
-import { getDefaultLightModelForProvider } from '@/src/services/ai/proxy';
-import { DEFAULT_REWRITE_TEMPERATURE } from '@/src/lib/aiTuning';
+import { DEFAULT_REWRITE_TEMPERATURE, type ClaudeCacheTtl } from '@/src/lib/aiTuning';
 
 interface Props {
-  provider: string;
-  keys: ProviderKeys;
   maxLoreChars: string;
   setMaxLoreChars: (v: string) => void;
-  lightModels: Record<string, string>;
-  setLightModels: (v: Record<string, string>) => void;
-  cacheTtl: string;
-  setCacheTtl: (v: string) => void;
+  cacheTtl: ClaudeCacheTtl;
+  setCacheTtl: (v: ClaudeCacheTtl) => void;
   rewriteTemp: string;
   setRewriteTemp: (v: string) => void;
   inlineConsistencyAI: boolean;
@@ -22,23 +13,15 @@ interface Props {
 }
 
 export function AdvancedAIOptimization({
-  provider, keys,
   maxLoreChars, setMaxLoreChars,
-  lightModels, setLightModels,
   cacheTtl, setCacheTtl,
   rewriteTemp, setRewriteTemp,
   inlineConsistencyAI, onToggleInlineConsistencyAI,
 }: Props) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <BrainCircuit size={18} className="text-indigo-500" />
-        <div>
-          <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100">Optimasi AI Lanjutan</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Penyetelan token & biaya untuk pengguna mahir. Default sudah aman dibiarkan.</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <summary className="cursor-pointer text-sm font-semibold">Optimasi AI Lanjutan</summary>
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* #5 — cap lore di cache */}
         <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
           <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
@@ -59,31 +42,6 @@ export function AdvancedAIOptimization({
           </select>
         </div>
 
-        {/* #7 — override model tugas ringan untuk provider default terpilih */}
-        <div className="min-w-0 p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
-          <label htmlFor="light-task-model" className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
-            Model Tugas Ringan
-          </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex-1">
-            Model untuk rangkuman dan ekstraksi entitas pada penyedia <strong>{provider}</strong>. Simpan pilihan lewat <strong>Simpan Kredensial</strong>.
-          </p>
-          {isModelListProvider(provider) ? (
-            <ModelSelect
-              key={provider}
-              id="light-task-model"
-              provider={provider}
-              apiKey={keys[provider]}
-              value={lightModels[provider] ?? ''}
-              onChange={(value) => setLightModels({ ...lightModels, [provider]: value })}
-              lightTaskDefault={getDefaultLightModelForProvider(provider) ?? ''}
-            />
-          ) : (
-            <p className="text-xs italic text-slate-400 dark:text-slate-500 py-2">
-              Tugas ringan memakai model utama.
-            </p>
-          )}
-        </div>
-
         {/* #P5 — masa hidup (TTL) cache Claude */}
         <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm flex flex-col">
           <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
@@ -95,7 +53,7 @@ export function AdvancedAIOptimization({
           <select
             aria-label="Masa Hidup Cache Claude"
             value={cacheTtl}
-            onChange={(e) => setCacheTtl(e.target.value)}
+            onChange={(e) => setCacheTtl(e.target.value === '5m' ? '5m' : '1h')}
             className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-shadow"
           >
             <option value="1h">1 jam — default (sesi menulis panjang)</option>
@@ -142,7 +100,7 @@ export function AdvancedAIOptimization({
                 Bila aktif, AI memeriksa <strong>paragraf yang sedang kamu ketik</strong> terhadap Codex/Bible setelah jeda berhenti mengetik, lalu menggarisbawahi kalimat berpotensi kontradiktif (ungu). <strong>Memakai token tiap paragraf</strong> yang diperiksa. Kalau dimatikan, kamu tetap bisa memeriksa kapan saja lewat tombol <strong>"Cek Konsistensi"</strong> di menu seleksi teks (pilih teks → klik).
               </p>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 italic">
-                Tersimpan otomatis saat diklik (tak perlu tombol Simpan). Saat memeriksa, indikator muncul di editor.
+                Berlaku langsung. Saat memeriksa, indikator muncul di editor.
               </p>
             </div>
             <div className="flex flex-col items-center gap-1.5 shrink-0">
@@ -162,6 +120,6 @@ export function AdvancedAIOptimization({
           </div>
         </div>
       </div>
-    </section>
+    </details>
   );
 }

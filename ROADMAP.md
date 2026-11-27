@@ -87,6 +87,7 @@ dengan aksi **Salin** dan **Tutup** agar penulis bisa merevisi sendiri.
 
 ### Pengaturan AI
 
+- [Penyempurnaan Konfigurasi AI, Data & Cadangan, dan pemulihan](docs/reports/audits/2026-11-26-pengaturan-ai-dan-pemulihan.md)
 - [Pemilih model tugas ringan per penyedia](docs/reports/audits/2026-11-26-model-tugas-ringan.md)
 
 ### Editor, Snippet, dan pencarian

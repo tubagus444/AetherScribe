@@ -174,11 +174,22 @@ Pertahankan `SettingsPanel` sebagai shell tab. Tambahkan kontrol pada section
 terkait dan pusatkan baca/tulis pengaturan AI di `useAISettings.ts`. Gunakan
 `useConnectionTest.ts` serta komponen status koneksi yang ada.
 
+Shell Pengaturan menyimpan draf selama pengguna berpindah antara Konfigurasi AI
+dan Data & Cadangan. Tombol **Simpan Pengaturan AI** muncul ketika draf berubah.
+Mode lokal, izin penyedia cadangan, dan konsistensi otomatis tetap berlaku
+langsung. Kartu **Penyedia utama** merangkum pilihan bawaan, koneksi, dan model.
+Uji koneksi memakai model utama dan alamat Ollama dari form ketika tersedia.
+Uji Ollama memeriksa katalog model lebih dulu dan menampilkan keadaan alamat
+ditolak, layanan tidak terjangkau, atau katalog kosong sebelum menguji model.
+Kontrol penyedia dan model memakai baris terpisah. Label berada di atas kontrol
+di layar sempit dan sejajar di layar lebar. Daftar izin cadangan dapat dibuka
+dari Preferensi dan statusnya terlihat saat daftar tertutup.
+
 Pemilih model tugas ringan memakai `ModelSelect` dan memuat katalog penyedia
 cloud saat dibuka. Proxy memakai API key pada form atau fallback server.
 Gunakan ID kosong untuk default AetherScribe. ID lama tetap dipertahankan
 saat katalog gagal dimuat atau tidak mencantumkannya. Pilihan disimpan per
-penyedia melalui **Simpan Kredensial**. Ollama memakai model utama.
+penyedia melalui **Simpan Pengaturan AI**. Ollama memakai model utama.
 Rangkuman otomatis di latar belakang memerlukan API key di browser.
 
 Facade AI dan panel memakai `credentialStore` bersama. Terapkan perubahan mode

@@ -529,9 +529,12 @@ test('F16 context facade communicates with a native worker without a model downl
 test('F27 settings keep session keys out of persistent storage and clear saved keys', async ({ page }) => {
   await page.route('**/api/ai/ollama-models', route => route.fulfill({ json: { models: [] } }));
   await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
+  await page.getByLabel('Penyedia AI', { exact: true }).selectOption('openai');
+  const storageSettings = page.getByText('Penyedia lain dan penyimpanan API key', { exact: true });
+  await storageSettings.click();
   const mode = page.getByLabel('Penyimpanan API key');
   const key = page.getByLabel('API key OpenAI', { exact: true });
-  const save = page.getByRole('button', { name: /Simpan Kredensial|Tersimpan!/ });
+  const save = page.getByRole('button', { name: 'Simpan Pengaturan AI' });
   await expect(mode).toHaveValue('session');
   await key.fill('F27-SYNTHETIC-SESSION');
   await save.click();
@@ -542,11 +545,13 @@ test('F27 settings keep session keys out of persistent storage and clear saved k
   await page.reload();
   await expect(key).toHaveValue('');
   await key.fill('F27-SYNTHETIC-PERSISTENT');
+  await storageSettings.click();
   await mode.selectOption('persistent');
   await save.click();
   await page.evaluate(() => sessionStorage.clear());
   await page.reload();
   await expect(key).toHaveValue('F27-SYNTHETIC-PERSISTENT');
+  await storageSettings.click();
   await page.getByRole('button', { name: 'Hapus semua API key dari browser ini' }).click();
   await expect(key).toHaveValue('');
   expect(await page.evaluate(() => localStorage.getItem('ai_key_openai'))).toBeNull();
@@ -569,17 +574,36 @@ test('light task models use the selected provider catalog and preserve saved cho
 
   await page.evaluate(() => localStorage.setItem('ai_light_model_groq', 'legacy-groq-model'));
   await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
-  const provider = page.getByLabel('Penyedia AI Default');
+  const provider = page.getByLabel('Penyedia AI', { exact: true });
   const model = page.getByLabel('Model Tugas Ringan', { exact: true });
-  const save = page.getByRole('button', { name: /Simpan Kredensial|Tersimpan!/ });
+  const save = page.getByRole('button', { name: 'Simpan Pengaturan AI' });
+  const primaryProvider = page.getByRole('region', { name: 'Penyedia utama' });
+  const mainModel = primaryProvider.getByLabel('Model utama', { exact: true });
+  await expect(provider).toHaveAccessibleDescription(/setelah disimpan.*tanpa memilih penyedia lain/i);
+  const expectAlignedModelRows = async () => {
+    const mainBounds = await mainModel.boundingBox();
+    const lightBounds = await model.boundingBox();
+    expect(mainBounds).not.toBeNull();
+    expect(lightBounds).not.toBeNull();
+    expect(mainBounds!.height).toBeGreaterThanOrEqual(44);
+    expect(lightBounds!.height).toBeGreaterThanOrEqual(44);
+    expect(Math.abs(mainBounds!.x - lightBounds!.x)).toBeLessThan(1);
+    expect(Math.abs(mainBounds!.width - lightBounds!.width)).toBeLessThan(1);
+    expect(lightBounds!.y).toBeGreaterThan(mainBounds!.y + mainBounds!.height);
+  };
 
   await provider.selectOption('groq');
   await page.getByLabel('API key Groq Cloud').fill('synthetic-groq');
+  await expectAlignedModelRows();
   await expect(model).toContainText('legacy-groq-model');
   expect(groqRequests).toBe(0);
   await model.click();
   await expect(page.getByText(/Gagal memuat daftar model/)).toBeVisible();
   await expect(model).toContainText('legacy-groq-model');
+  await page.getByLabel('API key Groq Cloud').click();
+  await expect(page.getByLabel('API key Groq Cloud')).toBeFocused();
+  await expect(model).toHaveAttribute('aria-expanded', 'false');
+  await model.click();
   await page.getByTitle('Muat ulang daftar model').click();
   await expect(page.getByRole('button', { name: /groq-text-model/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /whisper-large/ })).toHaveCount(0);
@@ -603,6 +627,7 @@ test('light task models use the selected provider catalog and preserve saved cho
   await page.setViewportSize({ width: 390, height: 700 });
   await provider.selectOption('groq');
   await expect(model).toContainText('groq-text-model');
+  await expectAlignedModelRows();
   await model.click();
   await search.press('Escape');
   await expect(model).toBeFocused();
@@ -611,6 +636,123 @@ test('light task models use the selected provider catalog and preserve saved cho
   await save.click();
   expect(await page.evaluate(() => localStorage.getItem('ai_light_model_groq'))).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem('ai_light_model_openrouter'))).toBe('test/account-model');
+});
+
+test('AI settings keep the draft across tabs and apply local privacy immediately', async ({ page }) => {
+  const tested: Array<{ provider: string; model: string; ollamaBaseUrl: string }> = [];
+  await page.route('**/api/ai/ollama-models', route => route.fulfill({ json: { models: [{ name: 'llama3.2:latest' }] } }));
+  await page.route('**/api/ai/proxy', route => {
+    const { provider, body, ollamaBaseUrl } = route.request().postDataJSON();
+    tested.push({ provider, model: body.model, ollamaBaseUrl });
+    return route.fulfill({ json: { choices: [{ message: { content: 'OK' } }] } });
+  });
+  await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
+  const provider = page.getByLabel('Penyedia AI', { exact: true });
+  const save = page.getByRole('button', { name: 'Simpan Pengaturan AI' });
+  await expect(save).toHaveCount(0);
+  await provider.selectOption('openai');
+  await expect(save).toBeVisible();
+  await provider.selectOption('google');
+  await expect(save).toHaveCount(0);
+  await provider.selectOption('groq');
+  await page.getByLabel('API key Groq Cloud').fill('synthetic-groq-draft');
+  await expect(page.getByRole('button', { name: 'Uji koneksi', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Data & Cadangan' }).click();
+  await expect(page.getByRole('heading', { name: 'Cadangan ruang kerja' })).toBeVisible();
+  await page.getByRole('button', { name: 'Konfigurasi AI' }).click();
+  await expect(provider).toHaveValue('groq');
+  await expect(page.getByLabel('API key Groq Cloud')).toHaveValue('synthetic-groq-draft');
+  expect(await page.evaluate(() => ({
+    provider: localStorage.getItem('ai_provider'),
+    key: sessionStorage.getItem('ai_key_groq'),
+    localOnly: localStorage.getItem('ai_local_only'),
+  }))).toEqual({ provider: null, key: null, localOnly: 'true' });
+
+  const localOnly = page.getByLabel('Hanya AI lokal (Ollama)');
+  await localOnly.uncheck();
+  expect(await page.evaluate(() => localStorage.getItem('ai_local_only'))).toBe('false');
+  const fallback = page.locator('summary').filter({ hasText: 'Penyedia cadangan' });
+  const openAI = page.getByRole('checkbox', { name: 'OpenAI', exact: true });
+  await expect(openAI).toHaveCount(0);
+  await fallback.click();
+  await openAI.check();
+  await expect(fallback).toContainText('1 diizinkan');
+  await openAI.uncheck();
+  await fallback.click();
+  await page.getByRole('button', { name: 'Uji koneksi', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Koneksi berhasil' })).toBeVisible();
+  expect(tested[0]).toMatchObject({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
+  await localOnly.check();
+  await page.getByRole('button', { name: 'Pilih Ollama' }).click();
+  await expect(provider).toHaveValue('ollama');
+  await page.getByLabel('Aktifkan Ollama').check();
+  await page.getByLabel('Alamat Ollama').fill('  http://127.0.0.1:11434  ');
+  await page.getByRole('button', { name: 'Uji koneksi', exact: true }).click();
+  await expect.poll(() => tested[1]).toEqual({ provider: 'ollama', model: 'llama3.2', ollamaBaseUrl: 'http://127.0.0.1:11434' });
+  expect(await page.evaluate(() => localStorage.getItem('ollama_base_url'))).toBeNull();
+  await save.click();
+  await expect(page.getByText('Pengaturan AI tersimpan.')).toBeVisible();
+  await page.reload();
+  await expect(provider).toHaveValue('ollama');
+  await expect(page.getByLabel('Alamat Ollama')).toHaveValue('http://127.0.0.1:11434');
+});
+
+test('settings distinguish rejected Ollama addresses, unreachable service and empty models', async ({ page }) => {
+  let catalogStatus = 400;
+  let inferenceRequests = 0;
+  await page.route('**/api/ai/ollama-models', route => route.fulfill({ status: catalogStatus, json: { models: [] } }));
+  await page.route('**/api/ai/proxy', route => {
+    inferenceRequests += 1;
+    return route.fulfill({ json: {} });
+  });
+  await page.getByRole('button', { name: 'Pengaturan Aplikasi' }).click();
+  await page.getByLabel('Penyedia AI', { exact: true }).selectOption('ollama');
+  await page.getByLabel('Aktifkan Ollama').check();
+  const address = page.getByLabel('Alamat Ollama');
+  const testConnection = page.getByRole('button', { name: /^Uji (ulang )?koneksi$/i });
+  const alert = page.getByRole('alert');
+  await address.fill('http://localhost:3000');
+  await testConnection.click();
+  await expect(alert).toContainText('Alamat Ollama ditolak');
+  await address.fill('http://127.0.0.1:11434');
+  catalogStatus = 503;
+  await testConnection.click();
+  await expect(alert).toContainText('Jalankan Ollama di perangkat ini');
+  catalogStatus = 200;
+  await testConnection.click();
+  await expect(alert).toContainText('belum ada model terpasang');
+  expect(inferenceRequests).toBe(0);
+  expect(await page.evaluate(() => localStorage.getItem('ollama_base_url'))).toBeNull();
+});
+
+test('settings show and allow tapping the local restore action on a touch viewport', async ({ browser, baseURL }) => {
+  const touch = await browser.newContext({ baseURL, hasTouch: true, serviceWorkers: 'block' });
+  const mobile = await touch.newPage();
+  await touch.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+  await mobile.route('**/__e2e_seed', route => route.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+  await mobile.goto('/__e2e_seed');
+  await mobile.evaluate(async () => {
+    const modulePath = '/src/db.ts';
+    const { db } = await import(modulePath);
+    await db.projects.add({ id: 1, name: 'Novel Sintetis', description: '', createdAt: 1, lastOpened: 1 });
+    await db.backups.add({ timestamp: Date.now(), size: 1024, kind: 'pre-restore', data: '' });
+    localStorage.setItem('aether_view_mode', 'settings');
+  });
+  await mobile.goto('/');
+  await expect(mobile.getByRole('heading', { name: 'Pengaturan', exact: true })).toBeVisible();
+  await mobile.getByRole('button', { name: 'Tampilkan/Sembunyikan Sidebar' }).click();
+  await mobile.setViewportSize({ width: 390, height: 700 });
+  await mobile.getByRole('button', { name: 'Data & Cadangan' }).tap();
+  await expect(mobile.getByRole('heading', { name: 'Pemeriksaan Relasi Data' })).toHaveCount(0);
+  await mobile.getByRole('link', { name: 'Lihat titik pulih lokal' }).tap();
+  const restore = mobile.getByRole('button', { name: 'Pulihkan', exact: true });
+  await expect(restore).toHaveCSS('opacity', '1');
+  expect(await restore.evaluate(element => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await restore.tap();
+  await expect(mobile.getByRole('alertdialog', { name: 'Timpa semua data?' })).toBeVisible();
+  await mobile.getByRole('button', { name: 'Batal', exact: true }).tap();
+  await expect(mobile.getByRole('alertdialog')).toHaveCount(0);
+  await touch.close();
 });
 
 for (const [legacy, current] of [['arc', 'continuity'], ['orphans', 'completeness'], ['unknown-panel', 'write'], ['workshop', 'codex']]) {

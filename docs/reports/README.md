@@ -8,6 +8,7 @@ Gunakan [referensi aplikasi](../README.md) untuk perilaku saat ini dan
 
 | Periode | Laporan |
 | --- | --- |
+| Pengaturan dan cadangan 26 November 2026 | [Verifikasi Konfigurasi AI, Data & Cadangan, dan pemulihan](audits/2026-11-26-pengaturan-ai-dan-pemulihan.md) |
 | Pengaturan AI 26 November 2026 | [Verifikasi pemilih model tugas ringan](audits/2026-11-26-model-tugas-ringan.md) |
 | Fakta Codex 26 November 2026 | [Verifikasi pencarian dan tampilan sampai bab pilihan](audits/2026-11-26-codex-fakta.md) |
 | Editor 26 November 2026 | [Verifikasi posisi edit dan filter catatan revisi](audits/2026-11-26-editor-posisi-catatan-revisi.md) |

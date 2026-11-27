@@ -218,9 +218,9 @@ export function validateBackup(backup: unknown, scope?: BackupScope): asserts ba
   }
   scope ??= b.scope === 'project' ? 'project' : 'all';
   if (scope === 'all' && b.scope !== undefined && b.scope !== 'all') {
-    throw new Error('File ekspor per-novel tidak dapat mengganti workspace. Gunakan “Impor Novel”.');
+    throw new Error('Ini file ekspor satu novel. Gunakan “Impor satu novel sebagai proyek baru”.');
   }
-  if (scope === 'project' && b.scope !== 'project') throw new Error('Ini bukan file ekspor per-novel. Gunakan pemulihan cadangan penuh.');
+  if (scope === 'project' && b.scope !== 'project') throw new Error('Impor memerlukan file ekspor satu novel. Untuk cadangan penuh, gunakan “Pulihkan seluruh ruang kerja”.');
   if (b.version >= 8 && (!b.imageMode || !b.scope)) fail(`scope dan imageMode wajib pada v${b.version}`);
   if (scope === 'project' && b.imageMode === 'references') fail('impor novel membutuhkan gambar lengkap');
   const d = b.data as Record<string, Row[]>;

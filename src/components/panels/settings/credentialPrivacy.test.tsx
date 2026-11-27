@@ -3,11 +3,11 @@ import React from 'react';
 import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { useAISettings } from './useAISettings';
-import { ApiCredentials } from './sections/ApiCredentials';
+import { AISettingsTab } from './AISettingsTab';
 import { readCredential } from '@/src/services/ai/credentialStore';
 
 vi.mock('@/src/components/common/ModelSelect', () => ({ ModelSelect: () => null }));
-vi.mock('./useConnectionTest', () => ({ useConnectionTest: () => ({ statusOf: () => 'idle', errors: {}, runTest: vi.fn() }) }));
+vi.mock('./useConnectionTest', () => ({ useConnectionTest: () => ({ status: 'idle', error: '', runTest: vi.fn() }) }));
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -71,11 +71,12 @@ it('failed destination write keeps legacy key and reports failure without claimi
 it('UI explains persistence and lets the user save or clear credentials', () => {
   function Credentials() {
     const settings = useAISettings();
-    return <ApiCredentials {...settings} onSave={settings.handleSave} onClear={settings.handleClearCredentials} />;
+    return <AISettingsTab settings={settings} />;
   }
   render(<Credentials />);
+  fireEvent.change(screen.getByLabelText('Penyedia AI', { exact: true }), { target: { value: 'openai' } });
   fireEvent.change(screen.getByLabelText('API key OpenAI'), { target: { value: 'synthetic-ui' } });
-  fireEvent.click(screen.getByText('Simpan Kredensial'));
+  fireEvent.click(screen.getByRole('button', { name: 'Simpan Pengaturan AI' }));
   expect(sessionStorage.getItem('ai_key_openai')).toBe('synthetic-ui');
   expect(screen.getByText(/Key di browser tidak dienkripsi/)).toBeTruthy();
   fireEvent.click(screen.getByText('Hapus semua API key dari browser ini'));

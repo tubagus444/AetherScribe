@@ -9,11 +9,13 @@ import { cn } from '@/src/lib/utils';
 
 interface Props {
   id?: string;
+  descriptionId?: string;
   provider: ModelListProvider;
   value: string;
   onChange: (value: string) => void;
   apiKey?: string;
   placeholder?: string;
+  allowServerKey?: boolean;
   lightTaskDefault?: string;
 }
 
@@ -22,7 +24,7 @@ interface Props {
  * dibuka, tetap mengizinkan ID model kustom. Menggantikan pola lama yang
  * berbeda-beda (tombol Google vs dropdown OpenRouter vs input polos).
  */
-export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder, lightTaskDefault }: Props) {
+export function ModelSelect({ id, descriptionId, provider, value, onChange, apiKey, placeholder, allowServerKey, lightTaskDefault }: Props) {
   const [models, setModels] = useState<ProviderModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,9 +33,10 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
   const [search, setSearch] = useState('');
   const request = useRef<AbortController | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
   const credential = apiKey?.trim();
   const lightTask = lightTaskDefault !== undefined;
-  const keyMissing = !lightTask && provider !== 'openrouter' && !credential;
+  const keyMissing = !lightTask && !allowServerKey && provider !== 'openrouter' && !credential;
   const defaultLabel = lightTaskDefault ? `Default AetherScribe (${lightTaskDefault})` : 'Default AetherScribe';
 
   useEffect(() => {
@@ -45,6 +48,18 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
     setSearch('');
     return () => request.current?.abort();
   }, [provider, credential]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !picker.current?.contains(event.target)) {
+        setIsOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    return () => document.removeEventListener('pointerdown', closeOutside);
+  }, [isOpen]);
 
   const loadModels = async () => {
     if (keyMissing) {
@@ -109,7 +124,14 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
 
   return (
     <div
+      ref={picker}
       className="relative w-full"
+      onBlur={event => {
+        if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) {
+          setIsOpen(false);
+          setSearch('');
+        }
+      }}
       onKeyDown={(event) => {
         if (isOpen && event.key === 'Escape') {
           event.stopPropagation();
@@ -121,27 +143,29 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
         id={id}
         ref={trigger}
         type="button"
+        aria-describedby={descriptionId}
         aria-expanded={isOpen}
         onClick={handleToggle}
-        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-1.5 text-xs text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-between"
+        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-indigo-500 dark:border-slate-700 dark:bg-slate-800"
       >
-        <span className="truncate text-slate-700 dark:text-slate-300">
+        <span className="min-w-0 text-slate-800 [overflow-wrap:anywhere] dark:text-slate-200">
           {selectedLabel || (lightTask ? defaultLabel : placeholder || 'Pilih model...')}
         </span>
-        <ChevronDown size={14} className={cn('text-slate-400 transition-transform shrink-0', isOpen && 'rotate-180')} />
+        <ChevronDown size={16} className={cn('text-slate-500 transition-transform shrink-0', isOpen && 'rotate-180')} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl max-h-60 flex flex-col overflow-hidden">
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+        <div className="absolute z-50 mt-1 flex max-h-72 w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+          <div className="flex shrink-0 items-center gap-2 border-b border-slate-100 px-3 dark:border-slate-800">
             <Search size={14} className="text-slate-400 shrink-0" />
             <input
               autoFocus
               type="text"
               placeholder={lightTask ? 'Cari model...' : 'Cari atau ketik ID model...'}
               value={search}
+              aria-label="Cari model"
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent border-none text-xs focus:ring-0 focus:outline-none text-slate-900 dark:text-slate-100 min-w-0"
+              className="min-h-11 min-w-0 flex-1 border-none bg-transparent text-sm text-slate-900 focus:ring-0 focus:outline-none dark:text-slate-100"
             />
             <button
               type="button"
@@ -151,7 +175,7 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
                 e.stopPropagation();
                 loadModels();
               }}
-              className="text-slate-400 hover:text-indigo-500 shrink-0"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center text-slate-600 hover:text-indigo-600 dark:text-slate-400"
             >
               <RefreshCw size={13} className={cn(isLoading && 'animate-spin')} />
             </button>
@@ -161,9 +185,9 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
             <button
               type="button"
               onClick={() => selectModel('')}
-              className="w-full shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-left text-xs font-medium hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+              className="flex min-h-11 w-full shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm font-medium hover:bg-indigo-50 dark:border-slate-800 dark:hover:bg-indigo-900/20"
             >
-              <span className="truncate">{defaultLabel}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{defaultLabel}</span>
               {!value && <Check size={12} className="text-indigo-600 shrink-0" />}
             </button>
           )}
@@ -185,7 +209,7 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
                       e.stopPropagation();
                       loadModels();
                     }}
-                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    className="min-h-11 px-2 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
                   >
                     Coba lagi
                   </button>
@@ -202,7 +226,7 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
                   type="button"
                   onClick={() => selectModel(m.id)}
                   className={cn(
-                    'w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex flex-col gap-0.5 transition-colors',
+                    'flex min-h-11 w-full flex-col gap-0.5 px-3 py-2 text-left text-sm transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
                     value === m.id && 'bg-indigo-50/50 dark:bg-indigo-900/10',
                   )}
                 >
@@ -212,7 +236,7 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
                     </span>
                     {value === m.id && <Check size={12} className="text-indigo-600 shrink-0" />}
                   </div>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
+                  <span className="text-xs text-slate-600 [overflow-wrap:anywhere] dark:text-slate-400">
                     {m.description ? `${m.id} — ${m.description}` : m.id}
                   </span>
                 </button>
@@ -225,7 +249,7 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
               <button
                 type="button"
                 onClick={() => selectModel(search.trim())}
-                className="w-full text-left px-2 py-1.5 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium hover:underline truncate"
+                className="min-h-11 w-full px-2 text-left text-sm font-medium text-indigo-600 [overflow-wrap:anywhere] hover:underline dark:text-indigo-400"
               >
                 Gunakan ID model kustom: "{search.trim()}"
               </button>
@@ -234,10 +258,6 @@ export function ModelSelect({ id, provider, value, onChange, apiKey, placeholder
         </div>
       )}
 
-      {/* Klik di luar untuk menutup */}
-      {isOpen && (
-        <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsOpen(false)} />
-      )}
     </div>
   );
 }

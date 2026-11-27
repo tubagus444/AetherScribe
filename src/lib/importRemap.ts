@@ -293,7 +293,7 @@ export interface ProjectBackupCounts {
 }
 
 /** Ringkasan jumlah untuk dialog konfirmasi impor. */
-export function summarizeProjectBackup(data: ProjectBackupData): ProjectBackupCounts {
+export function summarizeProjectBackup(data: Partial<Record<keyof ProjectBackupCounts, readonly unknown[]>>): ProjectBackupCounts {
   return {
     chapters: data.chapters?.length ?? 0,
     codex: data.codex?.length ?? 0,

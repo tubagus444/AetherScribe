@@ -43,6 +43,10 @@ menggunakan gzip.
 
 `restoreData(input)` hanya menerima cadangan seluruh workspace (`scope:'all'`). `importProjectData(input)` hanya menerima `scope:'project'` dengan tepat satu proyek dan menambahkan salinan baru melalui remap ID. UI memvalidasi sebelum konfirmasi; service memvalidasi lagi agar internal/Drive tidak dapat melewati pemeriksaan tersebut.
 
+Pemulihan dari file menampilkan status pemeriksaan, lalu nama file, tanggal
+arsip, dan jumlah novel setelah validasi. Konfirmasi memakai input asli agar
+service bisa memverifikasi checksum kembali.
+
 Schema memeriksa envelope, tipe field inti dan metadata yang dikenal, array, enum, ID positif/unik, kunci unik Bible/kategori/triage, serta referensi proyek, bab, Codex, dan peta. Referensi lintas-proyek ditolak. Metadata JSON tambahan pada record dipertahankan, tetapi tabel yang tidak dikenal, objek non-JSON, siklus, dan kunci prototype berbahaya ditolak. Validasi backup tidak menghapus markup pada teks sumber. Atlas memperlakukan judul marker/nama Codex sebagai teks saat render DOM, termasuk setelah impor (F01; lihat [katalog fitur](features.md)). Konten HTML modul lain mengikuti kebijakan modul masing-masing.
 
 Versi 3–10 tetap dapat dibaca. Scope yang tidak ditulis pada v3–v7 diperlakukan sebagai seluruh workspace. Setelah checksum data asli diverifikasi, tabel opsional yang absen dinormalisasi menjadi array kosong. Normalisasi tidak mengubah input atau checksum aslinya. Versi di luar 3–11 ditolak. Mulai v8, scope dan `imageMode` wajib. Cadangan penuh mewajibkan tabel sesuai versi. Ekspor per proyek memiliki tabel opsional sesuai cakupannya.

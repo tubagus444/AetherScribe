@@ -14,6 +14,7 @@ import { AIError } from './dispatch';
 export { AIError, callAI } from './dispatch';
 import { cancelAI as cancelExecution, executeAIAction } from './execution';
 import { resolveContextBuilder } from './context';
+import { fetchOllamaModels, NO_OLLAMA_MODELS } from './ollamaModels';
 export { isCacheSupported, getContextWindow } from './context';
 type RewriteResult = { text: string; status: StreamFinishStatus };
 const inFlightRewrites = new Map<string, Promise<RewriteResult>>();
@@ -401,8 +402,12 @@ export async function suggestBibleField(field: BibleAssistField, ctx: BibleConte
   return stripWrappers(res);
 }
 
-export async function testConnection(provider: string, apiKey: string, model?: string): Promise<boolean> {
+export async function testConnection(provider: string, apiKey: string, model?: string, ollamaBaseUrl?: string): Promise<boolean> {
   try {
+    if (provider === 'ollama') {
+      const models = await fetchOllamaModels(ollamaBaseUrl ?? (localStorage.getItem('ollama_base_url') || undefined));
+      if (!models.length) throw new Error(NO_OLLAMA_MODELS);
+    }
     const params: AIRenderParams = {
       systemInstruction: AI_PROMPTS.TEST_CONNECTION.SYSTEM(),
       userPrompt: AI_PROMPTS.TEST_CONNECTION.USER(),
@@ -411,7 +416,7 @@ export async function testConnection(provider: string, apiKey: string, model?: s
     };
 
     let result = '';
-    result = await callProxy(provider, params, apiKey);
+    result = await callProxy(provider, params, apiKey, ollamaBaseUrl);
     
     return result.includes('OK') || result.length > 0;
   } catch (error) {
